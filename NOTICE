@@ -1,0 +1,33 @@
+Thrum Pro Plugin
+Copyright 2026 Leon Letto
+
+This product includes the Thrum Pro plugin (skills, commands, agents, hooks,
+and configuration) for AI coding assistants, licensed under the Apache License,
+Version 2.0.
+
+The Thrum Pro binary is a separate product and is not distributed under this
+license. See the README for details.
+
+Contact: leon@thrum.team
+
+---
+
+Referenced plugins
+-------------------
+
+The Thrum Pro plugin references — but does NOT bundle or redistribute — the
+following third-party plugins. Each is installed separately by the user from its
+own source and remains under its own license:
+
+  - superpowers (obra / Jesse Vincent) — MIT
+    https://github.com/obra/superpowers
+  - episodic-memory (obra / Jesse Vincent) — MIT
+    https://github.com/obra/episodic-memory
+  - ralph-loop — MIT / Apache-2.0 (see source)
+  - frontend-design (Anthropic) — Apache-2.0
+    https://github.com/anthropics/claude-plugins-official
+  - claude-code-setup (Anthropic) — Apache-2.0
+    https://github.com/anthropics/claude-plugins-official
+
+These references are provided for interoperability and user convenience. No
+third-party code is included in this repository.

@@ -1,4 +1,4 @@
 interface:
   display_name: "Thrum"
-  short_description: ">"
-  default_prompt: ">"
+  short_description: "Multi-agent coordination via messaging, groups, and shared context. Use when agents need to communicate, delegate work, or coordinate across worktrees."
+  default_prompt: "Multi-agent coordination via messaging, groups, and shared context. Use when agents need to communicate, delegate work, or coordinate across worktrees."

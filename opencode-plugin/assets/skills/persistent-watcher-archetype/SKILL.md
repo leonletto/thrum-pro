@@ -1,6 +1,6 @@
 ---
 name: persistent-watcher-archetype
-description: Use when running as a persistent watcher agent — a standing, judgment-capable Claude Code agent that watches other agents' tmux panes, auto-approves safe modals, warns on context, and escalates up a parent-reference tree. Distinct from watcher-archetype (the wake-run-exit scan/emit/report substrate) — this archetype stays alive.
+description: "Use when running as a persistent watcher agent — a standing, judgment-capable Claude Code agent that watches other agents' tmux panes, auto-approves safe modals, warns on context, and escalates up a parent-reference tree. Distinct from watcher-archetype (the wake-run-exit scan/emit/report substrate) — this archetype stays alive."
 ---
 
 # Persistent Watcher Archetype

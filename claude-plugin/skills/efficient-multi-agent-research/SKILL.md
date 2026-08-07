@@ -1,10 +1,6 @@
 ---
 name: efficient-multi-agent-research
-description:
-  Use when investigating, auditing, or reviewing more than 6 items across a
-  codebase - function call sites, pattern usage, file reviews, or any research
-  task with partitionable items that would pollute the main agent's context if
-  read directly
+description: "Use when investigating, auditing, or reviewing more than 6 items across a codebase - function call sites, pattern usage, file reviews, or any research task with partitionable items that would pollute the main agent's context if read directly"
 ---
 
 # Efficient Multi-Agent Research

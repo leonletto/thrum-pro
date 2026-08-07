@@ -1,13 +1,6 @@
 ---
 name: update-agent-state
-description:
-  Use at end of work / wrap up session / save agent state — records the
-  just-completed session into the scheduled agent's state.md history. The 4
-  verbatim + 3 blocks of 5 = 19-session sliding window is enforced by the
-  `thrum agent state update` CLI command (via internal/agentstate's parser —
-  CLI-invoked at session end, NOT a daemon background process; hand-editing
-  state.md bypasses it entirely); the agent's job is to author a one-line
-  summary that will be the verbatim entry.
+description: "Use at end of work / wrap up session / save agent state — records the just-completed session into the scheduled agent's state.md history. The 4 verbatim + 3 blocks of 5 = 19-session sliding window is enforced by the `thrum agent state update` CLI command (via internal/agentstate's parser — CLI-invoked at session end, NOT a daemon background process; hand-editing state.md bypasses it entirely); the agent's job is to author a one-line summary that will be the verbatim entry."
 ---
 
 # Thrum: Update Agent State

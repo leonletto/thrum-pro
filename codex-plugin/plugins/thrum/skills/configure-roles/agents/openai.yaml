@@ -1,4 +1,4 @@
 interface:
   display_name: "Configure Roles"
-  short_description: ">"
-  default_prompt: ">"
+  short_description: "Detect environment and generate customized role-based preamble templates for your Thrum agents. Creates .thrum/role_templates/ files that auto-apply on agent registration."
+  default_prompt: "Detect environment and generate customized role-based preamble templates for your Thrum agents. Creates .thrum/role_templates/ files that auto-apply on agent registration."

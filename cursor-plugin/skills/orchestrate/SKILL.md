@@ -1,9 +1,6 @@
 ---
 name: orchestrate
-description:
-  Execute a plan by launching agents in tmux sessions, managing epic-by-epic
-  execution with review gates, and preparing merge reports. Use when the
-  orchestrator receives a plan handoff from the coordinator.
+description: "Execute a plan by launching agents in tmux sessions, managing epic-by-epic execution with review gates, and preparing merge reports. Use when the orchestrator receives a plan handoff from the coordinator."
 ---
 
 # Orchestrate: Managed Plan Execution

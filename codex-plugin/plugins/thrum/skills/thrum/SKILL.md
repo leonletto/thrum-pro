@@ -1,6 +1,8 @@
 ---
 name: thrum
-description: ">"
+description:
+  "Multi-agent coordination via messaging, groups, and shared context. Use when
+  agents need to communicate, delegate work, or coordinate across worktrees."
 # source: claude-plugin/skills/thrum/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---

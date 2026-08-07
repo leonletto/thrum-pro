@@ -1,9 +1,6 @@
 ---
 name: implementer-receiving-dispatch
-description:
-  Use when receiving a new task from the coordinator, starting implementation,
-  scoping a fresh task, or receiving dispatch. Loads implementer-specific
-  discipline for kicking off work cleanly.
+description: "Use when receiving a new task from the coordinator, starting implementation, scoping a fresh task, or receiving dispatch. Loads implementer-specific discipline for kicking off work cleanly."
 ---
 
 # Implementer: Receiving Dispatch

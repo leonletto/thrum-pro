@@ -1,9 +1,6 @@
 ---
 name: configure-roles
-description: >
-  Detect environment and generate customized role-based preamble templates for
-  your Thrum agents. Creates .thrum/role_templates/ files that auto-apply on
-  agent registration.
+description: "Detect environment and generate customized role-based preamble templates for your Thrum agents. Creates .thrum/role_templates/ files that auto-apply on agent registration."
 allowed-tools:
   "Bash(thrum:*), Bash(bd:*), Bash(git:worktree*), Read, Write, Glob,
   AskUserQuestion"

@@ -1,10 +1,6 @@
 ---
 name: update-state
-description:
-  Use to update your personal State.md — "update your State.md", "save personal
-  state", "significant checkpoint", "sleep gate directive". Any role
-  (coordinator / implementer / researcher). Lightweight personal counterpart to
-  thrum:update-project. Call any time; idempotent.
+description: "Use to update your personal State.md — 'update your State.md', 'save personal state', 'significant checkpoint', 'sleep gate directive'. Any role (coordinator / implementer / researcher). Lightweight personal counterpart to thrum:update-project. Call any time; idempotent."
 allowed-tools: "Bash(thrum:*)"
 ---
 

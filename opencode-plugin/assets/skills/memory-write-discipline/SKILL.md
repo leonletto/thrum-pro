@@ -1,10 +1,6 @@
 ---
 name: memory-write-discipline
-description:
-  Use when an agent needs to capture a new memory entry — a rule, a research
-  finding, an observation. Loads the canonical write-command shape, body
-  conventions, title prose convention, tags-as-slug pattern, and scope
-  semantics. Common across all roles that write memory.
+description: "Use when an agent needs to capture a new memory entry — a rule, a research finding, an observation. Loads the canonical write-command shape, body conventions, title prose convention, tags-as-slug pattern, and scope semantics. Common across all roles that write memory."
 ---
 
 # Writing thrum memory entries

@@ -32,10 +32,10 @@
     "coordination"
   ],
   "author": "Leon Letto",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/leonletto/thrum.git",
+    "url": "git+https://github.com/leonletto/thrum-pro.git",
     "directory": "opencode-plugin"
   },
   "peerDependencies": {

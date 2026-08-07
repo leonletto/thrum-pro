@@ -19,8 +19,8 @@
 #      auto-load the thrum prime briefing.
 #
 # Environment overrides:
-#   THRUM_INSTALL_REF        Git ref to install (default: latest release tag if available, else "thrum-dev")
-#   THRUM_INSTALL_REPO       Repo source (default: "leonletto/thrum")
+#   THRUM_INSTALL_REF        Git ref to install (default: "main")
+#   THRUM_INSTALL_REPO       Repo source (default: "leonletto/thrum-pro")
 #
 # Idempotent: safe to run multiple times. Re-running pulls the latest revision
 # of the configured ref and re-stages the cache.
@@ -29,8 +29,8 @@ set -uo pipefail
 
 MARKETPLACE_NAME="thrum-marketplace"
 PLUGIN_NAME="thrum"
-REPO="${THRUM_INSTALL_REPO:-leonletto/thrum}"
-REF="${THRUM_INSTALL_REF:-thrum-dev}"
+REPO="${THRUM_INSTALL_REPO:-leonletto/thrum-pro}"
+REF="${THRUM_INSTALL_REF:-main}"
 CODEX_HOME="${HOME}/.codex"
 CONFIG="${CODEX_HOME}/config.toml"
 STAGED_ROOT="${CODEX_HOME}/.tmp/marketplaces/${MARKETPLACE_NAME}"

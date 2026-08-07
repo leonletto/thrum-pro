@@ -1,10 +1,6 @@
 ---
 name: implementer-orchestrating-execution
-description:
-  Use when starting execution of a scoped implementation task — about to
-  implement, ready to write code, executing a bd task. Loads the orchestration
-  procedure — dispatch research, implementation, and verification to sub-agents
-  and synthesize their output instead of doing the legwork inline.
+description: "Use when starting execution of a scoped implementation task — about to implement, ready to write code, executing a bd task. Loads the orchestration procedure — dispatch research, implementation, and verification to sub-agents and synthesize their output instead of doing the legwork inline."
 ---
 
 # Implementer: Orchestrating Execution

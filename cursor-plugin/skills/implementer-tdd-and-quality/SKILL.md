@@ -1,9 +1,6 @@
 ---
 name: implementer-tdd-and-quality
-description:
-  Use when writing tests, running tests, hitting a quality gate, or before
-  reporting a task done. Loads project-specific test and quality discipline that
-  complements superpowers:test-driven-development.
+description: "Use when writing tests, running tests, hitting a quality gate, or before reporting a task done. Loads project-specific test and quality discipline that complements superpowers:test-driven-development."
 ---
 
 # Implementer: TDD and Quality

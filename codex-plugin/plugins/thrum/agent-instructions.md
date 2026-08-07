@@ -32,21 +32,18 @@ don't try to install codex or jq yourself.
 ## Run the installer (one command)
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/leonletto/thrum/thrum-dev/codex-plugin/plugins/thrum/scripts/install-plugin.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/leonletto/thrum-pro/main/codex-plugin/plugins/thrum/scripts/install-plugin.sh)
 ```
 
-Defaults install from the `thrum-dev` branch. To pin a release tag instead:
-
-```bash
-THRUM_INSTALL_REF=v0.10.3 bash <(curl -fsSL https://raw.githubusercontent.com/leonletto/thrum/v0.10.3/codex-plugin/plugins/thrum/scripts/install-plugin.sh)
-```
+Defaults install from the `main` branch — the only branch this distribution
+repo carries; there is no release-tag pinning yet.
 
 The script is idempotent — re-running it pulls the latest revision of the
 configured ref and re-stages the cache. It will:
 
 1. Verify codex + jq are installed.
-2. Register `thrum-marketplace` from `https://github.com/leonletto/thrum` (or
-   upgrade it if already registered).
+2. Register `thrum-marketplace` from `https://github.com/leonletto/thrum-pro`
+   (or upgrade it if already registered).
 3. Read the plugin version from the staged manifest.
 4. Stage the plugin into
    `~/.codex/plugins/cache/thrum-marketplace/thrum/<version>/`.

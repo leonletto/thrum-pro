@@ -1,9 +1,6 @@
 ---
 name: researcher-investigating
-description:
-  Use when investigating, exploring code, working on a research task, when asked
-  to find me X, or to investigate Y. Loads researcher-specific discipline for
-  running an investigation cleanly.
+description: "Use when investigating, exploring code, working on a research task, when asked to find me X, or to investigate Y. Loads researcher-specific discipline for running an investigation cleanly."
 ---
 
 # Researcher: Investigating

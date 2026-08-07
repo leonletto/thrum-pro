@@ -1,9 +1,6 @@
 ---
 name: implementer-receiving-review-feedback
-description:
-  Use when receiving review findings, when a reviewer flagged an issue, during a
-  review cycle, or when responding to review. Loads implementer-specific
-  discipline that complements superpowers:receiving-code-review.
+description: "Use when receiving review findings, when a reviewer flagged an issue, during a review cycle, or when responding to review. Loads implementer-specific discipline that complements superpowers:receiving-code-review."
 ---
 
 # Implementer: Receiving Review Feedback

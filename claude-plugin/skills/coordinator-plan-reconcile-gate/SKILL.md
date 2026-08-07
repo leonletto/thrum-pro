@@ -1,15 +1,6 @@
 ---
 name: coordinator-plan-reconcile-gate
-description:
-  Use when N parallel plans (one researcher per program of a shared idea) are
-  all LOCKED and about to feed project-setup, and the plans cross-talk at
-  shared seams — an anchor contract produced by one plan and consumed by
-  another, a shared struct field, a shared predicate. Verifies the plans
-  COMPOSE (consistent seams, no double-build, no gap) before any bead or
-  worktree exists. This is the multi-plan reconcile gate — the step that makes
-  parallel plan-writing pay off instead of producing N colliding plans. It
-  uses Fable, the single Leon-ratified standing exception (2026-07-22) to the
-  never-select-Fable rule — see Step 2 for the cited scope of that exception.
+description: "Use when N parallel plans (one researcher per program of a shared idea) are all LOCKED and about to feed project-setup, and the plans cross-talk at shared seams — an anchor contract produced by one plan and consumed by another, a shared struct field, a shared predicate. Verifies the plans COMPOSE (consistent seams, no double-build, no gap) before any bead or worktree exists. This is the multi-plan reconcile gate — the step that makes parallel plan-writing pay off instead of producing N colliding plans. It uses Fable, the single Leon-ratified standing exception (2026-07-22) to the never-select-Fable rule — see Step 2 for the cited scope of that exception."
 ---
 
 # Coordinator: Plan Reconcile Gate

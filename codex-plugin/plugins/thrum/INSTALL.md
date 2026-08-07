@@ -20,7 +20,7 @@
 ## Recommended: one-command install
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/leonletto/thrum/thrum-dev/codex-plugin/plugins/thrum/scripts/install-plugin.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/leonletto/thrum-pro/main/codex-plugin/plugins/thrum/scripts/install-plugin.sh)
 ```
 
 That's it. The script registers the marketplace, stages the per-plugin cache (a
@@ -28,11 +28,8 @@ step codex 0.130.0 doesn't do automatically for third-party marketplaces),
 enables the plugin, and turns on the `plugin_hooks` feature. It's idempotent —
 re-run any time to pull the latest revision.
 
-To pin a release tag instead of `thrum-dev`:
-
-```bash
-THRUM_INSTALL_REF=v0.10.3 bash <(curl -fsSL https://raw.githubusercontent.com/leonletto/thrum/v0.10.3/codex-plugin/plugins/thrum/scripts/install-plugin.sh)
-```
+Installs from the `main` branch — the only branch this distribution repo
+carries; there is no release-tag pinning yet.
 
 If you have the repo cloned already, you can run it locally instead:
 
@@ -50,7 +47,7 @@ it at the agent-instructions doc — it handles everything up to the manual
 
 ```text
 Please install the Thrum codex plugin by following:
-https://github.com/leonletto/thrum/blob/thrum-dev/codex-plugin/plugins/thrum/agent-instructions.md
+https://github.com/leonletto/thrum-pro/blob/main/codex-plugin/plugins/thrum/agent-instructions.md
 ```
 
 Your agent will read the file, run the installer, and tell you when it's time to
@@ -62,7 +59,7 @@ If you'd rather drive the install steps yourself:
 
 ```bash
 # 1. Register marketplace
-codex plugin marketplace add leonletto/thrum --ref thrum-dev
+codex plugin marketplace add leonletto/thrum-pro
 
 # 2. Stage cache (codex 0.130.0 doesn't do this for third-party marketplaces)
 VERSION=$(jq -r '.version' ~/.codex/.tmp/marketplaces/thrum-marketplace/codex-plugin/plugins/thrum/.codex-plugin/plugin.json)

@@ -1,9 +1,6 @@
 ---
 name: coordinator-running-review-cycles
-description:
-  Use when an implementer reports DONE, when consolidating review findings, when
-  handling implementer pushback on a finding, or when arriving at a review gate.
-  Loads coordinator-specific discipline for running review cycles cleanly.
+description: "Use when an implementer reports DONE, when consolidating review findings, when handling implementer pushback on a finding, or when arriving at a review gate. Loads coordinator-specific discipline for running review cycles cleanly."
 ---
 
 # Coordinator: Running Review Cycles

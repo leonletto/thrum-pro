@@ -1,15 +1,6 @@
 ---
 name: coordinator-context-monitoring
-description:
-  Use when managing live implementer/brainstormer agents during a long
-  coordination session, at epic merge gates, after a busy dispatch hour, or
-  whenever you suspect an agent is approaching context limits. Prevents
-  97%-context silent blow-ups by running a sweep + pre-emptive restart before
-  the agent degrades. Safe to wire into a recurring cron that INVOKES this skill
-  — the skill applies tier-ladder judgment, surfacing (and, only when explicitly
-  opted in via config, autonomously restarting) at the >85% tier. What's
-  forbidden is a cron/script that fires restarts unconditionally without going
-  through this skill's tier ladder.
+description: "Use when managing live implementer/brainstormer agents during a long coordination session, at epic merge gates, after a busy dispatch hour, or whenever you suspect an agent is approaching context limits. Prevents 97%-context silent blow-ups by running a sweep + pre-emptive restart before the agent degrades. Safe to wire into a recurring cron that INVOKES this skill — the skill applies tier-ladder judgment, surfacing (and, only when explicitly opted in via config, autonomously restarting) at the >85% tier. What's forbidden is a cron/script that fires restarts unconditionally without going through this skill's tier ladder."
 ---
 
 # Coordinator: Context Monitoring and Pre-emptive Restart

@@ -1,11 +1,6 @@
 ---
 name: researcher-maintaining-memory
-description:
-  Use after completing research, when updating research memory, when verifying
-  entries, or when working with the research index. Loads researcher-specific
-  discipline — the index file structure, cite-stamp protocol, staleness check
-  via git diff, namespace conventions. References common memory skills for
-  write/read/maintain basics.
+description: "Use after completing research, when updating research memory, when verifying entries, or when working with the research index. Loads researcher-specific discipline — the index file structure, cite-stamp protocol, staleness check via git diff, namespace conventions. References common memory skills for write/read/maintain basics."
 ---
 
 # Researcher memory discipline

@@ -1,10 +1,6 @@
 ---
 name: implementer-maintaining-memory
-description:
-  Use when the implementer writes a role-rule after user correction, or looks up
-  implementer rules at session start. Loads implementer-specific memory
-  discipline — single write path (agent_rule), refactoring opportunities go to
-  bd not memory, stay minimal.
+description: "Use when the implementer writes a role-rule after user correction, or looks up implementer rules at session start. Loads implementer-specific memory discipline — single write path (agent_rule), refactoring opportunities go to bd not memory, stay minimal."
 ---
 
 # Implementer memory discipline

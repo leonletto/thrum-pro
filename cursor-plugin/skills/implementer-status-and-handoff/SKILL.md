@@ -1,9 +1,6 @@
 ---
 name: implementer-status-and-handoff
-description:
-  Use when reporting status to the coordinator, marking a task done, or handing
-  off completed work. Loads implementer-specific discipline for closing the loop
-  cleanly.
+description: "Use when reporting status to the coordinator, marking a task done, or handing off completed work. Loads implementer-specific discipline for closing the loop cleanly."
 ---
 
 # Implementer: Status and Handoff

@@ -1,11 +1,6 @@
 ---
 name: memory-curate
-description:
-  Use when managing relationships between memories — adding/removing edges,
-  superseding old decisions, threading comments, walking hierarchies, or
-  deciding whether to unlink, supersede, or both. Loads edge kinds,
-  status-driven read semantics, cycle and single-parent rules, and the
-  unlink-supersede footgun.
+description: "Use when managing relationships between memories — adding/removing edges, superseding old decisions, threading comments, walking hierarchies, or deciding whether to unlink, supersede, or both. Loads edge kinds, status-driven read semantics, cycle and single-parent rules, and the unlink-supersede footgun."
 version: "0.11.0"
 author: "Leon Letto <https://github.com/leonletto>"
 license: "MIT"

@@ -9,8 +9,8 @@
     {
       "name": "thrum",
       "source": "./claude-plugin",
-      "version": "0.11.0-dev.1.36",
       "description": "Git-backed messaging for AI agent coordination across sessions, worktrees, and machines.",
+      "version": "0.11.0-dev.1.37",
       "homepage": "https://thrum.team",
       "repository": "https://github.com/leonletto/thrum-pro"
     }

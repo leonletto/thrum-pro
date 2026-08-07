@@ -1,9 +1,6 @@
 ---
 name: coordinator-single-responsibility-merge-gate
-description:
-  DEPRECATED — superseded by `coordinator-philosophy-merge-gate`. Invoke that
-  skill instead. (This stub is retained for backward discoverability; it
-  redirects immediately.)
+description: "DEPRECATED — superseded by `coordinator-philosophy-merge-gate`. Invoke that skill instead. (This stub is retained for backward discoverability; it redirects immediately.)"
 ---
 
 # Coordinator: Single-Responsibility Merge Gate (Deprecated)

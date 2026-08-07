@@ -1,10 +1,10 @@
 ---
 name: update-state
 description:
-  'Use to update your personal State.md — "update your State.md", "save personal
-  state", "significant checkpoint", "sleep gate directive". Any role
+  "Use to update your personal State.md — 'update your State.md', 'save personal
+  state', 'significant checkpoint', 'sleep gate directive'. Any role
   (coordinator / implementer / researcher). Lightweight personal counterpart to
-  thrum:update-project. Call any time; idempotent.'
+  thrum:update-project. Call any time; idempotent."
 # source: claude-plugin/skills/update-state/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---

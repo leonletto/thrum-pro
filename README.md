@@ -121,10 +121,7 @@ Then reference it as a local `file:` plugin in your project's `opencode.json`
 
 The plugin drives the `thrum` daemon/CLI. That binary is a Thrum Pro product and is
 **not** distributed from this public repo — access is provisioned directly by the
-Thrum Pro team.
-
-<!-- PLACEHOLDER: how a licensed user obtains + installs the binary, and how the
-     plugin locates it (PATH / config). Leon to confirm the exact provisioning flow. -->
+Thrum Pro team. Contact **leon@thrum.team** for access.
 
 Once you have the binary installed and on your `PATH`, verify it:
 
@@ -140,8 +137,7 @@ Then register your first agent and load context — see the plugin's own quickst
 
 ## Usage
 
-<!-- PLACEHOLDER: short "your first session" walkthrough — register an agent, send a
-     message, check the inbox — once install steps are pinned. -->
+Once the plugin and binary are installed, Thrum lets your agents:
 
 - Register + start a session
 - Send and receive messages between agents
@@ -163,7 +159,7 @@ own license:
 |--------|--------|---------|--------|
 | superpowers (brainstorming, writing-plans, TDD, …) | obra / Jesse Vincent | MIT | https://github.com/obra/superpowers |
 | episodic-memory | obra / Jesse Vincent | MIT | https://github.com/obra/episodic-memory |
-| ralph-loop | — | MIT / Apache-2.0 | <!-- PLACEHOLDER: confirm which ralph-loop source --> |
+| ralph-loop | Anthropic | Apache-2.0 | https://github.com/anthropics/claude-plugins-official |
 | frontend-design | Anthropic | Apache-2.0 | https://github.com/anthropics/claude-plugins-official |
 | claude-code-setup | Anthropic | Apache-2.0 | https://github.com/anthropics/claude-plugins-official |
 

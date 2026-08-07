@@ -23,7 +23,8 @@ own source and remains under its own license:
     https://github.com/obra/superpowers
   - episodic-memory (obra / Jesse Vincent) — MIT
     https://github.com/obra/episodic-memory
-  - ralph-loop — MIT / Apache-2.0 (see source)
+  - ralph-loop (Anthropic) — Apache-2.0
+    https://github.com/anthropics/claude-plugins-official
   - frontend-design (Anthropic) — Apache-2.0
     https://github.com/anthropics/claude-plugins-official
   - claude-code-setup (Anthropic) — Apache-2.0

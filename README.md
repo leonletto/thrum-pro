@@ -36,28 +36,42 @@ matching section below.
 
 ## Installing the plugin
 
-First, clone this repo — every command below is run relative to it:
+Every plugin talks to the `thrum` CLI on your `PATH`. This repo ships plugin text
+only — no `thrum` binary. Install `thrum` first (see
+[Getting the Thrum binary](#getting-the-thrum-binary)).
+
+Each runtime installs differently — there is no single command that covers all
+four. Full per-runtime detail, including verification steps, lives in
+[`INSTALL.md`](./INSTALL.md).
+
+### Claude Code — install straight from GitHub (no clone)
+
+Claude Code can add this repo as a plugin marketplace directly by URL:
+
+```bash
+claude plugin marketplace add leonletto/thrum-pro
+claude plugin install thrum@thrum
+```
+
+**Updating is one command** — Claude Code re-pulls the repo's latest commit:
+
+```bash
+claude plugin marketplace update thrum
+```
+
+### Codex, Cursor, OpenCode — clone first
+
+The other three runtimes install from a local checkout. Clone once:
 
 ```bash
 git clone https://github.com/leonletto/thrum-pro.git
 cd thrum-pro
 ```
 
-Each plugin talks to the `thrum` CLI on your `PATH`. This repo ships plugin text
-only — no `thrum` binary. Install `thrum` first (see
-[Getting the Thrum binary](#getting-the-thrum-binary)).
+To **update** later, `git pull` in the checkout and re-run the runtime's
+install/build step below.
 
-Full per-runtime detail — including verification steps — lives in
-[`INSTALL.md`](./INSTALL.md). The core steps:
-
-### Claude Code
-
-```bash
-claude plugin marketplace add ./claude-plugin
-claude plugin install thrum@thrum
-```
-
-### Codex
+#### Codex
 
 ```bash
 codex plugin marketplace add ./codex-plugin
@@ -71,7 +85,7 @@ runtimes' agents):
 ./codex-plugin/plugins/thrum/scripts/install-skills.sh
 ```
 
-### Cursor
+#### Cursor
 
 ```bash
 ./cursor-plugin/local-install.sh --target /path/to/your/project
@@ -81,7 +95,7 @@ This copies the plugin into `<project>/.cursor/` and writes `.cursor/hooks.json`
 with an absolute path back into this repo's `cursor-plugin/` directory — keep the
 checkout in place after installing, or re-run the script if you move it.
 
-### OpenCode
+#### OpenCode
 
 OpenCode loads the plugin as a Node package, so build it once:
 
@@ -99,15 +113,6 @@ Then reference it as a local `file:` plugin in your project's `opencode.json`
   "$schema": "https://opencode.ai/config.json",
   "plugin": ["file:/path/to/thrum-pro/opencode-plugin"]
 }
-```
-
-### Updating
-
-New plugin versions are published here as commits. Pull the latest and re-run the
-relevant install/build step for your runtime:
-
-```bash
-git pull
 ```
 
 ---

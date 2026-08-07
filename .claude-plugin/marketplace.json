@@ -1,0 +1,17 @@
+{
+  "name": "thrum",
+  "description": "Thrum plugin marketplace — Git-backed messaging for AI agent coordination across sessions, worktrees, and machines.",
+  "owner": {
+    "name": "Leon Letto",
+    "url": "https://github.com/leonletto"
+  },
+  "plugins": [
+    {
+      "name": "thrum",
+      "source": "./claude-plugin",
+      "description": "Git-backed messaging for AI agent coordination across sessions, worktrees, and machines.",
+      "homepage": "https://thrum.team",
+      "repository": "https://github.com/leonletto/thrum-pro"
+    }
+  ]
+}

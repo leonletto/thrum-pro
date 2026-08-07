@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "command": "__PLUGIN_ROOT__/scripts/inject-prime-context.sh",
+        "timeout": 15
+      }
+    ],
+    "beforeShellExecution": [
+      {
+        "type": "command",
+        "command": "__PLUGIN_ROOT__/scripts/block-sync-worktree-cd.sh",
+        "timeout": 5
+      },
+      {
+        "type": "command",
+        "command": "__PLUGIN_ROOT__/scripts/block-tls-key-exfil.sh",
+        "timeout": 5
+      }
+    ],
+    "stop": [
+      {
+        "type": "command",
+        "command": "__PLUGIN_ROOT__/scripts/stop-check-messages.sh",
+        "timeout": 15
+      }
+    ],
+    "preCompact": [
+      {
+        "type": "command",
+        "command": "__PLUGIN_ROOT__/scripts/pre-compact-save-context.sh 2>/dev/null || true"
+      }
+    ],
+    "postCompact": [
+      {
+        "type": "command",
+        "command": "__PLUGIN_ROOT__/scripts/post-compact-recover.sh",
+        "timeout": 10
+      }
+    ]
+  }
+}

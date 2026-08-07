@@ -1,0 +1,4 @@
+interface:
+  display_name: "Memory: Read Discipline"
+  short_description: "Use when an agent needs to find existing memory entries - load role-rules at session start, recall a topic mid-session, or pull the full body of a specific entry. Loads the canonical 3-step zoom-escalation read pattern (scan index, triage short, fetch full on confirm) and covers the list / search / show verbs. For advanced FTS5 plus embedding search options, see also the memory-search-advanced skill."
+  default_prompt: "Use when an agent needs to find existing memory entries - load role-rules at session start, recall a topic mid-session, or pull the full body of a specific entry. Loads the canonical 3-step zoom-escalation read pattern (scan index, triage short, fetch full on confirm) and covers the list / search / show verbs. For advanced FTS5 plus embedding search options, see also the memory-search-advanced skill."

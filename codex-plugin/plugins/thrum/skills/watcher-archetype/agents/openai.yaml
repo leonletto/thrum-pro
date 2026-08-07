@@ -1,0 +1,4 @@
+interface:
+  display_name: "Watcher Archetype"
+  short_description: "Use when running as a watcher agent on a scheduled wake - the read-only, wake-run-exit detection loop (scan, then triage plus fix-sketch, then emit, then report, then job done). Loads the deterministic run-cycle discipline and the domain skill-pack plug-in contract for security/lint/deps/etc. watchers built on the v0.11 watcher substrate."
+  default_prompt: "Use when running as a watcher agent on a scheduled wake - the read-only, wake-run-exit detection loop (scan, then triage plus fix-sketch, then emit, then report, then job done). Loads the deterministic run-cycle discipline and the domain skill-pack plug-in contract for security/lint/deps/etc. watchers built on the v0.11 watcher substrate."

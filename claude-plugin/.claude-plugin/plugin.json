@@ -1,0 +1,82 @@
+{
+  "name": "thrum",
+  "description": "Git-backed messaging for AI agent coordination across sessions, worktrees, and machines.",
+  "version": "0.11.0-dev.1.36",
+  "author": {
+    "name": "Leon Letto",
+    "url": "https://github.com/leonletto"
+  },
+  "repository": "https://github.com/leonletto/thrum",
+  "license": "MIT",
+  "homepage": "https://thrum.team",
+  "keywords": [
+    "messaging",
+    "multi-agent",
+    "coordination",
+    "git-sync"
+  ],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/block-sync-worktree-cd.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/block-tls-key-exfil.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/memory-rule-jit/hook.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/inject-prime-context.sh",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/stop-check-messages.sh",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/post-compact-recover.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

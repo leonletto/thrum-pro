@@ -1,0 +1,4 @@
+interface:
+  display_name: "Implementer: Orchestrating Execution"
+  short_description: "Use when starting execution of a scoped implementation task — about to implement, ready to write code, executing a bd task. Loads the orchestration procedure — dispatch research, implementation, and verification to sub-agents and synthesize their output instead of doing the legwork inline."
+  default_prompt: "Use when starting execution of a scoped implementation task — about to implement, ready to write code, executing a bd task. Loads the orchestration procedure — dispatch research, implementation, and verification to sub-agents and synthesize their output instead of doing the legwork inline."

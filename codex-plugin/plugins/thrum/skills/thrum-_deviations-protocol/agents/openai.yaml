@@ -1,0 +1,4 @@
+interface:
+  display_name: "Thrum _deviations Protocol"
+  short_description: "Shared Deviations-from-Source protocol — canonical block format, the required-even-when-empty rule, and derivation discipline. Not user-invocable directly."
+  default_prompt: "Run the thrum _deviations-protocol workflow and summarize the result."

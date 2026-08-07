@@ -36,46 +36,78 @@ matching section below.
 
 ## Installing the plugin
 
-<!-- PLACEHOLDER: exact per-runtime install commands land once the first plugin
-     bundle is committed. The structure below is the shape; the specific paths and
-     commands will be filled to match the real trees. -->
+First, clone this repo — every command below is run relative to it:
+
+```bash
+git clone https://github.com/leonletto/thrum-pro.git
+cd thrum-pro
+```
+
+Each plugin talks to the `thrum` CLI on your `PATH`. This repo ships plugin text
+only — no `thrum` binary. Install `thrum` first (see
+[Getting the Thrum binary](#getting-the-thrum-binary)).
+
+Full per-runtime detail — including verification steps — lives in
+[`INSTALL.md`](./INSTALL.md). The core steps:
 
 ### Claude Code
 
 ```bash
-# Clone (or pull) this repo
-git clone https://github.com/leonletto/thrum-pro.git
-
-# Point Claude Code at the plugin tree
-# <PLACEHOLDER: exact marketplace / plugin-install command for claude-plugin/>
+claude plugin marketplace add ./claude-plugin
+claude plugin install thrum@thrum
 ```
 
 ### Codex
 
 ```bash
-# <PLACEHOLDER: install steps for codex-plugin/>
+codex plugin marketplace add ./codex-plugin
+codex plugin add thrum@thrum-marketplace
+```
+
+Optionally install the Codex skills into `~/.agents/skills` (used by some other
+runtimes' agents):
+
+```bash
+./codex-plugin/plugins/thrum/scripts/install-skills.sh
 ```
 
 ### Cursor
 
 ```bash
-# <PLACEHOLDER: install steps for cursor-plugin/>
+./cursor-plugin/local-install.sh --target /path/to/your/project
 ```
+
+This copies the plugin into `<project>/.cursor/` and writes `.cursor/hooks.json`
+with an absolute path back into this repo's `cursor-plugin/` directory — keep the
+checkout in place after installing, or re-run the script if you move it.
 
 ### OpenCode
 
+OpenCode loads the plugin as a Node package, so build it once:
+
 ```bash
-# <PLACEHOLDER: install steps for opencode-plugin/>
+cd opencode-plugin
+npm install
+npm run build
+```
+
+Then reference it as a local `file:` plugin in your project's `opencode.json`
+(or global `~/.config/opencode/opencode.json`):
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["file:/path/to/thrum-pro/opencode-plugin"]
+}
 ```
 
 ### Updating
 
-New plugin versions are published here as commits. To update, pull the latest and
-re-run your runtime's plugin refresh:
+New plugin versions are published here as commits. Pull the latest and re-run the
+relevant install/build step for your runtime:
 
 ```bash
-git -C thrum-pro pull
-# <PLACEHOLDER: refresh command per runtime>
+git pull
 ```
 
 ---

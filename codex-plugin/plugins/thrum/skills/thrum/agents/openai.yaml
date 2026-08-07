@@ -1,0 +1,4 @@
+interface:
+  display_name: "Thrum"
+  short_description: ">"
+  default_prompt: ">"

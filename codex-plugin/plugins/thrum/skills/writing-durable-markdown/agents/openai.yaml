@@ -1,0 +1,4 @@
+interface:
+  display_name: "Writing Durable Markdown"
+  short_description: "Use when creating or editing ANY markdown file - CLAUDE.md, a role preamble, a SKILL.md, a runbook, project state, State.md, a spec, a plan, a README, or docs. Fires on adding a rule, writing a note, correcting a wrong claim, recording a lesson, or documenting an incident. Enforces state-the-rule-and-stop, because narrative in a loaded file costs tokens at every wake and leaves contradictions nobody can untangle."
+  default_prompt: "Use when creating or editing ANY markdown file - CLAUDE.md, a role preamble, a SKILL.md, a runbook, project state, State.md, a spec, a plan, a README, or docs. Fires on adding a rule, writing a note, correcting a wrong claim, recording a lesson, or documenting an incident. Enforces state-the-rule-and-stop, because narrative in a loaded file costs tokens at every wake and leaves contradictions nobody can untangle."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "thrum memory"
+  short_description: "Use when capturing or querying structured memories (session summaries, architectural decisions, restart snapshots, agent rules) via the thrum memory CLI. Loads decision flowchart, kind taxonomy, default-safe behaviors, and pointers to advanced sub-skills."
+  default_prompt: "Use when capturing or querying structured memories (session summaries, architectural decisions, restart snapshots, agent rules) via the thrum memory CLI. Loads decision flowchart, kind taxonomy, default-safe behaviors, and pointers to advanced sub-skills."

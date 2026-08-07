@@ -1,0 +1,4 @@
+interface:
+  display_name: "Coordinator: Single-Responsibility Merge Gate (DEPRECATED)"
+  short_description: "DEPRECATED — superseded by `coordinator-philosophy-merge-gate`. Invoke that skill instead. (This stub is retained for backward discoverability; it redirects immediately.)"
+  default_prompt: "DEPRECATED — superseded by `coordinator-philosophy-merge-gate`. Invoke that skill instead. (This stub is retained for backward discoverability; it redirects immediately.)"

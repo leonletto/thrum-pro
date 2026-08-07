@@ -1,0 +1,4 @@
+interface:
+  display_name: "Thrum _stamp Protocol"
+  short_description: "Shared Authored-against stamp protocol — canonical format, derivation commands, and never-type rule. Not user-invocable directly."
+  default_prompt: "Run the thrum _stamp-protocol workflow and summarize the result."

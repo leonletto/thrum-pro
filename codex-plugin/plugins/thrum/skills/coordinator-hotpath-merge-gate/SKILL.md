@@ -5,12 +5,14 @@ description:
   to you, you are picking up a queued gate, you are the Gate Runner beginning a
   gate, you are about to walk hot-path lenses - and when a coordinator is about
   to run git merge after dual review came back clean. Loads the gate-runner
-  restart rule (restart at ~50 percent, at a seam BETWEEN gates) plus the 10
-  hot-path and perf lenses read from .thrum/hotpath-gate.json. Skip only on a
-  mechanical zero-match against the configured trigger directories, paired with
-  a firing positive control. For branches touching RPC handlers, projection
-  writers, storage openers, sync code, peer dial paths, or daemon boot paths -
-  not CLI helpers, tests-only, docs, or website."
+  restart rule (restart at ~50 percent, at a seam BETWEEN gates) plus the
+  hot-path and perf lenses read from .thrum/hotpath-gate.json. Trigger-scoped
+  lenses skip on a mechanical zero-match against the configured trigger
+  directories, paired with a firing positive control, for branches touching RPC
+  handlers, projection writers, storage openers, sync code, peer dial paths, or
+  daemon boot paths - not CLI helpers, tests-only, docs, or website. Any lens
+  flagged always_run in the config runs on EVERY commit regardless of directory,
+  including the master-giant-process batch-decomposition lens."
 # source: claude-plugin/skills/coordinator-hotpath-merge-gate/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
@@ -183,9 +185,11 @@ relying on it rediscovering these the hard way:
 ### Trigger-directory skip logic
 
 Before walking the lenses, check if the diff touches any directory in
-`config.trigger_directories`. If not, skip this gate entirely and run only the
-philosophy gate. If the config has no `trigger_directories`, fail with guidance
-to run `project-hotpath-gate`.
+`config.trigger_directories`. If not, skip the trigger-scoped lenses and run
+only the philosophy gate — EXCEPT any lens carrying `"always_run": true` in its
+config entry (see `lens_scope_semantics` in the config), which still runs on
+every diff regardless of trigger directories. If the config has no
+`trigger_directories`, fail with guidance to run `project-hotpath-gate`.
 
 ### Delta re-gate continuity — walk the whole branch, read the whole function
 
@@ -458,9 +462,11 @@ list.
 hot-path-specific analysis (is it in a per-RPC path? Is there a pre-flight
 guard? Is there a Peek+background-refresh?), not duplicate it.
 
-**Skip rule:** Skip this gate if the diff touches no configured trigger
-directories. Never skip the philosophy gate. Skip both only for trivial diffs
-(one-line config, typo, test-only).
+**Skip rule:** Skip the trigger-scoped lenses if the diff touches no configured
+trigger directories — but any lens with `"always_run": true` in the config still
+runs regardless of directories touched. Never skip the philosophy gate. Skip
+everything, including always-run lenses, only for trivial diffs (one-line
+config, typo, test-only).
 
 ### Scope discipline (gate-wide)
 

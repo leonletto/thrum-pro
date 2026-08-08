@@ -376,6 +376,39 @@ most worth loading and feels least necessary.
 
 ---
 
+### 6b. Ship the refreshed bundle to the public repo (thrum-pro) — every version bump
+
+The open-core public repo (thrum-pro) is fed a self-contained plugin tarball,
+not the private repo. Its bundle version tracks `plugin.json`, so a bundle built
+before §3 step 4 ships stale skills. **Rebuild and deliver the bundle after
+every plugin version bump.**
+
+```bash
+# 1. BUILD from post-bump trunk (never from a pre-bump tree).
+make plugin-bundle
+#    -> dist/thrum-plugin-bundle-<sha>.tgz, version read from plugin.json.
+#    The target stages tracked content only (git archive), strips embedded per-plugin
+#    LICENSE/COPYING (thrum-pro's root Apache-2.0 covers all), synthesizes the root
+#    .claude-plugin/marketplace.json, runs `claude plugin validate .`, and file-type
+#    scans for leaked binaries. rc must be 0.
+
+# 2. RESOLVE coord_thrum_pro's box from the record, not memory.
+thrum peer list        # the peer whose `repo:` is thrum-pro is coord_thrum_pro's box
+
+# 3. DELIVER + verify the copy is byte-identical.
+scp dist/thrum-plugin-bundle-<sha>.tgz <box>:/private/tmp/thrum-plugin-bundle-<sha>.tgz
+shasum -a 256 dist/thrum-plugin-bundle-<sha>.tgz                 # local
+ssh <box> "shasum -a 256 /private/tmp/thrum-plugin-bundle-<sha>.tgz"   # must match
+
+# 4. NOTIFY coord_thrum_pro with the path, sha256, size, and version.
+#    coord_thrum_pro runs the world-readable leak scan and publishes to thrum-pro.
+```
+
+Delivery is not publication — coord_thrum_pro owns the final leak scan and the
+publish to thrum-pro. Do not publish the tarball yourself.
+
+---
+
 ### 7. Red flags — STOP
 
 - Editing a skill and calling it shipped **without bumping the plugin version**.
@@ -389,3 +422,9 @@ most worth loading and feels least necessary.
 - Reading a zero from a grep whose key might wrap across lines, with no control.
 - `ls | tail -1` to pick a version directory.
 - Concluding "deployed" when only the binary moved.
+- Bumping the plugin version without rebuilding and delivering the thrum-pro
+  bundle (§6b).
+- Building the bundle from a pre-bump tree, so it ships the old version's
+  skills.
+- Publishing the tarball yourself instead of handing it to coord_thrum_pro for
+  the leak scan.

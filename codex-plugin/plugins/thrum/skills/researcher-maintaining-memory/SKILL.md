@@ -51,6 +51,10 @@ Example:
 
 #### Open Questions
 
+> `thrum queue` now supersedes this free-text list for tracking open
+> investigation threads (see thrum-og7pq / the researcher role's Task Tracking
+> delta) — keep entries here only for historical context.
+
 Researcher TODOs / things-to-investigate that haven't been resolved into
 findings yet. Each line ≤120 chars; cite a file area or epic if relevant.
 

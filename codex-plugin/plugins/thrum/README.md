@@ -26,16 +26,12 @@ and one-time migration notes.
 
 ## Repository
 
-This plugin is published from the
-[thrum-pro](https://github.com/leonletto/thrum-pro) distribution repository as
-a sparse-checkout target.
+This plugin is published from the [thrum-pro](https://github.com/leonletto/thrum-pro) distribution repository as a sparse-checkout target.
 
 ## Security
 
-Report vulnerabilities via the [thrum-pro](https://github.com/leonletto/thrum-pro)
-repository's issue tracker.
+Report vulnerabilities via the parent repository's issue tracker.
 
 ## License
 
-Apache-2.0 — see the repository [LICENSE](../../../LICENSE) and
-[NOTICE](../../../NOTICE).
+Apache-2.0 — see the repository [LICENSE](../../../LICENSE) and [NOTICE](../../../NOTICE).

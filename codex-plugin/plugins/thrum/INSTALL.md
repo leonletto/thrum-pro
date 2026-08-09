@@ -28,8 +28,7 @@ step codex 0.130.0 doesn't do automatically for third-party marketplaces),
 enables the plugin, and turns on the `plugin_hooks` feature. It's idempotent —
 re-run any time to pull the latest revision.
 
-Installs from the `main` branch — the only branch this distribution repo
-carries; there is no release-tag pinning yet.
+Installs from the `main` branch — the only branch this distribution repo carries; there is no release-tag pinning yet.
 
 If you have the repo cloned already, you can run it locally instead:
 

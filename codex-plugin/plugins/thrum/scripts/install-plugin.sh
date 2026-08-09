@@ -19,7 +19,7 @@
 #      auto-load the thrum prime briefing.
 #
 # Environment overrides:
-#   THRUM_INSTALL_REF        Git ref to install (default: "main")
+#   THRUM_INSTALL_REF        Git ref to install (default: latest release tag if available, else "main")
 #   THRUM_INSTALL_REPO       Repo source (default: "leonletto/thrum-pro")
 #
 # Idempotent: safe to run multiple times. Re-running pulls the latest revision

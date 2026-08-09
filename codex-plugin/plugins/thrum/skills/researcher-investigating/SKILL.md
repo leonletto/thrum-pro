@@ -94,7 +94,9 @@ thrum memory create --kind research_note --scope role \
 Verified: $(date +%Y-%m-%d) @ $(git rev-parse HEAD)"
 ```
 
-Then add one line to `.thrum/context/research.md` under Tracked Topics:
+Then add one line to `.thrum/context/research.md` under Tracked Topics (note:
+`thrum queue` now supersedes free-text Open Questions tracking, per
+thrum-og7pq):
 
 ```markdown
 - `research-<slug>` — <one-line description, ≤ 80 chars>

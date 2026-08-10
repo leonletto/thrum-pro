@@ -61,38 +61,47 @@ Three distinct fields, do not conflate them:
 | Command | Does |
 |---|---|
 | `thrum queue add --title "..."` | Create a bundle in your queue |
-| `thrum queue add --from-message <msg_id>` | Lift an assignment out of a received message (keystone - copies content->title, author->assigned_by, refs->refs) |
+| `thrum queue add --from-message <msg_id>` | Special case: lift ONE specific message you received (content->title, author->assigned_by, refs->refs). Use the exact msg-id you're acting on - never head-1 of the inbox |
 | `thrum queue add --ref bead:<id>` | Promote a backlog item into active work |
 | `thrum queue list [--status <s>] [--agent <id>]` | List your queue (or another agent's) |
 | `thrum queue show <bundle-id> [--agent <id>]` | Full detail for one bundle |
 | `thrum queue start <bundle-id>` | -> in_progress (clears block_reason) |
 | `thrum queue block <bundle-id> [--reason "..."]` | -> blocked (records the reason) |
-| `thrum queue done <bundle-id>` | -> done (RESTING - not deleted; clears block_reason) |
-| `thrum queue drop <bundle-id>` | DELETE bundle + all its items, any status (the one destructive verb) |
+| `thrum queue done <bundle-id>` | -> done (TEMPORARY waypoint, not deleted; `start` reopens it; clears block_reason) |
+| `thrum queue drop <bundle-id>` | DELETE bundle + all its items, any status (the one destructive verb - drop promptly once a done bundle's record stops being useful) |
 | `thrum queue assign <bundle-id> <agent-id>...` | Append agent(s) to assigned_to (routing metadata only) |
 | `thrum queue item add <bundle-id> --title "..."` | Add one embedded item |
 | `thrum queue item batch-add <bundle-id> --title "..." --title "..."` | Add several items in one call (shared --ref/--priority) |
 | `thrum queue item start/block/done <bundle-id> <item-id>` | Item-level status (start/done clear the item's block_reason) |
 
-Optional everywhere they appear: `--from-message`, `--ref <type>:<value>`
-(repeatable), `--priority N` (higher sorts first). `add` / `item add` require at
+Optional: `--ref <type>:<value>` (repeatable), `--priority N` (higher sorts
+first), and `--from-message` (special case, below). `add` / `item add` require at
 least one of `--title` or `--from-message`; explicit `--title` wins over
-`--from-message`.
+`--from-message`. **`--title` is the normal way to add work.**
 
 ## Common Flows
 
-**Take an assignment someone messaged you** (the keystone primitive):
+**Add work you're taking on (the normal case):**
 ```
-thrum queue add --from-message <msg_id>
+thrum queue add --title "Ship the X migration"
 ```
-One command lifts the message's content into a bundle title, its author into
-`assigned_by`, and its refs into `refs` - then discards the message ID (no
-stored link back).
 
 **Promote a backlog bead into active work:**
 ```
 thrum queue add --title "Ship the X migration" --ref bead:thrum-abc12 --priority 5
 ```
+
+**Lift a SPECIFIC message you received** (special case - mainly an
+orchestrator/agent taking a dispatch it was handed):
+```
+thrum queue add --from-message <msg_id>
+```
+Copies the message's content into the bundle title, its author into
+`assigned_by`, its refs into `refs`, then discards the message ID. 🔴 Pass the
+EXACT id of the assignment you are acting on, matched to its sender - NEVER pipe
+`inbox --unread | head -1`, which grabs whatever is newest (often a monitor
+alert or an unrelated message) and stores it as your title. For anything you
+create yourself, use `--title`.
 
 **Hand work to another agent** (two steps, in this order - there is no one-shot):
 ```
@@ -107,17 +116,27 @@ EOF
 thrum queue list --agent @impl_foo --status in_progress
 ```
 
-**Finish vs discard:** `done` marks a bundle done and KEEPS it (resting state,
-still visible). `drop` DELETES it and every item inside, regardless of status.
-`done` then later `drop` is the normal close-out; `drop` alone is fine too.
+**Finish vs discard:** `done` is a WAYPOINT, not a resting place - it marks a
+bundle done and KEEPS it visible (`start` reopens it), but it is not where
+finished work should live. `drop` DELETES it and every item inside, regardless
+of status. Reconcile at session start and natural breakpoints: `done` then a
+prompt `drop` is the normal close-out; `drop` alone is fine too. Don't let a
+done bundle outlive your next reconcile unless you deliberately keep it.
 
 ## Common Mistakes
 
+- **Piping a guessed id into `--from-message` (e.g. `inbox --unread | head -1`).**
+  That grabs whatever is newest - often a monitor alert or an unrelated message -
+  and stores it as your bundle title. `--from-message` takes the EXACT id of the
+  assignment you are lifting, matched to its sender; for anything self-created use
+  `--title`.
 - **Expecting `assign` to put work in the other agent's queue.** It does not -
   it only tags your own bundle. Always follow it with a `thrum send`; the
-  recipient adds it themselves via `--from-message`.
-- **Using `done` to clear clutter.** `done` never removes anything - the bundle
-  stays. Use `drop` to actually delete.
+  recipient adds it themselves via `--from-message` (with that message's exact id).
+- **Leaving done bundles to pile up.** `done` never removes anything - the
+  bundle stays, and only `drop` deletes it. Drop each done bundle promptly once
+  its record stops being useful; a queue full of undropped done bundles is the
+  primary rot mode.
 - **Reaching for a `remove`/`rename`/item-`drop` verb.** They do not exist by
   design: removal happens only at the bundle level via `drop`; titles are set at
   creation and not edited.

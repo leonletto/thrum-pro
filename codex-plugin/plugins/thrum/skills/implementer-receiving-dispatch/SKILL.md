@@ -95,6 +95,14 @@ referenced paths: `ls /path/to/dev-docs/specs/<file>.md`. If anything is
 missing, reply `NEEDS_CONTEXT` with the missing path. Don't try to infer from
 related files.
 
+### Open your queue bundle when you claim the task
+
+The moment you claim (`bd update <id> --claim`), open the bundle that will carry
+your checklist: `thrum queue add --title "<task>" --ref bead:<task-id>` then
+`thrum queue start <bundle>`. Track the steps you run as items — this is the
+sanctioned restart-durable checklist (see the Committed-Work Queue block;
+TodoWrite / TaskCreate / markdown TODOs stay banned).
+
 ### Project-specific rules (already loaded)
 
 Project-local rules of kind `agent_rule` at `--scope role` were loaded at

@@ -76,6 +76,13 @@ Never report DONE with the push status silently omitted — an orchestrator
 that removes a worktree assuming "DONE implies pushed" on a project that
 does NOT push feature branches would destroy the only copy of the work.
 
+## Mark queue items done as you commit, push, and report
+
+As each step lands, mark its queue item `done`. Do NOT `drop` the bundle at your own
+DONE report — a review finding can reopen the task (`start` reopens a done bundle).
+Drop the bundle only once the coordinator confirms the merge landed (R1); until then
+it is your live record of what's addressed vs. still open.
+
 ## Cite SHAs and per-finding dispositions in status messages
 
 **Why:** A vague status message ("addressed all findings", "done with the

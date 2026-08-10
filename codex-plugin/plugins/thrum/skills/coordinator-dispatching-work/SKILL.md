@@ -80,6 +80,17 @@ optimization.
 > operator-ask or a skill step that names it. See the `choosing-subagent-models`
 > skill for the full policy.
 
+### Check the target's queue before you dispatch (R3)
+
+Before dispatching, confirm the agent isn't already loaded:
+`thrum queue list --agent <target>` (message it to confirm if its state is
+unclear). An empty result does NOT mean free — it also shows for an agent that
+keeps no queue or that you mis-named; confirm by message before assigning.
+`assign` appends to `assigned_to` with no duplicate check, so this pre-dispatch
+read is the only guard against double-loading a busy agent. Record the handoff
+on your own queue with `thrum queue assign <bundle> <target>`, then send the
+real dispatch via `thrum send`.
+
 ### Bundle adjacent open issues into every dispatch
 
 **Why:** Priority order and code locality are INDEPENDENT axes, and sequencing

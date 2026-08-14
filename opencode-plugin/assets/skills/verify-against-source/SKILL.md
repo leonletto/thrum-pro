@@ -116,6 +116,23 @@ which is backwards.
 sources, say so as a `BLOCKING` finding rather than silently running prose-only
 — a conformance pass that never opened a source file should not read as clean.
 
+### Third comparison unit: Primitive Ledger (required when hot-root I/O/SQL is present)
+
+For every I/O or SQL operation the code side introduces under a hot root
+(`Handle*`/tick/sweeper/`SyncApplier`/boot — see `.thrum/hotpath-gate.json`'s
+`lenses.existing_primitive_bypass.hot_root_indicators`), treat the implementer's Primitive Ledger row itself as
+a requirement to be verified, exactly like the field/struct/column checks
+above: raw op -> callee package searched -> primitive adopted (or none exists
++ bounded cost formula at production scale).
+
+**Verdicts (same taxonomy as above):** `SATISFIED` — a valid ledger row exists
+for the op and, if a primitive is named as adopted, it is actually used at the
+cited call site. `PARTIAL` — a ledger row exists but is incomplete or
+unverified (e.g. a "none exists" claim whose cost formula uses a test-fixture
+number instead of production scale). `MISSING-STEP` — the op was introduced
+under a hot root and no ledger row accounts for it. `NOT-ADDRESSED` — not
+applicable to this artifact (no hot-root I/O/SQL was added).
+
 ## Output format
 
 Findings go to stdout in this exact shape so the caller can consolidate the

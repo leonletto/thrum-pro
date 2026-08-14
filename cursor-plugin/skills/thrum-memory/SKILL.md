@@ -48,6 +48,9 @@ thrum memory create --kind arch_decision \
   --tag substrate,sync
 ```
 
+`--short`/`--full` carry real prose — compose via heredoc or file, never
+double-quoted inline; see your role preamble's 🔴 PROSE INTO A COMMAND rule.
+
 Search by tag + kind, default limit 10:
 
 ```bash

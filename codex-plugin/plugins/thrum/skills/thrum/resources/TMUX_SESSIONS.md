@@ -90,8 +90,8 @@ thrum inbox --unread
 ```
 
 Search, don't just page, for anything older: the default page is 10,
-newest-first, so stale unread sorts LAST exactly when it has waited longest. Run
-`thrum message search "<term>"` instead.
+newest-first, so stale unread sorts LAST exactly when it has waited longest.
+Run `thrum message search "<term>"` instead.
 
 No listener sub-agent, no polling, no CronCreate watchdog. Messages just arrive.
 
@@ -102,11 +102,11 @@ snapshot preserved:
 
 - **Self-initiated:** Run `$thrum-restart` — saves snapshot, notifies
   coordinator
-- **Coordinator-initiated:** `thrum tmux restart <name>` — **PLAIN, not
-  `--force`.** `--force` **drops the `--model` pin**; a plain restart re-applies
-  it at the readiness probe. Only use `--force` if a plain restart does not
-  take, and then re-pin and verify the model **off the pane**
-  (`runtime-config get` reports what was requested, not what is running).
+- **Coordinator-initiated:** `thrum tmux restart <name>` — **PLAIN, not `--force`.**
+  `--force` **drops the `--model` pin**; a plain restart re-applies it at the
+  readiness probe. Only use `--force` if a plain restart does not take, and then
+  re-pin and verify the model **off the pane** (`runtime-config get` reports what
+  was requested, not what is running).
 - **Automatic:** Configure `restart.auto_threshold` in `.thrum/config.json`
 
 The snapshot is automatically included in `thrum prime` on the next session

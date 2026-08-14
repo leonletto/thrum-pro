@@ -1,13 +1,10 @@
 ---
 name: memory-write-discipline
-description:
-  "Use when an agent needs to capture a new memory entry — a rule, a research
-  finding, an observation. Loads the canonical write-command shape, body
-  conventions, title prose convention, tags-as-slug pattern, and scope
-  semantics. Common across all roles that write memory."
+description: "Use when an agent needs to capture a new memory entry — a rule, a research finding, an observation. Loads the canonical write-command shape, body conventions, title prose convention, tags-as-slug pattern, and scope semantics. Common across all roles that write memory."
 # source: claude-plugin/skills/memory-write-discipline/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Writing thrum memory entries
 
@@ -20,12 +17,18 @@ role-specific kinds, etc.).
 ### Canonical write command
 
 ```bash
+cat > /tmp/memory-body.md <<'EOF'
+<body — rule + Why + How to apply, or finding + cites>
+EOF
 thrum memory create --kind <K> --scope <S> \
   --title "<short prose title — what this entry says>" \
   --oneline "<one-line summary, ≤280 bytes>" \
-  --short "<body — rule + Why + How to apply, or finding + cites>" \
+  --short "@/tmp/memory-body.md" \
   --tag <slug-or-keyword> [--tag <additional-tag>]
 ```
+
+`--short`/`--full` carry real prose — compose via heredoc or file, never
+double-quoted inline; see your role preamble's 🔴 PROSE INTO A COMMAND rule.
 
 Three flags are **REQUIRED** (schema NOT NULL): `--kind`, `--title`,
 `--oneline`. The daemon rejects any `memory.create` call missing these.

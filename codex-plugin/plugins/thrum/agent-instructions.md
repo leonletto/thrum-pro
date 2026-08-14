@@ -35,7 +35,7 @@ don't try to install codex or jq yourself.
 bash <(curl -fsSL https://raw.githubusercontent.com/leonletto/thrum-pro/main/codex-plugin/plugins/thrum/scripts/install-plugin.sh)
 ```
 
-Defaults install from the `main` branch — the only branch this distribution repo carries; there is no release-tag pinning yet.
+Installs from the `main` branch — the only branch this distribution repo carries; there is no release-tag pinning yet.
 
 The script is idempotent — re-running it pulls the latest revision of the
 configured ref and re-stages the cache. It will:

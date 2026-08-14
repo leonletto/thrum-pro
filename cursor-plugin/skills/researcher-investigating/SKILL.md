@@ -5,6 +5,12 @@ description: "Use when investigating, exploring code, working on a research task
 
 # Researcher: Investigating
 
+## Reconcile your queue first
+
+Lift this query into a bundle (`thrum queue add --from-message <msg-id>`),
+then `thrum queue start <bundle-id>`; drop/close finished bundles. Full
+lifecycle: `using-the-queue`.
+
 ## Use Explore sub-agents for breadth-first searches
 
 **Why:** Reading 10 files into your main context to "understand the
@@ -80,14 +86,21 @@ with a `research-<slug>` handle so other agents can find it later via
 `thrum memory search --tag research-<slug>`:
 
 ```bash
+cat > /tmp/research-note-body.md <<EOF
+<prose explanation with cited file:line refs>
+
+Verified: $(date +%Y-%m-%d) @ $(git rev-parse HEAD)
+EOF
 thrum memory create --kind research_note --scope role \
   --title "<finding prose, ~80 char soft limit>" \
   --tag research-<slug> \
   --oneline "<one-line summary>" \
-  --full "<prose explanation with cited file:line refs>
-
-Verified: $(date +%Y-%m-%d) @ $(git rev-parse HEAD)"
+  --full "@/tmp/research-note-body.md"
 ```
+
+`--full` here is multi-line prose — compose via heredoc or a captured
+variable, never double-quoted inline like this; see your role preamble's 🔴
+PROSE INTO A COMMAND rule.
 
 Then add one line to `.thrum/context/research.md` under Tracked Topics (note: `thrum queue` now supersedes free-text Open Questions tracking, per thrum-og7pq):
 

@@ -1,13 +1,10 @@
 ---
 name: implementer-maintaining-memory
-description:
-  "Use when the implementer writes a role-rule after user correction, or looks
-  up implementer rules at session start. Loads implementer-specific memory
-  discipline — single write path (agent_rule), refactoring opportunities go to
-  bd not memory, stay minimal."
+description: "Use when the implementer writes a role-rule after user correction, or looks up implementer rules at session start. Loads implementer-specific memory discipline — single write path (agent_rule), refactoring opportunities go to bd not memory, stay minimal."
 # source: claude-plugin/skills/implementer-maintaining-memory/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Implementer memory discipline
 
@@ -32,15 +29,21 @@ When the user corrects your behavior mid-implementation, capture an
 implementer-rule:
 
 ```bash
+cat > /tmp/role-rule-body.md <<'EOF'
+<rule>
+
+Why: <reason>
+How to apply: <when/where>
+EOF
 thrum memory create --kind agent_rule --scope role \
   --title "<short rule prose — what you must do or not do>" \
   --oneline "<rule one-liner>" \
-  --short "<rule>
-
-Why: <reason>
-How to apply: <when/where>" \
+  --short "@/tmp/role-rule-body.md" \
   --tag <slug>
 ```
+
+`--short`/`--full` carry real prose — compose via heredoc or file, never
+double-quoted inline; see your role preamble's 🔴 PROSE INTO A COMMAND rule.
 
 Body shape is uniform across all role-rule writes — see
 `memory-write-discipline`. The `Why:` line is load-bearing: future-you needs the

@@ -14,6 +14,12 @@ phases or steps.
 
 Before executing anything, verify the handoff is complete.
 
+### Step 0: Reconcile your queue
+
+Lift this plan handoff into a bundle (`thrum queue add --from-message
+<msg-id>`), then `thrum queue start <bundle-id>`; drop/close finished
+bundles. Full lifecycle: `using-the-queue`.
+
 ### Step 1: Read the plan
 
 ```bash

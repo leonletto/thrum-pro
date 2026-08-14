@@ -1,10 +1,6 @@
 ---
 name: thrum-restart-extended
-description:
-  Save a comprehensive 16-section restart snapshot and prepare for session
-  restart. Use for designer/architect-grade handoffs needing wire contracts,
-  capability matrix, anticipated Q&A, and design rationale that the standard
-  $thrum-restart compact format cannot carry.
+description: Save a comprehensive 16-section restart snapshot and prepare for session restart. Use for designer/architect-grade handoffs needing wire contracts, capability matrix, anticipated Q&A, and design rationale that the standard $thrum-restart compact format cannot carry.
 # source: claude-plugin/commands/restart-extended.md
 # generated-by: scripts/sync-skills.sh
 ---
@@ -14,6 +10,7 @@ description:
 Use this skill when the user explicitly wants the `restart-extended` Thrum
 workflow. Prefer the umbrella `thrum` skill when the request spans multiple
 commands or needs broader coordination judgment.
+
 
 ## Session Restart — Extended (16-section snapshot)
 
@@ -156,26 +153,27 @@ thrum tmux restart "$SESSION"
 **⚠️ PLAIN RESTART — NEVER `--force`.** `--force` **DROPS the `--model` pin**; a
 plain restart re-applies it at the readiness probe. This template used to say
 `--force` and was corrected 2026-07-17 after an orchestrator refused its own
-skill's instruction: _"NOT `--force` — despite what the restart-extended skill's
-own template says."_ A self-restarting agent that uses `--force` can come back
-on the WRONG MODEL, and `runtime-config get` will NOT reveal it — it reports the
-stored pin, not the delivered keystrokes. This is not theoretical: it has been
-caught live more than once, including via a plain restart that fixed it. The
-command above restarts your own pane; you will not see further output in this
-turn. Do not follow it with more commands. Only reach for `--force` if a plain
-restart genuinely does not take — and even then, immediately re-pin and **verify
-the model OFF THE PANE** after you come back, not off `runtime-config get`.
+skill's instruction: *"NOT `--force` — despite what the restart-extended
+skill's own template says."* A self-restarting agent that uses `--force` can
+come back on the WRONG MODEL, and `runtime-config get` will NOT reveal it — it
+reports the stored pin, not the delivered keystrokes. This is not theoretical:
+it has been caught live more than once, including via a plain restart that
+fixed it. The command above restarts your own pane; you will not see further
+output in this turn. Do not follow it with more commands. Only reach for
+`--force` if a plain restart genuinely does not take — and even then,
+immediately re-pin and **verify the model OFF THE PANE** after you come back,
+not off `runtime-config get`.
 
 This applies whether you are a coordinator or any other role — there is no
-requirement for a senior agent to run this for you; it is the same self-executed
-command `thrum:sleep` already uses for its own tmux-kill. **This ADDS a
-self-initiated route and does not remove the external ones**:
+requirement for a senior agent to run this for you; it is the same
+self-executed command `thrum:sleep` already uses for its own tmux-kill.
+**This ADDS a self-initiated route and does not remove the external ones**:
 force-restart-at-high-context and operator/coordinator-initiated restart still
-exist for the cases where self-restart isn't possible (e.g. verification failed,
-or you're not in tmux).
+exist for the cases where self-restart isn't possible (e.g. verification
+failed, or you're not in tmux).
 
-**If `$SESSION` is non-empty but `$SNAPSHOT_OK` = 0 or `$SESSION_OK` = 0** — DO
-NOT RESTART. Report and hold:
+**If `$SESSION` is non-empty but `$SNAPSHOT_OK` = 0 or `$SESSION_OK` = 0** —
+DO NOT RESTART. Report and hold:
 
 ```bash
 thrum send --to @coordinator_main --stdin <<'EOF'
@@ -190,8 +188,8 @@ If you ARE `coordinator_main` (no senior agent above you), print the same
 failure reason for the operator instead of sending it, and hold.
 
 **Else (no tmux session)** — self-restart has nothing to target (there is no
-tmux pane to run `thrum tmux restart` against). Print these instructions for the
-operator:
+tmux pane to run `thrum tmux restart` against). Print these instructions for
+the operator:
 
 > Restart snapshot saved at `.thrum/restart/${AGENT}.md`. To continue in a new
 > session:

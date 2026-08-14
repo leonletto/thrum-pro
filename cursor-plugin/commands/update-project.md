@@ -61,6 +61,36 @@ echo "=== READY ISSUES ===" && (bd ready -n 5 2>/dev/null || echo "(none)")
 Read `REPO_ROOT/.thrum/context/project_state.md` in full, yourself, using the
 Read tool.
 
+### Step 3.5: Staleness Check First (Parallel Fan-Out)
+
+Before you edit anything, verify what's actually still true. Stale rows in
+this file are how a coordinator ends up citing a merged bead as open or a torn-down
+worktree as active — the fan-out below catches that before you write, not after.
+
+This is narrower than the no-delegation rule above and does not conflict with
+it: these sub-agents verify facts, they do not compose the session narrative
+and they do not edit the file. You still write every Edit call yourself in
+Step 4.
+
+Dispatch one **read-only**, background sub-agent per section, each scoped to
+exactly one section and returning only a verified-stale delete-list plus an
+unsure-list (unsure ⇒ keep, never delete on a guess):
+
+1. `## Current State Summary` — for each cited SHA, `git merge-base
+   --is-ancestor <sha> origin/<merge_target>`; for each cited bead, `bd show
+   <id>`.
+2. `## Open Epics / Active Work` — `bd show` each bead ID; rows whose bead is
+   CLOSED are stale.
+3. `## Worktree Layout` — cross-reference against `git worktree list` and
+   `thrum team`; rows for removed worktrees or dead agents are stale.
+4. `## DEPLOY STATE` — flag rows whose AS-OF timestamp predates the current
+   fleet pin.
+
+Consolidate the four delete-lists yourself, then fold the confirmed-stale
+rows into the section edits in Step 4. Fan-out keeps this fast without
+sacrificing thoroughness — a single-threaded pass over four independent
+sections is the slow path, not the safe one.
+
 ### Step 4: Edit the File In-Place, Yourself
 
 Use the **Edit tool** directly to make targeted updates. Do NOT rewrite the

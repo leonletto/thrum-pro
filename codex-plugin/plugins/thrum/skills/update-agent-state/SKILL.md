@@ -1,16 +1,10 @@
 ---
 name: update-agent-state
-description:
-  "Use at end of work / wrap up session / save agent state — records the
-  just-completed session into the scheduled agent's state.md history. The 4
-  verbatim + 3 blocks of 5 = 19-session sliding window is enforced by the `thrum
-  agent state update` CLI command (via internal/agentstate's parser —
-  CLI-invoked at session end, NOT a daemon background process; hand-editing
-  state.md bypasses it entirely); the agent's job is to author a one-line
-  summary that will be the verbatim entry."
+description: "Use at end of work / wrap up session / save agent state — records the just-completed session into the scheduled agent's state.md history. The 4 verbatim + 3 blocks of 5 = 19-session sliding window is enforced by the `thrum agent state update` CLI command (via internal/agentstate's parser — CLI-invoked at session end, NOT a daemon background process; hand-editing state.md bypasses it entirely); the agent's job is to author a one-line summary that will be the verbatim entry."
 # source: claude-plugin/skills/update-agent-state/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Thrum: Update Agent State
 
@@ -32,16 +26,16 @@ the per-agent state.md this skill targets.
 
 ### Verify before you write
 
-A state.md fact is TRUE when written and can silently become FALSE later — the
-reader can't tell, because a summary doesn't present itself as a time-bound
-claim (thrum-hrigx: three agents burned by their own durable artifacts in one
-night). Only summarize what you've verified against current state, not what you
-remember or assume. If your summary or narrative fields record an UNEXPLAINED
-artifact, carry the unexplained-ness forward — "not mine, cause unknown, nobody
-has traced this" — rather than resolving it to a disposition like "ignore it."
-"Ignore it" is unfalsifiable by construction (an instruction to not look can't
-be caught by looking) and can silently train the next wake to stop looking at
-the one visible symptom of a live bug.
+A state.md fact is TRUE when written and can silently become FALSE later —
+the reader can't tell, because a summary doesn't present itself as a
+time-bound claim (thrum-hrigx: three agents burned by their own durable
+artifacts in one night). Only summarize what you've verified against current
+state, not what you remember or assume. If your summary or narrative fields
+record an UNEXPLAINED artifact, carry the unexplained-ness forward — "not
+mine, cause unknown, nobody has traced this" — rather than resolving it to a
+disposition like "ignore it." "Ignore it" is unfalsifiable by construction
+(an instruction to not look can't be caught by looking) and can silently
+train the next wake to stop looking at the one visible symptom of a live bug.
 
 ### Step 1: Compose your one-line summary
 
@@ -80,12 +74,13 @@ The CLI:
 4. Writes the updated `state.md` atomically (temp-file + rename).
 
 The strict 4-verbatim / 3-block / 5-per-block invariants live in the
-`internal/agentstate` package, invoked by this CLI command — not by the daemon.
-Enforcement only fires when you actually run `thrum agent state update`; nothing
-watches or rewrites the file in the background. You can't accidentally break the
-format by running this command, but hand-editing `state.md` yourself is NOT
-supported (the parser will reject a manually- mangled file at the next recovery
-cycle) and does not go through this enforcement at all.
+`internal/agentstate` package, invoked by this CLI command — not by the
+daemon. Enforcement only fires when you actually run `thrum agent state
+update`; nothing watches or rewrites the file in the background. You can't
+accidentally break the format by running this command, but hand-editing
+`state.md` yourself is NOT supported (the parser will reject a manually-
+mangled file at the next recovery cycle) and does not go through this
+enforcement at all.
 
 ### Step 3: Optional — replace narrative sections
 

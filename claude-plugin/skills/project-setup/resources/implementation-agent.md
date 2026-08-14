@@ -432,20 +432,39 @@ bd list --type=epic | grep -i refactor
 
 If no refactoring epic exists, create one:
 
+`--description` is multi-line prose — never double-quoted inline. On
+`scripts/bd-shared`, `--stdin`/`--body-file` are refused (remote-path
+resolution + silent-empty-body hazards), so write it to a scratch file and
+pass `-d "$(cat <file>)"`; see your role preamble's 🔴 PROSE INTO A COMMAND
+rule.
+
 ```bash
-bd create --title="Refactoring & DRY Opportunities" --type=epic --priority=3 \
-  --description="Persistent backlog for refactoring, DRY improvements, and code organization opportunities discovered during feature work. Tasks are added by implementation agents as they encounter opportunities. Reviewed and prioritized by the coordinator periodically."
+cat > /tmp/refactor-epic-desc.md <<'EOF'
+Persistent backlog for refactoring, DRY improvements, and code organization
+opportunities discovered during feature work. Tasks are added by
+implementation agents as they encounter opportunities. Reviewed and
+prioritized by the coordinator periodically.
+EOF
+bd create --title="Refactoring & DRY Opportunities" --type=epic --priority=3 -d "$(cat /tmp/refactor-epic-desc.md)"
 ```
 
 #### 2. Log the Opportunity
 
+`--description` is multi-line prose — never double-quoted inline. On
+`scripts/bd-shared`, `--stdin`/`--body-file` are refused (remote-path
+resolution + silent-empty-body hazards), so write it to a scratch file and
+pass `-d "$(cat <file>)"`; see your role preamble's 🔴 PROSE INTO A COMMAND
+rule.
+
 ```bash
-bd create --title="Refactor: <short description>" --type=task --parent=<refactoring-epic-id> --priority=3 \
-  --description="**Discovered during:** {{EPIC_ID}}
+cat > /tmp/refactor-task-desc.md <<'EOF'
+**Discovered during:** {{EPIC_ID}}
 **Files:** <file paths>
 **Opportunity:** <what could be improved — duplicated code, hardcoded values, missed abstraction>
 **Suggested approach:** <how to fix it>
-**Effort estimate:** small/medium/large"
+**Effort estimate:** small/medium/large
+EOF
+bd create --title="Refactor: <short description>" --type=task --parent=<refactoring-epic-id> --priority=3 -d "$(cat /tmp/refactor-task-desc.md)"
 ```
 
 #### 3. Continue With Your Assigned Work

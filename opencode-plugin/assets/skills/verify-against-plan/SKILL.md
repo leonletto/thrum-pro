@@ -149,8 +149,20 @@ clear error — do not proceed with partial inputs.
    These checks are re-derived at read time, every time this skill runs — not
    cached from a prior verification pass.
 
-Only when checks 1–3 pass should the comparison pass begin. Checks 4 and 5 run
-alongside and contribute findings; a missing stamp never blocks.
+6. **Primitive Ledger row present and valid.** If the diff adds I/O or SQL under
+   a hot root (`Handle*`/tick/sweeper/`SyncApplier`/boot — see
+   `.thrum/hotpath-gate.json`'s `lenses.existing_primitive_bypass.hot_root_indicators`), confirm the implementer's
+   report includes a ledger row (raw op -> callee package searched -> primitive
+   adopted, or none exists + bounded cost formula at production scale). Absence
+   of the row when one was required is a finding. Presence alone is not
+   sufficient — verify the claim: if a primitive is named as adopted, confirm it
+   is actually used at the cited call site; if "none exists" is claimed, spot-check
+   that the callee package was actually searched and the cost formula uses
+   realistic production scale, not a test-fixture number.
+
+Only when checks 1–3 pass should the comparison pass begin. Checks 4, 5, and 6
+run alongside and contribute findings; a missing stamp never blocks, and check 6
+only fires when the diff actually touches a hot root.
 
 ## Output format
 
@@ -244,6 +256,21 @@ Read-time provenance re-derivation (check 5) severity mapping:
   out of date; the described gate has already resolved (or never needed to
   block), which the coordinator should reconcile before acting on the plan's
   stated pending state.
+
+Primitive Ledger check (check 6) severity mapping:
+
+- **BLOCKING** — the hot-root diff genuinely bypasses an available primitive
+  (a primitive exists, was not adopted, and no ledger row accounts for the
+  bypass) — a raw op standing where a callee-package primitive was reachable
+  and unlogged. Also BLOCKING: a ledger row is present but the "adopted"
+  primitive is not actually used at the cited call site, or a "none exists"
+  claim is contradicted by an available primitive the implementer's own
+  ledger row claims to have searched for and missed.
+- **IMPORTANT** — the ledger row is missing but the raw op itself is
+  harmless (no primitive exists, cost formula would clear at production
+  scale) — the accounting step was skipped, not the substance. Also
+  IMPORTANT: a "none exists" claim whose cost formula uses a test-fixture
+  number instead of realistic production scale, pending a re-derived figure.
 
 When choosing between BLOCKING and IMPORTANT, apply the test: _would a reader of
 the merged code be surprised by this?_ BLOCKING = yes, definitely; IMPORTANT =

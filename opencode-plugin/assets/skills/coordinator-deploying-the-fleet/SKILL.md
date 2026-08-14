@@ -154,6 +154,12 @@ templates → role template), THEN `deploy` (role template → per-agent preambl
 **Running `deploy` alone re-renders agents from the OLD templates and reports
 success.**
 
+🔴 **RUN PASS 2 BETWEEN `make install` AND THE DAEMON RESTART, ALWAYS:**
+`make install` → `thrum roles refresh` → `thrum roles deploy` → daemon restart.
+Do the refresh+deploy the instant `make install` finishes and BEFORE restarting
+the daemon, so the current preamble is already in place when any agent next runs
+`thrum prime`, restarts, or checks its preamble.
+
 🔴 **PASS 2 IS MANDATORY WHENEVER THE BUILD CHANGES
 `internal/context/roleconfig/templates/` OR the compiled-in preamble.**
 Preambles are RENDERED, not read live — installing a binary changes the source

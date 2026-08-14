@@ -1,14 +1,18 @@
 ---
 name: researcher-investigating
-description:
-  "Use when investigating, exploring code, working on a research task, when
-  asked to find me X, or to investigate Y. Loads researcher-specific discipline
-  for running an investigation cleanly."
+description: "Use when investigating, exploring code, working on a research task, when asked to find me X, or to investigate Y. Loads researcher-specific discipline for running an investigation cleanly."
 # source: claude-plugin/skills/researcher-investigating/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
 
+
 ## Researcher: Investigating
+
+### Reconcile your queue first
+
+Lift this query into a bundle (`thrum queue add --from-message <msg-id>`),
+then `thrum queue start <bundle-id>`; drop/close finished bundles. Full
+lifecycle: `using-the-queue`.
 
 ### Use Explore sub-agents for breadth-first searches
 
@@ -24,18 +28,18 @@ specific symbol, or a specific question. Get a focused report back. For research
 across N > 6 items, invoke `efficient-multi-agent-research` instead of bespoke
 dispatch — it handles partition + parallelization + consolidation.
 
-> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet` (low
-> effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
-> operator-ask or a skill step that names it. See the `choosing-subagent-models`
-> skill for the full policy.
+> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet`
+> (low effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
+> operator-ask or a skill step that names it. See the
+> `choosing-subagent-models` skill for the full policy.
 
 #### Prefer `efficient-multi-agent-research` for multi-part research
 
 When a research or investigation task has independent parts, reach for the
 `efficient-multi-agent-research` skill FIRST — it partitions the work across
-many cheap parallel subagents (sonnet-low gatherers, sonnet-medium synthesizers)
-instead of one expensive serial subagent. It is the preferred research path:
-cheaper, faster, and it keeps each subagent's context tight.
+many cheap parallel subagents (sonnet-low gatherers, sonnet-medium synthesizers) instead of
+one expensive serial subagent. It is the preferred research path: cheaper,
+faster, and it keeps each subagent's context tight.
 
 ### Verify the actual state — don't answer from recall
 
@@ -85,18 +89,23 @@ with a `research-<slug>` handle so other agents can find it later via
 `thrum memory search --tag research-<slug>`:
 
 ```bash
+cat > /tmp/research-note-body.md <<EOF
+<prose explanation with cited file:line refs>
+
+Verified: $(date +%Y-%m-%d) @ $(git rev-parse HEAD)
+EOF
 thrum memory create --kind research_note --scope role \
   --title "<finding prose, ~80 char soft limit>" \
   --tag research-<slug> \
   --oneline "<one-line summary>" \
-  --full "<prose explanation with cited file:line refs>
-
-Verified: $(date +%Y-%m-%d) @ $(git rev-parse HEAD)"
+  --full "@/tmp/research-note-body.md"
 ```
 
-Then add one line to `.thrum/context/research.md` under Tracked Topics (note:
-`thrum queue` now supersedes free-text Open Questions tracking, per
-thrum-og7pq):
+`--full` here is multi-line prose — compose via heredoc or a captured
+variable, never double-quoted inline like this; see your role preamble's 🔴
+PROSE INTO A COMMAND rule.
+
+Then add one line to `.thrum/context/research.md` under Tracked Topics (note: `thrum queue` now supersedes free-text Open Questions tracking, per thrum-og7pq):
 
 ```markdown
 - `research-<slug>` — <one-line description, ≤ 80 chars>

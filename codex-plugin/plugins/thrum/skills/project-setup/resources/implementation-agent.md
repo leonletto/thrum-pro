@@ -35,9 +35,9 @@ When filling this template to create an implementation prompt:
 - `{{WORKTREE_PATH}}` — Absolute path to the working worktree
 - `{{BRANCH_NAME}}` — Git branch for this work (e.g., `feature/auth`)
 - `{{BASE_BRANCH}}` — The branch this work merges into. **Resolve it from the
-  project's actual merge target**
-  (`jq -r '.orchestration.merge_target' .thrum/config.json`); do not assume
-  `main` and do not carry a branch name from another document
+  project's actual merge target** (`jq -r '.orchestration.merge_target'
+  .thrum/config.json`); do not assume `main` and do not carry a branch name
+  from another document
 - `{{DESIGN_DOC}}` — **Absolute path** to the design spec (if applicable)
 - `{{REFERENCE_CODE}}` — Paths to reference implementations (if any)
 - `{{QUALITY_COMMANDS}}` — Commands for test/lint, **scoped to packages this
@@ -86,12 +86,12 @@ Otherwise, orchestrate via the agent table below.
 
 ### Agent selection
 
-| Dispatch                       | Agent type                     | Model                                      | Background? |
-| ------------------------------ | ------------------------------ | ------------------------------------------ | ----------- |
-| Research / explore a code area | `Explore` or `general-purpose` | `sonnet`                                   | yes         |
-| Implement a task               | `general-purpose`              | `sonnet` (low effort if purely mechanical) | no          |
-| Verify a task against the plan | `general-purpose`              | `sonnet`                                   | no          |
-| Run tests / lint               | `general-purpose`              | `sonnet` (low effort)                      | yes         |
+| Dispatch                       | Agent type                     | Model                                   | Background? |
+| ------------------------------ | ------------------------------ | --------------------------------------- | ----------- |
+| Research / explore a code area | `Explore` or `general-purpose` | `sonnet`                                | yes         |
+| Implement a task               | `general-purpose`              | `sonnet` (low effort if purely mechanical) | no       |
+| Verify a task against the plan | `general-purpose`              | `sonnet`                                | no          |
+| Run tests / lint               | `general-purpose`              | `sonnet` (low effort)                   | yes         |
 
 Always pass `model:` explicitly — never let a sub-agent inherit your (Opus)
 model. Label every dispatch's `description` with `research:` / `implement:` /
@@ -177,9 +177,7 @@ EOF
 Whether starting fresh or resuming after context loss, always begin here. This
 phase is idempotent — running it multiple times is safe and expected.
 
-🔴 **BEFORE ANYTHING ELSE — OBTAIN THE PLAN INTO YOUR WORKTREE AND CONFIRM YOU
-CAN OPEN IT.** Do NOT implement from plan detail relayed to you in messages or
-beads — relay is lossy and drifts as the plan is updated.
+🔴 **BEFORE ANYTHING ELSE — OBTAIN THE PLAN INTO YOUR WORKTREE AND CONFIRM YOU CAN OPEN IT.** Do NOT implement from plan detail relayed to you in messages or beads — relay is lossy and drifts as the plan is updated.
 
 ```bash
 cd {{WORKTREE_PATH}}
@@ -187,8 +185,7 @@ git pull                 # pull the committed plan into this worktree
 head -1 {{PLAN_FILE}}    # confirm the plan file actually opens here
 ```
 
-If `{{PLAN_FILE}}` cannot be opened, STOP and tell {{SUPERVISOR_NAME}} — do not
-proceed from relayed or remembered plan text.
+If `{{PLAN_FILE}}` cannot be opened, STOP and tell {{SUPERVISOR_NAME}} — do not proceed from relayed or remembered plan text.
 
 ### Step 1: Check Epic & Task Status
 
@@ -417,10 +414,10 @@ duplicated patterns, hardcoded values that should be shared, missed
 abstractions, or DRY violations. **Do not fix these inline** (scope creep) and
 **do not lose them** (they're valuable).
 
-Self-filing here is limited to purely cosmetic improvements to code that already
-works correctly — naming, duplication, structure. Anything that touches
-correctness, or is a defect, a plan gap, a missing case, or one of a class of
-sites where others are already wrong, goes to your dispatcher via the
+Self-filing here is limited to purely cosmetic improvements to code that
+already works correctly — naming, duplication, structure. Anything that
+touches correctness, or is a defect, a plan gap, a missing case, or one of a
+class of sites where others are already wrong, goes to your dispatcher via the
 `closing-findings-while-warm` skill — no exceptions, and regardless of how you
 label it. If you cannot tell which side of that line you are on, that
 uncertainty is itself the answer: surface it.
@@ -435,20 +432,39 @@ bd list --type=epic | grep -i refactor
 
 If no refactoring epic exists, create one:
 
+`--description` is multi-line prose — never double-quoted inline. On
+`scripts/bd-shared`, `--stdin`/`--body-file` are refused (remote-path
+resolution + silent-empty-body hazards), so write it to a scratch file and
+pass `-d "$(cat <file>)"`; see your role preamble's 🔴 PROSE INTO A COMMAND
+rule.
+
 ```bash
-bd create --title="Refactoring & DRY Opportunities" --type=epic --priority=3 \
-  --description="Persistent backlog for refactoring, DRY improvements, and code organization opportunities discovered during feature work. Tasks are added by implementation agents as they encounter opportunities. Reviewed and prioritized by the coordinator periodically."
+cat > /tmp/refactor-epic-desc.md <<'EOF'
+Persistent backlog for refactoring, DRY improvements, and code organization
+opportunities discovered during feature work. Tasks are added by
+implementation agents as they encounter opportunities. Reviewed and
+prioritized by the coordinator periodically.
+EOF
+bd create --title="Refactoring & DRY Opportunities" --type=epic --priority=3 -d "$(cat /tmp/refactor-epic-desc.md)"
 ```
 
 #### 2. Log the Opportunity
 
+`--description` is multi-line prose — never double-quoted inline. On
+`scripts/bd-shared`, `--stdin`/`--body-file` are refused (remote-path
+resolution + silent-empty-body hazards), so write it to a scratch file and
+pass `-d "$(cat <file>)"`; see your role preamble's 🔴 PROSE INTO A COMMAND
+rule.
+
 ```bash
-bd create --title="Refactor: <short description>" --type=task --parent=<refactoring-epic-id> --priority=3 \
-  --description="**Discovered during:** {{EPIC_ID}}
+cat > /tmp/refactor-task-desc.md <<'EOF'
+**Discovered during:** {{EPIC_ID}}
 **Files:** <file paths>
 **Opportunity:** <what could be improved — duplicated code, hardcoded values, missed abstraction>
 **Suggested approach:** <how to fix it>
-**Effort estimate:** small/medium/large"
+**Effort estimate:** small/medium/large
+EOF
+bd create --title="Refactor: <short description>" --type=task --parent=<refactoring-epic-id> --priority=3 -d "$(cat /tmp/refactor-task-desc.md)"
 ```
 
 #### 3. Continue With Your Assigned Work

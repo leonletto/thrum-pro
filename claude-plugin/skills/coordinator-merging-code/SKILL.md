@@ -81,6 +81,10 @@ merge target before merging.
 remembered agent name.** A name in a skill goes stale exactly like a copied model
 tier.
 
+Record the dispatch on your own queue (`thrum queue assign <bundle>
+<gate-runner>`) per `coordinator-dispatching-work`'s queue step before
+sending the gate dispatch.
+
 🔴 **WHERE THE LONG / tmux-SENSITIVE LANES RUN — a DEDICATED NON-FLEET gate box, never
 a populated one.** The integration lane and the rpc race suite create FIXED-NAME tmux
 fixtures on the shared fleet socket; on any box with live agents they COLLIDE, and every

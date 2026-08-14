@@ -1,19 +1,16 @@
 ---
 name: thrum-sleep
-description:
-  Park this agent for operator-initiated wake. Saves a standard 11-section
-  snapshot (does NOT signal coordinator) then thrum-tmux-kills own session. Use
-  when the operator is shutting down (e.g. computer restart) and the agent
-  should resume from snapshot on next boot.
+description: Park this agent for operator-initiated wake. Saves a standard 11-section snapshot (does NOT signal coordinator) then thrum-tmux-kills own session. Use when the operator is shutting down (e.g. computer restart) and the agent should resume from snapshot on next boot.
 # source: claude-plugin/commands/sleep.md
 # generated-by: scripts/sync-skills.sh
 ---
 
 # Thrum Sleep
 
-Use this skill when the user explicitly wants the `sleep` Thrum workflow. Prefer
-the umbrella `thrum` skill when the request spans multiple commands or needs
-broader coordination judgment.
+Use this skill when the user explicitly wants the `sleep` Thrum
+workflow. Prefer the umbrella `thrum` skill when the request spans multiple
+commands or needs broader coordination judgment.
+
 
 ## Sleep — Park Until Operator Wake
 
@@ -94,19 +91,19 @@ auto-injects this file — same mechanism as restart wake.
 **Your worktree may be torn down while you sleep — and if it is, YOUR SNAPSHOT
 GOES WITH IT unless you do this step.**
 
-🔴 **READ THIS CAREFULLY; AN EARLIER VERSION OF THIS SKILL WAS WRONG.** It
-claimed your snapshot "survives because `.thrum/` redirects to the main repo."
-**That is false.** A worktree's `.thrum/` is a REAL LOCAL DIRECTORY. The
-`redirect` inside it is just a plain text FILE containing a path — a pointer
-thrum's code consults. The filesystem redirects nothing. Your worktree keeps its
-own local `agents/`, `context/`, `identities/`, and `restart/`.
+🔴 **READ THIS CAREFULLY; AN EARLIER VERSION OF THIS SKILL WAS WRONG.** It claimed
+your snapshot "survives because `.thrum/` redirects to the main repo." **That is
+false.** A worktree's `.thrum/` is a REAL LOCAL DIRECTORY. The `redirect` inside
+it is just a plain text FILE containing a path — a pointer thrum's code consults.
+The filesystem redirects nothing. Your worktree keeps its own local `agents/`,
+`context/`, `identities/`, and `restart/`.
 
-**THE ACTUAL MECHANISM:** your snapshot at
-`<worktree>/.thrum/restart/<agent-id>.md` is **worktree-local**. It is copied
-into the main repo **only when you WAKE** — `thrum prime` reads it from the
-worktree and archives it to `<main-repo>/.thrum/agents/<agent-id>/sessions/`.
-**Then and only then.** So a teardown that happens BEFORE your wake destroys the
-snapshot, permanently, and nothing warns you.
+**THE ACTUAL MECHANISM:** your snapshot at `<worktree>/.thrum/restart/<agent-id>.md`
+is **worktree-local**. It is copied into the main repo **only when you WAKE** —
+`thrum prime` reads it from the worktree and archives it to
+`<main-repo>/.thrum/agents/<agent-id>/sessions/`. **Then and only then.** So a
+teardown that happens BEFORE your wake destroys the snapshot, permanently, and
+nothing warns you.
 
 **Leave the snapshot where it is** — `thrum prime` reads it from the worktree on
 wake, so that path is correct and required. **Additionally**, copy anything you
@@ -121,16 +118,16 @@ cp "${REPO}/.thrum/restart/${AGENT}.md" "${MAIN_THRUM}/agents/${AGENT}/last-slee
 ls -la "${MAIN_THRUM}/agents/${AGENT}/last-sleep-snapshot.md"   # VERIFY IT LANDED
 ```
 
-Copy there: reports / findings you authored, important uncommitted artifacts,
-and anything your resume plan references.
+Copy there: reports / findings you authored, important uncommitted artifacts, and
+anything your resume plan references.
 
 **VERIFY THE COPY EXISTS AT THE MAIN PATH before ending your session.** Do not
 trust `cp`'s exit code — list the destination file. This step is your ONLY
 recoverability guarantee against teardown-while-asleep; the redirect is not one.
 
-_(Recorded as thrum-izx2g. Verified at source: an agent's sleep snapshot was
-found in `<worktree>/.thrum/restart/` and ABSENT from the main path. Its context
-survived only because it made this explicit copy.)_
+*(Recorded as thrum-izx2g. Verified at source: an agent's sleep snapshot was found
+in `<worktree>/.thrum/restart/` and ABSENT from the main path. Its context survived
+only because it made this explicit copy.)*
 
 #### 5. Mark agent operational status idle
 
@@ -182,18 +179,17 @@ On runtime start, `thrum prime` auto-injects the snapshot at
 `.thrum/restart/<your-agent-id>.md` — same mechanism used by restart. Resume
 from §9 (Numbered resume plan).
 
-**Two wake paths, and they are NOT interchangeable — pick by WHO is waking
-you.**
+**Two wake paths, and they are NOT interchangeable — pick by WHO is waking you.**
 
-**A. THE OPERATOR (a human, at a terminal):** `thrum tmux start` from the
-agent's own working directory. That is create + launch + prime + attach in one,
-and it is the simplest path.
+**A. THE OPERATOR (a human, at a terminal):** `thrum tmux start` from the agent's
+own working directory. That is create + launch + prime + attach in one, and it is
+the simplest path.
 
-**B. ANOTHER AGENT (e.g. a coordinator waking a parked agent):** the operator
-path will FAIL for you, by design. Running `thrum tmux start` from someone
-else's worktree fires the `cross_worktree` identity guard (`pid_mismatch`) —
-that guard exists to stop one agent assuming another's identity, and it is
-working correctly when it blocks you. Use this instead, in order:
+**B. ANOTHER AGENT (e.g. a coordinator waking a parked agent):** the operator path
+will FAIL for you, by design. Running `thrum tmux start` from someone else's
+worktree fires the `cross_worktree` identity guard (`pid_mismatch`) — that guard
+exists to stop one agent assuming another's identity, and it is working correctly
+when it blocks you. Use this instead, in order:
 
 ```bash
 # 1. PROVE THE STALE PID IS DEAD — by DIRECT OBSERVATION, never from the DB.
@@ -215,9 +211,9 @@ thrum tmux launch <name>
 ```
 
 `--force` replaces the STALE IDENTITY FILE (you will see
-`tmux.create.identity-replaced`). It does **not** touch the snapshot — that is
-why step 1 (prove dead) and step 2 (salvage) come first. Forcing against a LIVE
-agent would evict a working agent from its own identity.
+`tmux.create.identity-replaced`). It does **not** touch the snapshot — that is why
+step 1 (prove dead) and step 2 (salvage) come first. Forcing against a LIVE agent
+would evict a working agent from its own identity.
 
 The snapshot file moves to `.thrum/agents/<your-agent-id>/sessions/` archive on
 wake (same as restart). Worst-case fallback: previous Claude session may be

@@ -13,7 +13,10 @@ This skill carries the canonical lifecycle operations on existing memory entries
 To update a memory entry's body, title, tags, or zoom levels:
 
 ```bash
-thrum memory edit <id> --short "<updated body>"
+cat > /tmp/memory-edit-body.md <<'EOF'
+<updated body>
+EOF
+thrum memory edit <id> --short "@/tmp/memory-edit-body.md"
 thrum memory edit <id> --title "<updated title>"
 thrum memory edit <id> --add-tag <new-tag>    # appends (repeatable); --rm-tag removes
 ```

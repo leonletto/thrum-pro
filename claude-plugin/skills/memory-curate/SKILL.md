@@ -108,6 +108,9 @@ thrum memory create --kind comment \
   --parent <X-id>
 ```
 
+`--short`/`--full` carry real prose — compose via heredoc or file, never
+double-quoted inline; see your role preamble's 🔴 PROSE INTO A COMMAND rule.
+
 `--parent` shorthand creates the `child_of` edge in the same operation. Author =
 `agent_id`, timestamp = `created_at`. Threading walks via the daemon's
 `memory.listByEdge` RPC on the parent.

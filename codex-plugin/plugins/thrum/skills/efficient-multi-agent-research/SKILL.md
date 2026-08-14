@@ -1,13 +1,10 @@
 ---
 name: efficient-multi-agent-research
-description:
-  "Use when investigating, auditing, or reviewing more than 6 items across a
-  codebase - function call sites, pattern usage, file reviews, or any research
-  task with partitionable items that would pollute the main agent's context if
-  read directly"
+description: "Use when investigating, auditing, or reviewing more than 6 items across a codebase - function call sites, pattern usage, file reviews, or any research task with partitionable items that would pollute the main agent's context if read directly"
 # source: claude-plugin/skills/efficient-multi-agent-research/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Efficient Multi-Agent Research
 
@@ -64,10 +61,11 @@ workflow: partition, investigate to disk, consolidate, then decide.
    Specify exact table columns and consistent formatting in every prompt.
 
    **Every prompt MUST scope the read-only restriction around its own output
-   file, in the same breath:**
-   `READ-ONLY EVERYWHERE EXCEPT YOUR OUTPUT FILE — do not modify source, tests, config, git state, or the issue tracker; you MUST write exactly dev-docs/<topic>/findings_N.md, and that write is expected and authorized.`
-   Omitting the exception is the most common cause of a fan-out that returns
-   nothing — see Common Mistakes.
+   file, in the same breath:** `READ-ONLY EVERYWHERE EXCEPT YOUR OUTPUT FILE —
+   do not modify source, tests, config, git state, or the issue tracker; you
+   MUST write exactly dev-docs/<topic>/findings_N.md, and that write is
+   expected and authorized.` Omitting the exception is the most common cause of
+   a fan-out that returns nothing — see Common Mistakes.
 
 3. **Wait** for all background agents to complete.
 
@@ -101,14 +99,14 @@ See the `choosing-subagent-models` skill for the full policy. Applied to this
 skill's fan-out:
 
 - **Level 1 — researchers / gatherers:** scope each one DOWN to a narrow slice
-  so you can run MANY in parallel. Use `model: "sonnet"` (low effort) — bounded
-  gather-and-report. Smaller scope = cheaper, concurrent (faster), tighter
-  per-agent context.
+  so you can run MANY in parallel. Use `model: "sonnet"` (low effort) —
+  bounded gather-and-report. Smaller scope = cheaper, concurrent (faster),
+  tighter per-agent context.
 - **Level 2 / Level 3 — summarizers / synthesizers:** use `model: "sonnet"` —
   aggregating and reconciling Level-1 outputs is judgment work.
 
-Prefer many narrow sonnet-low gatherers over one broad subagent. This is the
-cheap, fast default — equivalent parallelism at a fraction of the token cost.
+Prefer many narrow sonnet-low gatherers over one broad subagent. This is the cheap,
+fast default — equivalent parallelism at a fraction of the token cost.
 
 ### Common Mistakes
 
@@ -132,10 +130,10 @@ or not at all. Always include the exact output path in every prompt.
 
 **Have sub-agents write their findings file with a Bash heredoc, not the Write
 tool.** The Write tool refuses subagent report files ("Subagents should return
-findings as text, not write report files") regardless of how the brief is
-worded. Measured 2026-07-24 across an 8-agent fan-out: 7 blocked on Write, and
-the one that succeeded did so by falling back to Bash. The filesystem is
-writable; the tool is what refuses.
+findings as text, not write report files") regardless of how the brief is worded.
+Measured 2026-07-24 across an 8-agent fan-out: 7 blocked on Write, and the one
+that succeeded did so by falling back to Bash. The filesystem is writable; the
+tool is what refuses.
 
 **Put this in every prompt:**
 
@@ -151,8 +149,8 @@ If an agent still returns text instead of a file, persist it yourself verbatim
 and mark the provenance in the file — do not paraphrase.
 
 Put the exception in the SAME breath as the restriction, not in a later
-paragraph. An agent that reads "read-only" first and the write instruction forty
-lines later has already formed its posture.
+paragraph. An agent that reads "read-only" first and the write instruction
+forty lines later has already formed its posture.
 
 ### Example: Auditing 17 Call Sites
 

@@ -1,14 +1,19 @@
 ---
 name: implementer-receiving-dispatch
-description:
-  "Use when receiving a new task from the coordinator, starting implementation,
-  scoping a fresh task, or receiving dispatch. Loads implementer-specific
-  discipline for kicking off work cleanly."
+description: "Use when receiving a new task from the coordinator, starting implementation, scoping a fresh task, or receiving dispatch. Loads implementer-specific discipline for kicking off work cleanly."
 # source: claude-plugin/skills/implementer-receiving-dispatch/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
 
+
 ## Implementer: Receiving Dispatch
+
+### Reconcile your queue first
+
+Before reading further: lift this dispatch into a bundle (`thrum queue add
+--from-message <msg-id>`, the exact id of the dispatch you're acting on),
+then `thrum queue start <bundle-id>`; drop/close any finished bundles. Full
+lifecycle: `using-the-queue`.
 
 ### Read the full implementation prompt before any tool call
 
@@ -54,13 +59,21 @@ thrum-pxz dispatch named `thrum-xir` as the filing destination.)
 should be shared, or missed abstractions during implementation, log them to the
 project's refactor backlog (typically a beads epic like `thrum-xir`):
 
+`--description` is multi-line prose — never double-quoted inline. On
+`scripts/bd-shared`, `--stdin`/`--body-file` are refused (remote-path
+resolution + silent-empty-body hazards), so write it to a scratch file and
+pass `-d "$(cat <file>)"`; see your role preamble's 🔴 PROSE INTO A COMMAND
+rule.
+
 ```bash
-bd create --title="Refactor: <short description>" --type=task \
-  --parent=<refactor-epic-id> --priority=3 \
-  --description="**Discovered during:** <task-id>
+cat > /tmp/refactor-task-desc.md <<'EOF'
+**Discovered during:** <task-id>
 **Files:** <paths>
 **Opportunity:** <what could be improved>
-**Effort:** small/medium/large"
+**Effort:** small/medium/large
+EOF
+bd create --title="Refactor: <short description>" --type=task \
+  --parent=<refactor-epic-id> --priority=3 -d "$(cat /tmp/refactor-task-desc.md)"
 ```
 
 Then continue with the assigned work. Do not implement the refactoring.
@@ -94,14 +107,6 @@ dev-docs/specs/, plans in dev-docs/plans/".)
 referenced paths: `ls /path/to/dev-docs/specs/<file>.md`. If anything is
 missing, reply `NEEDS_CONTEXT` with the missing path. Don't try to infer from
 related files.
-
-### Open your queue bundle when you claim the task
-
-The moment you claim (`bd update <id> --claim`), open the bundle that will carry
-your checklist: `thrum queue add --title "<task>" --ref bead:<task-id>` then
-`thrum queue start <bundle>`. Track the steps you run as items — this is the
-sanctioned restart-durable checklist (see the Committed-Work Queue block;
-TodoWrite / TaskCreate / markdown TODOs stay banned).
 
 ### Project-specific rules (already loaded)
 

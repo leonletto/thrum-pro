@@ -5,6 +5,12 @@ description: "Use when another agent has asked you a research question, when fie
 
 # Researcher: Answering Queries
 
+## Reconcile your queue first
+
+Lift this query into a bundle (`thrum queue add --from-message <msg-id>`),
+then `thrum queue start <bundle-id>`; drop/close finished bundles. Full
+lifecycle: `using-the-queue`.
+
 ## Lookup order: index → thrum memory → staleness check → respond
 
 **Why:** A query that's already been answered shouldn't trigger a fresh

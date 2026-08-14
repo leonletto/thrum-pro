@@ -88,7 +88,10 @@ at the bottom of `--full` body content. When re-verifying an existing note, edit
 the entry to update the stamp:
 
 ```bash
-thrum memory edit <id> --full "<verified body with updated 'Verified: ... @ <new-sha>' footer>"
+cat > /tmp/memory-verify-body.md <<EOF
+<verified body with updated 'Verified: ... @ <new-sha>' footer>
+EOF
+thrum memory edit <id> --full "@/tmp/memory-verify-body.md"
 ```
 
 ## Staleness check via git diff
@@ -142,15 +145,21 @@ rollback handle.
 When the user corrects your behavior mid-session, capture a researcher-rule:
 
 ```bash
+cat > /tmp/role-rule-body.md <<'EOF'
+<rule>
+
+Why: <reason>
+How to apply: <when/where>
+EOF
 thrum memory create --kind agent_rule --scope role \
   --title "<short rule prose>" \
   --oneline "<rule one-liner>" \
-  --short "<rule>
-
-Why: <reason>
-How to apply: <when/where>" \
+  --short "@/tmp/role-rule-body.md" \
   --tag <slug>
 ```
+
+`--short`/`--full` carry real prose — compose via heredoc or file, never
+double-quoted inline; see your role preamble's 🔴 PROSE INTO A COMMAND rule.
 
 This is the SAME pattern as coordinator/implementer role-rule writes — see
 `memory-write-discipline` for the canonical shape.

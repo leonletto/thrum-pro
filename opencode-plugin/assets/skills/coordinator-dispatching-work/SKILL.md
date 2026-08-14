@@ -85,6 +85,9 @@ duplicate check, so this pre-dispatch read is the only guard against double-load
 busy agent. Record the handoff on your own queue with `thrum queue assign <bundle>
 <target>`, then send the real dispatch via `thrum send`.
 
+One bundle per epic/branch handed out — keep it reconciled as the work moves
+(`start` → review → merge-gate → torn down), per `using-the-queue`.
+
 ## Bundle adjacent open issues into every dispatch
 
 **Why:** Priority order and code locality are INDEPENDENT axes, and sequencing by

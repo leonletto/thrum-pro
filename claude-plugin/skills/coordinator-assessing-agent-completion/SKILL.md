@@ -110,6 +110,35 @@ timing signal does not.
 - **Absent from `connect`** means only "no tmux session on THIS box". `connect` is
   box-local; remote agents can never appear in it.
 
+## Idle-gopls RAM reclaim
+
+Once you've classified an agent as idle, its `gopls` process (if any) is a
+second, independent reclaim candidate — an idle agent's gopls is dead weight
+sitting in RAM.
+
+`scripts/reap-idle-gopls.sh` matches each running `gopls` process to its
+owning agent (ppid chain → tmux pane_pid → `thrum team --json` session) and
+uses `tmux_state` as a cheap first-pass filter — anything not idle by that
+signal is skipped outright. That filter is bounded, not authoritative: it
+does not replace this skill's own idle/finished judgment, which still comes
+from the transcript per the rules above. Run the script alongside the scan
+above, apply the same transcript-based gate to whatever it surfaces, and
+fold the result into a single combined table: idle agent · gopls PID ·
+RSS-MB.
+
+- Killing an idle agent's gopls is a no-op — it respawns on the agent's next
+  LSP request. Never destructive to the agent itself.
+- **NEVER kill a pool or active-worker gopls.** The script excludes by ROLE
+  (orchestrator, gate, coordinator, brainstormer, researcher — the roles
+  that are never reap targets) plus the non-idle-state skip above, plus one
+  named exception for a role-uncovered pool agent. It also runs a canary
+  self-check before printing anything: if it can't prove the exclusion still
+  resolves correctly, it aborts loudly instead of printing a kill-list.
+  Do not override or bypass any of this.
+- Same framing as the rest of this skill: the script **produces information,
+  you decide**. It is read-only and dry-run — it prints a kill-list, it never
+  kills anything.
+
 ## Why this fails dangerously if you skip the gate
 
 The failure direction is **false-GONE**: concluding a live agent is finished. It

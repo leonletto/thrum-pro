@@ -85,6 +85,12 @@ that would otherwise come back as findings.
    `os.UserHomeDir` baked into tests, inline `exec.Command` calls that should
    use `safecmd`, swallowed errors, missing `slog` calls on recoverable
    failures.
+3. **Primitive ledger pass.** If this diff adds I/O or SQL under a hot root
+   (`Handle*`/tick/sweeper/`SyncApplier`/boot — see `.thrum/hotpath-gate.json`'s
+   `lenses.existing_primitive_bypass.hot_root_indicators`), confirm you have a ledger row: raw op -> callee
+   package searched -> primitive adopted, or none exists + bounded cost formula
+   (frequency x production cardinality, at production scale). Include it in
+   your DONE report.
 
 Fix what you find before sending the ping.
 

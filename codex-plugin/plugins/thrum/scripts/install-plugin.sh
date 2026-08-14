@@ -51,8 +51,8 @@ if grep -q "^\\[marketplaces.${MARKETPLACE_NAME}\\]" "${CONFIG}"; then
   codex plugin marketplace upgrade "${MARKETPLACE_NAME}" >/dev/null \
     || die "codex plugin marketplace upgrade failed"
 else
-  say "Registering marketplace ${MARKETPLACE_NAME} from ${REPO} (ref ${REF})..."
-  codex plugin marketplace add "${REPO}" --ref "${REF}" >/dev/null \
+  say "Registering marketplace ${MARKETPLACE_NAME} from ${REPO}..."
+  codex plugin marketplace add "${REPO}" >/dev/null \
     || die "codex plugin marketplace add failed"
 fi
 

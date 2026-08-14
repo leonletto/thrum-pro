@@ -1,13 +1,10 @@
 ---
 name: coordinator-maintaining-memory
-description:
-  "Use when the coordinator writes a role-rule, captures an observation about
-  agent behavior, or notes a state change. Loads coordinator-specific memory
-  discipline — when to write, the role-rule pattern, the kind-diversification
-  roadmap (deferred to follow-up)."
+description: "Use when the coordinator writes a role-rule, captures an observation about agent behavior, or notes a state change. Loads coordinator-specific memory discipline — when to write, the role-rule pattern, the kind-diversification roadmap (deferred to follow-up)."
 # source: claude-plugin/skills/coordinator-maintaining-memory/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Coordinator memory discipline
 
@@ -32,15 +29,21 @@ corrects your judgment mid-session ("don't restart that agent early — they're
 mid-flight"), capture the rule:
 
 ```bash
+cat > /tmp/role-rule-body.md <<'EOF'
+<rule>
+
+Why: <reason — past incident, project policy, or Leon's strong preference>
+How to apply: <when/where this kicks in>
+EOF
 thrum memory create --kind agent_rule --scope role \
   --title "<short rule prose — what you must do or not do>" \
   --oneline "<rule one-liner, ≤280 bytes>" \
-  --short "<rule>
-
-Why: <reason — past incident, project policy, or Leon's strong preference>
-How to apply: <when/where this kicks in>" \
+  --short "@/tmp/role-rule-body.md" \
   --tag <slug>
 ```
+
+`--short`/`--full` carry real prose — compose via heredoc or file, never
+double-quoted inline; see your role preamble's 🔴 PROSE INTO A COMMAND rule.
 
 Body shape uniform across all role-rule writes — see `memory-write-discipline`.
 

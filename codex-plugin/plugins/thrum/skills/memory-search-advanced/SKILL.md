@@ -1,13 +1,10 @@
 ---
 name: memory-search-advanced
-description:
-  "Use when running thrum memory search with RAG (--near), composing complex
-  predicate stacks, paginating large result sets, interpreting MEM-001..010 hint
-  codes, or diagnosing embedding adapter behavior. Loads three-vector ranking
-  semantics, length-bias caveat, and the full hint catalog."
+description: "Use when running thrum memory search with RAG (--near), composing complex predicate stacks, paginating large result sets, interpreting MEM-001..010 hint codes, or diagnosing embedding adapter behavior. Loads three-vector ranking semantics, length-bias caveat, and the full hint catalog."
 # source: claude-plugin/skills/memory-search-advanced/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## memory-search-advanced — RAG, hint codes, complex predicates
 

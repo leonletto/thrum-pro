@@ -136,9 +136,9 @@ thrum sent --to @agent                         # Filter by recipient or audience
 thrum message get <message-id>                 # Full recipient detail for one message
 ```
 
-**Search, don't just page.** Default `--page-size` is 10 newest-first, so stale
-unread sorts LAST exactly when it has waited longest — the oldest backlog is
-exactly what a default-page check can't see:
+**Search, don't just page.** Default `--page-size` is 10 newest-first, so
+stale unread sorts LAST exactly when it has waited longest — the oldest
+backlog is exactly what a default-page check can't see:
 
 ```bash
 thrum message search "<term>"                  # full-text across all messages (positional query, no --limit)

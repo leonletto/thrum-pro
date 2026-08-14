@@ -1,14 +1,10 @@
 ---
 name: researcher-maintaining-memory
-description:
-  "Use after completing research, when updating research memory, when verifying
-  entries, or when working with the research index. Loads researcher-specific
-  discipline — the index file structure, cite-stamp protocol, staleness check
-  via git diff, namespace conventions. References common memory skills for
-  write/read/maintain basics."
+description: "Use after completing research, when updating research memory, when verifying entries, or when working with the research index. Loads researcher-specific discipline — the index file structure, cite-stamp protocol, staleness check via git diff, namespace conventions. References common memory skills for write/read/maintain basics."
 # source: claude-plugin/skills/researcher-maintaining-memory/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Researcher memory discipline
 
@@ -51,9 +47,7 @@ Example:
 
 #### Open Questions
 
-> `thrum queue` now supersedes this free-text list for tracking open
-> investigation threads (see thrum-og7pq / the researcher role's Task Tracking
-> delta) — keep entries here only for historical context.
+> `thrum queue` now supersedes this free-text list for tracking open investigation threads (see thrum-og7pq / the researcher role's Task Tracking delta) — keep entries here only for historical context.
 
 Researcher TODOs / things-to-investigate that haven't been resolved into
 findings yet. Each line ≤120 chars; cite a file area or epic if relevant.
@@ -97,7 +91,10 @@ at the bottom of `--full` body content. When re-verifying an existing note, edit
 the entry to update the stamp:
 
 ```bash
-thrum memory edit <id> --full "<verified body with updated 'Verified: ... @ <new-sha>' footer>"
+cat > /tmp/memory-verify-body.md <<EOF
+<verified body with updated 'Verified: ... @ <new-sha>' footer>
+EOF
+thrum memory edit <id> --full "@/tmp/memory-verify-body.md"
 ```
 
 ### Staleness check via git diff
@@ -151,15 +148,21 @@ rollback handle.
 When the user corrects your behavior mid-session, capture a researcher-rule:
 
 ```bash
+cat > /tmp/role-rule-body.md <<'EOF'
+<rule>
+
+Why: <reason>
+How to apply: <when/where>
+EOF
 thrum memory create --kind agent_rule --scope role \
   --title "<short rule prose>" \
   --oneline "<rule one-liner>" \
-  --short "<rule>
-
-Why: <reason>
-How to apply: <when/where>" \
+  --short "@/tmp/role-rule-body.md" \
   --tag <slug>
 ```
+
+`--short`/`--full` carry real prose — compose via heredoc or file, never
+double-quoted inline; see your role preamble's 🔴 PROSE INTO A COMMAND rule.
 
 This is the SAME pattern as coordinator/implementer role-rule writes — see
 `memory-write-discipline` for the canonical shape.

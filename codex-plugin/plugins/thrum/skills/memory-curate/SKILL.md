@@ -1,14 +1,10 @@
 ---
 name: memory-curate
-description:
-  "Use when managing relationships between memories — adding/removing edges,
-  superseding old decisions, threading comments, walking hierarchies, or
-  deciding whether to unlink, supersede, or both. Loads edge kinds,
-  status-driven read semantics, cycle and single-parent rules, and the
-  unlink-supersede footgun."
+description: "Use when managing relationships between memories — adding/removing edges, superseding old decisions, threading comments, walking hierarchies, or deciding whether to unlink, supersede, or both. Loads edge kinds, status-driven read semantics, cycle and single-parent rules, and the unlink-supersede footgun."
 # source: claude-plugin/skills/memory-curate/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## memory-curate — edges, status, hierarchy
 
@@ -110,6 +106,9 @@ thrum memory create --kind comment \
   --oneline "Confirmed leaving git a-sync removes the dual-consumer conflict." \
   --parent <X-id>
 ```
+
+`--short`/`--full` carry real prose — compose via heredoc or file, never
+double-quoted inline; see your role preamble's 🔴 PROSE INTO A COMMAND rule.
 
 `--parent` shorthand creates the `child_of` edge in the same operation. Author =
 `agent_id`, timestamp = `created_at`. Threading walks via the daemon's

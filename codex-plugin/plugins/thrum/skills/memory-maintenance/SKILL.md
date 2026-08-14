@@ -1,13 +1,10 @@
 ---
 name: memory-maintenance
-description:
-  "Use when an agent needs to update, delete, supersede, or audit an existing
-  memory entry — e.g., after verification, when a finding becomes stale, or when
-  a rule needs amendment. Loads the edit/delete/history protocol + when to
-  retire vs amend."
+description: "Use when an agent needs to update, delete, supersede, or audit an existing memory entry — e.g., after verification, when a finding becomes stale, or when a rule needs amendment. Loads the edit/delete/history protocol + when to retire vs amend."
 # source: claude-plugin/skills/memory-maintenance/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Maintaining thrum memory entries
 
@@ -19,7 +16,10 @@ This skill carries the canonical lifecycle operations on existing memory entries
 To update a memory entry's body, title, tags, or zoom levels:
 
 ```bash
-thrum memory edit <id> --short "<updated body>"
+cat > /tmp/memory-edit-body.md <<'EOF'
+<updated body>
+EOF
+thrum memory edit <id> --short "@/tmp/memory-edit-body.md"
 thrum memory edit <id> --title "<updated title>"
 thrum memory edit <id> --add-tag <new-tag>    # appends (repeatable); --rm-tag removes
 ```

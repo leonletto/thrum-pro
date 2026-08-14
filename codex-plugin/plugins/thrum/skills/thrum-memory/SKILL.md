@@ -1,13 +1,10 @@
 ---
 name: thrum-memory
-description:
-  "Use when capturing or querying structured memories (session summaries,
-  architectural decisions, restart snapshots, agent rules) via the thrum memory
-  CLI. Loads decision flowchart, kind taxonomy, default-safe behaviors, and
-  pointers to advanced sub-skills."
+description: "Use when capturing or querying structured memories (session summaries, architectural decisions, restart snapshots, agent rules) via the thrum memory CLI. Loads decision flowchart, kind taxonomy, default-safe behaviors, and pointers to advanced sub-skills."
 # source: claude-plugin/skills/thrum-memory/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## thrum memory — capture and query structured memories
 
@@ -50,6 +47,9 @@ thrum memory create --kind arch_decision \
   --short @short.md --full @full.md \
   --tag substrate,sync
 ```
+
+`--short`/`--full` carry real prose — compose via heredoc or file, never
+double-quoted inline; see your role preamble's 🔴 PROSE INTO A COMMAND rule.
 
 Search by tag + kind, default limit 10:
 

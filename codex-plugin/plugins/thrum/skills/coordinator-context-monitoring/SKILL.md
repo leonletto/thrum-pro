@@ -1,18 +1,10 @@
 ---
 name: coordinator-context-monitoring
-description:
-  "Use when managing live implementer/brainstormer agents during a long
-  coordination session, at epic merge gates, after a busy dispatch hour, or
-  whenever you suspect an agent is approaching context limits. Prevents
-  97%-context silent blow-ups by running a sweep + pre-emptive restart before
-  the agent degrades. Safe to wire into a recurring cron that INVOKES this skill
-  — the skill applies tier-ladder judgment, surfacing (and, only when explicitly
-  opted in via config, autonomously restarting) at the >85% tier. What's
-  forbidden is a cron/script that fires restarts unconditionally without going
-  through this skill's tier ladder."
+description: "Use when managing live implementer/brainstormer agents during a long coordination session, at epic merge gates, after a busy dispatch hour, or whenever you suspect an agent is approaching context limits. Prevents 97%-context silent blow-ups by running a sweep + pre-emptive restart before the agent degrades. Safe to wire into a recurring cron that INVOKES this skill — the skill applies tier-ladder judgment, surfacing (and, only when explicitly opted in via config, autonomously restarting) at the >85% tier. What's forbidden is a cron/script that fires restarts unconditionally without going through this skill's tier ladder."
 # source: claude-plugin/skills/coordinator-context-monitoring/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Coordinator: Context Monitoring and Pre-emptive Restart
 
@@ -158,14 +150,14 @@ is a single monitor for all lenses in v1 (I9), not one per lens.
 
 #### Default-ON lenses (implemented, E1–E6)
 
-| Lens                        | Default | Disposition                                                                                                                                                                                                                                                                                     |
-| --------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `context_tiers`             | ON      | The ctx%/stuck-working ladder (L1). Sole autonomous actuator when `restart_actuation=true`; otherwise RECOMMEND via `recommend-restart-extended` reason in ALERT.                                                                                                                               |
-| `idle_mid_task`             | ON      | L2 — 30-min idle-with-open-task detection (bead cross-ref). RECOMMEND `$thrum-sleep-extended`; a no-task variant REPORTs `idle-no-task` at lower priority.                                                                                                                                      |
-| `snapshot_awaiting_restart` | ON      | L3 — pane text + fresh-snapshot two-signal heuristic. RECOMMEND `thrum tmux restart <agent>` (never autonomous).                                                                                                                                                                                |
-| `blocked_on_human_modal`    | ON      | L4 — detects spend-limit/permission/consent modal prompts. DETECTION ONLY, never auto-answers; routes into the L5 ledger.                                                                                                                                                                       |
+| Lens                        | Default | Disposition                                                                                                                                                       |
+| --------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `context_tiers`             | ON      | The ctx%/stuck-working ladder (L1). Sole autonomous actuator when `restart_actuation=true`; otherwise RECOMMEND via `recommend-restart-extended` reason in ALERT. |
+| `idle_mid_task`             | ON      | L2 — 30-min idle-with-open-task detection (bead cross-ref). RECOMMEND `$thrum-sleep-extended`; a no-task variant REPORTs `idle-no-task` at lower priority.        |
+| `snapshot_awaiting_restart` | ON      | L3 — pane text + fresh-snapshot two-signal heuristic. RECOMMEND `thrum tmux restart <agent>` (never autonomous).                                                  |
+| `blocked_on_human_modal`    | ON      | L4 — detects spend-limit/permission/consent modal prompts. DETECTION ONLY, never auto-answers; routes into the L5 ledger.                                         |
 | `pending_human_ledger`      | ON      | L5 — flat JSONL ledger of items awaiting a human. EXEMPT from D5 backoff — surfaces every tick. `hb_ledger_resolve` (the resolution path) is defined but has zero call sites (thrum-ce317) — nothing marks an entry resolved, so today the ledger is append-only-forever, not "until resolved." |
-| `waiting_on_coord`          | ON      | L9 — 21-rule pattern match (folded in from the standalone waiting-on-coord sweep) + warm-hold exemption. RECOMMEND coordinator answer.                                                                                                                                                          |
+| `waiting_on_coord`          | ON      | L9 — 21-rule pattern match (folded in from the standalone waiting-on-coord sweep) + warm-hold exemption. RECOMMEND coordinator answer.                            |
 
 #### Default-OFF lenses (E8, flag-gated — NOT YET IMPLEMENTED as of E7)
 
@@ -286,10 +278,10 @@ brick.
 
 ### Subagent model selection
 
-> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet` (low
-> effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
-> operator-ask or a skill step that names it. See the `choosing-subagent-models`
-> skill for the full policy.
+> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet`
+> (low effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
+> operator-ask or a skill step that names it. See the
+> `choosing-subagent-models` skill for the full policy.
 
 ### Step 1 — Run the sweep
 
@@ -307,22 +299,22 @@ Claude Code status bar footer, normalizing UTF-8 non-breaking spaces
 
 #### 🔴 ORCHESTRATORS ARE NOT ON THE CONTEXT LADDER — they restart on a PLAN BOUNDARY
 
-**The context thresholds below are a COORDINATOR rule. Orchestrators inherited
-it rather than being chosen for it, and it is not cost-optimal for them.** Do
-not hold an orchestrator open to reach 70–75%, and do not restart one mid-plan
-to chase the cost curve.
+**The context thresholds below are a COORDINATOR rule. Orchestrators inherited it
+rather than being chosen for it, and it is not cost-optimal for them.** Do not
+hold an orchestrator open to reach 70–75%, and do not restart one mid-plan to
+chase the cost curve.
 
 **The orchestrator rule:**
 
 > **Restart an orchestrator at PLAN COMPLETION — where completion means the plan
-> is MERGED _and_ the follow-up beads filed during that plan have been FIXED.**
+> is MERGED *and* the follow-up beads filed during that plan have been FIXED.**
 > Not at the merge report. Not at the merge.
 
 **Why the follow-ups clause is load-bearing, not a detail.** The standing
 fix-while-warm rule says a bug found mid-work gets FIXED while warm, because
 file-and-move-on costs ~10x — the research has to be redone before the fix can
 start. Bugs found during a plan are therefore filed and swept up at the END of
-the plan, while the orchestrator _and its implementers_ still hold the context.
+the plan, while the orchestrator *and its implementers* still hold the context.
 **A restart at the merge boundary destroys exactly that warmth, and does so
 INVISIBLY — the follow-ups still get done, just cold and at the 10x price.** A
 restart rule keyed to "the merge" does not merely mistime a restart; it silently
@@ -335,19 +327,18 @@ repeals fix-while-warm.
   roughly QUADRATIC in how far context is allowed to grow. Break-even for a
   restart is **under one turn** once context is meaningfully above the re-prime
   floor.
-- **Orchestrators re-prime far cheaper than coordinators, and it is
-  structural:** `internal/cli/prime_filter.go` gives ONLY `role=="coordinator"`
-  the full project-state passthrough. Measured orchestrator re-prime ≈ 30k
-  tokens.
+- **Orchestrators re-prime far cheaper than coordinators, and it is structural:**
+  `internal/cli/prime_filter.go` gives ONLY `role=="coordinator"` the full
+  project-state passthrough. Measured orchestrator re-prime ≈ 30k tokens.
 - Coordinators keep the ladder below for a stated reason — larger re-entry cost,
   plus decision-dense context a snapshot cannot faithfully reconstruct.
 
 **What the plan boundary buys:** it is the one point where the cost argument and
-the preserve-in-flight-judgment argument AGREE. The work has just been handed
-off in a merge report and the follow-ups are closed, so in-flight judgment is at
-its minimum and state is externalised into beads.
+the preserve-in-flight-judgment argument AGREE. The work has just been handed off
+in a merge report and the follow-ups are closed, so in-flight judgment is at its
+minimum and state is externalised into beads.
 
-**Confidence: medium.** Turns-per-plan is measured at n=4 and per-_plan_ (as
+**Confidence: medium.** Turns-per-plan is measured at n=4 and per-*plan* (as
 opposed to per-restart-session) figures are UNESTABLISHED — plan boundaries and
 restart boundaries do not currently align. If plans are typically smaller than
 the observed ~45-turn cycle, the gain is larger than stated, not smaller.
@@ -356,6 +347,8 @@ the observed ~45-turn cycle, the gain is larger than stated, not smaller.
 NOT a restart candidate on context alone. Check whether its plan is complete
 (merged + follow-ups closed). If it is, restart regardless of how low its
 context is. If it is not, leave it alone regardless of how high.
+
+
 
 | ctx_tier | stuck_working | Action                                                                                                                                                                                                                                                                   |
 | -------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |

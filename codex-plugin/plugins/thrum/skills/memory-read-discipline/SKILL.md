@@ -1,15 +1,10 @@
 ---
 name: memory-read-discipline
-description:
-  "Use when an agent needs to find existing memory entries - load role-rules at
-  session start, recall a topic mid-session, or pull the full body of a specific
-  entry. Loads the canonical 3-step zoom-escalation read pattern (scan index,
-  triage short, fetch full on confirm) and covers the list / search / show
-  verbs. For advanced FTS5 plus embedding search options, see also the
-  memory-search-advanced skill."
+description: "Use when an agent needs to find existing memory entries - load role-rules at session start, recall a topic mid-session, or pull the full body of a specific entry. Loads the canonical 3-step zoom-escalation read pattern (scan index, triage short, fetch full on confirm) and covers the list / search / show verbs. For advanced FTS5 plus embedding search options, see also the memory-search-advanced skill."
 # source: claude-plugin/skills/memory-read-discipline/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Reading thrum memory entries
 

@@ -440,12 +440,20 @@ template's "Logging Refactoring Opportunities" section.
 
 If not found, create one:
 
+`--description` is multi-line prose — never double-quoted inline. On
+`scripts/bd-shared`, `--stdin`/`--body-file` are refused (remote-path
+resolution + silent-empty-body hazards), so write it to a scratch file and
+pass `-d "$(cat <file>)"`; see your role preamble's 🔴 PROSE INTO A COMMAND
+rule.
+
 ```bash
-bd create --title="Refactoring & DRY Opportunities" --type=epic --priority=3 \
-  --description="Persistent backlog for refactoring, DRY improvements, and code
+cat > /tmp/refactor-epic-desc.md <<'EOF'
+Persistent backlog for refactoring, DRY improvements, and code
 organization opportunities discovered during feature work. Tasks are added by
 implementation agents as they encounter opportunities. Reviewed and prioritized
-by the coordinator periodically."
+by the coordinator periodically.
+EOF
+bd create --title="Refactoring & DRY Opportunities" --type=epic --priority=3 -d "$(cat /tmp/refactor-epic-desc.md)"
 ```
 
 This epic is **project-wide and long-lived** — it persists across feature epics.

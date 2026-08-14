@@ -127,8 +127,8 @@ from the role, e.g., `--name lead-agent --role coordinator`.
 ## 15. Trusting the Default Inbox Page to Find Old Messages
 
 **Wrong:** Reading `thrum inbox --unread` (default page: 10, newest-first) and
-concluding there's nothing important waiting. **Right:** Stale unread sorts LAST
-exactly when it has waited longest — the default page is structurally blind to
-the oldest backlog. Use `thrum message search "<term>"` (full-text, no page
-limit) or `thrum inbox -q "<term>"` to find it. `thrum message reindex` rebuilds
-the FTS index if search looks wrong.
+concluding there's nothing important waiting. **Right:** Stale unread sorts
+LAST exactly when it has waited longest — the default page is structurally
+blind to the oldest backlog. Use `thrum message search "<term>"` (full-text,
+no page limit) or `thrum inbox -q "<term>"` to find it. `thrum message
+reindex` rebuilds the FTS index if search looks wrong.

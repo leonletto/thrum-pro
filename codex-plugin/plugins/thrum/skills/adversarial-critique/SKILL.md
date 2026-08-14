@@ -1,13 +1,10 @@
 ---
 name: adversarial-critique
-description:
-  "Use when an implementer is blocked mid-work by a design flaw, contradiction,
-  or unforeseen fork with 2-3 ways to resolve it - produces a defended pick that
-  unblocks the work and leaves an audit trail so the decision can be revisited
-  if it later proves wrong"
+description: "Use when an implementer is blocked mid-work by a design flaw, contradiction, or unforeseen fork with 2-3 ways to resolve it - produces a defended pick that unblocks the work and leaves an audit trail so the decision can be revisited if it later proves wrong"
 # source: claude-plugin/skills/adversarial-critique/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Adversarial Critique: Resolving a Blocking Design Fork Mid-Implementation
 
@@ -62,10 +59,10 @@ Pre-assembled context is the difference between a real debate and a shallow one.
 
 ### The three rounds
 
-> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet` (low
-> effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
-> operator-ask or a skill step that names it. See the `choosing-subagent-models`
-> skill for the full policy.
+> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet`
+> (low effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
+> operator-ask or a skill step that names it. See the
+> `choosing-subagent-models` skill for the full policy.
 
 Dispatch one sub-agent per option, in parallel (single message, multiple Agent
 tool calls). `model: "sonnet"` for all dispatches — quality matches Opus on
@@ -211,8 +208,8 @@ your working context in an actionable shape:
   reading never catches.
 - **Optional audit-trail enhancement:** when the decision affects multiple
   future tasks or will be referenced in a PR description, record it with
-  `bd create --type=decision` so the rationale is queryable from the beads graph
-  (not just from the brainstorm markdown).
+  `bd create --type=decision` so the rationale is queryable from the beads graph (not just
+  from the brainstorm markdown).
 
 ### Anti-patterns
 

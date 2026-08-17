@@ -145,7 +145,7 @@ positives on the items supplied.
 worktree; its sub-agents get READ-ONLY git. `checkout`/`reset`/`restore`/`stash`/
 `clean`/`rebase` forbidden in **every** directory for both. Give an escape hatch
 for instrument-and-undo (a `cp` copy, or edit-then-revert) or the careful agent
-breaches the fence doing good work. **Ban `rm -r` as well as `rm -rf`.**
+breaches the fence doing good work. **Use `rm -r`, NEVER `rm -rf`.**
 **Pasting a fence is not enforcing it.**
 
 ## 4. THE EXECUTED VERIFY — SCOPED TO THE CHANGE
@@ -216,9 +216,12 @@ success, and the dropped lines include the goroutine dump that separates a
 deadlock from an assertion failure.
 
 **When a suite is red, establish pre-existing vs introduced by running the same
-suite at the merge-base** in a throwaway detached worktree under `/private/tmp`,
-and **compare failing sets BY NAME, not by count.** Sets differing in both
-directions indicate flakiness; a regression adds failures without removing any.
+suite at the merge-base** in a throwaway detached worktree — check the
+discriminator, don't assume from the platform: `[ -L /tmp ]`. macOS (symlink)
+needs `/private/tmp`; Linux (real dir) uses `/tmp` (`/private/tmp` may not
+exist there and must not be created) — and **compare failing sets BY NAME, not
+by count.** Sets differing in both directions indicate flakiness; a regression
+adds failures without removing any.
 
 ## 6. RE-DERIVE ANCESTRY IN THE SAME TURN AS THE MERGE
 
@@ -243,10 +246,14 @@ agreeing (`rev-parse origin/<branch>` and `ls-remote`). **Assert the branch TIP*
 3. **Commit accumulated agent state** under `.thrum/agents/` along with the merge.
    Uncommitted agent state exists in exactly one working tree, and it IS the
    agent's memory across restarts. **Never `git add -f`.**
-4. **Delete the merged branch at merge time**, after the push is verified.
-   `feature/*` and `fix/*` are one-shot — delete freely. **`agent/*`, `salvage/*`,
-   `website-dev` and `release/*` are ongoing or archival — do NOT delete.**
-   Deferring this is how 562 stale merged branches accumulated.
+4. **Delete the merged branch AND drop its queue bundle — one ritual, at merge
+   time**, after the push is verified. `feature/*` and `fix/*` are one-shot —
+   delete freely. **`agent/*`, `salvage/*`, `website-dev` and `release/*` are
+   ongoing or archival — do NOT delete.** Then, in the same turn: `thrum queue
+   done <bundle>` + `thrum queue drop <bundle>` for the bundle that tracked this
+   branch, and `bd close <id>` any beads this merge closed. A merge is not
+   complete until the branch ref AND its queue bundle are both gone — the same
+   act that lands the code retires its tracking.
 
 ## 7a. BEFORE YOU ACCEPT A VERDICT — CONFIRM THE RUNNER TORE ITS OWN THINGS DOWN
 
@@ -295,6 +302,7 @@ how a month-stale skill cache went unnoticed while serving a banned model tier.
 - Pushing without guarding on the merge's exit status.
 - Declaring a class closed on a count you did not re-derive.
 - Deleting `agent/*`, `salvage/*`, `website-dev` or `release/*`.
+- Pushing a merge without dropping the queue bundle that tracked it.
 
 ## See also
 

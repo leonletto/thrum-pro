@@ -1,10 +1,13 @@
 ---
 name: coordinator-maintaining-memory
-description: "Use when the coordinator writes a role-rule, captures an observation about agent behavior, or notes a state change. Loads coordinator-specific memory discipline — when to write, the role-rule pattern, the kind-diversification roadmap (deferred to follow-up)."
+description:
+  "Use when the coordinator writes a role-rule, captures an observation about
+  agent behavior, or notes a state change. Loads coordinator-specific memory
+  discipline — when to write, the role-rule pattern, the kind-diversification
+  roadmap (deferred to follow-up)."
 # source: claude-plugin/skills/coordinator-maintaining-memory/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
-
 
 ## Coordinator memory discipline
 

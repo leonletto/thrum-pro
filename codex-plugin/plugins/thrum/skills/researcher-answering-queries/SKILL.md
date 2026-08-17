@@ -1,18 +1,20 @@
 ---
 name: researcher-answering-queries
-description: "Use when another agent has asked you a research question, when fielding a research request, or when responding to a query. Loads the lookup-and-respond protocol so cached findings get reused before fresh investigation starts."
+description:
+  "Use when another agent has asked you a research question, when fielding a
+  research request, or when responding to a query. Loads the lookup-and-respond
+  protocol so cached findings get reused before fresh investigation starts."
 # source: claude-plugin/skills/researcher-answering-queries/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
-
 
 ## Researcher: Answering Queries
 
 ### Reconcile your queue first
 
-Lift this query into a bundle (`thrum queue add --from-message <msg-id>`),
-then `thrum queue start <bundle-id>`; drop/close finished bundles. Full
-lifecycle: `using-the-queue`.
+Lift this query into a bundle (`thrum queue add --from-message <msg-id>`), then
+`thrum queue start <bundle-id>`; drop/close finished bundles. Full lifecycle:
+`using-the-queue`.
 
 ### Lookup order: index → thrum memory → staleness check → respond
 
@@ -29,10 +31,10 @@ memory by slug, (3) verify if stamp is stale, (4) respond".)
 1. **Index check.** Read `.thrum/context/research.md`. Does any Tracked Topic
    line look relevant? Note the `research-<slug>` tag handles.
 2. **Content fetch.** For each candidate slug, escalate zoom per the shared
-   3-step read pattern (`memory-read-discipline`): `thrum memory search --tag
-   research-<slug>` returns the matching entry IDs; triage with
-   `thrum memory show <id> --zoom short` before fetching the full body with
-   `thrum memory show <id> --zoom full`.
+   3-step read pattern (`memory-read-discipline`):
+   `thrum memory search --tag research-<slug>` returns the matching entry IDs;
+   triage with `thrum memory show <id> --zoom short` before fetching the full
+   body with `thrum memory show <id> --zoom full`.
 3. **Staleness check.** Use the protocol from `researcher-maintaining-memory`:
    `git diff --name-only <stamp-sha> HEAD` filtered by the entry's cited paths.
    If empty, the entry stands. If any cited path appears, re-verify (re-read the
@@ -103,7 +105,7 @@ thrum send --to @<requester> --stdin <<'EOF'
 Research <task-id>: <finding>. Evidence: <file:line refs>.
 EOF
 
-# Step 2: Mark yourself idle (writes local identity file directly)
+# Step 2: Mark yourself idle (RPC-preferred; local-write fallback if daemon is unreachable)
 thrum agent set-status idle
 ```
 

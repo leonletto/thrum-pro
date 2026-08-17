@@ -144,11 +144,11 @@ distinguish "agent finished cleanly" from "agent stuck claiming to work" — see
 
 ```bash
 # Step 1: Report DONE to coordinator
-thrum send --to @coordinator_main --stdin <<'EOF'
+thrum send --to @your_coordinator --stdin <<'EOF'
 DONE: <task-id>. <one-line summary>. Commits: <SHA1>, <SHA2>.
 EOF
 
-# Step 2: Mark yourself idle (writes local identity file directly; no daemon round-trip)
+# Step 2: Mark yourself idle (RPC-preferred; falls back to a local identity-file write if the daemon is unreachable)
 thrum agent set-status idle
 ```
 

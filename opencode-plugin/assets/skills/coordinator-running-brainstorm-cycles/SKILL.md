@@ -373,7 +373,7 @@ Some users have a global `~/.claude/CLAUDE.md` rule that reads "always run thrum
 commands from the main repo directory." That rule is correct for the
 main-repo-resident coordinator agent — but **it inverts for worktree-resident
 researchers.** A researcher running thrum from the main repo path resolves
-identity to the coordinator's name (e.g. `@coordinator_main`) and sends every
+identity to the coordinator's name (e.g. `@your_coordinator`) and sends every
 message under the coordinator's identity, polluting audit trails.
 
 The correct rule is: **agents run thrum commands from their OWN home

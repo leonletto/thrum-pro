@@ -1,10 +1,12 @@
 ---
 name: coordinator-dispatching-work
-description: "Use when starting an epic, dispatching to an implementer, creating a worktree for an agent, or spawning a sub-agent. Loads coordinator-specific discipline for kicking off implementation work."
+description:
+  "Use when starting an epic, dispatching to an implementer, creating a worktree
+  for an agent, or spawning a sub-agent. Loads coordinator-specific discipline
+  for kicking off implementation work."
 # source: claude-plugin/skills/coordinator-dispatching-work/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
-
 
 ## Coordinator: Dispatching Work
 
@@ -73,75 +75,85 @@ optimization.
 
 ### Subagent model selection
 
-> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet`
-> (low effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
-> operator-ask or a skill step that names it. See the
-> `choosing-subagent-models` skill for the full policy.
+> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet` (low
+> effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
+> operator-ask or a skill step that names it. See the `choosing-subagent-models`
+> skill for the full policy.
 
 ### Check the target's queue before you dispatch (R3)
 
-Before dispatching, confirm the agent isn't already loaded: `thrum queue list --agent
-<target>` (message it to confirm if its state is unclear). An empty result does NOT
-mean free — it also shows for an agent that keeps no queue or that you mis-named;
-confirm by message before assigning. `assign` appends to `assigned_to` with no
-duplicate check, so this pre-dispatch read is the only guard against double-loading a
-busy agent. Record the handoff on your own queue with `thrum queue assign <bundle>
-<target>`, then send the real dispatch via `thrum send`.
+Before dispatching, confirm the agent isn't already loaded:
+`thrum queue list --agent <target>` (message it to confirm if its state is
+unclear). An empty result does NOT mean free — it also shows for an agent that
+keeps no queue or that you mis-named; confirm by message before assigning.
+`assign` appends to `assigned_to` with no duplicate check, so this pre-dispatch
+read is the only guard against double-loading a busy agent. Record the handoff
+on your own queue with `thrum queue assign <bundle> <target>`, then send the
+real dispatch via `thrum send`.
 
 One bundle per epic/branch handed out — keep it reconciled as the work moves
-(`start` → review → merge-gate → torn down), per `using-the-queue`.
+(`start` → review → merge-gate → torn down), per `using-the-queue`. You RECORD
+at dispatch (here); you CLOSE at a trigger — the moment the branch merges into
+trunk or the last referenced bead closes, `done` + `drop` in that same turn (see
+`coordinator-merging-code` §7 and `using-the-queue`). ADD has a natural trigger
+and gets done; the close has one only if you make the merge/close BE it.
 
 ### Bundle adjacent open issues into every dispatch
 
-**Why:** Priority order and code locality are INDEPENDENT axes, and sequencing by
-priority alone silently optimizes the wrong one. The expensive part of any task is
-loading the context — the package, the call paths, the invariants. Once an
-implementer has paid that cost, a second bead two files away is nearly free. Ship
-them one at a time to cold implementers and you pay full context load for each,
-while a P0 sits in the queue purely because it sorted into a different row.
+**Why:** Priority order and code locality are INDEPENDENT axes, and sequencing
+by priority alone silently optimizes the wrong one. The expensive part of any
+task is loading the context — the package, the call paths, the invariants. Once
+an implementer has paid that cost, a second bead two files away is nearly free.
+Ship them one at a time to cold implementers and you pay full context load for
+each, while a P0 sits in the queue purely because it sorted into a different
+row.
 
-Most backlogs are far more adjacent than their titles suggest. Bundling collapses
-the queue fast; one-at-a-time dispatch is the wasteful default that feels orderly.
+Most backlogs are far more adjacent than their titles suggest. Bundling
+collapses the queue fast; one-at-a-time dispatch is the wasteful default that
+feels orderly.
 
 **How to apply — the coordinator half:**
 
-Before sending ANY dispatch, run an adjacency pass. Delegate it (it is a wide read
-across beads and packages — exactly what should not burn coordinator context):
+Before sending ANY dispatch, run an adjacency pass. Delegate it (it is a wide
+read across beads and packages — exactly what should not burn coordinator
+context):
 
 1. Determine each item's CODE AREA — package, subsystem, files. Derive it from
-   `bd show <id>` **plus reading the code**, never from the bead title. Two beads
-   with similar titles may live in different packages; two with unrelated titles
-   may share a file.
-2. Find OPEN issues touching those same areas — **including higher-priority ones**.
-   A P0 adjacent to a P2 you are dispatching is the whole point of this pass.
+   `bd show <id>` **plus reading the code**, never from the bead title. Two
+   beads with similar titles may live in different packages; two with unrelated
+   titles may share a file.
+2. Find OPEN issues touching those same areas — **including higher-priority
+   ones**. A P0 adjacent to a P2 you are dispatching is the whole point of this
+   pass.
 3. Name the inverse too: which open issues have NO adjacency to this batch. That
-   set is what genuinely stays unstaffed, and stating it stops a later reader from
-   mistaking an un-surfaced issue for a deliberately parked one.
-4. **You make the ride-along call.** The sub-agent reports adjacency and evidence;
-   it does not rank, prioritize, or decide.
+   set is what genuinely stays unstaffed, and stating it stops a later reader
+   from mistaking an un-surfaced issue for a deliberately parked one.
+4. **You make the ride-along call.** The sub-agent reports adjacency and
+   evidence; it does not rank, prioritize, or decide.
 
-Do this at SEQUENCING time, before dispatch messages go out. Afterwards the routing
-is committed and folding an item in costs more than the pass saves.
+Do this at SEQUENCING time, before dispatch messages go out. Afterwards the
+routing is committed and folding an item in costs more than the pass saves.
 
-> 🔴 **NEVER run `bd list --all`** while doing this, in any form — `--all --limit N`
-> is STILL unbounded (the limit is discarded) and has twice driven a box to seconds
-> from swap exhaustion. Get ground truth from `bd stats`, bound above that count,
-> and **verify the printed `Total:` is not equal to your limit** — equal means you
-> are at the ceiling and were silently truncated. Put these rules in the sub-agent's
-> brief; it cannot see the damage from where it runs.
+> 🔴 **NEVER run `bd list --all`** while doing this, in any form —
+> `--all --limit N` is STILL unbounded (the limit is discarded) and has twice
+> driven a box to seconds from swap exhaustion. Get ground truth from
+> `bd stats`, bound above that count, and **verify the printed `Total:` is not
+> equal to your limit** — equal means you are at the ceiling and were silently
+> truncated. Put these rules in the sub-agent's brief; it cannot see the damage
+> from where it runs.
 
 **How to apply — the orchestrator half (this is where validity gets checked):**
 
-Do NOT try to verify the adjacent items are still valid yourself. You are cold, and
-your list goes stale between the pass and the dispatch. **The orchestrator cuts its
-branches from the CURRENT tip and merges forward onto it (never rebases) before
-handoff**, so it is working against today's code — which makes validity checking
-nearly free at exactly the moment it is accurate.
+Do NOT try to verify the adjacent items are still valid yourself. You are cold,
+and your list goes stale between the pass and the dispatch. **The orchestrator
+cuts its branches from the CURRENT tip and merges forward onto it (never
+rebases) before handoff**, so it is working against today's code — which makes
+validity checking nearly free at exactly the moment it is accurate.
 
-So dispatch adjacent items as CANDIDATES and say so explicitly. The orchestrator's
-own skill (`orchestrate`, Phase 1 Step 2b) defines what that word obligates; you do
-not need to restate the procedure in the dispatch, only to mark the items clearly
-and give each one its bead ID.
+So dispatch adjacent items as CANDIDATES and say so explicitly. The
+orchestrator's own skill (`orchestrate`, Phase 1 Step 2b) defines what that word
+obligates; you do not need to restate the procedure in the dispatch, only to
+mark the items clearly and give each one its bead ID.
 
 What comes back: still-valid candidates get folded into the warm implementer;
 already-fixed ones return to you as COMPLETED with evidence so **you close the
@@ -149,8 +161,8 @@ bead** — draining the queue with nobody implementing anything; ambiguous ones
 return as questions. You should receive a disposition for EVERY candidate,
 including the folded-in ones.
 
-**Expect returns, and act on them.** A candidate returned as already-fixed is only
-half-drained until you actually close the bead.
+**Expect returns, and act on them.** A candidate returned as already-fixed is
+only half-drained until you actually close the bead.
 
 ### Prompt construction for implementers
 
@@ -168,9 +180,9 @@ re-dispatch overhead.
    spawns (sonnet-low for mechanical, sonnet-medium for judgment)
 6. Spec/plan paths to read before starting
 7. **Adjacent candidate beads** from the adjacency pass above, labeled as
-   CANDIDATES with their validity explicitly unverified — plus the instruction to
-   check them against the merged-forward tip and either fold them in or return
-   them as completed
+   CANDIDATES with their validity explicitly unverified — plus the instruction
+   to check them against the merged-forward tip and either fold them in or
+   return them as completed
 
 ### Never rename an agent tied to a worktree
 
@@ -198,8 +210,9 @@ inherit too. Cost compounds across a session. (Source: findings_coordinator.md �
 **How to apply:** Every dispatch prompt should include the model-selection rule
 explicitly: "When you spawn your own sub-agents, pass explicit `model:` —
 `sonnet` (low effort) for mechanical work (lint, tests, find/replace), `sonnet`
-(medium effort) for judgment work (review, complex implementation), `opus`
-only when justified. Default to sonnet over opus." Audit the dispatch prompt before sending.
+(medium effort) for judgment work (review, complex implementation), `opus` only
+when justified. Default to sonnet over opus." Audit the dispatch prompt before
+sending.
 
 ### The impl-prompt review stamp satisfies pre-dispatch review
 
@@ -263,8 +276,8 @@ EOF
 
 ### See also
 
-- `dev-docs/process/2026-07-22-idea-to-merged-end-to-end-process-capture.md`
-  — the full idea-to-merged pipeline; this skill covers Stage 5 (dispatch).
+- `dev-docs/process/2026-07-22-idea-to-merged-end-to-end-process-capture.md` —
+  the full idea-to-merged pipeline; this skill covers Stage 5 (dispatch).
 
 ### Project-specific rules (already loaded)
 

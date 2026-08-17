@@ -86,7 +86,11 @@ busy agent. Record the handoff on your own queue with `thrum queue assign <bundl
 <target>`, then send the real dispatch via `thrum send`.
 
 One bundle per epic/branch handed out — keep it reconciled as the work moves
-(`start` → review → merge-gate → torn down), per `using-the-queue`.
+(`start` → review → merge-gate → torn down), per `using-the-queue`. You RECORD at
+dispatch (here); you CLOSE at a trigger — the moment the branch merges into trunk
+or the last referenced bead closes, `done` + `drop` in that same turn (see
+`coordinator-merging-code` §7 and `using-the-queue`). ADD has a natural trigger and
+gets done; the close has one only if you make the merge/close BE it.
 
 ## Bundle adjacent open issues into every dispatch
 

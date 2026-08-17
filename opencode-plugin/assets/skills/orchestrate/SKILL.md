@@ -342,7 +342,8 @@ Handle each message type:
 4. **Consolidate** both reviewers' findings into ONE numbered list (sequential
    numbering, severity-prefixed). Send once. Never send partial findings — the
    implementer fixes batch 1 and misses batch 2 if you split.
-5. If review passes → close the task: `bd close <task-id>`
+5. If review passes → close the task (`bd close <task-id>`) AND advance this
+   epic's queue bundle toward `done`; `drop` it once the branch lands in Phase 5.
 6. If review has findings → send the consolidated list to the agent, wait for
    fixes (max 2 rounds — see Review loop below)
 
@@ -479,11 +480,13 @@ After coordinator explicitly approves via thrum:
 
 ```bash
 # A dedicated worktree lets you merge without leaving detached HEAD.
-# /private/tmp, NEVER /tmp: on macOS /tmp is a symlink to /private/tmp, so a
-# worktree created under /tmp resolves to a different real path and false-FAILS
-# worktree/ancestor verification.
-git worktree add /private/tmp/thrum-merge-<plan-id> <merge-target>
-cd /private/tmp/thrum-merge-<plan-id>
+# Check the discriminator, don't assume from the platform: [ -L /tmp ]. On macOS
+# (symlink) /tmp resolves to a different real path than /private/tmp and
+# false-FAILs worktree/ancestor verification, so use /private/tmp there. On
+# Linux (real dir) /tmp is correct and /private/tmp may not exist.
+SCRATCH=/tmp; [ -L /tmp ] && SCRATCH=/private/tmp
+git worktree add "$SCRATCH/thrum-merge-<plan-id>" <merge-target>
+cd "$SCRATCH/thrum-merge-<plan-id>"
 git pull origin <merge-target>  # ensure up to date
 ```
 
@@ -519,7 +522,9 @@ After resolution, continue the merge loop.
 
 ```bash
 git push origin <merge-target>
-git worktree remove /private/tmp/thrum-merge-<plan-id>
+# Re-derive SCRATCH — this block may be run standalone, separate from step A.
+SCRATCH=/tmp; [ -L /tmp ] && SCRATCH=/private/tmp
+git worktree remove "$SCRATCH/thrum-merge-<plan-id>"
 ```
 
 **E. Forward shipped-but-logged findings to coordinator:**
@@ -532,6 +537,12 @@ EOF
 ```
 
 ### Step 5: Cleanup
+
+**Close the tracking bundle as part of retirement.** The implementer's branch is
+merged and pushed (Step 4D), so YOUR tracking bundle for it is completed — `thrum
+queue done <bundle>` then `thrum queue drop <bundle>` in the same pass that retires
+the agent. A retired agent with a live bundle is completed-but-open rot. (The
+implementer's OWN queue dies with the agent; this is your tracking bundle.)
 
 After merge completes, **remove each implementer's worktree now — do not
 leave it for a later coordinator audit.** Once an agent has exited, its
@@ -553,7 +564,7 @@ snapshots and authored agent state live UNTRACKED under the worktree's own
 🔴 **SALVAGE THE WHOLE `.thrum` PATHSPEC, NEVER JUST `.thrum/agents/`.** The
 preamble lives at **`.thrum/context/<name>_preamble.md`**, outside `agents/`. An
 `agents/`-scoped enumeration returns a confident, well-formed result that is
-missing it. **Measured 2026-07-31 (`orch_thrumtest_c`): a worktree FOUR MINUTES
+missing it. **Measured 2026-07-31 (`orch_example_a`): a worktree FOUR MINUTES
 OLD and believed empty held a 1,088-byte launch snapshot AND a 34,202-byte
 preamble, neither in the main repo nor anywhere in git history** — the preamble
 is the file the narrow scope drops, and it is the larger of the two. **Being untracked,
@@ -765,8 +776,10 @@ hypothetical.
   read-only for git, and a checkout in a shared tree destroys other agents'
   uncommitted state — no reflog entry for a pathspec checkout, no blob for
   unstaged content. If the reviewer genuinely must build or run tests at that
-  SHA, give it its OWN throwaway worktree:
-  `git worktree add /private/tmp/review-<slug> <sha> --detach`.
+  SHA, give it its OWN throwaway worktree — check `[ -L /tmp ]` first: macOS
+  (symlink) needs `/private/tmp`, Linux (real dir) uses `/tmp` (`/private/tmp`
+  may not exist there):
+  `git worktree add "$([ -L /tmp ] && echo /private/tmp || echo /tmp)/review-<slug>" <sha> --detach`.
 - **Require the reviewer to report back the SHA it actually scanned.** If the
   SHA it reports is not the SHA you pinned, the verdict is VOID — re-dispatch.
   Do not accept a verdict that cannot name its own base.

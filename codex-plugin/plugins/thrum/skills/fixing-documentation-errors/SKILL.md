@@ -1,10 +1,21 @@
 ---
 name: fixing-documentation-errors
-description: "Use the moment you notice documentation is wrong, stale, incomplete, or contradicts what a command actually does - a doc that omits a flag or subcommand that exists, a README/llms.txt/CLI-help/docstring/comment that disagrees with observed behaviour, a version-stamped section that predates a feature, an example that would fail if run, a doc claim you were about to cite and could not confirm. Illustrative (non-exhaustive) triggers - 'the docs don't mention X', 'llms.txt is out of date', 'the help text says Y but it actually does Z', 'that flag isn't documented', 'this example is wrong', 'the docs are stale here', 'I should file a bead about the docs', 'I'll note the doc gap' - but the trigger is NOTICING A DOC DEFECT, not matching a phrase. Fires regardless of what you were originally doing; a doc error found mid-task is still in scope."
+description:
+  "Use the moment you notice documentation is wrong, stale, incomplete, or
+  contradicts what a command actually does - a doc that omits a flag or
+  subcommand that exists, a README/llms.txt/CLI-help/docstring/comment that
+  disagrees with observed behaviour, a version-stamped section that predates a
+  feature, an example that would fail if run, a doc claim you were about to cite
+  and could not confirm. Illustrative (non-exhaustive) triggers - 'the docs
+  don't mention X', 'llms.txt is out of date', 'the help text says Y but it
+  actually does Z', 'that flag isn't documented', 'this example is wrong', 'the
+  docs are stale here', 'I should file a bead about the docs', 'I'll note the
+  doc gap' - but the trigger is NOTICING A DOC DEFECT, not matching a phrase.
+  Fires regardless of what you were originally doing; a doc error found mid-task
+  is still in scope."
 # source: claude-plugin/skills/fixing-documentation-errors/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
-
 
 ## Fixing Documentation Errors
 
@@ -26,17 +37,17 @@ doing it.
 are the two forbidden responses for everyone. What differs by role is only
 whether you fix it yourself or ask first.
 
-| Role | What you do, IN THIS TURN |
-|---|---|
-| Coordinator · orchestrator · researcher · gate · watcher | **Fix it.** You hold the authority. Verify, edit every copy, then file the record. |
-| Implementer **between tasks / idle** | **Fix it.** Same as above. |
-| Implementer **mid-task** | **ASK your orchestrator or coordinator, in this turn** — one line: *"Found a doc error: `<file:line>` says X, actual behaviour is Y (verified how). Want me to fix it now, or carry it?"* |
-| Sub-agent | **Report it to whoever dispatched you**, in your final report, with file:line and the measured truth. Do not fix outside your assigned scope. |
+| Role                                                     | What you do, IN THIS TURN                                                                                                                                                                 |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Coordinator · orchestrator · researcher · gate · watcher | **Fix it.** You hold the authority. Verify, edit every copy, then file the record.                                                                                                        |
+| Implementer **between tasks / idle**                     | **Fix it.** Same as above.                                                                                                                                                                |
+| Implementer **mid-task**                                 | **ASK your orchestrator or coordinator, in this turn** — one line: _"Found a doc error: `<file:line>` says X, actual behaviour is Y (verified how). Want me to fix it now, or carry it?"_ |
+| Sub-agent                                                | **Report it to whoever dispatched you**, in your final report, with file:line and the measured truth. Do not fix outside your assigned scope.                                             |
 
-**For the mid-task implementer, THE ASK IS THE ACTION.** It is not a deferral and
-it is not a bead. It goes out in the turn you found the defect, while you still
-hold the file, the line, and the evidence — so that whoever answers can say
-"yes, now" and you are already warm.
+**For the mid-task implementer, THE ASK IS THE ACTION.** It is not a deferral
+and it is not a bead. It goes out in the turn you found the defect, while you
+still hold the file, the line, and the evidence — so that whoever answers can
+say "yes, now" and you are already warm.
 
 ⚠️ **Do not ask and then drop it.** If no answer arrives before you finish your
 task, say so explicitly in your completion report, with the file:line and the
@@ -48,10 +59,10 @@ you were already sent to change, and it is unambiguous, just fix it. The ask
 exists for scope discipline, not as a ritual.
 
 **Manager side — if you receive one of these asks, answer it in the turn you
-read it.** "Yes, fix it" is almost always right, and it is cheapest at the moment
-the reporter is still warm. Every hour you sit on it converts a five-minute edit
-into a re-derivation. If you say "not now", say what happens to it instead —
-never leave the reporter holding it.
+read it.** "Yes, fix it" is almost always right, and it is cheapest at the
+moment the reporter is still warm. Every hour you sit on it converts a
+five-minute edit into a re-derivation. If you say "not now", say what happens to
+it instead — never leave the reporter holding it.
 
 ### Why deferring is worse than it looks
 
@@ -59,7 +70,7 @@ Filing while warm does not defer the work. **It duplicates it and throws away
 the expensive half.**
 
 To write a useful doc bead you must state the file, the line, the wrong text,
-the correct text, and how you know. That *is* the fix specification — writing it
+the correct text, and how you know. That _is_ the fix specification — writing it
 costs roughly what performing the edit costs. So the real choice is never "fix
 now vs fix later." It is:
 
@@ -83,9 +94,9 @@ These are the observed failure modes, not hypotheticals. Expect them.
 
 - **A thorough write-up registers as having acted.** A thin note nags at you; a
   well-argued bead closes the loop in your head. Diligence in the write-up is
-  the *cause*, not the mitigation.
+  the _cause_, not the mitigation.
 - **A severity label disguises a deferral.** "P1, do it later" reads as triage
-  rather than avoidance, because assigning P1 *feels* like taking it seriously.
+  rather than avoidance, because assigning P1 _feels_ like taking it seriously.
 - **"Not my task."** A doc error found mid-task is in scope. The cost of coming
   back is what this skill exists to avoid.
 - **"Someone owns these docs."** Nobody owns a stale line. Ownership is the
@@ -101,10 +112,10 @@ Establish ground truth by **direct observation**, then edit:
 
 1. **Read the tool's own help** for every subcommand and flag you are about to
    document — `<cmd> --help`, `<cmd> <sub> --help`. Enumerate the FULL
-   subcommand list; do not grep for the one you have in mind.
-   ⚠️ **A too-narrow search key returns a confident wrong answer.** Grepping
-   help for `^\s+start` cannot match `restart`, and "the command doesn't exist"
-   is the result. Read the full list unfiltered.
+   subcommand list; do not grep for the one you have in mind. ⚠️ **A too-narrow
+   search key returns a confident wrong answer.** Grepping help for `^\s+start`
+   cannot match `restart`, and "the command doesn't exist" is the result. Read
+   the full list unfiltered.
 2. **Exercise the behaviour on a THROWAWAY**, never on live state. This is the
    part people skip, and it is the part that settles disagreements between the
    docs, the help text, and a bead.
@@ -193,9 +204,9 @@ git log -1 --format="%h %ad %s" --date=short -- <target-file>
 git log --format="%h %ad %s" --date=short -- <target-file>   # target-only commits = at risk
 ```
 
-Then check whether any commit touched the target **without** touching the
-source — those are direct edits to the sync target, and they are exactly what a
-sync run would erase:
+Then check whether any commit touched the target **without** touching the source
+— those are direct edits to the sync target, and they are exactly what a sync
+run would erase:
 
 ```
 git show --stat --format="" <sha> | grep <basename>

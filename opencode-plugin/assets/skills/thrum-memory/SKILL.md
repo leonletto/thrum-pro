@@ -4,7 +4,7 @@ description: "Use when capturing or querying structured memories (session summar
 allowed-tools: "Bash(thrum memory:*)"
 version: "0.11.0"
 author: "Leon Letto <https://github.com/leonletto>"
-license: "MIT"
+license: "Apache-2.0"
 ---
 
 # thrum memory — capture and query structured memories

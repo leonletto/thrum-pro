@@ -1,10 +1,17 @@
 ---
 name: recover-agent-state
-description: "Use after suspected scheduled-agent crash, when state.md may be partial / malformed / unparseable - validates structure BEFORE writing, preserves corrupt content to state.md.broken, and routes the daemon-side §6.5 corruption flow (sets the auto-respawn gate flag plus pages the operator via the canonical Q3-D escalation). Also handles soft-recovery - when state.md parses cleanly but is missing the prior wake's entry (mid-wake kill), reconstructs that entry from the prior session's restart snapshot via the thrum agent state update command."
+description:
+  "Use after suspected scheduled-agent crash, when state.md may be partial /
+  malformed / unparseable - validates structure BEFORE writing, preserves
+  corrupt content to state.md.broken, and routes the daemon-side §6.5 corruption
+  flow (sets the auto-respawn gate flag plus pages the operator via the
+  canonical Q3-D escalation). Also handles soft-recovery - when state.md parses
+  cleanly but is missing the prior wake's entry (mid-wake kill), reconstructs
+  that entry from the prior session's restart snapshot via the thrum agent state
+  update command."
 # source: claude-plugin/skills/recover-agent-state/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
-
 
 ## Thrum: Recover Agent State
 
@@ -16,13 +23,12 @@ required" error.
 
 ### Why this exists
 
-State.md has a strict 19-session sliding-window format (4 verbatim
-
-- 3 blocks of 5). A crash mid-write can leave the file partially serialized —
-  broken YAML-ish structure, missing sections, count violations. If
-  `$thrum-update-agent-state` is invoked on top of that broken file, the parser
-  rejects the input AND the writer would otherwise overwrite the partial data
-  with a fresh state, destroying whatever was recoverable.
+State.md has a strict 19-session sliding-window format (4 verbatim plus 3 blocks
+of 5). A crash mid-write can leave the file partially serialized — broken
+YAML-ish structure, missing sections, count violations. If
+`$thrum-update-agent-state` is invoked on top of that broken file, the parser
+rejects the input AND the writer would otherwise overwrite the partial data with
+a fresh state, destroying whatever was recoverable.
 
 Spec §6.5 mandates: do NOT silently overwrite. Validate first; if the parse
 fails, preserve the corrupt content + page the operator + block auto-respawn
@@ -114,15 +120,15 @@ no extra LLM call. Summarize the prior session's snapshot into a single
 the normal write path.
 
 **Verify before you write:** a state.md fact is TRUE when written and can
-silently become FALSE later — the reader can't tell, because a summary
-doesn't present itself as a time-bound claim (thrum-hrigx). Reconstruct only
-what the prior snapshot actually supports, not an assumption filled in to
-complete the entry. If the reconstructed line records an UNEXPLAINED
-artifact, carry the unexplained-ness forward — "not mine, cause unknown,
-nobody has traced this" — rather than resolving it to a disposition like
-"ignore it." "Ignore it" is unfalsifiable by construction (an instruction to
-not look can't be caught by looking) and can silently train the next wake to
-stop looking at the one visible symptom of a live bug.
+silently become FALSE later — the reader can't tell, because a summary doesn't
+present itself as a time-bound claim (thrum-hrigx). Reconstruct only what the
+prior snapshot actually supports, not an assumption filled in to complete the
+entry. If the reconstructed line records an UNEXPLAINED artifact, carry the
+unexplained-ness forward — "not mine, cause unknown, nobody has traced this" —
+rather than resolving it to a disposition like "ignore it." "Ignore it" is
+unfalsifiable by construction (an instruction to not look can't be caught by
+looking) and can silently train the next wake to stop looking at the one visible
+symptom of a live bug.
 
 ```bash
 thrum agent state update \

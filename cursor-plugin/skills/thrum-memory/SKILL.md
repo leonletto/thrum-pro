@@ -3,7 +3,7 @@ name: thrum-memory
 description: "Use when capturing or querying structured memories (session summaries, architectural decisions, restart snapshots, agent rules) via the thrum memory CLI. Loads decision flowchart, kind taxonomy, default-safe behaviors, and pointers to advanced sub-skills."
 version: "0.11.0"
 author: "Leon Letto <https://github.com/leonletto>"
-license: "MIT"
+license: "Apache-2.0"
 ---
 
 # thrum memory — capture and query structured memories

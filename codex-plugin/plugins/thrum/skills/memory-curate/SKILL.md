@@ -1,10 +1,14 @@
 ---
 name: memory-curate
-description: "Use when managing relationships between memories — adding/removing edges, superseding old decisions, threading comments, walking hierarchies, or deciding whether to unlink, supersede, or both. Loads edge kinds, status-driven read semantics, cycle and single-parent rules, and the unlink-supersede footgun."
+description:
+  "Use when managing relationships between memories — adding/removing edges,
+  superseding old decisions, threading comments, walking hierarchies, or
+  deciding whether to unlink, supersede, or both. Loads edge kinds,
+  status-driven read semantics, cycle and single-parent rules, and the
+  unlink-supersede footgun."
 # source: claude-plugin/skills/memory-curate/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
-
 
 ## memory-curate — edges, status, hierarchy
 

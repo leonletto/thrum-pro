@@ -1,10 +1,12 @@
 ---
 name: configure-roles
-description: "Detect environment and generate customized role-based preamble templates for your Thrum agents. Creates .thrum/role_templates/ files that auto-apply on agent registration."
+description:
+  "Detect environment and generate customized role-based preamble templates for
+  your Thrum agents. Creates .thrum/role_templates/ files that auto-apply on
+  agent registration."
 # source: claude-plugin/skills/configure-roles/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
-
 
 ## Configure Roles
 

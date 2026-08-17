@@ -35,7 +35,7 @@ def slug(path):
     internal/transcript/parsers/claude.go's EncodeClaudePath exactly for ASCII
     input. The prior narrower rule silently produced the wrong directory name
     (and a false "no transcript" result) for any worktree/agent path
-    containing an underscore, e.g. orch_b, impl_*, researcher_*.
+    containing an underscore, e.g. <orchestrator>, impl_*, researcher_*.
     """
     return re.sub(r"[^A-Za-z0-9]", "-", path)
 

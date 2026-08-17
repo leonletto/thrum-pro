@@ -100,7 +100,7 @@ thrum send --to @<requester> --stdin <<'EOF'
 Research <task-id>: <finding>. Evidence: <file:line refs>.
 EOF
 
-# Step 2: Mark yourself idle (writes local identity file directly)
+# Step 2: Mark yourself idle (RPC-preferred; local-write fallback if daemon is unreachable)
 thrum agent set-status idle
 ```
 

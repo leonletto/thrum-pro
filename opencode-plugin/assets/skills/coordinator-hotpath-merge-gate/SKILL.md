@@ -133,9 +133,12 @@ rediscovering these the hard way:
    it cost an implementer 56 silent minutes once, and it stalls gate sub-agents
    mid-run waiting on a keystroke. `rm -r` runs free. Do NOT widen the ask rule
    to work around this; that entry is the only deletion protection on the box.
-9. Create throwaway worktrees under `/private/tmp`, NEVER `/tmp` — a merge
-   worktree under `/tmp` false-FAILs worktree-ancestor tests on macOS via the
-   symlink, producing a confident wrong gate result.
+9. Check the discriminator before picking a scratch path, don't assume from
+   the platform: `[ -L /tmp ]`. macOS (symlink) — create throwaway worktrees
+   under `/private/tmp`; a worktree under `/tmp` false-FAILs worktree-ancestor
+   tests via the symlink, producing a confident wrong gate result. Linux (real
+   dir) — `/tmp` is correct; `/private/tmp` may not exist there and must not
+   be created.
 10. Your report reaches the coordinator ONLY as your final returned text.
     Side-channel output is discarded. Put the whole verdict in the return value.
 11. **NEVER run `git stash`, `git checkout`, `git reset`, or any working-tree

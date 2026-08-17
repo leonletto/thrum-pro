@@ -1,10 +1,15 @@
 ---
 name: coordinator-running-autonomous-feature-development
-description: "Use when the coordinator is idle or in a post-merge lull and a small, self-contained, reversible backlog item exists that could plausibly be developed and planned autonomously, with the finished plan still going to the human for go/no-go. Not for inventing work to stay busy, for cross-cutting / schema / release-gating items, for items the human flagged as theirs, or for the dispatch and execution mechanics themselves."
+description:
+  "Use when the coordinator is idle or in a post-merge lull and a small,
+  self-contained, reversible backlog item exists that could plausibly be
+  developed and planned autonomously, with the finished plan still going to the
+  human for go/no-go. Not for inventing work to stay busy, for cross-cutting /
+  schema / release-gating items, for items the human flagged as theirs, or for
+  the dispatch and execution mechanics themselves."
 # source: claude-plugin/skills/coordinator-running-autonomous-feature-development/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
-
 
 ## Coordinator: Running Autonomous Feature Development
 

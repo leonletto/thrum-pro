@@ -35,7 +35,7 @@ real footgun, so the CLI now requires the recipient to be explicit:
 thrum send "msg"
 
 # Right — directed send (canonical form)
-thrum send --to @coordinator_main --stdin <<'EOF'
+thrum send --to @your_coordinator --stdin <<'EOF'
 msg
 EOF
 

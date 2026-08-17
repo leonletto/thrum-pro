@@ -92,8 +92,8 @@ auto-detect or broadcast fallback behind it.
 {
   "permission_supervisors": [
     "coordinator", // role → fans out to every active coordinator
-    "@coordinator_main", // specific agent (name-based)
-    "@user:leon-letto", // user → auto-bridges to Telegram if configured
+    "@your_coordinator", // specific agent (name-based)
+    "@user:jane-doe", // user → auto-bridges to Telegram if configured
   ],
 }
 ```

@@ -152,7 +152,7 @@ thrum reply <MSG_ID> --stdin <<'EOF'
 Received. Starting <scope>. ETA <rough>.
 EOF
 
-# Step 2: Mark yourself working (writes local identity file directly)
+# Step 2: Mark yourself working (RPC-preferred; local-write fallback if daemon is unreachable)
 thrum agent set-status working
 ```
 

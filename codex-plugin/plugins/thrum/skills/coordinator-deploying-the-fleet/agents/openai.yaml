@@ -1,4 +1,0 @@
-interface:
-  display_name: "Coordinator Deploying The Fleet"
-  short_description: "Use when rolling a build across ALL boxes - fleet deploy, fleet roll, rolling the fleet, deploy everywhere, ship to every box, canary then the rest, promote the canary, fleet rollout, deploying after a merge batch. Orchestrates the staged multi-box order and the promotion gate between stages, and delegates each individual box to the coordinator-deploying-a-box runbook. Load this BEFORE dispatching any box."
-  default_prompt: "Use when rolling a build across ALL boxes - fleet deploy, fleet roll, rolling the fleet, deploy everywhere, ship to every box, canary then the rest, promote the canary, fleet rollout, deploying after a merge batch. Orchestrates the staged multi-box order and the promotion gate between stages, and delegates each individual box to the coordinator-deploying-a-box runbook. Load this BEFORE dispatching any box."

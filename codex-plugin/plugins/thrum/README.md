@@ -37,4 +37,4 @@ Report vulnerabilities via the parent repository's issue tracker.
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+Apache-2.0 — see the [thrum-pro repository LICENSE](https://github.com/leonletto/thrum-pro/blob/main/LICENSE).

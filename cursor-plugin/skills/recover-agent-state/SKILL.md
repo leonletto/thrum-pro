@@ -13,9 +13,8 @@ required" error.
 
 ## Why this exists
 
-State.md has a strict 19-session sliding-window format (4 verbatim
-
-- 3 blocks of 5). A crash mid-write can leave the file partially serialized —
+State.md has a strict 19-session sliding-window format (4 verbatim plus
+3 blocks of 5). A crash mid-write can leave the file partially serialized —
   broken YAML-ish structure, missing sections, count violations. If
   `/thrum:update-agent-state` is invoked on top of that broken file, the parser
   rejects the input AND the writer would otherwise overwrite the partial data

@@ -1,15 +1,16 @@
 ---
 name: thrum-_snapshot-protocol
-description: Shared snapshot-composition protocol consumed by the snapshot-save commands. Not user-invocable directly.
+description:
+  Shared snapshot-composition protocol consumed by the snapshot-save commands.
+  Not user-invocable directly.
 # source: claude-plugin/commands/_snapshot-protocol.md
 # generated-by: scripts/sync-skills.sh
 ---
 
-# Thrum _snapshot Protocol
+# Thrum \_snapshot Protocol
 
 This is a shared partial, not a user-invocable skill. Sibling Thrum skills
 consume it as a protocol reference; do not invoke it directly.
-
 
 ## Snapshot Composition Protocol (shared partial)
 
@@ -86,11 +87,11 @@ its checks here.
 
 **Describe commits, don't claim them.** A snapshot's job is to describe what a
 commit's content and effect ARE — that's checkable by anyone re-reading it.
-Prohibit first-person narration of git actions in the body of a snapshot:
-no "I pushed X", "I fixed Y and verified it", "I ran Z". Write instead:
-"commit `<sha>` exists and does `<Y>`" / "`<sha>` addresses `<Y>`". Attribution
-of WHO performed a git action already lives in `command.jsonl` / `hooklog.jsonl`
-— restating it here would assert authorship the snapshot-writer has typically
+Prohibit first-person narration of git actions in the body of a snapshot: no "I
+pushed X", "I fixed Y and verified it", "I ran Z". Write instead: "commit
+`<sha>` exists and does `<Y>`" / "`<sha>` addresses `<Y>`". Attribution of WHO
+performed a git action already lives in `command.jsonl` / `hooklog.jsonl` —
+restating it here would assert authorship the snapshot-writer has typically
 never mechanically verified. (This bit us once: a snapshot narrated a pairing
 session in first person for commits someone else actually pushed — the
 content/effect described was accurate, only the implied authorship was false.)

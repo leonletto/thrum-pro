@@ -1,10 +1,12 @@
 ---
 name: coordinator-running-review-cycles
-description: "Use when an implementer reports DONE, when consolidating review findings, when handling implementer pushback on a finding, or when arriving at a review gate. Loads coordinator-specific discipline for running review cycles cleanly."
+description:
+  "Use when an implementer reports DONE, when consolidating review findings,
+  when handling implementer pushback on a finding, or when arriving at a review
+  gate. Loads coordinator-specific discipline for running review cycles cleanly."
 # source: claude-plugin/skills/coordinator-running-review-cycles/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
-
 
 ## Coordinator: Running Review Cycles
 
@@ -21,10 +23,10 @@ Protocol — "Run both review types in parallel for every agent branch".)
 reviewers as parallel sub-agents in the same message. Pass each a clear scope
 ("review the diff at <BASE>...<HEAD> for <criteria>").
 
-> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet`
-> (low effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
-> operator-ask or a skill step that names it. See the
-> `choosing-subagent-models` skill for the full policy.
+> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet` (low
+> effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
+> operator-ask or a skill step that names it. See the `choosing-subagent-models`
+> skill for the full policy.
 
 ### Wait for both reviewers before sending anything to the implementer
 
@@ -147,9 +149,9 @@ AFTER they report DONE. They target different artifacts and both are needed.
 
 ### See also
 
-- `coordinator-branch-split-on-block` — when a Pass-3 gate or this skill's
-  dual review BLOCKS on one concern of a branch that bundles multiple
-  independent concerns, while the other concern(s) are clean.
+- `coordinator-branch-split-on-block` — when a Pass-3 gate or this skill's dual
+  review BLOCKS on one concern of a branch that bundles multiple independent
+  concerns, while the other concern(s) are clean.
 
 ### Project-specific rules (already loaded)
 

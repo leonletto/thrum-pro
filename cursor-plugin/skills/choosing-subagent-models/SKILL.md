@@ -8,7 +8,7 @@ description: "Use when about to launch, spawn, or dispatch a subagent, sub-agent
 ## Audit, review, or question? Require a file.
 
 **Every subagent you dispatch for an answer must WRITE ITS RESULT TO A FILE
-(e.g. `/private/tmp/<task>.md`); its reply to you is only a summary. Put this
+(e.g. `/tmp/<task>.md`); its reply to you is only a summary. Put this
 in the prompt.**
 
 ## Pin every spawn. The floor depends on the agent's ROLE.
@@ -184,7 +184,7 @@ given ten tasks is the anti-pattern.
 `thrum agent runtime-config get <agent>` reports the **configured** value, not the
 **resolved** one.
 
-Observed 2026-07-13: `impl_yespn` was **actually running Opus 4.8** while both the
+Observed 2026-07-13: `<implementer>` was **actually running Opus 4.8** while both the
 launch flag (`--model sonnet`) *and* `runtime-config get` **confirmed sonnet**. The
 check that exists to catch a bad pin is itself a false green.
 

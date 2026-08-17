@@ -4,7 +4,7 @@ description: "Use when running thrum memory search with RAG (--near), composing 
 allowed-tools: "Bash(thrum memory:*),Bash(thrum config:*)"
 version: "0.11.0"
 author: "Leon Letto <https://github.com/leonletto>"
-license: "MIT"
+license: "Apache-2.0"
 ---
 
 # memory-search-advanced — RAG, hint codes, complex predicates

@@ -114,6 +114,15 @@ to advance, advance it.
 
 ## Destroy an agent before tearing down its worktree
 
+🔴 **BEFORE reaping ANY worktree — especially a batch reap to reduce the worktree
+count or relieve load — assess liveness FIRST via `coordinator-assessing-agent-completion`.**
+Its safeguard is DIRECT-OBSERVATION liveness (live tmux pane / ppid). A
+snapshot-presence check detects only SLEEPING agents; a LIVE agent has no
+snapshot, so filtering on "no restart snapshot" reaps live agents. Never
+batch-reap `git worktree list` on a proxy heuristic. The reap preconditions
+(HEAD containment, only-copy untracked state, direct-death observation) are
+mandatory.
+
 **Why:** `thrum worktree teardown <name>` does exactly what its name says — it
 tears down the **worktree** — and is intentionally not coupled to runtime
 lifecycle. If the agent's runtime is still running in tmux when you teardown,

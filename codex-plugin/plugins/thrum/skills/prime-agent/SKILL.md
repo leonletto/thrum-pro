@@ -1,10 +1,14 @@
 ---
 name: prime-agent
-description: "Use on scheduled-agent wake or lean prime restart - replaces the full thrum prime briefing with a lean two-step warmup tuned for short-lived scheduled-agent invocations. Step 1 reads the inbox literally (NOT a discipline assumption); step 2 surfaces newly-shipped skills since the agent last ran."
+description:
+  "Use on scheduled-agent wake or lean prime restart - replaces the full thrum
+  prime briefing with a lean two-step warmup tuned for short-lived
+  scheduled-agent invocations. Step 1 reads the inbox literally (NOT a
+  discipline assumption); step 2 surfaces newly-shipped skills since the agent
+  last ran."
 # source: claude-plugin/skills/prime-agent/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
-
 
 ## Thrum: Prime Scheduled Agent (Lean)
 

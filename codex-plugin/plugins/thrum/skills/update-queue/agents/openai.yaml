@@ -1,0 +1,4 @@
+interface:
+  display_name: "Update Queue"
+  short_description: "Use to reconcile your own thrum queue against ground truth - 'update my queue', 'audit my queue', 'my queue is stale', 'reconcile the queue', 'clean up done bundles', or at any session start / lull when you are about to conclude nothing is pending. Verifies each live bundle against git + beads + merge state, drops rot, adds missing committed work. Any role. A repeatable subset of a full multi-agent reconcile - scoped to YOUR queue only."
+  default_prompt: "Use to reconcile your own thrum queue against ground truth - 'update my queue', 'audit my queue', 'my queue is stale', 'reconcile the queue', 'clean up done bundles', or at any session start / lull when you are about to conclude nothing is pending. Verifies each live bundle against git + beads + merge state, drops rot, adds missing committed work. Any role. A repeatable subset of a full multi-agent reconcile - scoped to YOUR queue only."

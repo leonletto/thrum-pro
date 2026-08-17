@@ -1,10 +1,12 @@
 ---
 name: implementer-tdd-and-quality
-description: "Use when writing tests, running tests, hitting a quality gate, or before reporting a task done. Loads project-specific test and quality discipline that complements superpowers:test-driven-development."
+description:
+  "Use when writing tests, running tests, hitting a quality gate, or before
+  reporting a task done. Loads project-specific test and quality discipline that
+  complements superpowers:test-driven-development."
 # source: claude-plugin/skills/implementer-tdd-and-quality/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
-
 
 ## Implementer: TDD and Quality
 
@@ -90,10 +92,10 @@ that would otherwise come back as findings.
    failures.
 3. **Primitive ledger pass.** If this diff adds I/O or SQL under a hot root
    (`Handle*`/tick/sweeper/`SyncApplier`/boot — see `.thrum/hotpath-gate.json`'s
-   `lenses.existing_primitive_bypass.hot_root_indicators`), confirm you have a ledger row: raw op -> callee
-   package searched -> primitive adopted, or none exists + bounded cost formula
-   (frequency x production cardinality, at production scale). Include it in
-   your DONE report.
+   `lenses.existing_primitive_bypass.hot_root_indicators`), confirm you have a
+   ledger row: raw op -> callee package searched -> primitive adopted, or none
+   exists + bounded cost formula (frequency x production cardinality, at
+   production scale). Include it in your DONE report.
 
 Fix what you find before sending the ping.
 

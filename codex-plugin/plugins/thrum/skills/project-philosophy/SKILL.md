@@ -1,10 +1,14 @@
 ---
 name: project-philosophy
-description: "Use when a project needs its implementation philosophy established or updated — the canonical doc at .thrum/philosophy.md defining anti-patterns, red flags, and project-specific rules that implementation agents read at task-start time. First invocation generates from project inspection; subsequent invocations reconcile against current project state and propose diffs."
+description:
+  "Use when a project needs its implementation philosophy established or updated
+  — the canonical doc at .thrum/philosophy.md defining anti-patterns, red flags,
+  and project-specific rules that implementation agents read at task-start time.
+  First invocation generates from project inspection; subsequent invocations
+  reconcile against current project state and propose diffs."
 # source: claude-plugin/skills/project-philosophy/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
-
 
 ## Project Philosophy
 
@@ -181,14 +185,14 @@ Read `resources/reliability-class-library.md`. For each of its 7 classes, run
 the per-language probe matching the language detected in Step 1 (fall back to
 the class's generic probe if the detected language has no dedicated entry).
 Record every hit as an adapted finding: the class name, the specific file/line
-found, and a BAD/GOOD pair phrased in the target repo's own language and
-idioms — never reuse the library's own example snippets verbatim, they are
+found, and a BAD/GOOD pair phrased in the target repo's own language and idioms
+— never reuse the library's own example snippets verbatim, they are
 illustrations of the SHAPE to look for, not text to paste.
 
 A class with zero hits is not an error — record it as walked-and-not-found and
 move on. This step runs before the interactive prompts (Step 5) so seeded
-findings can be shown to the user as defaults they can accept, edit, or
-decline, rather than starting from a blank prompt.
+findings can be shown to the user as defaults they can accept, edit, or decline,
+rather than starting from a blank prompt.
 
 #### Step 5: Interactive prompts for project-specific rules
 
@@ -213,25 +217,24 @@ quality comes from real answers, not filler.
 
 #### Step 6: Render the template
 
-Read `resources/philosophy-template.md`. It is not token-substituted — it
-uses bracketed prose placeholders (e.g. `[Criterion 1 — e.g., ...]`) that you
-replace with real content, and `<!-- TODO: ... -->` comments for anything left
+Read `resources/philosophy-template.md`. It is not token-substituted — it uses
+bracketed prose placeholders (e.g. `[Criterion 1 — e.g., ...]`) that you replace
+with real content, and `<!-- TODO: ... -->` comments for anything left
 undetected or unprovided. Fill in:
 
 - The intro/language/framework/test-harness lines from Step 1–3.
 - The `## Anti-Patterns` section's `### 1.`–`### 3.` entries are universal
-  defaults — leave them as-is unless a detected convention (Step 4)
-  contradicts one.
+  defaults — leave them as-is unless a detected convention (Step 4) contradicts
+  one.
 - `### 4.` onward: one numbered section per Step 4a finding (an adapted class
-  hit), in the order the classes are listed in the library, using that
-  finding's BAD/GOOD pair and Why. If Step 4a found more than 2 classes, add
-  as many numbered sections as the probe finds — the template's `### 4.`/
-  `### 5.` are illustrative slots, not a fixed count. If Step 4a found fewer
-  than 2, leave the remaining slot(s) as the template's own
-  `[Project-specific anti-pattern]` placeholder rather than fabricating a
-  finding.
-- Any remaining `[...]` placeholder with no detected or provided value stays
-  as a `<!-- TODO: … -->` line rather than silent emptiness.
+  hit), in the order the classes are listed in the library, using that finding's
+  BAD/GOOD pair and Why. If Step 4a found more than 2 classes, add as many
+  numbered sections as the probe finds — the template's `### 4.`/ `### 5.` are
+  illustrative slots, not a fixed count. If Step 4a found fewer than 2, leave
+  the remaining slot(s) as the template's own `[Project-specific anti-pattern]`
+  placeholder rather than fabricating a finding.
+- Any remaining `[...]` placeholder with no detected or provided value stays as
+  a `<!-- TODO: … -->` line rather than silent emptiness.
 
 #### Step 6a: MANDATORY — wire the project's security/threat model into the Decision Framework
 
@@ -248,24 +251,23 @@ word "attacker".
 ```
 
 🔴 **WHY THE KEY MATTERS MORE THAN THE POINTER (thrum, 2026-07-24).** This
-project already had a security-model row and it read *"Does this design name
-an ATTACKER, or harden against one?"* — so it **could not fire** on a
-requirement that never named one. A permanence requirement arrived framed as
-*"forensic evidence must survive"*, read as durability rather than security,
-and produced an unratified never-rotate invariant that reached an implementer
-as a build instruction. **A control whose key excludes its own target
-population is decoration.** Security-shaped requirements usually arrive
-wearing non-security vocabulary: durability, forensics, compliance,
-"defence in depth", "must never be lost".
+project already had a security-model row and it read _"Does this design name an
+ATTACKER, or harden against one?"_ — so it **could not fire** on a requirement
+that never named one. A permanence requirement arrived framed as _"forensic
+evidence must survive"_, read as durability rather than security, and produced
+an unratified never-rotate invariant that reached an implementer as a build
+instruction. **A control whose key excludes its own target population is
+decoration.** Security-shaped requirements usually arrive wearing non-security
+vocabulary: durability, forensics, compliance, "defence in depth", "must never
+be lost".
 
 🔴 **AND STATE THE DEPLOYMENT SHAPE POSITIVELY, not just the exclusions.** The
-dominant failure here is importing a SaaS/multi-tenant frame into a system
-that is not one — which **manufactures defects out of correct design**
-(recorded twice on this project; one instance invalidated a six-agent
-inventory). Write what the project IS, e.g. for thrum: *NOT SaaS, NOT
-internet-facing, NOT product-oriented; single-user, localhost, multi-machine
-on the same network.* A reader who knows only what is out of scope will still
-import the wrong frame.
+dominant failure here is importing a SaaS/multi-tenant frame into a system that
+is not one — which **manufactures defects out of correct design** (recorded
+twice on this project; one instance invalidated a six-agent inventory). Write
+what the project IS, e.g. for thrum: _NOT SaaS, NOT internet-facing, NOT
+product-oriented; single-user, localhost, multi-machine on the same network._ A
+reader who knows only what is out of scope will still import the wrong frame.
 
 #### Step 7: Write `.thrum/philosophy.md`
 
@@ -416,8 +418,8 @@ Skipped-proposal log is advisory — its absence is not an error.
 ### Reference
 
 - `.thrum/philosophy.md` — the canonical doc this skill generates
-- `resources/reliability-class-library.md` — the generalizable reliability
-  class library Step 4a probes; shared with `project-hotpath-gate`
+- `resources/reliability-class-library.md` — the generalizable reliability class
+  library Step 4a probes; shared with `project-hotpath-gate`
 - `coordinator-philosophy-merge-gate` — the gate skill that reads the philosophy
   doc
 - `project-hotpath-gate` — the companion builder that generates

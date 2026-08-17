@@ -1,10 +1,14 @@
 ---
 name: verify-against-plan
-description: "Use after implementation is complete to verify the code covers every requirement from the plan / design spec - runs alongside code-review as the second pass in the Code Review Protocol. Outputs structured findings - missing scope, unmet acceptance criteria, silent deviations from the spec, newly-introduced surprises."
+description:
+  "Use after implementation is complete to verify the code covers every
+  requirement from the plan / design spec - runs alongside code-review as the
+  second pass in the Code Review Protocol. Outputs structured findings - missing
+  scope, unmet acceptance criteria, silent deviations from the spec,
+  newly-introduced surprises."
 # source: claude-plugin/skills/verify-against-plan/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
-
 
 ## Verify Against Plan
 
@@ -76,40 +80,40 @@ clear error — do not proceed with partial inputs.
    for the actual verification pass. If neither is present, bail — a plan with
    no acceptance criteria and no file table cannot be verified against.
 
-4. **Authored-against drift check (informational; does not block on missing stamp).**
-   Look for a stamp of this form near the top of the plan:
+4. **Authored-against drift check (informational; does not block on missing
+   stamp).** Look for a stamp of this form near the top of the plan:
 
-   Literal example: `**Authored-against:** \`a1b2c3d4e5\` target: \`thrum-agents\``
+   Literal example: `**Authored-against:** \`a1b2c3d4e5\` target:
+   \`thrum-agents\``
 
-   Regex: `^\*\*Authored-against:\*\* \`([0-9a-f]+)\` target: \`([^\`]+)\``
-   (sha → capture group 1, merge_target → capture group 2)
+   Regex: `^\*\*Authored-against:\*\* \`([0-9a-f]+)\` target: \`([^\`]+)\`` (sha
+   → capture group 1, merge_target → capture group 2)
 
    (Canonical stamp definition: `claude-plugin/commands/_stamp-protocol.md`. The
-   stamp follows the same literal `grep -F` / fixed-field-order / case-sensitive /
-   ASCII-only convention as the `THRUM-REVIEW` marker — see
+   stamp follows the same literal `grep -F` / fixed-field-order / case-sensitive
+   / ASCII-only convention as the `THRUM-REVIEW` marker — see
    `coordinator-running-brainstorm-cycles` skill § "Footer → commit → stamp".)
 
    Three distinct outcomes, never conflated:
-
    - **UNVERIFIABLE — no stamp:** note as informational ("plan predates the
-     Authored-against stamp convention, cannot check for drift") and continue
-     — do not fail or block; this is an additive check for plans that carry the
+     Authored-against stamp convention, cannot check for drift") and continue —
+     do not fail or block; this is an additive check for plans that carry the
      stamp.
    - **UNVERIFIABLE — stamp present, no cited files:** if the stamp is present
      but the plan's File Structure table cites zero files, check for this
      condition BEFORE constructing any `git diff` command — a bare
      `git diff <sha>..<target> --` with an empty pathspec produces a FULL-REPO
-     diff rather than an empty one, which would wrongly land in the NEEDS-RECHECK
-     branch with nothing to re-check. Go straight to reporting UNVERIFIABLE
-     without running any diff. Report explicitly: "stamp present but no cited
-     files to diff — cannot confirm currency." This is NOT reported as
-     VERIFIED-CURRENT.
-   - **Stamp found and cited files present:** run `git diff
-     <sha>..origin/<merge_target> -- <files from the File Structure table>`
+     diff rather than an empty one, which would wrongly land in the
+     NEEDS-RECHECK branch with nothing to re-check. Go straight to reporting
+     UNVERIFIABLE without running any diff. Report explicitly: "stamp present
+     but no cited files to diff — cannot confirm currency." This is NOT reported
+     as VERIFIED-CURRENT.
+   - **Stamp found and cited files present:** run
+     `git diff <sha>..origin/<merge_target> -- <files from the File Structure table>`
      (resolve `<merge_target>` through its remote-tracking ref, never a bare
-     local branch name — a local branch of the same name can be stale or
-     absent on the reader's machine), scoped only to the files the plan cites
-     (never a full-repo diff). Two sub-outcomes:
+     local branch name — a local branch of the same name can be stale or absent
+     on the reader's machine), scoped only to the files the plan cites (never a
+     full-repo diff). Two sub-outcomes:
      - **VERIFIED-CURRENT** — empty diff: report as a FALSIFIABLE NULL: "plan's
        cited files verified CURRENT as of `<merge_target>` — zero drift." (State
        a positive confirmed fact, not "no evidence of problems" — that
@@ -124,10 +128,10 @@ clear error — do not proceed with partial inputs.
          cited anchor rotted; a precondition the plan assumed no longer holds).
          A deleted or renamed cited file is automatically BLOCKING without
          further re-check nuance: the plan asserts the file exists and has
-         certain content; a deleted file can never satisfy that assertion.
-         (This routing — deleted/renamed cited file → NEEDS-RECHECK → BLOCKING
-         — is intentional; future pathspec optimizations must not short-circuit
-         past this branch for deleted or renamed files.)
+         certain content; a deleted file can never satisfy that assertion. (This
+         routing — deleted/renamed cited file → NEEDS-RECHECK → BLOCKING — is
+         intentional; future pathspec optimizations must not short-circuit past
+         this branch for deleted or renamed files.)
        - **IMPORTANT** — if the cited files moved but every plan claim re-checks
          as accurate: "cited files moved since authoring, re-verified — claims
          still accurate."
@@ -136,32 +140,32 @@ clear error — do not proceed with partial inputs.
    missing stamp).** Runs whenever check 4 found a stamp at all — both the
    "stamp present, no cited files" outcome and the "stamp and cited files
    present" outcome above, since this check only needs the stamp's
-   `<sha>`/`<merge_target>`, not the plan's cited-files list. Run the
-   ordered, short-circuiting two-check sequence defined canonically in
+   `<sha>`/`<merge_target>`, not the plan's cited-files list. Run the ordered,
+   short-circuiting two-check sequence defined canonically in
    `_stamp-protocol.md` § "Read-time provenance re-derivation" (SHA-resolves
-   first, then merge-status) against the stamp's `<sha>`/`<merge_target>` —
-   the exact commands live there as the single source of truth; this section
-   states outcomes and severity only:
-
+   first, then merge-status) against the stamp's `<sha>`/`<merge_target>` — the
+   exact commands live there as the single source of truth; this section states
+   outcomes and severity only:
    - **FABRICATED** — SHA-resolves fails: flag immediately and stop; the
      merge-status check is undefined for a SHA that doesn't exist.
-   - **STALE** — SHA-resolves passes AND merge-status shows the SHA has
-     already merged into `<merge_target>` AND the plan's own prose still
-     describes that SHA's work as open/in-progress/awaiting-a-gate.
+   - **STALE** — SHA-resolves passes AND merge-status shows the SHA has already
+     merged into `<merge_target>` AND the plan's own prose still describes that
+     SHA's work as open/in-progress/awaiting-a-gate.
 
    These checks are re-derived at read time, every time this skill runs — not
    cached from a prior verification pass.
 
 6. **Primitive Ledger row present and valid.** If the diff adds I/O or SQL under
    a hot root (`Handle*`/tick/sweeper/`SyncApplier`/boot — see
-   `.thrum/hotpath-gate.json`'s `lenses.existing_primitive_bypass.hot_root_indicators`), confirm the implementer's
-   report includes a ledger row (raw op -> callee package searched -> primitive
-   adopted, or none exists + bounded cost formula at production scale). Absence
-   of the row when one was required is a finding. Presence alone is not
-   sufficient — verify the claim: if a primitive is named as adopted, confirm it
-   is actually used at the cited call site; if "none exists" is claimed, spot-check
-   that the callee package was actually searched and the cost formula uses
-   realistic production scale, not a test-fixture number.
+   `.thrum/hotpath-gate.json`'s
+   `lenses.existing_primitive_bypass.hot_root_indicators`), confirm the
+   implementer's report includes a ledger row (raw op -> callee package searched
+   -> primitive adopted, or none exists + bounded cost formula at production
+   scale). Absence of the row when one was required is a finding. Presence alone
+   is not sufficient — verify the claim: if a primitive is named as adopted,
+   confirm it is actually used at the cited call site; if "none exists" is
+   claimed, spot-check that the callee package was actually searched and the
+   cost formula uses realistic production scale, not a test-fixture number.
 
 Only when checks 1–3 pass should the comparison pass begin. Checks 4, 5, and 6
 run alongside and contribute findings; a missing stamp never blocks, and check 6
@@ -224,8 +228,8 @@ not write "### BLOCKING #0 — none".
   implementation diff with no corresponding entry in the plan's File Structure
   table — unplanned additions the coordinator should review for scope creep.
   Also: drift check found that cited files moved since authoring but all plan
-  claims re-checked as accurate ("cited files moved since authoring,
-  re-verified — claims still accurate").
+  claims re-checked as accurate ("cited files moved since authoring, re-verified
+  — claims still accurate").
 - **MINOR** — missing documentation reference, commit-message format drift, or
   stylistic plan deviation that does not affect behavior. Example: plan calls
   for `Refs thrum-s9q9.3` in commit body, commit just has the title.
@@ -253,27 +257,27 @@ Read-time provenance re-derivation (check 5) severity mapping:
 - **FABRICATED** — SHA-resolves failed: the stamped `<sha>` does not exist in
   the repo. **BLOCKING** — the stamp itself is untrustworthy; every downstream
   drift claim (check 4) built on this SHA is unverifiable.
-- **STALE** — SHA-resolves passed, merge-status shows the SHA has already
-  merged into `<merge_target>`, but the plan's prose still narrates that work
-  as open/in-progress/awaiting-a-gate. **IMPORTANT** — the plan's narrative is
-  out of date; the described gate has already resolved (or never needed to
-  block), which the coordinator should reconcile before acting on the plan's
-  stated pending state.
+- **STALE** — SHA-resolves passed, merge-status shows the SHA has already merged
+  into `<merge_target>`, but the plan's prose still narrates that work as
+  open/in-progress/awaiting-a-gate. **IMPORTANT** — the plan's narrative is out
+  of date; the described gate has already resolved (or never needed to block),
+  which the coordinator should reconcile before acting on the plan's stated
+  pending state.
 
 Primitive Ledger check (check 6) severity mapping:
 
-- **BLOCKING** — the hot-root diff genuinely bypasses an available primitive
-  (a primitive exists, was not adopted, and no ledger row accounts for the
-  bypass) — a raw op standing where a callee-package primitive was reachable
-  and unlogged. Also BLOCKING: a ledger row is present but the "adopted"
-  primitive is not actually used at the cited call site, or a "none exists"
-  claim is contradicted by an available primitive the implementer's own
-  ledger row claims to have searched for and missed.
-- **IMPORTANT** — the ledger row is missing but the raw op itself is
-  harmless (no primitive exists, cost formula would clear at production
-  scale) — the accounting step was skipped, not the substance. Also
-  IMPORTANT: a "none exists" claim whose cost formula uses a test-fixture
-  number instead of realistic production scale, pending a re-derived figure.
+- **BLOCKING** — the hot-root diff genuinely bypasses an available primitive (a
+  primitive exists, was not adopted, and no ledger row accounts for the bypass)
+  — a raw op standing where a callee-package primitive was reachable and
+  unlogged. Also BLOCKING: a ledger row is present but the "adopted" primitive
+  is not actually used at the cited call site, or a "none exists" claim is
+  contradicted by an available primitive the implementer's own ledger row claims
+  to have searched for and missed.
+- **IMPORTANT** — the ledger row is missing but the raw op itself is harmless
+  (no primitive exists, cost formula would clear at production scale) — the
+  accounting step was skipped, not the substance. Also IMPORTANT: a "none
+  exists" claim whose cost formula uses a test-fixture number instead of
+  realistic production scale, pending a re-derived figure.
 
 When choosing between BLOCKING and IMPORTANT, apply the test: _would a reader of
 the merged code be surprised by this?_ BLOCKING = yes, definitely; IMPORTANT =

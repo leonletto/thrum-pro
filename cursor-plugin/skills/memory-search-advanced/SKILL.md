@@ -3,7 +3,7 @@ name: memory-search-advanced
 description: "Use when running thrum memory search with RAG (--near), composing complex predicate stacks, paginating large result sets, interpreting MEM-001..010 hint codes, or diagnosing embedding adapter behavior. Loads three-vector ranking semantics, length-bias caveat, and the full hint catalog."
 version: "0.11.0"
 author: "Leon Letto <https://github.com/leonletto>"
-license: "MIT"
+license: "Apache-2.0"
 ---
 
 # memory-search-advanced — RAG, hint codes, complex predicates

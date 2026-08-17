@@ -20,8 +20,8 @@ re-reads every earlier one. N narrated messages means turn *k* carries all
 it changes the growth curve.
 
 **Natural experiment, owner-confirmed:** the 3 boxes with orchestrators
-(primary, thrumtest, zaras) show this problem; the 2 without (ubuntuleondev,
-leontest) do not. Same role, same preamble, same guidelines, opposite
+(box-a, box-b, box-c) show this problem; the 2 without (box-d,
+box-e) do not. Same role, same preamble, same guidelines, opposite
 outcomes. Coordinator context scales with **subordinate count and message
 volume**, not with work completed. The quiet boxes are not more disciplined —
 nobody is talking to them. Any fix framed as "be more disciplined" is refuted
@@ -135,7 +135,7 @@ The point of this section: **an example gets copied far more faithfully than
 a rule gets obeyed.** Same situation, both ways.
 
 **An agent reports a completed review.**
-❌ *"orch_b just finished reviewing impl_duolq's branch. The review found two
+❌ *"<orchestrator> just finished reviewing <implementer>'s branch. The review found two
 minor issues: an unused import in redact.go and a missing test case for the
 empty-string path. Both were fixed and the branch is now clean. I'm going to
 merge it into thrum-agents now and then check on the next epic..."*

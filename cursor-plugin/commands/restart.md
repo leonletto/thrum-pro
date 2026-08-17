@@ -237,7 +237,7 @@ failed, or you're not in tmux).
 DO NOT RESTART. Report and hold:
 
 ```bash
-thrum send --to @coordinator_main --stdin <<'EOF'
+thrum send --to @your_coordinator --stdin <<'EOF'
 Restart verification FAILED — holding, not self-restarting.
 Reason: <paste the VERIFY FAILED line(s) from Step 5>
 Snapshot path checked: ${REPO}/.thrum/restart/${AGENT}.md
@@ -245,7 +245,7 @@ Session target checked: ${SESSION} (raw: ${SESSION_RAW})
 EOF
 ```
 
-If you ARE `coordinator_main` (no senior agent above you), print the same
+If you ARE the top-level coordinator (no senior agent above you), print the same
 failure reason for the operator instead of sending it, and hold.
 
 **Else (no tmux session)** — self-restart has nothing to target (there is no

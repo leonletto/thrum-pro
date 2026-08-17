@@ -1,6 +1,10 @@
 ---
 name: thrum-sleep-extended
-description: Park this agent for operator-initiated wake with a comprehensive 16-section snapshot (does NOT signal coordinator) then thrum-tmux-kills own session. Use for designer/architect-grade work where wake may be cold and must recover wire contracts + capability matrix + design rationale.
+description:
+  Park this agent for operator-initiated wake with a comprehensive 16-section
+  snapshot (does NOT signal coordinator) then thrum-tmux-kills own session. Use
+  for designer/architect-grade work where wake may be cold and must recover wire
+  contracts + capability matrix + design rationale.
 # source: claude-plugin/commands/sleep-extended.md
 # generated-by: scripts/sync-skills.sh
 ---
@@ -10,7 +14,6 @@ description: Park this agent for operator-initiated wake with a comprehensive 16
 Use this skill when the user explicitly wants the `sleep-extended` Thrum
 workflow. Prefer the umbrella `thrum` skill when the request spans multiple
 commands or needs broader coordination judgment.
-
 
 ## Sleep — Extended (16-section snapshot)
 
@@ -87,21 +90,21 @@ auto-injects this file — same mechanism as restart wake.
 **Your worktree may be torn down while you sleep — and if it is, YOUR SNAPSHOT
 GOES WITH IT unless you do this step.**
 
-🔴 **READ THIS CAREFULLY; AN EARLIER VERSION OF THIS SKILL WAS WRONG.** It claimed
-your snapshot "survives because `.thrum/` redirects to the main repo." **That is
-false.** A worktree's `.thrum/` is a REAL LOCAL DIRECTORY. The `redirect` inside
-it is just a plain text FILE containing a path — a pointer thrum's code consults.
-The filesystem redirects nothing. Your worktree keeps its own local `agents/`,
-`context/`, `identities/`, and `restart/`.
+🔴 **READ THIS CAREFULLY; AN EARLIER VERSION OF THIS SKILL WAS WRONG.** It
+claimed your snapshot "survives because `.thrum/` redirects to the main repo."
+**That is false.** A worktree's `.thrum/` is a REAL LOCAL DIRECTORY. The
+`redirect` inside it is just a plain text FILE containing a path — a pointer
+thrum's code consults. The filesystem redirects nothing. Your worktree keeps its
+own local `agents/`, `context/`, `identities/`, and `restart/`.
 
-**THE ACTUAL MECHANISM:** your snapshot at `<worktree>/.thrum/restart/<agent-id>.md`
-is **worktree-local**. It is copied into the main repo **only when you WAKE** —
-`thrum prime` reads it from the worktree and archives it to
-`<main-repo>/.thrum/agents/<agent-id>/sessions/`. **Then and only then.** So a
-teardown that happens BEFORE your wake destroys the snapshot, permanently, and
-nothing warns you. This matters more for an extended snapshot: you are parking
-wire contracts, a capability matrix, and design rationale that are expensive to
-reconstruct and exist nowhere else.
+**THE ACTUAL MECHANISM:** your snapshot at
+`<worktree>/.thrum/restart/<agent-id>.md` is **worktree-local**. It is copied
+into the main repo **only when you WAKE** — `thrum prime` reads it from the
+worktree and archives it to `<main-repo>/.thrum/agents/<agent-id>/sessions/`.
+**Then and only then.** So a teardown that happens BEFORE your wake destroys the
+snapshot, permanently, and nothing warns you. This matters more for an extended
+snapshot: you are parking wire contracts, a capability matrix, and design
+rationale that are expensive to reconstruct and exist nowhere else.
 
 **Leave the snapshot where it is** — `thrum prime` reads it from the worktree on
 wake, so that path is correct and required. **Additionally**, copy anything you
@@ -116,16 +119,16 @@ cp "${REPO}/.thrum/restart/${AGENT}.md" "${MAIN_THRUM}/agents/${AGENT}/last-slee
 ls -la "${MAIN_THRUM}/agents/${AGENT}/last-sleep-snapshot.md"   # VERIFY IT LANDED
 ```
 
-Copy there: reports / findings you authored, important uncommitted artifacts, and
-anything your resume plan references.
+Copy there: reports / findings you authored, important uncommitted artifacts,
+and anything your resume plan references.
 
 **VERIFY THE COPY EXISTS AT THE MAIN PATH before ending your session.** Do not
 trust `cp`'s exit code — list the destination file. This step is your ONLY
 recoverability guarantee against teardown-while-asleep; the redirect is not one.
 
-*(Recorded as thrum-izx2g. Verified at source: an agent's sleep snapshot was found
-in `<worktree>/.thrum/restart/` and ABSENT from the main path. Its context survived
-only because it made this explicit copy.)*
+_(Recorded as thrum-izx2g. Verified at source: an agent's sleep snapshot was
+found in `<worktree>/.thrum/restart/` and ABSENT from the main path. Its context
+survived only because it made this explicit copy.)_
 
 #### 5. Mark agent operational status idle
 
@@ -170,9 +173,9 @@ restart. Resume from §16 immediate-next-actions.
 own working directory — create + launch + prime + attach in one.
 
 **B. ANOTHER AGENT (e.g. a coordinator):** path A will FAIL for you by design —
-running it from someone else's worktree fires the `cross_worktree` identity guard
-(`pid_mismatch`), which exists to stop one agent assuming another's identity and
-is working correctly when it blocks you. Instead:
+running it from someone else's worktree fires the `cross_worktree` identity
+guard (`pid_mismatch`), which exists to stop one agent assuming another's
+identity and is working correctly when it blocks you. Instead:
 
 ```bash
 # 1. PROVE THE STALE PID IS DEAD — DIRECT OBSERVATION, never from the DB.

@@ -3,7 +3,7 @@ name: memory-audit-recover
 description: "Use when investigating change history (`memory history`), recovering a soft-deleted memory, recovering the losing side of a concurrent edit (MEM-009 LWW loser), or running a confirmed hard-delete. Loads the audit walk, LWW conflict-resolution semantics, undelete flow, and the `Type DELETE <id>` hard-delete gate."
 version: "0.11.0"
 author: "Leon Letto <https://github.com/leonletto>"
-license: "MIT"
+license: "Apache-2.0"
 ---
 
 # memory-audit-recover — history, undelete, hard-delete

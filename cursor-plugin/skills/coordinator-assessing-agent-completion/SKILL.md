@@ -1,9 +1,9 @@
 ---
 name: coordinator-assessing-agent-completion
-description: "Use when deciding which live agents are FINISHED and can be stood down - finding obsolete agents, idle agents, agents nobody is waiting on, agents still running after their work landed, reaping candidates, tidying up the fleet, 'who can I shut down', 'which agents are done', or auditing a box before a deploy or restart. Produces a candidate list from the transcript record plus a blocker check, never a kill list."
+description: "Use when deciding which live agents are FINISHED and can be stood down - finding obsolete agents, idle agents, agents nobody is waiting on, agents still running after their work landed, reaping candidates, tidying up the fleet, 'who can I shut down', 'which agents are done', auditing a box before a deploy or restart - AND when reducing the worktree count or reaping/freeing worktrees to relieve load (too many worktrees, the identity or collision scan timing out, tmux create or launches failing, 'reduce the worktree count', 'reap dead worktrees'), because a worktree is an agent's home and reaping one is an agent-lifecycle decision, never disk cleanup. Produces a candidate list from the transcript plus a DIRECT-OBSERVATION liveness check (live tmux pane / ppid, not a snapshot-presence proxy), never a kill list."
 ---
 
-# Assessing Whether a Live Agent Is Finished
+# Assessing Whether an Agent Is Finished — and Whether a Worktree Is Safe to Reap
 
 `thrum tmux connect` tells you which agents are **alive**. Nothing tells you which
 are **alive but done**. This is that second question.

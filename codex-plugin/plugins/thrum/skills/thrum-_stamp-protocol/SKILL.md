@@ -1,24 +1,26 @@
 ---
 name: thrum-_stamp-protocol
-description: Shared Authored-against stamp protocol — canonical format, derivation commands, and never-type rule. Not user-invocable directly.
+description:
+  Shared Authored-against stamp protocol — canonical format, derivation
+  commands, and never-type rule. Not user-invocable directly.
 # source: claude-plugin/commands/_stamp-protocol.md
 # generated-by: scripts/sync-skills.sh
 ---
 
-# Thrum _stamp Protocol
+# Thrum \_stamp Protocol
 
 This is a shared partial, not a user-invocable skill. Sibling Thrum skills
 consume it as a protocol reference; do not invoke it directly.
 
-
 ## Authored-against Stamp Protocol (shared partial)
 
-This is the canonical source-of-truth for the Authored-against stamp: its format,
-derivation commands, and the never-type rule. Consuming files point here instead of
-restating the recipe. Do NOT invoke this file directly; it has no terminal action.
-(To find what currently points here: `grep -rn "_stamp-protocol.md" claude-plugin/`
-— a hand-listed consumer roster in this file would rot the moment a new emitter or
-reader is added, so none is kept here.)
+This is the canonical source-of-truth for the Authored-against stamp: its
+format, derivation commands, and the never-type rule. Consuming files point here
+instead of restating the recipe. Do NOT invoke this file directly; it has no
+terminal action. (To find what currently points here:
+`grep -rn "_stamp-protocol.md" claude-plugin/` — a hand-listed consumer roster
+in this file would rot the moment a new emitter or reader is added, so none is
+kept here.)
 
 ### Purpose
 
@@ -42,10 +44,10 @@ after its own date/frontmatter for brainstorm/plan/prompt; immediately after the
 
 Always resolve `<merge_target>` through its remote-tracking ref
 (`origin/<merge_target>`), never a bare local branch name, in every recipe in
-this file — a local branch of the same name can be stale (last fetched days
-ago) or simply absent on the reader's machine, while `origin/<merge_target>`
-is only ever what's actually on the remote. Fetch before running any of these
-diffs if the remote-tracking ref might be stale.
+this file — a local branch of the same name can be stale (last fetched days ago)
+or simply absent on the reader's machine, while `origin/<merge_target>` is only
+ever what's actually on the remote. Fetch before running any of these diffs if
+the remote-tracking ref might be stale.
 
 ### Derivation commands (run at authoring time)
 
@@ -61,10 +63,10 @@ The author must never type or remember either value by hand — both come from t
 shell commands above, run at authoring time.
 
 If either command returns empty or `null`, STOP and report — do NOT emit a stamp
-with a null/empty field. An artifact with no stamp is honest; an artifact stamped
-`null` is a lie the reader cannot detect (the string "null" still matches the
-reader's regex, so it reads as a valid stamp instead of UNVERIFIABLE, and the
-resulting `git diff <sha>..null` then errors).
+with a null/empty field. An artifact with no stamp is honest; an artifact
+stamped `null` is a lie the reader cannot detect (the string "null" still
+matches the reader's regex, so it reads as a valid stamp instead of
+UNVERIFIABLE, and the resulting `git diff <sha>..null` then errors).
 
 Before emitting the stamp, also verify the derived `<sha>` actually resolves:
 
@@ -74,19 +76,18 @@ git cat-file -e <sha>
 ```
 
 If this fails, STOP and report — do NOT emit a stamp citing an unresolvable SHA.
-This is the same failure class as the null/empty check above (a stamp the
-reader cannot trust), catching a different way to get there: `git rev-parse
-HEAD` itself can't produce a bad SHA, but a stamp isn't always freshly derived
-this way — it can be hand-typed, copied from a stale source, or otherwise
-introduced without running the command above. Treat this resolve-check as a
-mandatory guard regardless of how the SHA was obtained, not an optional sanity
-check.
+This is the same failure class as the null/empty check above (a stamp the reader
+cannot trust), catching a different way to get there: `git rev-parse HEAD`
+itself can't produce a bad SHA, but a stamp isn't always freshly derived this
+way — it can be hand-typed, copied from a stale source, or otherwise introduced
+without running the command above. Treat this resolve-check as a mandatory guard
+regardless of how the SHA was obtained, not an optional sanity check.
 
 ### Format conventions
 
 The stamp follows the same literal-match convention as the `THRUM-REVIEW` marker
-(canonical form documented in `coordinator-running-brainstorm-cycles` skill
-§ "Footer → commit → stamp"): fixed field order, case-sensitive, ASCII-only —
+(canonical form documented in `coordinator-running-brainstorm-cycles` skill §
+"Footer → commit → stamp"): fixed field order, case-sensitive, ASCII-only —
 parseable with `grep -F` semantics without regex. The reader-side regex in
 `verify-against-plan` anchors on this fixed format; do not reorder or recase any
 field.
@@ -94,10 +95,10 @@ field.
 ### Read-time provenance re-derivation
 
 Both checks below are computable from the two fields the stamp already carries
-(`<sha>` and `<merge_target>`) — no new stamped field is needed. A reader running
-either check for the first time, or re-running it on an artifact read before,
-must run them in this exact order; the second is undefined if the first fails
-(short-circuit):
+(`<sha>` and `<merge_target>`) — no new stamped field is needed. A reader
+running either check for the first time, or re-running it on an artifact read
+before, must run them in this exact order; the second is undefined if the first
+fails (short-circuit):
 
 1. **SHA-resolves** — `git cat-file -e <sha>` (or
    `git rev-parse --verify <sha>^{commit}`). If this fails, the stamp cites a

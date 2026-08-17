@@ -1,10 +1,17 @@
 ---
 name: coordinator-running-brainstorm-cycles
-description: "Use when starting a brainstorm for a bug fix, feature, or architectural decision the coordinator can't trivially decide alone — spawns a researcher in an isolated worktree, runs the brainstorm interactively with the user, iterates dual-review cycles to ready-to-merge, optionally drives an overarching coherence pass when multiple sibling brainstorms close, then hands off to project-setup. Saves coordinator context by isolating brainstorm work in a sub-agent worktree rather than burning main-context tokens on Q-by-Q dialog."
+description:
+  "Use when starting a brainstorm for a bug fix, feature, or architectural
+  decision the coordinator can't trivially decide alone — spawns a researcher in
+  an isolated worktree, runs the brainstorm interactively with the user,
+  iterates dual-review cycles to ready-to-merge, optionally drives an
+  overarching coherence pass when multiple sibling brainstorms close, then hands
+  off to project-setup. Saves coordinator context by isolating brainstorm work
+  in a sub-agent worktree rather than burning main-context tokens on Q-by-Q
+  dialog."
 # source: claude-plugin/skills/coordinator-running-brainstorm-cycles/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
-
 
 ## Coordinator: Running Brainstorm Cycles
 
@@ -52,18 +59,18 @@ the implementer executes against them.
 
 ### Subagent model selection
 
-> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet`
-> (low effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
-> operator-ask or a skill step that names it. See the
-> `choosing-subagent-models` skill for the full policy.
+> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet` (low
+> effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
+> operator-ask or a skill step that names it. See the `choosing-subagent-models`
+> skill for the full policy.
 
 #### Prefer `efficient-multi-agent-research` for multi-part research
 
 When a research or investigation task has independent parts, reach for the
 `efficient-multi-agent-research` skill FIRST — it partitions the work across
-many cheap parallel subagents (sonnet-low gatherers, sonnet-medium synthesizers) instead of
-one expensive serial subagent. It is the preferred research path: cheaper,
-faster, and it keeps each subagent's context tight.
+many cheap parallel subagents (sonnet-low gatherers, sonnet-medium synthesizers)
+instead of one expensive serial subagent. It is the preferred research path:
+cheaper, faster, and it keeps each subagent's context tight.
 
 ### Review-loop mechanics (applies to Phases 3, 6, 7)
 
@@ -72,9 +79,9 @@ names only its stage-specific source.
 
 #### The two reviewers (parallel, per gate)
 
-| Axis            | Reviewer                                                                                                       | Notes                                                                                                                                                                                                                                                                                                                                             |
-| --------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Conformance** | `verify-against-source` (thrum-owned skill)                                                                    | Does the artifact honor its INPUT(s)? Replaces `verify-against-plan` at prose gates — `verify-against-plan` BAILS without a code diff + a File-Structure table, so it cannot run on a brainstorm/plan/prompt. `verify-against-source` accepts a prose artifact + source doc with neither.                                                         |
+| Axis            | Reviewer                                                                                                       | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| --------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Conformance** | `verify-against-source` (thrum-owned skill)                                                                    | Does the artifact honor its INPUT(s)? Replaces `verify-against-plan` at prose gates — `verify-against-plan` BAILS without a code diff + a File-Structure table, so it cannot run on a brainstorm/plan/prompt. `verify-against-source` accepts a prose artifact + source doc with neither.                                                                                                                                                                                                                                                              |
 | **Quality**     | general-purpose sonnet + prose-quality rubric (PRIMARY) ∥ `superpowers:requesting-code-review` (SUPPLEMENTARY) | The general-purpose prose-quality pass (internal consistency, gaps, contradiction, ambiguity, scope creep) is AUTHORITATIVE. `requesting-code-review` runs on a DIFF, so point it at the artifact's own commit range (`HEAD~1..HEAD`) — gated on the skill being resolvable; skip gracefully if absent. ⚠️ **That is the diff of the `.md` file, NOT a diff against the production code the artifact describes** — this row does NOT cover the code axis. Prose-vs-code is Conformance's job (see `verify-against-source` § "Second comparison unit"). |
 
 Both are `general-purpose`, `model: "sonnet"`, `run_in_background: true`. Wait
@@ -91,27 +98,27 @@ forwarding.
    (giving the supplementary reviewer a fresh diff).
 4. On terminate, append the verdict stamp. Use the **canonical, fixed-key-order
    form** (keys always in the order `stage=`, `verdict=`, `cycle=`, `date=`,
-   `verify=`, optional `by=`/`reason=`; **case-sensitive** — exactly
-   `Ready:Yes` / `OVERRIDE`; never `grep -i`) so the readers' **anchored**
+   `verify=`, optional `by=`/`reason=`; **case-sensitive** — exactly `Ready:Yes`
+   / `OVERRIDE`; never `grep -i`) so the readers' **anchored**
    `grep -E '…verdict=Ready:Yes([[:space:]]|-->|$)'` matches — the gates no
    longer use `grep -F`, because a bare substring accepts
    `verdict=Ready:Yes-with-residual`:
    `<!-- THRUM-REVIEW: stage=<S> verdict=<Ready:Yes|OVERRIDE> cycle=<N> date=<YYYY-MM-DD> verify=<Ready:Yes|OVERRIDE|PREDATES> [by=<agent> reason="..."] -->`
 
    **`verify=` is REQUIRED (not optional) for `stage=plan` stamps going
-   forward** — it records whether `verify-against-source` specifically ran
-   this cycle (as opposed to some other reviewer stamping the artifact), and
-   it must be PRESENT with one of exactly three values:
+   forward** — it records whether `verify-against-source` specifically ran this
+   cycle (as opposed to some other reviewer stamping the artifact), and it must
+   be PRESENT with one of exactly three values:
    - `Ready:Yes` — `verify-against-source` ran this cycle and came back clean.
-   - `OVERRIDE` — a coordinator deliberately waived `verify-against-source`
-     for THIS specific cycle (an active, in-the-moment decision, with a
-     reason, same as the outer stamp's `OVERRIDE`).
-   - `PREDATES` — this plan/stamp predates the `verify=` convention
-     entirely; the legacy case. This is NOT the same as omitting the field
-     — omission still fails `project-setup` Phase 0's mechanical gate. A
-     plan from before this convention must be RE-STAMPED with
-     `verify=PREDATES` (an explicit, checkable claim) to pass, not silently
-     pass by having no `verify=` key at all.
+   - `OVERRIDE` — a coordinator deliberately waived `verify-against-source` for
+     THIS specific cycle (an active, in-the-moment decision, with a reason, same
+     as the outer stamp's `OVERRIDE`).
+   - `PREDATES` — this plan/stamp predates the `verify=` convention entirely;
+     the legacy case. This is NOT the same as omitting the field — omission
+     still fails `project-setup` Phase 0's mechanical gate. A plan from before
+     this convention must be RE-STAMPED with `verify=PREDATES` (an explicit,
+     checkable claim) to pass, not silently pass by having no `verify=` key at
+     all.
 
    For other stages (`brainstorm`, `prompt`) `verify=` remains optional until
    those gates grow their own mechanical enforcement.
@@ -123,7 +130,11 @@ forwarding.
 
    **Authored-against:** `<sha>` target: `<merge_target>`
 
-   > ⚠️ Verify base before acting: `git diff <sha>..origin/<merge_target> -- <files cited>` -- non-empty ⇒ cited code moved. (Resolve `<merge_target>` through its remote-tracking ref, never a bare local branch name — a local branch of the same name can be stale or absent.)
+   > ⚠️ Verify base before acting:
+   > `git diff <sha>..origin/<merge_target> -- <files cited>` -- non-empty ⇒
+   > cited code moved. (Resolve `<merge_target>` through its remote-tracking
+   > ref, never a bare local branch name — a local branch of the same name can
+   > be stale or absent.)
 
 #### Soft pre-flight greps (the SOFT enforcement tier)
 
@@ -131,9 +142,9 @@ Before invoking `writing-plans` (Phase 6) and before `project-setup` (Phase 7),
 grep the prior artifact for `THRUM-REVIEW: stage=<S> verdict=Ready:Yes` (or
 `verdict=OVERRIDE`); absent → STOP and run the review first. Anchor the match —
 `grep -E '...verdict=Ready:Yes([[:space:]]|-->|$)'`, never `grep -F` — or an
-invented `verdict=Ready:Yes-with-residual` passes as a substring. This is a STRONG
-BEHAVIORAL guardrail, NOT a mechanical gate — an agent can ignore it. The only
-structurally-enforceable gate is `project-setup` Phase 0 (it hard-bails).
+invented `verdict=Ready:Yes-with-residual` passes as a substring. This is a
+STRONG BEHAVIORAL guardrail, NOT a mechanical gate — an agent can ignore it. The
+only structurally-enforceable gate is `project-setup` Phase 0 (it hard-bails).
 
 #### Loop semantics
 
@@ -146,16 +157,15 @@ structurally-enforceable gate is `project-setup` Phase 0 (it hard-bails).
   pipeline) — a hard brainstorm does not starve the plan's budget.
 - Cap hit with BLOCKINGs still open → STOP and escalate to the coordinator, who
   logs an override (stamp `verdict=OVERRIDE … reason="…"`) or redirects.
-- **FEASIBILITY findings escalate, they do not reshape.** A FEASIBILITY
-  finding (see Severity criteria, `verify-against-source/SKILL.md`) records
-  that a reviewer judged a requirement too hard — NOT that the requirement
-  should be dropped. The researcher may NOT resolve a FEASIBILITY finding by
-  folding it inline into the next plan version as a silent scope cut. STOP
-  and escalate to the coordinator as an explicit decision; only the
-  coordinator (on the intent-owner's behalf) may rule "so we will not do
-  it." The outcome — keep, cut, or weaken — is written into the
-  `## Deviations from Source` block with attribution `owner decision`, never
-  silently absorbed.
+- **FEASIBILITY findings escalate, they do not reshape.** A FEASIBILITY finding
+  (see Severity criteria, `verify-against-source/SKILL.md`) records that a
+  reviewer judged a requirement too hard — NOT that the requirement should be
+  dropped. The researcher may NOT resolve a FEASIBILITY finding by folding it
+  inline into the next plan version as a silent scope cut. STOP and escalate to
+  the coordinator as an explicit decision; only the coordinator (on the
+  intent-owner's behalf) may rule "so we will not do it." The outcome — keep,
+  cut, or weaken — is written into the `## Deviations from Source` block with
+  attribution `owner decision`, never silently absorbed.
 
 #### Superpowers dependency (D6)
 
@@ -217,11 +227,11 @@ For each `*-brainstorm` worktree that looks relevant, inspect:
 | Idle + domain-relevant researcher found | **REUSE** — send the Phase 2 briefing to the existing agent in its current worktree. Skip the rest of Phase 1. |
 | No idle relevant researcher             | Fall through → proceed with "Pick the base branch" below.                                                      |
 
-When reusing, have the agent itself run `thrum agent set-intent "<new one-line
-topic>"` so `thrum team` output stays accurate (there is no command to set
-ANOTHER agent's intent — `set-intent` acts on the caller), then send the Phase 2
-briefing as normal. The existing
-worktree and branch carry over; the agent is already primed.
+When reusing, have the agent itself run
+`thrum agent set-intent "<new one-line topic>"` so `thrum team` output stays
+accurate (there is no command to set ANOTHER agent's intent — `set-intent` acts
+on the caller), then send the Phase 2 briefing as normal. The existing worktree
+and branch carry over; the agent is already primed.
 
 **Scope of reuse:** adjacent topics in the same domain (e.g., a researcher who
 handled scheduler-persistence brainstorm is a good candidate for a
@@ -240,11 +250,11 @@ noise — start fresh.
 
 #### Pick the base branch
 
-| Topic shape                                                                          | Base branch                                           |
-| ------------------------------------------------------------------------------------ | ----------------------------------------------------- |
-| Bug fix, hardening, infra cleanup belonging to the current line                       | The configured merge target — `jq -r '.orchestration.merge_target' .thrum/config.json` |
-| Work belonging to a multi-epic version program                                       | The version's long-lived branch                       |
-| Work tied to an existing feature epic with its own long-lived branch                 | That branch                                           |
+| Topic shape                                                          | Base branch                                                                            |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Bug fix, hardening, infra cleanup belonging to the current line      | The configured merge target — `jq -r '.orchestration.merge_target' .thrum/config.json` |
+| Work belonging to a multi-epic version program                       | The version's long-lived branch                                                        |
+| Work tied to an existing feature epic with its own long-lived branch | That branch                                                                            |
 
 When in doubt, ask the user. Don't branch from `upstream/*` (per the global
 git-safety rule).
@@ -376,7 +386,7 @@ Some users have a global `~/.claude/CLAUDE.md` rule that reads "always run thrum
 commands from the main repo directory." That rule is correct for the
 main-repo-resident coordinator agent — but **it inverts for worktree-resident
 researchers.** A researcher running thrum from the main repo path resolves
-identity to the coordinator's name (e.g. `@coordinator_main`) and sends every
+identity to the coordinator's name (e.g. `@your_coordinator`) and sends every
 message under the coordinator's identity, polluting audit trails.
 
 The correct rule is: **agents run thrum commands from their OWN home
@@ -410,7 +420,12 @@ When the researcher reports the brainstorm is ready for review, run the
   **source(s)** = parent decisions, the feature request, the ticket, and any
   sibling brainstorms.
 
-  **Code side (REQUIRED):** for every decision naming a field, struct, column, table, RPC parameter, config key, or stored value, also hand the reviewer the ACTUAL definition at the authored-against SHA. Prose sources alone cannot catch an artifact that is wrong about the code. A gap there is a MISSING-STEP in the artifact, never a defect in the source — `IMPOSSIBLE` is not a verdict.
+  **Code side (REQUIRED):** for every decision naming a field, struct, column,
+  table, RPC parameter, config key, or stored value, also hand the reviewer the
+  ACTUAL definition at the authored-against SHA. Prose sources alone cannot
+  catch an artifact that is wrong about the code. A gap there is a MISSING-STEP
+  in the artifact, never a defect in the source — `IMPOSSIBLE` is not a verdict.
+
 - **Quality:** general-purpose prose-quality PRIMARY ∥ `requesting-code-review`
   SUPPLEMENTARY (internal consistency, technical soundness, anti-patterns,
   gaps).
@@ -500,36 +515,36 @@ contract-drift and quality issues the internal reviewer misses.
 
 1. Researcher writes plan v1 via `writing-plans` skill (countermand applied).
 2. Researcher authors the `## Deviations from Source` block per
-   `claude-plugin/commands/_deviations-protocol.md`, diffing plan v1 against
-   the brainstorm + design spec — BEFORE dual-review, so
-   `verify-against-source` validates it as part of conformance. Required even
-   when empty ("No deviations from source.").
+   `claude-plugin/commands/_deviations-protocol.md`, diffing plan v1 against the
+   brainstorm + design spec — BEFORE dual-review, so `verify-against-source`
+   validates it as part of conformance. Required even when empty ("No deviations
+   from source.").
 3. Researcher runs the two-reviewer dual review (Review-loop mechanics):
    - **Conformance:** `verify-against-source` — artifact = the plan;
      **source(s)** = the brainstorm + the design spec. Verifies the plan honors
      every LOCKED decision AND that the Deviations block is present and
      accurate; flags missing scope, silent deviation, over-scoping, or an
-     absent/inaccurate Deviations block.
-     **Code side (REQUIRED):** for every requirement naming a field, struct,
-     column, table, RPC parameter, config key, or stored value, hand the
-     reviewer the ACTUAL definition at the authored-against SHA and require an
-     enumerated SATISFIED / PARTIAL / MISSING-STEP / NOT-ADDRESSED verdict per
-     requirement. `IMPOSSIBLE` is not a verdict — absent substrate is a
-     MISSING-STEP in the plan, so the plan must ADD it.
+     absent/inaccurate Deviations block. **Code side (REQUIRED):** for every
+     requirement naming a field, struct, column, table, RPC parameter, config
+     key, or stored value, hand the reviewer the ACTUAL definition at the
+     authored-against SHA and require an enumerated SATISFIED / PARTIAL /
+     MISSING-STEP / NOT-ADDRESSED verdict per requirement. `IMPOSSIBLE` is not a
+     verdict — absent substrate is a MISSING-STEP in the plan, so the plan must
+     ADD it.
    - **Quality:** general-purpose prose-quality PRIMARY ∥
      `requesting-code-review` SUPPLEMENTARY — per-task acceptance-criteria
      precision, anti-pattern enumeration, risk-register completeness, sequencing
      logic.
 4. Researcher consolidates findings into ONE numbered list (all findings, all
    severities, per the same format Phase 3 uses).
-5. Researcher folds findings inline → plan v2; applies footer → commit →
-   stamp. Any FEASIBILITY finding (see Loop semantics) routes to the
-   coordinator instead of being folded inline.
+5. Researcher folds findings inline → plan v2; applies footer → commit → stamp.
+   Any FEASIBILITY finding (see Loop semantics) routes to the coordinator
+   instead of being folded inline.
 6. Researcher repeats only if cycle-1 introduces new design surface (rare for
    bounded mechanical plans); otherwise v2 LOCKED, stamped
    `<!-- THRUM-REVIEW: stage=plan verdict=Ready:Yes cycle=<N> date=<YYYY-MM-DD> verify=Ready:Yes -->`.
-7. Researcher signals plan LOCKED back to coord, citing both review passes
-   and the Deviations block.
+7. Researcher signals plan LOCKED back to coord, citing both review passes and
+   the Deviations block.
 
 If the researcher skips this step, send them back. Before Phase 7, the soft
 pre-flight grep (Review-loop mechanics) confirms the plan carries the
@@ -562,8 +577,8 @@ review catches translation errors (plan → prompt) plus prompt-specific quality
      **Code side (REQUIRED):** for every AC naming a field, struct, column,
      table, RPC parameter, config key, or stored value, hand the reviewer the
      ACTUAL definition at the authored-against SHA. An AC the current code
-     cannot satisfy is a MISSING-STEP in the prompt/plan — the substrate must
-     be ADDED. `IMPOSSIBLE` is not a verdict.
+     cannot satisfy is a MISSING-STEP in the prompt/plan — the substrate must be
+     ADDED. `IMPOSSIBLE` is not a verdict.
    - **Quality:** general-purpose prose-quality PRIMARY ∥
      `requesting-code-review` SUPPLEMENTARY — clarity, scope language,
      dispatch-readiness, sub-agent model guidance, DONE-shape spec.
@@ -650,11 +665,10 @@ don't rebind the agent name to a different topic in place.
 ### See also
 
 - `coordinator-plan-reconcile-gate` — when ≥2 plans for one program were
-  authored in parallel (Phase 6 output) and must be verified to compose
-  before `project-setup` (shared seams, no double-build, no gap).
-- `dev-docs/process/2026-07-22-idea-to-merged-end-to-end-process-capture.md`
-  — the full idea-to-merged pipeline this skill's Phases 1-8 map to Stages
-  1-2.
+  authored in parallel (Phase 6 output) and must be verified to compose before
+  `project-setup` (shared seams, no double-build, no gap).
+- `dev-docs/process/2026-07-22-idea-to-merged-end-to-end-process-capture.md` —
+  the full idea-to-merged pipeline this skill's Phases 1-8 map to Stages 1-2.
 
 ### Reference: existing pattern in flight
 

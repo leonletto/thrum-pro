@@ -123,6 +123,22 @@ of status. Reconcile at session start and natural breakpoints: `done` then a
 prompt `drop` is the normal close-out; `drop` alone is fine too. Don't let a
 done bundle outlive your next reconcile unless you deliberately keep it.
 
+**Close on a TRIGGER, not a reminder.** The moment a bundle's branch merges into
+trunk, OR its last referenced bead closes, `done` + `drop` it in that same turn -
+closure is part of the merge/close act, exactly as `add` is part of dispatch. A
+bundle whose branch is an ancestor of trunk, or whose beads are all closed, is
+completed-but-open rot; do not leave it for "later". `add` has a natural trigger
+(dispatch) and gets done reliably; the close has no trigger unless you make the
+merge/close BE the trigger.
+
+**Reconcile is a bounded sweep, not a review.** At session start / breakpoint,
+close only the bundles a check proves done, and skip the rest. Two checks only:
+- branch is an ancestor of trunk (`git merge-base --is-ancestor <tip> origin/<trunk>`) -> `done` + `drop`
+- every `bead:` ref is closed (`bd show <id>`) -> `done` + `drop`
+
+Do NOT read each bundle's full history - the sweep is those two checks against
+merged/closed state, nothing more.
+
 ## Common Mistakes
 
 - **Piping a guessed id into `--from-message` (e.g. `inbox --unread | head -1`).**

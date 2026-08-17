@@ -1,10 +1,12 @@
 ---
 name: coordinator-managing-state-and-lifecycle
-description: "Use when ending a session, when updating project state, when managing beads epics, or before session close. Loads coordinator-specific discipline for owning project state and shepherding the team's lifecycle."
+description:
+  "Use when ending a session, when updating project state, when managing beads
+  epics, or before session close. Loads coordinator-specific discipline for
+  owning project state and shepherding the team's lifecycle."
 # source: claude-plugin/skills/coordinator-managing-state-and-lifecycle/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
-
 
 ## Coordinator: Managing State and Lifecycle
 
@@ -39,13 +41,13 @@ worktree-local path, move it before referencing it in dispatch messages.
 
 **Why:** A ruling captured only in a bead body is not durably findable. Tier-1
 semantic compaction (30 days closed, ~70% reduction) summarizes/truncates a
-closed issue's description and notes in the active record, so an agent that reads
-or greps the active bead sees a truncated body and cannot surface the ruling —
-while a dev-docs/specs file is neither truncated nor unreachable. Whether the
-pre-compaction original is recoverable is contested between the two tool docs;
-the findability argument holds either way, because normal read/grep of the active
-record fails regardless and nobody runs `bd restore` on a bead that looks
-complete.
+closed issue's description and notes in the active record, so an agent that
+reads or greps the active bead sees a truncated body and cannot surface the
+ruling — while a dev-docs/specs file is neither truncated nor unreachable.
+Whether the pre-compaction original is recoverable is contested between the two
+tool docs; the findability argument holds either way, because normal read/grep
+of the active record fails regardless and nobody runs `bd restore` on a bead
+that looks complete.
 
 **How to apply:** When a RULING-GRADE decision lands in a bead — a substantive
 decision Leon or the coordinator makes that changes project direction (e.g. an
@@ -85,10 +87,10 @@ batch — the visual tree exposes inversion immediately. For bulk epic creation
 (many tasks at once), spawn parallel sub-agents to issue the `bd create` calls;
 bd is fully concurrent-safe.
 
-> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet`
-> (low effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
-> operator-ask or a skill step that names it. See the
-> `choosing-subagent-models` skill for the full policy.
+> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet` (low
+> effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
+> operator-ask or a skill step that names it. See the `choosing-subagent-models`
+> skill for the full policy.
 
 ### Use `bd close --suggest-next` to surface unblocked work
 
@@ -116,6 +118,15 @@ you actually approach it. If you're under the threshold and have a coherent task
 to advance, advance it.
 
 ### Destroy an agent before tearing down its worktree
+
+🔴 **BEFORE reaping ANY worktree — especially a batch reap to reduce the
+worktree count or relieve load — assess liveness FIRST via
+`coordinator-assessing-agent-completion`.** Its safeguard is DIRECT-OBSERVATION
+liveness (live tmux pane / ppid). A snapshot-presence check detects only
+SLEEPING agents; a LIVE agent has no snapshot, so filtering on "no restart
+snapshot" reaps live agents. Never batch-reap `git worktree list` on a proxy
+heuristic. The reap preconditions (HEAD containment, only-copy untracked state,
+direct-death observation) are mandatory.
 
 **Why:** `thrum worktree teardown <name>` does exactly what its name says — it
 tears down the **worktree** — and is intentionally not coupled to runtime
@@ -145,51 +156,51 @@ Done/idle agents on closed epics need no graceful shutdown.
 
 ### Expect orchestrators to remove implementer worktrees at completion — do not defer this to a coordinator audit
 
-**Why:** Implementer worktrees used to accumulate because removal was left for
-a later coordinator sweep that never actually reduced the count — a
+**Why:** Implementer worktrees used to accumulate because removal was left for a
+later coordinator sweep that never actually reduced the count — a
 hand-maintained cleanup rots. The fix (Leon, 2026-07-23 — thrum-vmb0h) puts
 ownership on the agent that actually knows the work is finished: the
-**orchestrator** removes an implementer's worktree as soon as that
-implementer reports DONE and its branch is merged/pushed. This is not the
-coordinator's own destroy sequence above (that section is for agents the
-coordinator manages directly) — it is the standing expectation you hold
-orchestrators to for the implementers **they** launched.
+**orchestrator** removes an implementer's worktree as soon as that implementer
+reports DONE and its branch is merged/pushed. This is not the coordinator's own
+destroy sequence above (that section is for agents the coordinator manages
+directly) — it is the standing expectation you hold orchestrators to for the
+implementers **they** launched.
 
 **How to apply:**
 
-- **Scope: implementers only.** Brainstormer and researcher worktrees are
-  KEPT (ongoing design-doc value) — an orchestrator applying this to a
-  brainstormer or researcher worktree is doing it wrong; correct it if you
-  see it.
-- **Precondition: the implementer's branch is DURABLY ON ORIGIN.** Verify
-  with EITHER `git merge-base --is-ancestor <tip-sha> origin/<base>` (already
-  merged — the strongest form) OR `git ls-remote origin refs/heads/<branch>`
-  (the ref still exists on origin). **Do not phrase or accept this check as
-  "the branch ref resolves."** Post-merge cleanup DELETES the merged branch
-  ref, so a literal `git rev-parse origin/<branch>` (or `origin/<branch>` as
-  a local-cache lookup) FAILS for an already-merged branch — which is
-  MAXIMAL satisfaction of durably-on-origin, not a failure. A ref-existence
-  check false-blocks exactly the case you most want to allow.
+- **Scope: implementers only.** Brainstormer and researcher worktrees are KEPT
+  (ongoing design-doc value) — an orchestrator applying this to a brainstormer
+  or researcher worktree is doing it wrong; correct it if you see it.
+- **Precondition: the implementer's branch is DURABLY ON ORIGIN.** Verify with
+  EITHER `git merge-base --is-ancestor <tip-sha> origin/<base>` (already merged
+  — the strongest form) OR `git ls-remote origin refs/heads/<branch>` (the ref
+  still exists on origin). **Do not phrase or accept this check as "the branch
+  ref resolves."** Post-merge cleanup DELETES the merged branch ref, so a
+  literal `git rev-parse origin/<branch>` (or `origin/<branch>` as a local-cache
+  lookup) FAILS for an already-merged branch — which is MAXIMAL satisfaction of
+  durably-on-origin, not a failure. A ref-existence check false-blocks exactly
+  the case you most want to allow.
 - **Don't re-teardown what's already gone.** Once an orchestrator has retired
-  the implementer and removed its worktree, treat that worktree as handled —
-  you are not the second layer of cleanup for it. If you find an implementer
-  worktree that is DONE, durably-on-origin, and still present, that is a
-  finding against the orchestrator's discipline (raise it), not a task for
-  you to silently absorb.
+  the implementer and removed its worktree, treat that worktree as handled — you
+  are not the second layer of cleanup for it. If you find an implementer
+  worktree that is DONE, durably-on-origin, and still present, that is a finding
+  against the orchestrator's discipline (raise it), not a task for you to
+  silently absorb.
 - ~~Rationale worth carrying into any pushback: once an agent has exited, its
   in-session context is gone and unrecoverable, so a restart snapshot in a DONE
   implementer's worktree does not justify KEEPING THE TREE — the agent will not
   wake to use it.~~ **RETIRED — this rationale was WRONG (thrum-j14q3): a
   snapshot's absence from the branch does NOT mean there is nothing worth
   saving. It is not "rationale worth carrying" — it is the rationale the
-  paragraph below corrects. See the salvage correction immediately below; it
-  is not optional.**
-- 🔴 **But the pushed branch is NOT "the only artifact that matters" (thrum-j14q3).**
-  Authored agent state lives UNTRACKED in the worktree's `.thrum/agents/<self>/`,
-  so it is **not on the branch** — every ancestry/push check reads clean while a
-  teardown destroys it. **Salvage-before-remove is required, and if you are the
-  one raising a teardown finding against an orchestrator, do not let this
-  rationale be quoted back at you as licence to skip it.**
+  paragraph below corrects. See the salvage correction immediately below; it is
+  not optional.**
+- 🔴 **But the pushed branch is NOT "the only artifact that matters"
+  (thrum-j14q3).** Authored agent state lives UNTRACKED in the worktree's
+  `.thrum/agents/<self>/`, so it is **not on the branch** — every ancestry/push
+  check reads clean while a teardown destroys it. **Salvage-before-remove is
+  required, and if you are the one raising a teardown finding against an
+  orchestrator, do not let this rationale be quoted back at you as licence to
+  skip it.**
 
 ### Project-specific rules (already loaded)
 

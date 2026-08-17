@@ -4,7 +4,7 @@ description: "Use when managing relationships between memories — adding/removi
 allowed-tools: "Bash(thrum memory:*)"
 version: "0.11.0"
 author: "Leon Letto <https://github.com/leonletto>"
-license: "MIT"
+license: "Apache-2.0"
 ---
 
 # memory-curate — edges, status, hierarchy

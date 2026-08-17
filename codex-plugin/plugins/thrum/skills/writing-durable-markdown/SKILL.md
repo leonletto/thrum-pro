@@ -1,10 +1,15 @@
 ---
 name: writing-durable-markdown
-description: "Use when creating or editing ANY markdown file - CLAUDE.md, a role preamble, a SKILL.md, a runbook, project state, State.md, a spec, a plan, a README, or docs. Fires on adding a rule, writing a note, correcting a wrong claim, recording a lesson, or documenting an incident. Enforces state-the-rule-and-stop, because narrative in a loaded file costs tokens at every wake and leaves contradictions nobody can untangle."
+description:
+  "Use when creating or editing ANY markdown file - CLAUDE.md, a role preamble,
+  a SKILL.md, a runbook, project state, State.md, a spec, a plan, a README, or
+  docs. Fires on adding a rule, writing a note, correcting a wrong claim,
+  recording a lesson, or documenting an incident. Enforces
+  state-the-rule-and-stop, because narrative in a loaded file costs tokens at
+  every wake and leaves contradictions nobody can untangle."
 # source: claude-plugin/skills/writing-durable-markdown/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
-
 
 ## Writing or editing ANY markdown file — state the rule and stop
 
@@ -27,20 +32,21 @@ explanation is not paid once by the author — it is paid by every agent, every
 session, forever. Inside a session it is worse than linear: injected text is
 re-read on every later turn.
 
-**2. Contradiction.** Stories assert facts. Three stories about one rule disagree
-about its scope, whether it still applies, and which version is current. **An
-agent cannot tell which sentence is authoritative, so it obeys both.** Prose rots
-silently — a test goes red when it drifts, a paragraph never does.
+**2. Contradiction.** Stories assert facts. Three stories about one rule
+disagree about its scope, whether it still applies, and which version is
+current. **An agent cannot tell which sentence is authoritative, so it obeys
+both.** Prose rots silently — a test goes red when it drifts, a paragraph never
+does.
 
 **3. Abandonment.** Past a certain size nobody can audit the file for
-contradictions, so nobody tries, and the contradictions become permanent.
-**The bloat is what makes the file unfixable** — every story added removes
-someone's ability to fix the story before it.
+contradictions, so nobody tries, and the contradictions become permanent. **The
+bloat is what makes the file unfixable** — every story added removes someone's
+ability to fix the story before it.
 
 ### A correction replaces; it does not accumulate
 
 Delete the wrong text and write the right rule in its place. A correction left
-*beside* what it corrects leaves two claims and no way to rank them. Corrections
+_beside_ what it corrects leaves two claims and no way to rank them. Corrections
 are always longer than what they replace, so this is the main way these files
 grow.
 
@@ -52,11 +58,12 @@ pointer.
 
 ### Exempt from the cap
 
-Tables, CLI output, command strings, file paths, enumerated vocabularies. **Never
-truncate those to hit a line count.** The cap stops narrative; it does not
-shorten data.
+Tables, CLI output, command strings, file paths, enumerated vocabularies.
+**Never truncate those to hit a line count.** The cap stops narrative; it does
+not shorten data.
 
 ### Shipped content carries no internal particulars
 
-No issue IDs, no dates, no agent names, no measurements in customer-facing files.
-The tracker references the change; the change never references the tracker.
+No issue IDs, no dates, no agent names, no measurements in customer-facing
+files. The tracker references the change; the change never references the
+tracker.

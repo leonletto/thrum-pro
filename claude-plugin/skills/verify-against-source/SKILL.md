@@ -123,7 +123,7 @@ For every I/O or SQL operation the code side introduces under a hot root
 `lenses.existing_primitive_bypass.hot_root_indicators`), treat the implementer's Primitive Ledger row itself as
 a requirement to be verified, exactly like the field/struct/column checks
 above: raw op -> callee package searched -> primitive adopted (or none exists
-+ bounded cost formula at production scale).
+and a bounded cost formula at production scale).
 
 **Verdicts (same taxonomy as above):** `SATISFIED` — a valid ledger row exists
 for the op and, if a primitive is named as adopted, it is actually used at the

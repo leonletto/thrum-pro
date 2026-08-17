@@ -4,7 +4,7 @@ description: "Use when investigating change history (`memory history`), recoveri
 allowed-tools: "Bash(thrum memory:*)"
 version: "0.11.0"
 author: "Leon Letto <https://github.com/leonletto>"
-license: "MIT"
+license: "Apache-2.0"
 ---
 
 # memory-audit-recover — history, undelete, hard-delete

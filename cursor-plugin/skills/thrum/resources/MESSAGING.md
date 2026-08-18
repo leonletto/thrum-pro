@@ -78,8 +78,7 @@ Rules:
 - A single trailing newline (the one the heredoc adds) is stripped; additional
   blank lines are preserved.
 - All bodies must be supplied via `--stdin` (or `-`), or `--body-file` —
-  positional body arguments are refused to prevent silent shell substitution
-  (thrum-6lrd9).
+  positional body arguments are refused to prevent silent shell substitution.
 
 ## Permission-Prompt Routing
 

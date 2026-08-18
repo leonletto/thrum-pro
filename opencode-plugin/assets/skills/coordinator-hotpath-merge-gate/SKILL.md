@@ -119,10 +119,10 @@ rediscovering these the hard way:
 5. Run `git merge-base --is-ancestor` as an explicit gate condition (the
    fast-forward check) — git silently deduplicates content-identical commits
    on both sides of a rebase, so a tree that "builds clean" can still be
-   carrying dupes instead of the real content (`fcc62adf53`/`feb1844509`).
+   carrying dupes instead of the real content (`<sha>`/`<sha>`).
 6. Run full-package `-race`, not targeted `-run` — a targeted race run misses
-   cross-test races (the thrum-dlquh lesson: a full-package `-race` run on
-   `625ccb5c1f` surfaced a real data race that a narrower `-run` would have
+   cross-test races (a full-package `-race` run on
+   `<sha>` surfaced a real data race that a narrower `-run` would have
    missed entirely).
 7. Build+test the MERGED-tree result as a SEPARATE condition — neither gate
    currently runs a build of the actual post-merge tree; a clean pre-merge
@@ -165,7 +165,7 @@ rediscovering these the hard way:
         it. Usually fine (a gate merge is reproducible by redoing it) but say so
         in your report rather than doing it silently.
     Then `git worktree remove --force <wt>`.
-    **WHY THIS HAD TO BE WRITTEN DOWN (measured on primary 2026-07-22):** SEVEN
+    **WHY THIS HAD TO BE WRITTEN DOWN (measured on <primary-box> 2026-07-22):** SEVEN
     abandoned gate worktrees had accumulated under `/private/tmp` — two dirty (6
     and 10 uncommitted paths), two with unreachable HEADs. Before this rule, the
     ONLY mention of teardown across BOTH gates was a warning that teardown
@@ -185,11 +185,11 @@ every diff regardless of trigger directories. If the config has no
 
 ## Delta re-gate continuity — walk the whole branch, read the whole function
 
-**Why:** thrum-ipxej. A fork-exec under `state.Lock()` in HandleRegister
-(`safecmd.GitConfig`, introduced `ff07807db2`, merged `5466765348`,
+**Why:** A fork-exec under `state.Lock()` in HandleRegister
+(`safecmd.GitConfig`, introduced `<sha-introduced>`, merged `<sha-merged>`,
 feature/lantransport, 2026-07-17) — the founding daemon-wedge class — passed
 TWO hotpath gate rounds CLEAN and was only found outside the gate (fixed
-`30f92b4f93`, 07-18). Root cause: the gate is delta-scoped. The commit that
+`<sha-fixed>`, 07-18). Root cause: the gate is delta-scoped. The commit that
 introduced the `Lock()` was an ancestor of the round-2 delta base, so it was
 never in any walked diff — even though a later commit in that same delta
 edited the gating condition on that very call. The diff hunk showing the
@@ -481,7 +481,7 @@ After every gate run, record the outcome in `dev-docs/hotpath-gate-efficacy.md`
 (created lazily on first run). This is a durable, committed, grep-queryable log
 that measures v1's real-world efficacy so we can iterate to v2 with data.
 
-**Format (structured header, thrum-iu683 R7):** a structured header line, with
+**Format (structured header):** a structured header line, with
 essay content moved to an indented notes block underneath it:
 
 ```

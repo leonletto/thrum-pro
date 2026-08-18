@@ -13,8 +13,7 @@ description:
 ### Use the four-token status vocabulary exactly
 
 **Why:** The coordinator uses your status token to decide whether to proceed,
-hold for review, or unblock. (Source: findings_implementer.md — "Use the
-four-token status vocabulary exactly".) Vague reports like "I finished the work"
+hold for review, or unblock. Vague reports like "I finished the work"
 or "mostly done" force the coordinator to re-read the full implementation to
 judge state, which adds latency to every dispatch they manage. The token is a
 100ms decision instead of a five-minute re-read.
@@ -35,8 +34,7 @@ exactly what would unblock you.
 ### Commit per task with the bead ID in the trailer
 
 **Why:** Beads links commits to issues via `Refs: <id>` trailers in the commit
-message body. (Source: findings_implementer.md — "Commit beads task references
-in commit trailers".) Skipping the trailer breaks the audit chain; using the
+message body. Skipping the trailer breaks the audit chain; using the
 parent epic ID instead of the specific task ID flags as a traceability nit
 during review. Per-task commits also keep the diff small enough that the
 dual-review pass can reason about it without context exhaustion.
@@ -138,7 +136,7 @@ If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `implementer-maintaining-memory` skill — it references the
 `memory-write-discipline` common for the canonical `thrum memory create` shape.
 
-### Pattern D self-write — set `agent_status=idle` on DONE handoff (thrum-9neg)
+### Pattern D self-write — set `agent_status=idle` on DONE handoff
 
 When reporting DONE to the coordinator, write `agent_status="idle"` to your
 local identity file. This closes the `working→idle` transition opened by the ACK

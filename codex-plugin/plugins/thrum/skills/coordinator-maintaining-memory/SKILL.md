@@ -66,8 +66,8 @@ Secondary write triggers:
   `kind: research_note` writes.
 - **Per-task notes / TODOs** — put them in bd ticket comments or the
   conversation context; they're ephemeral.
-- **Refactoring opportunities** — file under the bd refactoring epic
-  `thrum-xir`, not memory.
+- **Refactoring opportunities** — file under a backlog refactoring epic,
+  not memory.
 
 ### Kind-diversification (deferred follow-up)
 

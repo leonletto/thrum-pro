@@ -9,7 +9,7 @@ description: "Use whenever you are about to write to the pane for the human, or 
 
 Coordinators consume **40-50% of this box's total tokens** (owner's figure).
 The dominant cause is narrating agent traffic to the pane for a human who is
-not there. Measured 2026-07-27 on primary: roughly 15 notification turns, each
+not there. Measured 2026-07-27 on <primary-box>: roughly 15 notification turns, each
 answered with a multi-paragraph pane report — about half a coordinator
 session, spent talking to nobody.
 

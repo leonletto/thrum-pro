@@ -22,7 +22,7 @@ every agent in your `roster`:
    capture of its status bar — **never from a figure it claims about
    itself** (a message, a memory-footer line, anywhere). If it's getting
    close to the end and hasn't restarted, warn it. This is the exact
-   mechanism behind thrum-4i41i's founding evidence (4 ctx-fabrication
+   mechanism behind this archetype's founding evidence (4 ctx-fabrication
    catches a self-check missed) — a watcher that trusts the target's
    self-report would catch none of them.
 3. **All of it is judgment.** Read pane, judge (unblock / warn-on-ctx /
@@ -106,7 +106,7 @@ is the entire reason the watch exists — and a blocked coordinator cannot
 receive its own escalation. The escalation would arrive at the one inbox
 guaranteed not to be read.
 
-## Declared-intent reminders (duty #4, thrum-4i41i.1)
+## Declared-intent reminders (duty #4)
 
 Each cycle, for each roster member, judge whether the last assistant turn
 declares a concrete near-term action not yet performed ("I'll check X
@@ -120,10 +120,10 @@ here is the same anti-pattern already rejected for the wake-loop itself).
   indicator in its status bar — the same "never trust the target's
   self-report" discipline as duty #2's ctx% read). Never consume the
   target's own `agent_status` field for this — self-reported status is a
-  known false-positive generator in this fleet (`thrum-3ghy8`).
+  known false-positive generator in this fleet.
 - **Quiet-duration threshold (row 12):** require TWO consecutive idle
   checks before nudging, not one — a single quiet interval routinely
-  reflects legitimate heads-down work (`thrum-0tcd`), and at
+  reflects legitimate heads-down work, and at
   `cadence_active` (2-5min) two checks still land in 4-10min, far inside
   the sweep's ~30-60min effective cadence.
 - **The reminder itself:** a plain `thrum send`, not a modal, not an

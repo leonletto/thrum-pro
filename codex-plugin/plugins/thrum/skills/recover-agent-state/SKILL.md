@@ -121,7 +121,7 @@ the normal write path.
 
 **Verify before you write:** a state.md fact is TRUE when written and can
 silently become FALSE later — the reader can't tell, because a summary doesn't
-present itself as a time-bound claim (thrum-hrigx). Reconstruct only what the
+present itself as a time-bound claim (a known incident pattern). Reconstruct only what the
 prior snapshot actually supports, not an assumption filled in to complete the
 entry. If the reconstructed line records an UNEXPLAINED artifact, carry the
 unexplained-ness forward — "not mine, cause unknown, nobody has traced this" —

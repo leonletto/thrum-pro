@@ -1,17 +1,16 @@
 ---
 name: thrum-restart
-description:
-  Save a conversation snapshot and prepare for session restart. Use when you
-  need a fresh session due to context exhaustion, rate limits, or stuck state.
+description: Save a conversation snapshot and prepare for session restart. Use when you need a fresh session due to context exhaustion, rate limits, or stuck state.
 # source: claude-plugin/commands/restart.md
 # generated-by: scripts/sync-skills.sh
 ---
 
 # Thrum Restart
 
-Use this skill when the user explicitly wants the `restart` Thrum workflow.
-Prefer the umbrella `thrum` skill when the request spans multiple commands or
-needs broader coordination judgment.
+Use this skill when the user explicitly wants the `restart` Thrum
+workflow. Prefer the umbrella `thrum` skill when the request spans multiple
+commands or needs broader coordination judgment.
+
 
 ## Session Restart
 
@@ -57,7 +56,7 @@ the cycles closed. Examples:
 > Q-Spec approvals, and Q-Spec-5 deferred to impl-time. Hand-off pending
 > coordinator final review.
 >
-> Investigated rc.9 inbox-race against impl_inbox_race's hypothesis: confirmed
+> Investigated rc.9 inbox-race against <implementer>'s hypothesis: confirmed
 > the lock-substrate fence is the right fix. Filed thrum-XXX with 4 BLOCKING
 > evidence points.
 >
@@ -72,7 +71,7 @@ file paths, before patterns — because composing the §1 summary forces you to
 identify what was actually load-bearing about this session, and that priority
 shapes everything else you write below it.
 
-**Stamp your snapshot with the base it was authored against (thrum-m43mk).**
+**Stamp your snapshot with the base it was authored against.**
 Derive and emit the **Authored-against** stamp per
 `claude-plugin/commands/_stamp-protocol.md` and place it at the very top of your
 §1 section (that protocol computes the SHA and merge_target for you — never
@@ -153,9 +152,9 @@ or `cat <<EOF` redirection is needed — write the file directly.
 ```bash
 SESSION_RAW=$(thrum whoami --field tmux_session)
 # thrum whoami --field tmux_session returns a PANE-QUALIFIED value
-# (e.g. "i7xv1-lifecycle-cmds:0.0"), not a session name. `thrum tmux restart`
+# (e.g. "abc12-my-task:0.0"), not a session name. `thrum tmux restart`
 # takes a session NAME and the daemon sanitizes ":"/"." to "-", so passing the
-# raw value produces a lookup key ("i7xv1-lifecycle-cmds-0-0") that does not
+# raw value produces a lookup key ("abc12-my-task-0-0") that does not
 # exist and every self-restart would fail. Strip to the bare session name:
 SESSION=${SESSION_RAW%%:*}
 ROLE=$(thrum whoami --field role)
@@ -224,26 +223,26 @@ thrum tmux restart "$SESSION"
 ```
 
 **⚠️ PLAIN RESTART — NEVER `--force`.** `--force` **DROPS the `--model` pin**; a
-plain restart re-applies it at the readiness probe. A self-restarting agent that
-uses `--force` can come back on the WRONG MODEL, and `runtime-config get` will
-NOT reveal it — it reports the stored pin, not the delivered keystrokes. This is
-not theoretical: it has been caught live more than once, including via a plain
-restart that fixed it. The command above restarts your own pane; you will not
-see further output in this turn. Do not follow it with more commands. Only reach
-for `--force` if a plain restart genuinely does not take — and even then,
-immediately re-pin and **verify the model OFF THE PANE** after you come back,
-not off `runtime-config get`.
+plain restart re-applies it at the readiness probe. A self-restarting agent
+that uses `--force` can come back on the WRONG MODEL, and `runtime-config get`
+will NOT reveal it — it reports the stored pin, not the delivered keystrokes.
+This is not theoretical: it has been caught live more than once, including via
+a plain restart that fixed it. The command above restarts your own pane; you
+will not see further output in this turn. Do not follow it with more commands.
+Only reach for `--force` if a plain restart genuinely does not take — and even
+then, immediately re-pin and **verify the model OFF THE PANE** after you come
+back, not off `runtime-config get`.
 
 This applies whether you are a coordinator or any other role — there is no
-requirement for a senior agent to run this for you; it is the same self-executed
-command `thrum:sleep` already uses for its own tmux-kill. **This ADDS a
-self-initiated route and does not remove the external ones**:
+requirement for a senior agent to run this for you; it is the same
+self-executed command `thrum:sleep` already uses for its own tmux-kill.
+**This ADDS a self-initiated route and does not remove the external ones**:
 force-restart-at-high-context and operator/coordinator-initiated restart still
-exist for the cases where self-restart isn't possible (e.g. verification failed,
-or you're not in tmux).
+exist for the cases where self-restart isn't possible (e.g. verification
+failed, or you're not in tmux).
 
-**If `$SESSION` is non-empty but `$SNAPSHOT_OK` = 0 or `$SESSION_OK` = 0** — DO
-NOT RESTART. Report and hold:
+**If `$SESSION` is non-empty but `$SNAPSHOT_OK` = 0 or `$SESSION_OK` = 0** —
+DO NOT RESTART. Report and hold:
 
 ```bash
 thrum send --to @your_coordinator --stdin <<'EOF'
@@ -258,8 +257,8 @@ If you ARE the top-level coordinator (no senior agent above you), print the same
 failure reason for the operator instead of sending it, and hold.
 
 **Else (no tmux session)** — self-restart has nothing to target (there is no
-tmux pane to run `thrum tmux restart` against). Print these instructions for the
-operator:
+tmux pane to run `thrum tmux restart` against). Print these instructions for
+the operator:
 
 > Restart snapshot saved at `.thrum/restart/${AGENT}.md`. To continue in a new
 > session:

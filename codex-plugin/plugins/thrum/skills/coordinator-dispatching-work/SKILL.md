@@ -15,9 +15,7 @@ description:
 **Why:** Manual `tmux send-keys 'claude'` followed by `$thrum-prime` skips
 identity registration and produces silent CWD drift. The
 `thrum tmux launch <name>` flow registers the agent against the worktree path
-correctly and gives the daemon a real PID to track. (Source:
-findings_coordinator.md — "Use thrum tmux launch — not send-keys — to start a
-runtime".)
+correctly and gives the daemon a real PID to track.
 
 **How to apply:** Whenever you need to start a runtime in an existing tmux pane,
 use `thrum tmux launch <session_name>` even if you've already typed the runtime
@@ -40,8 +38,7 @@ lifecycle skill end-to-end.
 **Why:** Sub-agents (Agent tool) and Thrum agents (`thrum send`) are different
 coordination mechanisms. A sub-agent spawned into a worktree where a Thrum agent
 already sits competes for files, identity, and tmux state — the result is
-identity drift, broken nudges, and silent message loss. (Source:
-findings_coordinator.md — "No sub-agents into live worktrees".)
+identity drift, broken nudges, and silent message loss.
 
 **How to apply:** Run `thrum team` before spawning any Agent tool call. If a
 worktree shows a registered agent, communicate with it via
@@ -55,9 +52,8 @@ never for implementation work in another agent's worktree.
 daemon nudge: `thrum send` enters the message in the daemon's state, the daemon
 nudges the pane, the agent reads the inbox and starts work. Injecting the prompt
 with `thrum tmux send` or `tmux send-keys` bypasses the inbox entirely, breaks
-the nudge for future messages, and strands the agent without a recorded message.
-(Source: findings_coordinator.md — "Dispatch via thrum send after tmux launch,
-not via tmux send-keys".)
+the nudge for future messages, and strands the agent without a recorded
+message.
 
 **How to apply:** Correct flow: `thrum tmux launch <name>` → agent auto-primes →
 `thrum send --to @agent_name --body-file prompt.md` (body: work prompt) → daemon
@@ -189,8 +185,7 @@ re-dispatch overhead.
 **Why:** Agent identity is bound to the worktree, not the epic. Re-registering
 `@implementer_api` as `@implementer_billing` mid-flight creates two identity
 files in the same worktree, causing persistent stop-hook misfires and routing
-failures. (Source: findings_coordinator.md — "Never rename an agent tied to a
-worktree".)
+failures.
 
 **How to apply:** Run `thrum team` before assigning new work to confirm the
 existing identity name. Send work to that name. Do not use `thrum quickstart`
@@ -204,8 +199,7 @@ with a different name — do not rename in place.
 that spawns an unspecified sub-agent gets Opus-cost work for tasks that need
 sonnet-low. The same trap repeats inside an implementer's worktree: if the
 implementer doesn't propagate the discipline, their own sub-agents silently
-inherit too. Cost compounds across a session. (Source: findings_coordinator.md —
-"Always pass explicit model on sub-agent spawns".)
+inherit too. Cost compounds across a session.
 
 **How to apply:** Every dispatch prompt should include the model-selection rule
 explicitly: "When you spawn your own sub-agents, pass explicit `model:` —

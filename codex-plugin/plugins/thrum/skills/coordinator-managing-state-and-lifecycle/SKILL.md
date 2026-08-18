@@ -15,8 +15,7 @@ description:
 **Why:** Project state captures session-level context (what shipped, what broke,
 what's next) and feeds the next session's priming. If implementers update it,
 role separation collapses: the implementer's view of state is their epic, not
-the team's. (Source: findings_coordinator.md — "Project state is the
-coordinator's responsibility — implementers don't update it".)
+the team's.
 
 **How to apply:** Only the coordinator runs `$thrum-update-project` or edits
 `.thrum/context/project_state.md`. If an implementer is about to restart and
@@ -28,9 +27,7 @@ manually; it overwrites accumulated session state.
 
 **Why:** Worktree-local paths aren't shared with the coordinator or other
 agents, and `docs/superpowers/` was added to `.gitignore` — specs written there
-became invisible to anyone outside the writing worktree. (Source:
-findings_coordinator.md — "Specs always go in dev-docs/specs/ — not
-worktree-local paths".)
+became invisible to anyone outside the writing worktree.
 
 **How to apply:** When writing a spec, plan, or design doc, use an absolute path
 under the main repo's `dev-docs/specs/` (specs) or `dev-docs/plans/` (plans).
@@ -61,9 +58,7 @@ text.
 
 **Why:** Unpushed work is stranded locally and invisible to other agents and
 machines. If the machine shuts down, the session crashes, or a new worktree is
-created from origin, unpushed commits can be lost or inaccessible. (Source:
-findings_coordinator.md — "Push before ending any session — unpushed work is
-unprotected".)
+created from origin, unpushed commits can be lost or inaccessible.
 
 **How to apply:** Session close protocol — push the coordination branch every
 session end. **Read the branch name, never recall it:**
@@ -158,7 +153,7 @@ Done/idle agents on closed epics need no graceful shutdown.
 
 **Why:** Implementer worktrees used to accumulate because removal was left for a
 later coordinator sweep that never actually reduced the count — a
-hand-maintained cleanup rots. The fix (Leon, 2026-07-23 — thrum-vmb0h) puts
+hand-maintained cleanup rots. The fix (Leon, 2026-07-23) puts
 ownership on the agent that actually knows the work is finished: the
 **orchestrator** removes an implementer's worktree as soon as that implementer
 reports DONE and its branch is merged/pushed. This is not the coordinator's own
@@ -189,13 +184,13 @@ implementers **they** launched.
 - ~~Rationale worth carrying into any pushback: once an agent has exited, its
   in-session context is gone and unrecoverable, so a restart snapshot in a DONE
   implementer's worktree does not justify KEEPING THE TREE — the agent will not
-  wake to use it.~~ **RETIRED — this rationale was WRONG (thrum-j14q3): a
+  wake to use it.~~ **RETIRED — this rationale was WRONG: a
   snapshot's absence from the branch does NOT mean there is nothing worth
   saving. It is not "rationale worth carrying" — it is the rationale the
   paragraph below corrects. See the salvage correction immediately below; it is
   not optional.**
-- 🔴 **But the pushed branch is NOT "the only artifact that matters"
-  (thrum-j14q3).** Authored agent state lives UNTRACKED in the worktree's
+- 🔴 **But the pushed branch is NOT "the only artifact that matters".**
+  Authored agent state lives UNTRACKED in the worktree's
   `.thrum/agents/<self>/`, so it is **not on the branch** — every ancestry/push
   check reads clean while a teardown destroys it. **Salvage-before-remove is
   required, and if you are the one raising a teardown finding against an

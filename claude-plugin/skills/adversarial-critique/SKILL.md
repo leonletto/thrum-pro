@@ -43,7 +43,7 @@ future readers can see exactly why it was made and what was considered.
 
 - Context block: relevant file excerpts, prior art, schema snippets, constraints
 - Engagement axes: cross-cutting concerns the debate MUST address. Example axes
-  that worked on a real debate (the enlw.9 role-query-hardening debate — pick
+  that worked on a real role-query-hardening debate (pick
   analogues for your domain):
   - cross-daemon semantics
   - schema impact

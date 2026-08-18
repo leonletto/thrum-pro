@@ -128,7 +128,7 @@ and anything your resume plan references.
 trust `cp`'s exit code — list the destination file. This step is your ONLY
 recoverability guarantee against teardown-while-asleep; the redirect is not one.
 
-_(Recorded as thrum-izx2g. Verified at source: an agent's sleep snapshot was
+_(Recorded from a prior investigation. Verified at source: an agent's sleep snapshot was
 found in `<worktree>/.thrum/restart/` and ABSENT from the main path. Its context
 survived only because it made this explicit copy.)_
 
@@ -136,10 +136,10 @@ survived only because it made this explicit copy.)_
 
 ```bash
 thrum agent set-status idle
-# NOTE: idle-status write becomes observable after thrum-9neg lands.
+# NOTE: idle-status write becomes observable after the agent-status-wiring change lands.
 ```
 
-Per thrum-9neg agent-status-wiring verdict, `idle` is the signal that this agent
+Per an internal agent-status-wiring verdict, `idle` is the signal that this agent
 has parked. NO new "sleeping" state was added — `idle` covers both "no active
 work" and "parked for operator wake."
 
@@ -227,5 +227,5 @@ resumable via Claude Code's native session-continuation mechanism.
 
 The underlying mechanic — write snapshot + set status idle + session end + tmux
 kill — can be invoked from an operator's shutdown script directly via the bash
-commands above (without going through the skill). Out of scope for thrum-rwhg;
+commands above (without going through the skill). Out of scope here;
 document only.

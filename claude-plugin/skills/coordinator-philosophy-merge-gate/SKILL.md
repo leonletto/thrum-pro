@@ -380,7 +380,7 @@ applies here the same as anywhere else.
 **Every coordinator, on every merge: stage and commit accumulated agent state
 under `.thrum/agents/` along with the merge.** Session snapshots, `State.md`
 files, salvage directories. This is a standing rule for ALL coordinators on ALL
-boxes, not a primary-only habit.
+boxes, not a <primary-box>-only habit.
 
 **Why this is a rule and not housekeeping:** uncommitted agent state exists in
 exactly ONE place — a working tree. Anything that touches that tree destroys it,

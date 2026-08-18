@@ -16,9 +16,8 @@ quality-gate practice.
 **Why:** Thrum's daemon has significant concurrent state (goroutines for
 WebSocket, Unix socket, sync, telegram bridge, peer transport). Race conditions
 that pass bare `go test` fail under `-race` — sometimes with silent data
-corruption that takes hours to track down later. (Source:
-findings_implementer.md — "Run tests with the race detector, not bare".) The
-Makefile's `make test` includes `-race` by default for exactly this reason.
+corruption that takes hours to track down later. The Makefile's `make test`
+includes `-race` by default for exactly this reason.
 
 **How to apply:** Always run `go test -race ./...` (or scope to specific
 packages with `-race`). Never report tests passing without having run with
@@ -41,10 +40,9 @@ nothing else broke.
 ## Use `t.TempDir()` for filesystem fixtures — never hardcoded paths
 
 **Why:** Hardcoded absolute paths (especially the implementer's home directory)
-only work on one machine. (Source: findings_implementer.md — virtual-supervisor
-2026-04-17 wrote `TestSupervisorIdentity_Shape` with a hardcoded
-`/Users/leon/dev/opensource/thrum`. Review caught it as a SHOULD FIX; the fix
-was two characters: `t.TempDir()`.) The same pattern shows up with
+only work on one machine. For example, a test once shipped with a hardcoded
+absolute repo path like `/path/to/thrum`; review caught it as a SHOULD FIX,
+and the fix was two characters: `t.TempDir()`. The same pattern shows up with
 `os.UserHomeDir()` results being baked into expected values.
 
 **How to apply:** Any test that creates a temporary directory, writes files, or
@@ -68,11 +66,11 @@ small annotation or refactor to silencing the warning.
 ## Two-stage self-review before pinging the coordinator
 
 **Why:** A self-review pass before the coordinator's dual review reduces total
-review round-trips. (Source: findings_implementer.md — virtual-supervisor
-implementer found and fixed a real `safecmd` injection issue via self-review
-before the coordinator's formal review, which meant fewer BLOCKING findings and
-fewer iterations.) Self-review is not ceremony; it pre-pays the cost of issues
-that would otherwise come back as findings.
+review round-trips. (In one case, an internal review found and fixed a real
+`safecmd` injection issue via self-review before the coordinator's formal
+review, which meant fewer BLOCKING findings and fewer iterations.) Self-review
+is not ceremony; it pre-pays the cost of issues that would otherwise come back
+as findings.
 
 **How to apply:** At task close, before sending DONE:
 

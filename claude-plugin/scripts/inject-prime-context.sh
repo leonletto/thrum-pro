@@ -8,7 +8,7 @@
 # file with only the first ~2KB previewed inline (and a
 # `<persisted-output>` wrapper showing the full file path).
 #
-# Field-test history (zarambp14):
+# Field-test history (<primary-box>):
 #   - thrum-tfrv tried the documented JSON output protocol
 #     (`hookSpecificOutput.additionalContext`) to bypass the size cap.
 #     Claude Code captured the JSON to attachment.stdout but

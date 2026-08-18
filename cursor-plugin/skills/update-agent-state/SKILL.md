@@ -25,7 +25,7 @@ the per-agent state.md this skill targets.
 
 A state.md fact is TRUE when written and can silently become FALSE later —
 the reader can't tell, because a summary doesn't present itself as a
-time-bound claim (thrum-hrigx: three agents burned by their own durable
+time-bound claim (an internal incident: three agents burned by their own durable
 artifacts in one night). Only summarize what you've verified against current
 state, not what you remember or assume. If your summary or narrative fields
 record an UNEXPLAINED artifact, carry the unexplained-ness forward — "not
@@ -106,7 +106,7 @@ Updated /path/to/.thrum/agents/<id>/state.md (verbatim: N, summary blocks: M)
 
 Where N ∈ [1, 4] and M ∈ [0, 3]. If N or M fall outside those ranges, something
 is wrong — the format invariants are enforced in code; an out-of-range count
-indicates a code bug worth filing under thrum-xir.
+indicates a code bug worth filing as an issue.
 
 ## What this skill does NOT do
 

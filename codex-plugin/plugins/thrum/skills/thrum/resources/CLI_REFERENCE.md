@@ -72,10 +72,10 @@ generator | thrum send --to @name -                  # '-' is a --stdin alias
 ```
 
 A recipient flag is REQUIRED — `thrum send 'msg'` with no `--to` or
-`--broadcast` is a hard error (thrum-t698). `--to` and `--broadcast` are
+`--broadcast` is a hard error. `--to` and `--broadcast` are
 mutually exclusive.
 
-Shell-safe bodies (thrum-d3fp): backticks, `$(...)`, `$VAR`, and quotes in a
+Shell-safe bodies: backticks, `$(...)`, `$VAR`, and quotes in a
 double-quoted message are interpreted by the shell BEFORE thrum runs, silently
 corrupting content. Read the body from stdin (`--stdin`, or pass the message as
 `-`) or a file (`--body-file`) with a QUOTED heredoc (`<<'EOF'`) to disable all
@@ -107,7 +107,7 @@ thrum reply <msg-id> --body-file ./body.md           # Reply body (file)
 `reply` takes **no `--to`** — the recipient is derived from the parent message.
 To start a new thread to a specific agent, use `thrum send ... --to @name`.
 
-Shell-safe bodies (thrum-d3fp): like `send`, `reply` accepts `--stdin` (or the
+Shell-safe bodies: like `send`, `reply` accepts `--stdin` (or the
 response argument as `-`) and `--body-file` so backtick/`$(...)`/quote-bearing
 text survives the shell. Use a QUOTED heredoc (`<<'EOF'`).
 
@@ -206,7 +206,7 @@ thrum message reindex                          # Rebuild the FTS index if search
 Subcommand flags:
 
 ```text
-# message edit  (shell-safe bodies, thrum-d3fp)
+# message edit  (shell-safe bodies)
 --stdin             Read the new text from stdin (or pass TEXT as '-')
 --body-file string  Read the new text from a file (mutex with --stdin)
 

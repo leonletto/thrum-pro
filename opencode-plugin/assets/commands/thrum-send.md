@@ -20,7 +20,7 @@ Unknown recipients are a hard error. Use `thrum team` to verify agent names
 before sending.
 
 If the body has backticks, `$(...)`, `$VAR`, or quotes, pass it via a quoted
-heredoc so the shell doesn't corrupt it (thrum-d3fp):
+heredoc so the shell doesn't corrupt it:
 
 ```bash
 thrum send --to @agent_name --stdin <<'EOF'

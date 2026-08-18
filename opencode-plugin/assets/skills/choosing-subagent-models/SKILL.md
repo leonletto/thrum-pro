@@ -147,7 +147,7 @@ unspecified.
 
 **A model pin is an ARGUMENT and travels by itself. A behavioural constraint is
 PROSE and reaches the child only if you paste it.** Constrain every level: a rule
-that stops at depth 1 is absent where the work happens. (Provenance: `thrum-9vrwk`.)
+that stops at depth 1 is absent where the work happens.
 
 **Paste verbatim, including the last line:**
 

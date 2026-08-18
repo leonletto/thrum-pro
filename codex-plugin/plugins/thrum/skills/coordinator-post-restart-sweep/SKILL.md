@@ -1,16 +1,10 @@
 ---
 name: coordinator-post-restart-sweep
-description:
-  "Use immediately after the coordinator returns from a restart, compaction, or
-  extended absence — as the first deliberate action post-prime. Detects agents
-  whose latest assistant message indicates they are blocked waiting for a
-  coordinator decision the coordinator may not have seen (question surfaced in
-  pane, not in inbox). Safe to run any time the session feels 'we've been gone a
-  while'; not just post-restart. Pairs with the coordinator-context-monitoring
-  sweep (sibling sweep, different lens)."
+description: "Use immediately after the coordinator returns from a restart, compaction, or extended absence — as the first deliberate action post-prime. Detects agents whose latest assistant message indicates they are blocked waiting for a coordinator decision the coordinator may not have seen (question surfaced in pane, not in inbox). Safe to run any time the session feels 'we've been gone a while'; not just post-restart. Pairs with the coordinator-context-monitoring sweep (sibling sweep, different lens)."
 # source: claude-plugin/skills/coordinator-post-restart-sweep/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Coordinator: Post-Restart Sweep for Waiting-on-Coord Agents
 
@@ -22,7 +16,7 @@ a question 20 minutes before your restart will still be standing at-pane with
 their question visible — but the question lives in the agent's JSONL transcript,
 not in your inbox. The sweep reads each agent's latest assistant message body,
 pattern-matches against a library of empirically- observed waiting-on-coord
-phrasings (mined from the project's conversation archive per thrum-e1n0), and
+phrasings (mined from the project's conversation archive), and
 flags hits.
 
 Other reasonable triggers:
@@ -41,7 +35,7 @@ cat /tmp/waiting-on-coord.txt
 ```
 
 The script enumerates alive Claude agents (Codex/Cursor/OpenCode runtimes are
-skipped at v1 — pa34 epic backlog), extracts each agent's latest assistant
+skipped at v1 — tracked as backlog), extracts each agent's latest assistant
 message body from the JSONL transcript at
 `~/.claude/projects/<encoded-worktree>/<session>.jsonl`, and pattern-matches
 against the regex library. Exit code is `0` if zero flagged, `1` if any flagged
@@ -81,8 +75,8 @@ For each `===== @<agent_id> · ... =====` block in the report:
 
 The decision tree is judgment work, not script automation. The sweep does
 **not** auto-respond, auto-nudge, or auto-escalate — coord IS the recipient of
-the report, and the right next action is context-dependent (per thrum-e1n0
-scope-clarification with @impl_v0105: report-only, no auto-action).
+the report, and the right next action is context-dependent (per a prior
+scope-clarification with @<implementer>: report-only, no auto-action).
 
 ### Step 4 — Re-run the sweep after acting
 
@@ -105,9 +99,9 @@ either:
 ### Reference
 
 - **Sweep script**: `scripts/waiting-on-coord-agent-sweep.sh` (Claude-only at
-  v1; non-Claude runtimes via thrum-pa34 epoch adapters when available)
+  v1; non-Claude runtimes via future runtime adapters when available)
 - **Pattern library source**: empirical mining of project conversation archive
-  via the episodic-memory plugin (thrum-e1n0, 2026-05-20). Patterns observed at
+  via the episodic-memory plugin (2026-05-20). Patterns observed at
   least twice in real waiting-on-coord situations; literal examples include
   PENDING LEON banners, "your call", "awaiting your <X>", "Standing by for
   coordinator's <X>", "Stopping here to surface". See the comment header in the
@@ -120,7 +114,7 @@ either:
   waiting-on-coord). Future refactor opportunity: extract a shared
   identity-enumeration + JSONL-resolution helper when a third sweep variant
   lands.
-- **Motivating incident**: 2026-05-20 researcher_thrum_memory sat blocked ~10min
+- **Motivating incident**: 2026-05-20 <researcher> sat blocked ~10min
   with question fully visible at-pane but not in coord's inbox.
 - **Related discipline**:
   - `feedback_surface_pending_leon_questions` — escalations to Leon go in a

@@ -21,8 +21,8 @@ Lift this query into a bundle (`thrum queue add --from-message <msg-id>`), then
 **Why:** Reading 10 files into your main context to "understand the
 architecture" is the Context Hog trap. Sub-agents partition the search across
 multiple conversations that each report a focused finding back — the
-investigation gets done without polluting your context with raw file contents.
-(Source: findings_researcher.md F1 / project Sub-Agent Strategy.)
+investigation gets done without polluting your context with raw file
+contents.
 
 **How to apply:** When the question is "how does X work" or "what calls Y",
 spawn an `Explore` sub-agent with a clear partition: a specific directory, a
@@ -67,9 +67,7 @@ not verified Y."
 **Why:** A vague request ("investigate the auth flow") burns hours investigating
 dimensions the requester didn't actually care about. Returning early with a
 clarifying question is faster overall — even if it adds five minutes of
-round-trip latency, it prevents three hours of wrong-direction work. (Source:
-findings_researcher.md F6 — codex "3 hours of work, one real deliverable commit"
-stemmed from an ambiguous dispatch where the spec and the message conflicted.)
+round-trip latency, it prevents three hours of wrong-direction work.
 
 **How to apply:** Read the dispatch and the linked spec/plan first. If the scope
 is ambiguous (multiple plausible interpretations, contradictory documents, no
@@ -81,9 +79,8 @@ question. Don't guess. Don't investigate "what they probably meant" in parallel.
 **Why:** A finding sent only as a Thrum message is ephemeral — the coordinator
 may acknowledge and move on, and the next session has to re-investigate.
 Persisting as a `research_note` memory makes findings recoverable across
-sessions and re-readable by other agents. (Source: findings_researcher.md R15 —
-"File a beads issue for any bug you find; do not just mention it" generalizes to
-all findings.)
+sessions and re-readable by other agents — the same principle behind filing a
+beads issue for any bug you find rather than just mentioning it in passing.
 
 **How to apply:** After reporting to the requester, write the finding as a
 `research_note` memory with cited file:line refs and a verification footer. Tag
@@ -108,8 +105,8 @@ never double-quoted inline like this; see your role preamble's 🔴 PROSE INTO A
 COMMAND rule.
 
 Then add one line to `.thrum/context/research.md` under Tracked Topics (note:
-`thrum queue` now supersedes free-text Open Questions tracking, per
-thrum-og7pq):
+`thrum queue` now supersedes free-text Open Questions tracking, per an
+internal agent-status-wiring decision):
 
 ```markdown
 - `research-<slug>` — <one-line description, ≤ 80 chars>
@@ -122,7 +119,7 @@ The full index format and staleness-check protocol live in
 
 **Why:** Your job ends when you have a finding. Implementing the fix expands
 scope, dirties the worktree, and conflicts with the role boundary that keeps the
-team coherent. (Source: findings_researcher.md R5.)
+team coherent.
 
 **How to apply:** When investigation surfaces a bug:
 
@@ -146,7 +143,7 @@ If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `researcher-maintaining-memory` skill — it references the
 `memory-write-discipline` common for the canonical `thrum memory create` shape.
 
-### Pattern D self-write — set `agent_status=working` on dispatch ACK (thrum-9neg)
+### Pattern D self-write — set `agent_status=working` on dispatch ACK
 
 Immediately after sending the dispatch ACK for a research request, write
 `agent_status="working"` to your local identity file. This is the same Pattern D

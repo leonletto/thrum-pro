@@ -143,9 +143,9 @@ The implementer's context on the blocked half's fix is exactly what the
 three-pass re-gate cycle needs if it surfaces further findings; retiring
 early forces a cold restart mid-fix-cycle.
 
-## Worked example (q5r2x liveness/tmux-lock split, 2026-07-21/22)
+## Worked example (liveness/tmux-lock split, 2026-07-21/22)
 
-`thrum-q5r2x` bundled a liveness inconclusive-signal fix (concern A) with a
+The branch bundled a liveness inconclusive-signal fix (concern A) with a
 tmux-lock false-completeness fix (concern B) that the gate found
 independently, in the same branch. The coordinator's Pass-3 initially
 **falsely cleared** the liveness blocker (Discipline D1 — the gate's Lens-8
@@ -158,26 +158,26 @@ RPC-scoped gate hadn't reached.
 
 Merge-king ruled **SPLIT THE BRANCH**:
 
-- **B (tmux-lock fix)** merged first: `<sha>`. Landing B took its
-  commits to a corrected merged form (e.g. `5cd3a0eb9`) — a distinct object
+- **B (tmux-lock fix)** merged first: `<sha-B-merge>`. Landing B took its
+  commits to a corrected merged form (e.g. `<sha-B-corrected>`) — a distinct object
   from the pre-split commit it replaced.
 - **A (liveness fix)** re-cut onto B's now-moved merge tip
-  (`<sha>`), carrying only A's own 7 liveness commits — both of B's
+  (`<sha-B-tip>`), carrying only A's own 7 liveness commits — both of B's
   **original pre-split tmux commits** explicitly dropped from A's re-cut
-  range (the re-cut legitimately descends from B's merged tip, `<sha>`,
+  range (the re-cut legitimately descends from B's merged tip, `<sha-B-tip>`,
   which is expected and correct).
 - The **not-ancestor invariant** was run against the **original pre-split
   SHAs**, not the merged form:
-  `git merge-base --is-ancestor {<sha>, <sha>} <sha>` — both
+  `git merge-base --is-ancestor {<sha-orig-1>, <sha-orig-2>} <sha-B-tip>` — both
   of those are the ORIGINAL pre-split tmux commit SHAs (one carried a stale,
-  overstated comment that B's merge corrected), not `5cd3a0eb9` (the
-  corrected merged form, which *is* an ancestor of `<sha>` by design and
+  overstated comment that B's merge corrected), not `<sha-B-corrected>` (the
+  corrected merged form, which *is* an ancestor of `<sha-B-tip>` by design and
   would wrongly fail the check if used here). Both original SHAs came back
   NOT-an-ancestor — PASS — confirming A's re-cut carried none of B's
   pre-correction objects, so merging A could not silently revert B's comment
   fix.
 - A was three-pass re-gated (unframed → code-derived → by-effect) and
-  merged: `<sha>`.
+  merged: `<sha-A-merge>`.
 - Efficacy rows were recorded for **both** A and B (`outcome=REAL_DEFECT`
   for each), and `<implementer>` (the implementer) was retired only after
   both merges landed.

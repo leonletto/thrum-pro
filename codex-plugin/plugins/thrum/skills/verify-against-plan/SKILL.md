@@ -34,7 +34,7 @@ file-structure and acceptance-criteria anchors the skill compares against.
   case). E.g. `feat/verify-against-plan`.
 - **Commit range** — `start..end` for custom ranges. E.g. `d4943ce5..HEAD`.
 - **Worktree path** — infer the branch and diff from the worktree's current
-  state. E.g. `/Users/leon/.workspaces/thrum/plugin-skills-slate`.
+  state. E.g. `/path/to/workspace/thrum`.
 
 #### Context-inferred defaults
 
@@ -232,7 +232,7 @@ not write "### BLOCKING #0 — none".
   — claims still accurate").
 - **MINOR** — missing documentation reference, commit-message format drift, or
   stylistic plan deviation that does not affect behavior. Example: plan calls
-  for `Refs thrum-s9q9.3` in commit body, commit just has the title.
+  for `Refs bd-123` in commit body, commit just has the title.
 
 Drift-check-specific outcomes (step 4) and their severity mapping:
 

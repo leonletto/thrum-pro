@@ -3,7 +3,7 @@ name: update-state
 description: "Use to update your personal State.md — 'update your State.md', 'save personal state', 'significant checkpoint', 'sleep gate directive'. Any role (coordinator / implementer / researcher). Lightweight personal counterpart to thrum:update-project. Call any time; idempotent."
 ---
 
-# Thrum: Update Personal State (thrum-9gfo / D10)
+# Thrum: Update Personal State (D10)
 
 Compose your resume-state directly from in-context knowledge — NO subagent
 spawn, NO git log / bd stats / worktree list — and write it via
@@ -32,7 +32,7 @@ this skill exists to prevent, not an equally-valid alternative.
 
 A State.md fact is TRUE when written and can silently become FALSE later —
 the reader can't tell, because a note doesn't present itself as a time-bound
-claim (thrum-hrigx: three agents burned by their own durable artifacts in one
+claim (an internal incident: three agents burned by their own durable artifacts in one
 night). Before writing anything into State.md:
 
 - Only write what you've verified against current state — not what you

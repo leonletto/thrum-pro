@@ -1,12 +1,10 @@
 ---
 name: implementer-receiving-review-feedback
-description:
-  "Use when receiving review findings, when a reviewer flagged an issue, during
-  a review cycle, or when responding to review. Loads implementer-specific
-  discipline that complements superpowers:receiving-code-review."
+description: "Use when receiving review findings, when a reviewer flagged an issue, during a review cycle, or when responding to review. Loads implementer-specific discipline that complements superpowers:receiving-code-review."
 # source: claude-plugin/skills/implementer-receiving-review-feedback/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Implementer: Receiving Review Feedback
 
@@ -20,8 +18,7 @@ skill. Layer the rules below on top of those universals.
 substantial changes before the next epic can build on it. Starting the next epic
 before the current one is reviewed creates compounding rework — when round-2
 fixes land in epic N, the early work on epic N+1 may need to be redone or
-reverted. (Source: findings_implementer.md — "Treat the review gate as a hard
-stop, not a suggestion".)
+reverted.
 
 **How to apply:** After sending DONE/DONE_WITH_CONCERNS for an epic: close beads
 tasks for that epic, ensure work is durably preserved per project policy, then
@@ -32,10 +29,10 @@ explicit GREENLIT or APPROVED message.
 ### Batch all review fixes into ONE commit
 
 **Why:** A single fix commit makes re-review straightforward — the coordinator
-inspects one diff against the numbered finding list. (Source:
-findings_implementer.md — virtual-supervisor 2026-04-17 implementer handled five
-findings in a single commit `da48c70`, which listed each finding in the message
-body.) Per-finding commits multiply the surface the re-review has to traverse
+inspects one diff against the numbered finding list. (In one case, an
+implementer handled five findings in a single commit `<sha>`, which listed
+each finding in the message body.) Per-finding commits multiply the surface
+the re-review has to traverse
 and increase the chance that a finding fixed in commit A is regressed by commit
 B.
 

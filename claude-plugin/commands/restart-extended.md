@@ -74,9 +74,9 @@ operator-initiated `thrum tmux create`.
 ```bash
 SESSION_RAW=$(thrum whoami --field tmux_session)
 # thrum whoami --field tmux_session returns a PANE-QUALIFIED value
-# (e.g. "i7xv1-lifecycle-cmds:0.0"), not a session name. `thrum tmux restart`
+# (e.g. "abc12-my-task:0.0"), not a session name. `thrum tmux restart`
 # takes a session NAME and the daemon sanitizes ":"/"." to "-", so passing the
-# raw value produces a lookup key ("i7xv1-lifecycle-cmds-0-0") that does not
+# raw value produces a lookup key ("abc12-my-task-0-0") that does not
 # exist and every self-restart would fail. Strip to the bare session name:
 SESSION=${SESSION_RAW%%:*}
 ROLE=$(thrum whoami --field role)

@@ -33,7 +33,7 @@ is typically <10, so replay is cheap.
 
 Provenance now lives in the durable `memory-events-v2/` lane and is read by
 `memory history` directly — it survives events.jsonl compaction and cold boot
-(thrum-j7n5.50).
+.
 
 ## Conflict resolution (LWW by event ULID)
 

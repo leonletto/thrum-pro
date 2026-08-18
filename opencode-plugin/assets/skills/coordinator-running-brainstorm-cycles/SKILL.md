@@ -250,13 +250,13 @@ git-safety rule).
 
 - **Worktree dir name:** `<topic>-brainstorm` — kebab-case, descriptive of the
   topic, ends with `-brainstorm` so it's instantly recognizable in
-  `git worktree list`. Examples: `inbox-race-brainstorm`, `agents-brainstorm`,
-  `email-brainstorm`.
+  `git worktree list`. Examples: `auth-flow-brainstorm`, `cache-ttl-brainstorm`,
+  `log-rotation-brainstorm`.
 - **Branch name:** `feature/<topic>-brainstorm` (or `fix/<topic>-brainstorm` if
   the topic is a bug fix).
 - **Agent name:** `researcher_<topic_underscore>` — matches the
-  `<role>_<module>` convention. Examples: `researcher_inbox_race`,
-  `researcher_scheduler`.
+  `<role>_<module>` convention. Examples: `researcher_auth_flow`,
+  `researcher_cache_ttl`.
 - **Module slug:** `<topic_underscore>` — short, lowercase, underscored.
 
 ### Create branch + worktree + agent + launch runtime
@@ -661,9 +661,9 @@ program (started 2026-05-13):
 
 - Brainstorm docs:
   `dev-docs/brainstorms/2026-05-13-thrum-agents-{a,b,c,d}-b1-brainstorm.md`
-- Tracking: `dev-docs/thrum-agents/brainstorming-roadmap.md` + bd `thrum-6qmf`
-- Four parallel researchers (`@researcher_scheduler`, `@researcher_agents`,
-  `@researcher_skills`, `@researcher_email`) ran the pattern end-to-end.
+- Tracking: `dev-docs/thrum-agents/brainstorming-roadmap.md`
+- Four parallel researchers (`@<researcher-1>`, `@<researcher-2>`,
+  `@<researcher-3>`, `@<researcher-4>`) ran the pattern end-to-end.
 
 ## Project-specific rules (already loaded)
 

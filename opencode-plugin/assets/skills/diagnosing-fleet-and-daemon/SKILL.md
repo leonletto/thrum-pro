@@ -122,7 +122,7 @@ plus one `UPDATE` has been observed to trigger this. Do not reason "this upgrade
 is small, so it is safe."
 
 > *Dev-fleet note (ignore if you are running a release build): tracked as
-> `thrum-j8i5l` / `bmrrz`; the fix is a boot-seam pool recycle.*
+> tracked internally; the fix is a boot-seam pool recycle.*
 
 ⚠️ Read the DB with `mode=ro`. **Never `immutable=1`** — it reads the stale base
 file past a live `-wal` and answers confidently wrong.
@@ -136,7 +136,8 @@ grep -icE "SIGBUS|panic:|fatal error|walIndexRecover" .thrum/var/log/daemon.log
 tail -40 .thrum/var/log/daemon.log
 ```
 
-- **Hits** → a crash. Capture the trace before restarting; it may be `bmrrz`.
+- **Hits** → a crash. Capture the trace before restarting; it may be the
+  known dev-fleet crash noted above.
 - **Zero, and the log simply stops** → it was *stopped*, not crashed. Look for
   who stopped it (§ Who did that) rather than hunting a nonexistent crash.
 

@@ -217,7 +217,7 @@ Example: every superseded session summary that touched a given epic, paged:
 thrum memory search \
   --kind session_summary \
   --status superseded \
-  --tag epic-thrum-j7n5 \
+  --tag epic-<epic-id> \
   --sort updated_at_desc \
   --limit 50 --offset 0
 ```

@@ -10,7 +10,7 @@ Consumers: run `grep -rl _snapshot-protocol claude-plugin/commands/` for the
 current set — do NOT hardcode it here. A list of consumers inside the consumed
 file is a second copy of a git-answerable fact and rots the moment a command is
 added or dropped. Note: plain `/thrum:restart` does NOT consume this partial; it
-carries its own inline snapshot template (stamped identically per thrum-m43mk).
+carries its own inline snapshot template (stamped identically per the same convention).
 
 This is the canonical source-of-truth for snapshot composition discipline. The
 sibling commands that consume this partial compose: read this partial →
@@ -49,7 +49,7 @@ decisions, the cycles closed. Examples:
 > Q-Spec approvals, and Q-Spec-5 deferred to impl-time. Hand-off pending
 > coordinator final review.
 >
-> Investigated rc.9 inbox-race against impl_inbox_race's hypothesis: confirmed
+> Investigated rc.9 inbox-race against <implementer>'s hypothesis: confirmed
 > the lock-substrate fence is the right fix. Filed thrum-XXX with 4 BLOCKING
 > evidence points.
 >
@@ -64,7 +64,7 @@ file paths, before patterns — because composing the §1 summary forces you to
 identify what was actually load-bearing about this session, and that priority
 shapes everything else you write below it.
 
-**Stamp your snapshot with the base it was authored against (thrum-m43mk).**
+**Stamp your snapshot with the base it was authored against.**
 Derive and emit the **Authored-against** stamp per
 `claude-plugin/commands/_stamp-protocol.md` and place it at the very top of your
 §1 section (that protocol computes the SHA and merge_target for you — never

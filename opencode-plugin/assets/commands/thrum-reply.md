@@ -16,7 +16,7 @@ EOF
 The reply inherits the original message's audience (direct or group).
 
 If the body has backticks, `$(...)`, `$VAR`, or quotes, pass it via a quoted
-heredoc so the shell doesn't corrupt it (thrum-d3fp):
+heredoc so the shell doesn't corrupt it:
 
 ```bash
 thrum reply <msg-id> --stdin <<'EOF'

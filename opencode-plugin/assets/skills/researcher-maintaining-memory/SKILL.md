@@ -44,7 +44,7 @@ Example:
 
 ### Open Questions
 
-> `thrum queue` now supersedes this free-text list for tracking open investigation threads (see thrum-og7pq / the researcher role's Task Tracking delta) — keep entries here only for historical context.
+> `thrum queue` now supersedes this free-text list for tracking open investigation threads (see an internal agent-status-wiring decision / the researcher role's Task Tracking delta) — keep entries here only for historical context.
 
 Researcher TODOs / things-to-investigate that haven't been resolved into
 findings yet. Each line ≤120 chars; cite a file area or epic if relevant.
@@ -52,8 +52,8 @@ findings yet. Each line ≤120 chars; cite a file area or epic if relevant.
 Example:
 
 ```text
-- Is the embedding adapter wired post-rzp5.4? (check internal/memory/embed/adapter_ollama.go)
-- thrum-puhr.9 monitor reliability follow-up still has 4 child bugs open
+- Is the embedding adapter wired post-migration? (check internal/memory/embed/adapter_ollama.go)
+- the monitor reliability follow-up still has 4 child bugs open
 - Open: does --scope role on memory.create auto-infer the role, or does it require explicit value?
 ```
 
@@ -137,7 +137,7 @@ clobbering user-authored entries with the same slug.
 
 The legacy `research-<slug>` and `research-mod-<module>-<slug>` bd-key
 conventions are retired. Migrated entries carry the original bd-key as title
-(per rzp5.4 utility convention) + `--tag migrated-from-bd:<bd-key>` as the
+(per an internal utility convention) + `--tag migrated-from-bd:<bd-key>` as the
 rollback handle.
 
 ## Role-rule writes (researcher-specific)

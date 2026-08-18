@@ -92,7 +92,7 @@ If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `researcher-maintaining-memory` skill — it references the
 `memory-write-discipline` common for the canonical `thrum memory create` shape.
 
-### Pattern D self-write — set `agent_status=idle` on response/DONE (thrum-9neg)
+### Pattern D self-write — set `agent_status=idle` on response/DONE
 
 When reporting a research finding back to the requester (or closing a DONE on a
 research task), write `agent_status="idle"` to your local identity file. This

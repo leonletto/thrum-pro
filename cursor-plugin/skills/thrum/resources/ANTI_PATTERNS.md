@@ -26,7 +26,7 @@ Task(subagent_type="message-listener", run_in_background=true, prompt="...")
 
 ## 4. Sending Without an Explicit Recipient Flag
 
-`thrum send 'msg'` with no `--to` or `--broadcast` is a hard error (thrum-t698,
+`thrum send 'msg'` with no `--to` or `--broadcast` is a hard error (as of
 v0.10.6+). The previous default — silent broadcast to every team agent — was a
 real footgun, so the CLI now requires the recipient to be explicit:
 

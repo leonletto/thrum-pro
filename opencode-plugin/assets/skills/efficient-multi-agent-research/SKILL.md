@@ -40,7 +40,7 @@ workflow: partition, investigate to disk, consolidate, then decide.
 ### Partition > Parallel Investigate > Consolidate > Decide
 
 1. **Create output directory:** `mkdir -p dev-docs/<topic>/` — if re-running,
-   archive previous `findings_*.md` to a subdirectory (e.g., `run-01/`) before
+   archive previous `report_*.md` to a subdirectory (e.g., `run-01/`) before
    starting so the consolidation glob only picks up current results.
 
 2. **Launch investigation agents** — all in one message, all
@@ -48,11 +48,11 @@ workflow: partition, investigate to disk, consolidate, then decide.
 
    ```text
    Agent(run_in_background=true,
-     prompt="Investigate items A-D. Write to dev-docs/<topic>/findings_1.md
+     prompt="Investigate items A-D. Write to dev-docs/<topic>/report_1.md
      using table schema: [columns]. Flag uncertainties.")
 
    Agent(run_in_background=true,
-     prompt="Investigate items E-H. Write to dev-docs/<topic>/findings_2.md ...")
+     prompt="Investigate items E-H. Write to dev-docs/<topic>/report_2.md ...")
    ```
 
    Specify exact table columns and consistent formatting in every prompt.
@@ -60,7 +60,7 @@ workflow: partition, investigate to disk, consolidate, then decide.
    **Every prompt MUST scope the read-only restriction around its own output
    file, in the same breath:** `READ-ONLY EVERYWHERE EXCEPT YOUR OUTPUT FILE —
    do not modify source, tests, config, git state, or the issue tracker; you
-   MUST write exactly dev-docs/<topic>/findings_N.md, and that write is
+   MUST write exactly dev-docs/<topic>/report_N.md, and that write is
    expected and authorized.` Omitting the exception is the most common cause of
    a fan-out that returns nothing — see Common Mistakes.
 
@@ -69,7 +69,7 @@ workflow: partition, investigate to disk, consolidate, then decide.
 4. **Launch consolidation agent** — always request these four elements:
 
    ```text
-   Agent(prompt="Read all dev-docs/<topic>/findings_*.md.
+   Agent(prompt="Read all dev-docs/<topic>/report_*.md.
      Create consolidated_report.md with:
      1. Unified table merging all agent tables
      2. Cross-cutting patterns across findings
@@ -87,7 +87,7 @@ workflow: partition, investigate to disk, consolidate, then decide.
 | Group size    | 4-5 items per agent                                       |
 | Agent count   | Typically 3-5                                             |
 | Agent mode    | Always `run_in_background=true`                           |
-| Output        | `dev-docs/<topic>/findings_N.md` per agent                |
+| Output        | `dev-docs/<topic>/report_N.md` per agent                |
 | Consolidation | Always a dedicated agent writing `consolidated_report.md` |
 
 ## Model tiers for this skill
@@ -137,7 +137,7 @@ tool is what refuses.
 ```text
 READ-ONLY EVERYWHERE EXCEPT YOUR OUTPUT FILE.
 Do not modify source, tests, config, git state, or the issue tracker.
-You MUST write your findings to exactly: dev-docs/<topic>/findings_N.md
+You MUST write your findings to exactly: dev-docs/<topic>/report_N.md
 Write it with a Bash heredoc (cat > <path> <<'EOF' ... EOF), NOT the Write tool —
 Write refuses report files. That single write is expected and authorized.
 ```

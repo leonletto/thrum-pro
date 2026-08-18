@@ -174,7 +174,7 @@ thrum worktree create <name>
 # create session — ephemeral implementer (no agent folder, stateless)
 # --mode ephemeral --identity ephemeral: register as (ephemeral, ephemeral) so
 #   the per-agent agents/ folder is auto-cleaned if the operator ever runs the
-#   (coordinator-only) delete path (thrum-n20ur.7). Orchestrators retire via
+#   (coordinator-only) delete path. Orchestrators retire via
 #   set-phase retired, never delete.
 # Pin --model on BOTH create AND launch — create's persist to runtime_config.json
 # is asynchronous and can lose the race to launch's resolution if launch omits
@@ -192,9 +192,9 @@ thrum tmux launch <name> --runtime <runtime> --model sonnet
 > folder). At NORMAL epic completion AND at a tier-swap, retire the agent with
 > `thrum agent set-phase retired --agent <name>` — this RETAINS the registry row
 > (phase=retired) so the agent stays visible in the Retired tab + auditable
-> (thrum-aml37). ⚠️ **"Folderless" refers to the registry, NOT the worktree: a
+> ⚠️ **"Folderless" refers to the registry, NOT the worktree: a
 > worktree still carries UNTRACKED `.thrum/` state that must be salvaged before
-> any teardown (thrum-j14q3, Step 5) — enumerate the WHOLE `.thrum` pathspec,
+> any teardown (see Step 5: Cleanup) — enumerate the WHOLE `.thrum` pathspec,
 > not just `.thrum/agents/`; the preamble sits in `.thrum/context/`.**
 > `thrum agent delete` is operator-only (gated to the coordinator) and is NOT an
 > orchestrator tool — never use it for teardown or for a swap; `set-phase
@@ -248,7 +248,7 @@ assigning work. Do not dispatch an unpinned implementer.
 
 > **Daemon role-default backstop (a net, not a substitute).** The launch
 > precedence is `CLI --model > agent pin > ROLE DEFAULT > project default >
-> built-in` — the role default sits ABOVE the project default (thrum-jjjv8.3),
+> built-in` — the role default sits ABOVE the project default,
 > so an unpinned agent lands on its role tier even when the project default is a
 > premium model. 🛑 **The per-role values are NOT listed here — read them at the
 > moment you need them:** `jq -r '.runtime.role_models' .thrum/config.json`. A list
@@ -550,13 +550,13 @@ in-session context is gone and unrecoverable; the pushed branch is the only
 artifact worth keeping, and by Step 4D above it is already merged into
 `<merge-target>` and pushed. ~~A restart snapshot sitting in a DONE
 implementer's worktree does not justify KEEPING THE TREE — the agent will not wake
-to use it.~~ **RETIRED — this rationale was WRONG (thrum-j14q3): a snapshot's
+to use it.~~ **RETIRED — this rationale was WRONG: a snapshot's
 absence from the branch does NOT mean there is nothing worth saving. See the
 salvage correction immediately below — it is not optional.** **Scope:
 implementers only.** Brainstormer and researcher worktrees are kept (ongoing
 design-doc value) — do not apply this step to them.
 
-🔴 **BUT YOU MUST SALVAGE UNTRACKED AGENT STATE BEFORE REMOVING (thrum-j14q3).**
+🔴 **BUT YOU MUST SALVAGE UNTRACKED AGENT STATE BEFORE REMOVING.**
 **Not keeping the tree is not the same as having nothing to save.** Restart
 snapshots and authored agent state live UNTRACKED under the worktree's own
 **`.thrum/` — NOT only `.thrum/agents/<self>/`.**

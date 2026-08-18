@@ -32,8 +32,7 @@ reviewers as parallel sub-agents in the same message. Pass each a clear scope
 
 **Why:** Sending findings from reviewer A while reviewer B is still running
 causes the implementer to fix batch 1 and miss batch 2 entirely, extending the
-review cycle by a full extra round. (Source: findings_coordinator.md — "Wait for
-both reviewers before sending findings".)
+review cycle by a full extra round.
 
 **How to apply:** Block until both review sub-agents return their full output.
 Do not send partial findings, even if the user is asking for an update. If one
@@ -60,8 +59,7 @@ one.
 **Why:** Reviewers reading a large diff sometimes cite wrong line numbers or
 describe behavior that doesn't match the current code. Forwarding a misread
 finding causes the implementer to waste time investigating a non-issue and
-erodes trust in the review process. (Source: findings_coordinator.md — "Verify
-reviewer claims before forwarding".)
+erodes trust in the review process.
 
 **How to apply:** For any finding citing a specific file and line, read that
 file at that range before forwarding. For API-shape claims, grep for the symbol
@@ -75,8 +73,7 @@ findings poisons the cycle.
 shape is Y — here's the trace"), that is the correct behavior, not
 insubordination. The coordinator may have stated expectations that drift from
 runtime reality. Treating pushback as a challenge breaks the feedback loop and
-trains implementers to swallow corrections. (Source: findings_coordinator.md —
-"Implementer pushback is a signal to verify, not dismiss".)
+trains implementers to swallow corrections.
 
 **How to apply:** When an implementer pushes back: read the cited file at the
 cited lines, run the cited command, or `bd show <id>` for beads state. If
@@ -102,8 +99,7 @@ design issue, not just sloppy review.
 **Why:** A test that cannot run (blocked upstream build, unrelated flake, CI
 environment issue) cannot validate behavior. Saying "no errors seen" is weaker
 than enumerating what a regression would produce and showing none of those
-signatures occurred. (Source: findings_coordinator.md — "Verify the cited code
-before closing a regression as 'green'".)
+signatures occurred.
 
 **How to apply:** When a green-test check is blocked, prove absence of
 regression by: (1) listing specific failure modes a regression would produce

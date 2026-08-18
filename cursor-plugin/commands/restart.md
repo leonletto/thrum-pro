@@ -48,7 +48,7 @@ the cycles closed. Examples:
 > Q-Spec approvals, and Q-Spec-5 deferred to impl-time. Hand-off pending
 > coordinator final review.
 >
-> Investigated rc.9 inbox-race against impl_inbox_race's hypothesis: confirmed
+> Investigated rc.9 inbox-race against <implementer>'s hypothesis: confirmed
 > the lock-substrate fence is the right fix. Filed thrum-XXX with 4 BLOCKING
 > evidence points.
 >
@@ -63,7 +63,7 @@ file paths, before patterns — because composing the §1 summary forces you to
 identify what was actually load-bearing about this session, and that priority
 shapes everything else you write below it.
 
-**Stamp your snapshot with the base it was authored against (thrum-m43mk).**
+**Stamp your snapshot with the base it was authored against.**
 Derive and emit the **Authored-against** stamp per
 `claude-plugin/commands/_stamp-protocol.md` and place it at the very top of your
 §1 section (that protocol computes the SHA and merge_target for you — never
@@ -144,9 +144,9 @@ or `cat <<EOF` redirection is needed — write the file directly.
 ```bash
 SESSION_RAW=$(thrum whoami --field tmux_session)
 # thrum whoami --field tmux_session returns a PANE-QUALIFIED value
-# (e.g. "i7xv1-lifecycle-cmds:0.0"), not a session name. `thrum tmux restart`
+# (e.g. "abc12-my-task:0.0"), not a session name. `thrum tmux restart`
 # takes a session NAME and the daemon sanitizes ":"/"." to "-", so passing the
-# raw value produces a lookup key ("i7xv1-lifecycle-cmds-0-0") that does not
+# raw value produces a lookup key ("abc12-my-task-0-0") that does not
 # exist and every self-restart would fail. Strip to the bare session name:
 SESSION=${SESSION_RAW%%:*}
 ROLE=$(thrum whoami --field role)

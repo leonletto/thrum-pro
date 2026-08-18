@@ -153,9 +153,9 @@ plans is a real second instrument.
 
 ## Worked example (3-plan identity/authority arc, 2026-07-21)
 
-Three programs from one idea: ① identity/authority core (`thrum-xknm6`), ②
-reconciler cwd-drift self-heal (`thrum-0jier`), ③ liveness inconclusive-signal
-axis (`thrum-q5r2x`). Shared seams: the **A2 anchor contract**, **the
+Three programs from one idea: ① identity/authority core, ②
+reconciler cwd-drift self-heal, ③ liveness inconclusive-signal
+axis. Shared seams: the **A2 anchor contract**, **the
 reconciler**, **the identity-file schema**, **the `PhaseOf` predicate**.
 
 Fable reconcile verdict: **YES-WITH-FIXES**. The consolidated fix list

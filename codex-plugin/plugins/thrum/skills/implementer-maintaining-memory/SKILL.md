@@ -55,7 +55,7 @@ reason to judge edge cases the rule doesn't literally cover.
 ### Implementer does NOT write
 
 - **Refactoring opportunities discovered mid-task** → file under the bd
-  refactoring epic `thrum-xir`, NOT memory. Memory is for AGENT BEHAVIOR rules;
+  refactoring epic (tracked separately), NOT memory. Memory is for AGENT BEHAVIOR rules;
   bd tracks code work.
 - **Research findings about the codebase** → ping the researcher; they own
   `kind: research_note` writes.

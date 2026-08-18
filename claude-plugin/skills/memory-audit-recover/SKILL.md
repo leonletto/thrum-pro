@@ -32,8 +32,7 @@ The full event timeline always comes from JSONL replay — per-memory event coun
 is typically <10, so replay is cheap.
 
 Provenance now lives in the durable `memory-events-v2/` lane and is read by
-`memory history` directly — it survives events.jsonl compaction and cold boot
-(thrum-j7n5.50).
+`memory history` directly — it survives events.jsonl compaction and cold boot.
 
 ## Conflict resolution (LWW by event ULID)
 

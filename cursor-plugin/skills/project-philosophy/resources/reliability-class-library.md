@@ -2,9 +2,8 @@
 
 Shared reference loaded by `project-philosophy` (all 7 classes) and
 `project-hotpath-gate` (classes tagged `hotpath` below, via their hot-path
-facet). Distilled from thrum's own 15 anti-patterns
-(`.thrum/philosophy.md`) plus the Hipp/SQLite crash-recovery lessons
-(`dev-docs/thrum-test-strategy-update/`). Each class is a generalizable
+facet). Distilled from thrum's own anti-patterns and SQLite crash-recovery lessons.
+Each class is a generalizable
 failure SHAPE, not a thrum-specific rule — adapt the probes to the target
 repo's detected language before writing anything into a generated doc.
 
@@ -15,9 +14,8 @@ into a non-Go repo's philosophy.md.
 ## Class 1 — Injectable fault seam
 
 **Consumers:** philosophy, hotpath (hot-path facet: per-request expensive-call)
-**thrum source:** AP#1 (`.thrum/philosophy.md`); the VFS lesson (SQLite's OS
-layer is a swappable driver so every I/O failure mode is testable without
-touching a real disk).
+**thrum source:** the VFS lesson: SQLite's OS layer is a swappable driver, so
+every I/O failure mode is testable without touching a real disk.
 
 **Definition:** A call into the OS, filesystem, or network that can fail
 (process exec, file open/read/write, socket dial, DNS) is made directly from
@@ -52,9 +50,8 @@ finding.
 ## Class 2 — Unrecovered async failure kills the host process
 
 **Consumers:** philosophy, hotpath (hot-path facet: unrecovered-async-crash)
-**thrum source:** the goroutine-crash finding behind hotpath lens
-`async_io_decoupling` (new I/O work added inside a daemon boot stage or
-dispatch handler with no recovery if that work panics/throws).
+**thrum source:** new I/O work added inside a daemon boot stage or dispatch
+handler with no recovery if that work panics/throws.
 
 **Definition:** Work is moved onto a background thread/goroutine/async task
 for latency reasons, but a panic, unhandled rejection, or unrecovered
@@ -86,7 +83,6 @@ spawn with no enclosing recover/catch in the same function is a finding.
 ## Class 3 — Destructive reconcile on fresh install (empty canonical is a wipe)
 
 **Consumers:** philosophy only
-**thrum source:** AP#13 (`.thrum/philosophy.md`) — fresh-install blast radius.
 
 **Definition:** A reconcile/sync/cleanup routine treats an EMPTY canonical
 source (first boot, no state yet) the same as a canonical source that says
@@ -119,7 +115,6 @@ everything not in the list."
 ## Class 4 — Guard-adequacy: presence verified, capability not
 
 **Consumers:** philosophy only
-**thrum source:** AP#12 (`.thrum/philosophy.md`) — marked "universal" in the spec.
 
 **Definition:** A guard checks that something EXISTS (a file, a flag, a
 config key, a permission record) but never checks that it actually WORKS or
@@ -152,9 +147,8 @@ check) or only presence.
 ## Class 5 — Synchronous palliative vs. bounded async queue
 
 **Consumers:** philosophy, hotpath (hot-path facets: shared-lock-across-I/O, unbounded-wait)
-**thrum source:** AP#11 (`.thrum/philosophy.md`) — synchronous palliative on a
-shared serialization point; the Hipp/SQLite lesson of removing a slow
-component rather than patching around it with more synchronous work.
+**thrum source:** the Hipp/SQLite lesson: remove a slow component rather than
+patching around it with more synchronous work.
 
 **Definition:** A shared serialization point (a global lock, a single
 writer connection, a single dispatch queue) is under contention, and the
@@ -223,8 +217,7 @@ failed (a deliberately broken fixture, an invented-symbol probe).
 ## Class 7 — Crash/power-loss recovery and migration against real old data
 
 **Consumers:** philosophy only
-**thrum source:** the SQLite core disciplines (Hipp/SQLite talk); ties to
-thrum's own REL-1 migration-corpus work.
+**thrum source:** the SQLite core disciplines (Hipp/SQLite talk).
 
 **Definition:** A durable store's crash-recovery path (WAL replay, journal
 recovery, migration-on-boot) is tested only against synthetic in-memory
@@ -608,26 +601,24 @@ drift.
 ## Class 16 — Unauthenticated hot-path route
 
 **Consumers:** hotpath
-**thrum source:** New for language-agnostic hotpath onboarding (N1, dev-docs/plans/2026-08-08-language-agnostic-generators-plan.md) — authored against docs/security_model/master.md §1.2/§1.5 scoping discipline, not derived from an existing thrum anti-pattern.
 
 **Definition:** A request-handling route on a hot path — one reachable by an external, unauthenticated caller off the box (a customer-facing HTTP/RPC endpoint) — has no authentication or authorization check in its call chain before it touches business logic or data.
 
-**Why it's expensive:** An externally-reachable handler with no auth check is a direct path to data or actions the caller was never granted. This is scoped narrowly on purpose: it applies only to a route that is actually reachable by an unauthenticated caller off the box — an internal-only route (behind internal-network middleware, admin-only binding, loopback-only listener), or a deliberately open endpoint (health check, static asset, login/signup route itself), is not a finding. Per `docs/security_model/master.md` §1.5/§1.5.2: "an attacker not named in scope justifies nothing," and a local/internal-trust surface is not the same threat as an externally-reachable one. This distinction is also why thrum's own hot-path handlers get **no probe for this class in Go** (see below) — thrum's daemon RPC surface sits behind an mTLS + pairing perimeter that already authenticates every non-loopback caller, so "route lacking auth" is not a coherent finding against thrum's own hot path. Do not import that exemption into a customer repo: a typical Flask/Express/Go web service has no equivalent perimeter, and a route handler in its public API is presumptively externally reachable unless there is clear evidence of an internal-only guard (internal-network middleware, admin-only bind address, an explicit auth-exempt allowlist).
+**Why it's expensive:** An externally-reachable handler with no auth check is a direct path to data or actions the caller was never granted. This is scoped narrowly on purpose: it applies only to a route that is actually reachable by an unauthenticated caller off the box — an internal-only route (behind internal-network middleware, admin-only binding, loopback-only listener), or a deliberately open endpoint (health check, static asset, login/signup route itself), is not a finding. A local/internal-trust surface is not the same threat as an externally-reachable one. This distinction is also why thrum's own hot-path handlers get **no probe for this class in Go** (see below) — thrum's daemon RPC surface sits behind an mTLS + pairing perimeter that already authenticates every non-loopback caller, so "route lacking auth" is not a coherent finding against thrum's own hot path. Do not import that exemption into a customer repo: a typical Flask/Express/Go web service has no equivalent perimeter, and a route handler in its public API is presumptively externally reachable unless there is clear evidence of an internal-only guard (internal-network middleware, admin-only bind address, an explicit auth-exempt allowlist).
 
 **Detection heuristic:** find route/handler registrations on the hot path (per the target repo's routing framework) and check whether an auth decorator/middleware/dependency guard appears in the handler's own chain (not just declared somewhere in the app and never wired to this route). A route with no such guard, and no adjacent evidence that it is internal-only or intentionally public, is a finding.
 
 **Per-language probes:**
 
-- Go: none — thrum's own hot-path handlers sit behind the mTLS perimeter (docs/security_model/master.md §1.5.2); this concept targets customer repos with no equivalent perimeter, not thrum itself. Emit no Go probe (existing behavior stays byte-identical).
+- Go: none — thrum's own hot-path handlers sit behind an mTLS perimeter that already authenticates every non-loopback caller; this concept targets repos with no equivalent perimeter. Emit no Go probe.
 - Python: `grep -rn '@app\.\(route\|get\|post\|put\|delete\|patch\)\|@router\.\(get\|post\|put\|delete\|patch\)' --include='*.py'`, then for each match check the surrounding function/decorator stack for `@requires_auth`, `@login_required`, or a `Depends(verify_token)`/`Depends(get_current_user)`-shaped FastAPI dependency; a route with none of these, and no `# public`/`# internal-only` marker, is a finding.
 - JS/TS: `grep -rn "app\.\(get\|post\|put\|delete\|patch\)(\|router\.\(get\|post\|put\|delete\|patch\)(" --include='*.ts' --include='*.js'`, then check whether an auth middleware (e.g. `requireAuth`, `passport.authenticate`, `verifyToken`) appears in the same handler's middleware chain before the handler body.
-- Rust: open gap — the plan table specifies Go/Python/JS-TS only for this concept; no Rust probe has been derived here. Note as a follow-up if Rust hotpath support is added.
+- Rust: no probe defined for this concept yet.
 - Fallback: find the target language's route/handler registration primitive; check whether an auth guard (middleware, decorator, dependency-injection check) sits in that specific handler's chain, and treat internal-only-bound or explicitly-public routes as out of scope rather than findings.
 
 ## Class 17 — Secret or token value flows into a log
 
 **Consumers:** hotpath
-**thrum source:** New for language-agnostic hotpath onboarding (N2, dev-docs/plans/2026-08-08-language-agnostic-generators-plan.md) — authored against docs/security_model/master.md §1.2/§1.5 scoping discipline, not derived from an existing thrum anti-pattern.
 
 **Definition:** A hot-path handler logs or prints a request object, auth header, bearer token, API key, or other secret-shaped value — directly or via a wholesale dump of headers/request state — rather than a redacted or field-scoped log line.
 
@@ -637,27 +628,26 @@ drift.
 
 **Per-language probes:**
 
-- Go: none — same caveat as Class 16 (open question, not silently invented): the plan table marks this concept absent for Go. Whether thrum's own daemon logging should get a probe for this pattern is an open question left for a future pass, not resolved here. Emit no Go probe (existing behavior stays byte-identical).
+- Go: none — whether thrum's own daemon logging should get a probe for this pattern is left for a future pass. Emit no Go probe.
 - Python: `grep -rn 'log\(ger\)\?\.\(info\|debug\|warning\|error\)(.*\(token\|request\.headers\|authorization\|api_key\|secret\)\|print(.*\(token\|request\.headers\|authorization\)' --include='*.py' -i`
 - JS/TS: `grep -rn 'console\.\(log\|error\|warn\|info\)(.*\(req\.headers\|token\|authorization\|apiKey\|secret\)' --include='*.ts' --include='*.js' -i`
-- Rust: open gap — the plan table specifies Go/Python/JS-TS only for this concept; no Rust probe has been derived here.
+- Rust: no probe defined for this concept yet.
 - Fallback: find the language's logging/print primitives on the hot path; check whether any call site passes a whole headers/request object or a token/secret/password/api-key-named variable without a redaction step first.
 
 ## Class 18 — Hot-path handler or proxy loop with no concurrency cap
 
 **Consumers:** hotpath
-**thrum source:** New for language-agnostic hotpath onboarding (N3, dev-docs/plans/2026-08-08-language-agnostic-generators-plan.md) — authored against docs/security_model/master.md §1.2/§1.5 scoping discipline, not derived from an existing thrum anti-pattern.
 
 **Definition:** A hot-path handler or proxy/fan-out loop issues unbounded concurrent work (unbounded `Promise.all`, an unguarded per-request loop dialing out to N downstream calls, a proxy relay with no semaphore/limiter) with no cap on in-flight concurrency and no rate limiter protecting the entry point.
 
-**Why it's expensive:** Without a concurrency cap, load on this path scales directly with caller-controlled fan-out (request volume, or the size of a caller-supplied list/batch) rather than with any server-chosen bound. A burst of legitimate traffic — or a single caller sending a large batch — can exhaust downstream connections, memory, or file descriptors, causing backpressure collapse for every other caller on the same process. This is a request-shape and resource-exhaustion concern, distinct from `docs/security_model/master.md` §1.5's out-of-scope on-path network adversary (ARP poisoning, packet drops): sizing a concurrency cap or rate limiter against ordinary caller-controlled load is in scope even where sizing against a network-level adversary is explicitly not.
+**Why it's expensive:** Without a concurrency cap, load on this path scales directly with caller-controlled fan-out (request volume, or the size of a caller-supplied list/batch) rather than with any server-chosen bound. A burst of legitimate traffic — or a single caller sending a large batch — can exhaust downstream connections, memory, or file descriptors, causing backpressure collapse for every other caller on the same process. This is a request-shape and resource-exhaustion concern, distinct from an out-of-scope on-path network adversary (ARP poisoning, packet drops): sizing a concurrency cap or rate limiter against ordinary caller-controlled load is in scope even where sizing against a network-level adversary is not.
 
 **Detection heuristic:** find the hot-path handler or proxy/relay loop and check for (a) a rate limiter or throttle guarding the entry point, and (b) a concurrency cap (semaphore, worker pool, bounded queue) around any per-request fan-out to downstream calls. A loop or `Promise.all`-shaped fan-out with neither is a finding; a rate-limiter decorator/middleware that was present and has since been removed (a diff-visible regression) is also a finding.
 
 **Per-language probes:**
 
-- Go: none — same caveat as Class 16/17: the plan table marks this concept absent for Go. Emit no Go probe (existing behavior stays byte-identical).
+- Go: none. Emit no Go probe.
 - Python: `grep -rn 'for .* in .*:\s*$' --include='*.py' -A5` in proxy/relay-shaped modules, checked for an absent `Semaphore`/`BoundedSemaphore` around the loop body; separately `grep -rn '@limiter\.\(limit\|exempt\)\|@ratelimit' --include='*.py'` cross-checked via `git log -p` for a removed `@limiter` decorator on a hot-path route.
 - JS/TS: `grep -rn 'Promise\.all(' --include='*.ts' --include='*.js'`, checked for whether the mapped array length is caller-controlled (request body/query param) and no chunking/`p-limit`/semaphore wraps it; separately `grep -rn 'rateLimit\|express-rate-limit\|limiter' --include='*.ts' --include='*.js'` to confirm a limiter exists on the entry point.
-- Rust: open gap — the plan table specifies Go/Python/JS-TS only for this concept; no Rust probe has been derived here.
+- Rust: no probe defined for this concept yet.
 - Fallback: find the hot-path handler or proxy/fan-out loop; check for a rate limiter at the entry point and a concurrency cap (semaphore, bounded worker pool) around any per-request fan-out, and check version history for a removed limiter on that route.

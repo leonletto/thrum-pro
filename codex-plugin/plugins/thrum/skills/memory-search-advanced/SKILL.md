@@ -1,18 +1,15 @@
 ---
 name: memory-search-advanced
-description:
-  "Use when running thrum memory search with RAG (--near), composing complex
-  predicate stacks, paginating large result sets, interpreting MEM-001..010 hint
-  codes, or diagnosing embedding adapter behavior. Loads three-vector ranking
-  semantics, length-bias caveat, and the full hint catalog."
+description: "Use when running thrum memory search with RAG (--near), composing complex predicate stacks, paginating large result sets, interpreting MEM-001..010 hint codes, or diagnosing embedding adapter behavior. Loads three-vector ranking semantics, length-bias caveat, and the full hint catalog."
 # source: claude-plugin/skills/memory-search-advanced/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
 
+
 ## memory-search-advanced — RAG, hint codes, complex predicates
 
-Load this sub-skill from `thrum-memory` (umbrella) when you need more than tag +
-kind + recency filtering.
+Load this sub-skill from `thrum-memory` (umbrella) for predicate needs beyond
+tag + kind + recency filtering.
 
 ### Predicate surface (shipped)
 
@@ -69,7 +66,7 @@ the eventual search-surface implementer, NOT as usable commands:
 Workarounds with the shipped surface: time filtering = `--since` only (no
 created-vs-updated split); per-field grep = not available (grep spans title +
 all three zooms); edge predicates = not available (edge reads are the
-`memory.listByEdge` RPC, no CLI); `--pinned` = `--tag pinned` (D9: pinned is a
+`memory.listByEdge` RPC, no CLI); `--pinned` = `--tag pinned` (pinned is a
 tag).
 
 ### Pagination patterns
@@ -120,10 +117,9 @@ queries can systematically match `oneline` over `full` for length-similarity
 reasons rather than semantic-relevance reasons.** This is a real bias inherited
 from the embedding model.
 
-Detection and recovery (manual in v1; a future MEM-011+ zoom-divergence detector
-is reserved for this case — the shipped MEM-008 is the embed-enqueue-failed
-warning, NOT the zoom-divergence detector the brainstorm originally penciled
-in):
+Detection and recovery (manual in v1; a future MEM-011+ zoom-divergence
+detector is reserved for this case; the shipped MEM-008 is the
+embed-enqueue-failed warning, not a zoom-divergence detector):
 
 - Inspect `matched_zoom` in each result. If short queries return rows dominated
   by `matched_zoom=oneline`, the ranking may have been misled.
@@ -147,26 +143,21 @@ blocking-shaped advice, `info` for nudges.
 | Code      | Trigger                                                           | What it tells you                                                    |
 | --------- | ----------------------------------------------------------------- | -------------------------------------------------------------------- |
 | `MEM-001` | search returned >50 matches                                       | Narrow with `--kind` / `--tag` / `--since`                           |
-| `MEM-002` | `--near` supplied without `--kind`                                | Add `--kind` to narrow before semantic re-rank (deferred — Epic 7)   |
+| `MEM-002` | `--near` supplied without `--kind`                                | Add `--kind` to narrow before semantic re-rank (deferred)            |
 | `MEM-003` | empty result with two or more narrowing predicates                | Drop the most-restrictive flag                                       |
 | `MEM-004` | `--near` with embedding adapter disabled                          | Hard refusal — enable the adapter (see setup below)                  |
 | `MEM-005` | `--grep` matched nothing AND field is empty for most rows of kind | Broaden: drop `--kind`                                               |
-| `MEM-006` | `--near` found rows with `embed_status=pending` → FTS fallback    | Wait for backfill or run `memory.embed.rebuild` (deferred — Epic 7)  |
-| `MEM-007` | `--near` skipped rows whose `embedding_model` ≠ configured model  | Run backfill to migrate vectors (deferred — Epic 7)                  |
+| `MEM-006` | `--near` found rows with `embed_status=pending` → FTS fallback    | Wait for backfill or run `memory.embed.rebuild` (deferred)           |
+| `MEM-007` | `--near` skipped rows whose `embedding_model` ≠ configured model  | Run backfill to migrate vectors (deferred)                           |
 | `MEM-008` | `memory.create` enqueue to embed worker failed                    | Best-effort; the worker will retry via `memory.embed.rebuild`        |
 | `MEM-009` | `memory.edit` projection detected concurrent edit; LWW loser      | Loser's value is preserved in `memory.history` (deferred surfacing)  |
 | `MEM-010` | `memory.create` omitted `body_short` or `body_full`               | Three-zoom retrieval works better with all three; non-blocking nudge |
 
 **Deferred triggers:** MEM-002, MEM-006, MEM-007 are registered today but the
-emission path lights up in Epic 7 (`--near` adapter wiring + multi-model
-support). MEM-009 emission lights up when LWW-loser surfacing lands in the
-projection response. The codes are stable; only the trigger conditions are in
-flight.
-
-**MEM-008 historical note:** the brainstorm originally reserved MEM-008 for a
-RAG-zoom-divergence detector. The shipped code uses MEM-008 for the
-embed-enqueue-failed warning; the zoom-divergence slot is re-allocated to
-MEM-011+ in a future epic.
+emission path lights up in a future epic (`--near` adapter wiring +
+multi-model support). MEM-009 emission lights up when LWW-loser surfacing
+lands in the projection response. The codes are stable; only the trigger
+conditions are in flight.
 
 **Hard refusal:** MEM-004 is the only hint with `AllowForce=false`. There is no
 recovery flag — the adapter is either present or absent.
@@ -220,7 +211,7 @@ Example: every superseded session summary that touched a given epic, paged:
 thrum memory search \
   --kind session_summary \
   --status superseded \
-  --tag epic-<epic-id> \
+  --tag epic-thrum-abc \
   --sort updated_at_desc \
   --limit 50 --offset 0
 ```

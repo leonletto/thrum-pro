@@ -17,9 +17,8 @@
    positional query, no `--limit`) or `thrum inbox -q "<term>"` (same search
    scoped to your inbox). `thrum message reindex` rebuilds the FTS index if
    search looks wrong.
-7. **Reply** — `thrum reply <msg-id> --body-file reply.md` (same audience; **no
-   `--to`** — the recipient is derived from the parent message; use
-   `thrum send --to @name` for a new thread)
+7. **Reply** — `thrum reply <msg-id> --body-file reply.md` (see Addressing for
+   the no-`--to` rule)
 
 ## Addressing
 
@@ -42,9 +41,7 @@
 **The trap:** a double-quoted body is processed by your shell _before_ thrum
 runs. Backticks and `$(...)` are command-substituted, `$VAR` is expanded, and
 the original text never reaches thrum — it cannot detect or repair the
-corruption. A real dispatch once lost a backticked word (`` `img` `` ran as a
-command → "command not found: img") and the recipient silently got mangled
-instructions. Single-quoting is only a stopgap — it breaks on apostrophes in
+corruption. Single-quoting is only a stopgap — it breaks on apostrophes in
 prose.
 
 **The safe default:** read the body from stdin or a file instead of passing it

@@ -45,9 +45,9 @@ split isn't clean enough to attempt this play.
 ### Land the clean half first
 
 Do not hold the clean half hostage to the blocked half's fix cycle. Route the
-clean half through its own merge report to the merge-king (Discipline D13 —
-box coordinators never self-merge) and get it merged **first**. This
-advances the mainline tip by the clean half's commits.
+clean half through its own merge report to the merge-king (coordinators
+never self-merge) and get it merged **first**. This advances the mainline
+tip by the clean half's commits.
 
 ### Re-cut the blocked half onto the now-moved base
 
@@ -68,9 +68,9 @@ Once the clean half is merged, the blocked half must be **re-cut** — not
 merely rebased — onto the new tip, so it carries **only its own commits**,
 not a copy of the clean half's commits riding along from the original
 branch-off point. Concretely: create the new branch from the merged tip
-(the clean half's merge SHA, announced per Discipline D7 — base-mover
-discipline, announce the new tip by SHA unprompted), then cherry-pick or
-rebase only the blocked half's own commits onto it. The goal state is a
+(the clean half's merge SHA, announced by SHA unprompted, per base-mover
+discipline), then cherry-pick or rebase only the blocked half's own commits
+onto it. The goal state is a
 branch whose full commit range is exactly "the blocked concern's fix,"
 nothing else.
 
@@ -109,9 +109,9 @@ future merge-base calculation on the same files, and git's three-way merge
 can resolve back toward the older, pre-correction content — silently
 reverting whatever the clean half's merge fixed. There is no conflict, no
 warning, no gate that catches this by construction: the merge just succeeds
-and quietly re-applies the older version. This is exactly the D5/D6 shape —
-verification (ancestry) has a shelf life, and re-deriving it AT THIS SPECIFIC
-HANDOFF (the re-cut) is not optional.
+and quietly re-applies the older version. Verification (ancestry) has a
+shelf life, and re-deriving it AT THIS SPECIFIC HANDOFF (the re-cut) is not
+optional.
 
 Run the check at **re-cut time** and again immediately before the merge-king
 executes the re-cut branch's merge (the base can move again in between on a
@@ -120,8 +120,8 @@ live shared branch — re-run, don't relay a stale result).
 ### Three-pass re-gate on the re-cut branch
 
 The re-cut branch is a new artifact (different base, different commit set)
-and gets a full re-gate, not a diff-against-the-old-gate. Follow Discipline
-D1's three-pass order, in order:
+and gets a full re-gate, not a diff-against-the-old-gate. Follow the
+three-pass order, in order:
 
 1. **UNFRAMED first** — no defect brief, read the full changed functions,
    flag anything nobody asked about. Run this before the other two; a
@@ -146,59 +146,15 @@ The implementer's context on the blocked half's fix is exactly what the
 three-pass re-gate cycle needs if it surfaces further findings; retiring
 early forces a cold restart mid-fix-cycle.
 
-### Worked example (liveness/tmux-lock split, 2026-07-21/22)
-
-The branch bundled a liveness inconclusive-signal fix (concern A) with a
-tmux-lock false-completeness fix (concern B) that the gate found
-independently, in the same branch. The coordinator's Pass-3 initially
-**falsely cleared** the liveness blocker (Discipline D1 — the gate's Lens-8
-reused the commit's own `IsAgentLive(` grep key, which cannot match
-`IsAgentLiveFromStartTime`, so it never traced the second channel that
-tombstones on inconclusive). The merge-king's independent second-lens gate
-caught the real tombstone-on-inconclusive defect; the coordinator's own
-**unframed** pass then found a third, separate lock domain the merge-king's
-RPC-scoped gate hadn't reached.
-
-Merge-king ruled **SPLIT THE BRANCH**:
-
-- **B (tmux-lock fix)** merged first: `<sha-B-merge>`. Landing B took its
-  commits to a corrected merged form (e.g. `<sha-B-corrected>`) — a distinct object
-  from the pre-split commit it replaced.
-- **A (liveness fix)** re-cut onto B's now-moved merge tip
-  (`<sha-B-tip>`), carrying only A's own 7 liveness commits — both of B's
-  **original pre-split tmux commits** explicitly dropped from A's re-cut
-  range (the re-cut legitimately descends from B's merged tip, `<sha-B-tip>`,
-  which is expected and correct).
-- The **not-ancestor invariant** was run against the **original pre-split
-  SHAs**, not the merged form:
-  `git merge-base --is-ancestor {<sha-orig-1>, <sha-orig-2>} <sha-B-tip>` — both
-  of those are the ORIGINAL pre-split tmux commit SHAs (one carried a stale,
-  overstated comment that B's merge corrected), not `<sha-B-corrected>` (the
-  corrected merged form, which *is* an ancestor of `<sha-B-tip>` by design and
-  would wrongly fail the check if used here). Both original SHAs came back
-  NOT-an-ancestor — PASS — confirming A's re-cut carried none of B's
-  pre-correction objects, so merging A could not silently revert B's comment
-  fix.
-- A was three-pass re-gated (unframed → code-derived → by-effect) and
-  merged: `<sha-A-merge>`.
-- Efficacy rows were recorded for **both** A and B (`outcome=REAL_DEFECT`
-  for each), and `<implementer>` (the implementer) was retired only after
-  both merges landed.
-
 ### Gate that closes it
 
-Both halves merged, both efficacy rows recorded (Stage 10 discipline — one
-row per merged branch, not one row for the original bundled branch), the
-not-ancestor invariant's PASS result is part of the merge report the
-merge-king relied on (not asserted after the fact).
+Both halves merged, both efficacy rows recorded (one row per merged branch,
+not one row for the original bundled branch), the not-ancestor invariant's
+PASS result is part of the merge report the merge-king relied on (not
+asserted after the fact).
 
 ### See also
 
-- `dev-docs/process/2026-07-22-idea-to-merged-end-to-end-process-capture.md`
-  — the full 11-stage pipeline (Stage 0 + Stages 1–10; this play is Stage
-  9/10) and Discipline D1 (gate independence / unframed-first), D5
-  (verification shelf-life), D6 (conflict-free-not-strict-ff), D7
-  (base-mover discipline) that this play composes.
 - `coordinator-hotpath-merge-gate` / `coordinator-philosophy-merge-gate` —
   the Pass-3 gates whose BLOCK verdict triggers this play.
 - `coordinator-running-review-cycles` — the dual-review cycle that may also
@@ -206,11 +162,8 @@ merge-king relied on (not asserted after the fact).
 
 ### Project-specific rules (already loaded)
 
-Project-local rules of kind `agent_rule` at `--scope role` were loaded at
-session start by your preamble (see your role template's Memory model block).
-If a project-local rule conflicts with this skill, the project-local rule
-wins; surface the conflict in your reply so the user can decide whether to
-graduate or remove the override.
+Read the shared partial at the absolute path:
+`claude-plugin/commands/_project-rules-protocol.md`
 
 If you accumulate a new rule mid-session about branch-splitting, capture it
 via the `coordinator-maintaining-memory` skill — it references the

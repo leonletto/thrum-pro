@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PreToolUse hook: JIT agent-rule injection (D6, D8, D9).
+# PreToolUse hook: JIT agent-rule injection.
 #
 # Reads PreToolUse JSON from stdin. For Edit/Write/MultiEdit tools:
 #   1. Extracts the file path(s) from tool_input.
@@ -15,19 +15,13 @@
 # Dedup file: ~/.thrum/var/hook-state/$CLAUDE_SESSION_ID/injected-rules
 # One rule ID per line. Created on first injection.
 #
-# Output contract (verified against CC 2.1.190):
+# Output contract:
 #   - Soft rules: plain text to stdout → CC routes hook stdout as
 #     additionalContext injected before the next model turn. No JSON envelope
 #     needed; hookEventName field is not required.
 #   - Hard rules: JSON to stderr with hookSpecificOutput.permissionDecision=ask
 #     + permissionDecisionReason. Exit 2 triggers the ask dialog. hookEventName
-#     is optional (omitted here). Verified against block-tls-key-exfil.sh
-#     which uses the identical pattern and works on CC 2.1.190.
-#
-# Prime-side verification (aep6v.3): agent_rule records render index-first
-# at prime via §1.5 writeMemoryRefList (E3 routes ALL ForYou kinds as oneline
-# index; no special case for agent_rule needed). Test:
-#   TestFormatMemoriesSectionIndexFirst in internal/cli/prime_memory_depth_test.go
+#     is optional (omitted here).
 #
 # Plugin sync: this hook is wired in claude-plugin only. sync-skills.sh does
 # not propagate hooks to opencode/codex/cursor plugins (they use different hook

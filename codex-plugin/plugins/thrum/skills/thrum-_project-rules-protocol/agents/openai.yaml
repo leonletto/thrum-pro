@@ -1,0 +1,4 @@
+interface:
+  display_name: "Thrum _project Rules Protocol"
+  short_description: "Shared project-specific-rules protocol consumed by role skills. Not user-invocable directly."
+  default_prompt: "Run the thrum _project-rules-protocol workflow and summarize the result."

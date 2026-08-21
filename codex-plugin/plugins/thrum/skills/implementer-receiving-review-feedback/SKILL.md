@@ -29,10 +29,7 @@ explicit GREENLIT or APPROVED message.
 ### Batch all review fixes into ONE commit
 
 **Why:** A single fix commit makes re-review straightforward — the coordinator
-inspects one diff against the numbered finding list. (In one case, an
-implementer handled five findings in a single commit `<sha>`, which listed
-each finding in the message body.) Per-finding commits multiply the surface
-the re-review has to traverse
+inspects one diff against the numbered finding list. Per-finding commits multiply the surface the re-review has to traverse
 and increase the chance that a finding fixed in commit A is regressed by commit
 B.
 
@@ -68,7 +65,7 @@ deferring it to a follow-up issue is often the wrong trade. The marginal cost of
 fixing it now is small (the file is already in your context, you already
 understand the surrounding code). The cost of a future follow-up is real
 (re-load context, re-read neighbors, redo verification). Default to fix-now when
-the file is already being touched. (Source: feedback_no_lazy_deferral.md.)
+the file is already being touched.
 
 **How to apply:** For each finding categorized as "could defer", run the
 trade-off explicitly:
@@ -87,8 +84,7 @@ Don't reach for "deferred" as a shortcut to ship faster.
 **Why:** Reviewers reading large diffs sometimes cite wrong line numbers,
 describe behavior that doesn't match the current code, or apply a universal rule
 to a project-specific exception. Pushback is welcome — it's how the feedback
-loop stays calibrated. (Source: project Code Review Protocol —
-"trace-corrections are welcome".) But pushback without verification is just
+loop stays calibrated. But pushback without verification is just
 opinion against opinion.
 
 **How to apply:** When you disagree with a finding, verify against the source
@@ -124,11 +120,8 @@ list, file them as bd issues — don't slip them into the fix commit.
 
 ### Project-specific rules (already loaded)
 
-Project-local rules of kind `agent_rule` at `--scope role` were loaded at
-session start by your preamble (see your role template's Memory model block). If
-a project-local rule conflicts with a universal rule above, the project-local
-rule wins; surface the conflict in your reply so the user can decide whether to
-graduate or remove the override.
+Read the shared partial at the absolute path:
+`claude-plugin/commands/_project-rules-protocol.md`
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `implementer-maintaining-memory` skill — it references the

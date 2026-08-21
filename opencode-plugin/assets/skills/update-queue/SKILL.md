@@ -11,7 +11,7 @@ work that is missing. Scoped to your queue only — cross-agent reconciles are a
 larger pass (see the final section). Run it at session start, at a lull, or
 whenever the queue can no longer be trusted at a glance.
 
-You only ever edit your OWN queue. Handing work to another agent is a message,
+Edit only your OWN queue. Handing work to another agent is a message,
 never a write to their queue (see the `using-the-queue` skill).
 
 ---
@@ -23,7 +23,7 @@ thrum queue list
 thrum queue list | awk -F'\t' 'NF>1{print $2}' | sort | uniq -c   # status counts
 ```
 
-Read the whole list yourself. The status counts are the before-number you
+Read the whole list yourself. The status counts are the before-number to
 reconcile against and report the delta from. `-F'\t'` is load-bearing: bundle
 rows are tab-delimited, but `queue list` also prints a space-delimited footer
 (`Oldest bundle updated …`) to stdout — under default whitespace splitting that
@@ -97,8 +97,8 @@ thrum queue done <bundle-id> && thrum queue drop <bundle-id>
 
 More than ~6 live bundles to verify → dispatch read-only sub-agents, one slice
 each, rather than checking them inline (see `efficient-multi-agent-research`).
-You consume consolidated verdicts and make every drop/keep/add/start call
-yourself — the sub-agents only gather evidence.
+Consume consolidated verdicts and make every drop/keep/add/start call yourself
+— the sub-agents only gather evidence.
 
 Give each sub-agent:
 

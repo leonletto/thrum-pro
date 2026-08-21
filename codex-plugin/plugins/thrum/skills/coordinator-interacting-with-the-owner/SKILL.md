@@ -12,9 +12,9 @@ description: "Use whenever you are about to write to the pane for the human, or 
 
 Coordinators consume **40-50% of this box's total tokens** (owner's figure).
 The dominant cause is narrating agent traffic to the pane for a human who is
-not there. Measured 2026-07-27 on <primary-box>: roughly 15 notification turns, each
-answered with a multi-paragraph pane report — about half a coordinator
-session, spent talking to nobody.
+not there — a stream of notification turns, each answered with a
+multi-paragraph pane report, spending about half a coordinator session
+talking to nobody.
 
 🔴 **The cost is quadratic, not linear, and that is the point that must not
 get lost in the fix.** A narration joins the transcript, so every later turn
@@ -22,13 +22,9 @@ re-reads every earlier one. N narrated messages means turn *k* carries all
 *k−1* of them. Shortening a narration only changes the constant; not writing
 it changes the growth curve.
 
-**Natural experiment, owner-confirmed:** the 3 boxes with orchestrators
-(box-a, box-b, box-c) show this problem; the 2 without (box-d,
-box-e) do not. Same role, same preamble, same guidelines, opposite
-outcomes. Coordinator context scales with **subordinate count and message
-volume**, not with work completed. The quiet boxes are not more disciplined —
-nobody is talking to them. Any fix framed as "be more disciplined" is refuted
-by that pair before it starts.
+Coordinator context scales with subordinate count and message volume, not
+with work completed or discipline; a coordinator with no subordinates
+talking to it produces no narration regardless of care taken.
 
 ### 1. A thrum notification is not the human
 
@@ -80,10 +76,9 @@ expansion and is never re-parsed for backticks or `$( )`, so this is safe even
 though the flag itself takes a literal string.
 
 ⚠️ **The single-line form is the one that comes to mind first — that is the
-failure.** The owner estimates 25-40% of beads, messages, and memory writes
-get polluted this way, until an agent re-learns the heredoc habit in-session —
-and loses it again at the next restart, because the lesson lived in a
-transcript, not in a rule.
+failure.** This pollutes beads, messages, and memory writes until an agent
+re-learns the heredoc habit in-session — and loses it again at the next
+restart, because the lesson lived in a transcript, not in a rule.
 
 ### 3. Restart on a measurement, never a feeling
 
@@ -92,9 +87,7 @@ footer, every single time you're about to decide whether to restart.
 
 **A number you measured earlier and have been mentally incrementing since is
 a memory, not a measurement — and it feels measured because it once was.**
-Measured 2026-07-27: eight consecutive fabricated footer readings, claiming
-91% at an actual 66% — a 25-point error, with the identical signature weeks
-earlier at 16 points. The drift always runs toward **false urgency, never
+The drift always runs toward **false urgency, never
 complacency**: an inflated number reads as caution, so nobody challenges it,
 and it is exactly the direction that makes a bad restart look prudent instead
 of wasteful. (Do not state a threshold percentage here — the existing
@@ -149,7 +142,7 @@ silent.
 **An agent surfaces a decision that genuinely needs the owner.**
 ❌ 300 words of background, the options considered, the tradeoffs, and a
 recommendation, before finally landing on the question.
-✅ *"Leon — release/v0.10.6 soak found a schema-migration regression.
+✅ *"<owner> — release/v0.10.6 soak found a schema-migration regression.
 Options: (a) patch and re-soak 48h, (b) ship without the fix and hotfix
 after. Your call."*
 
@@ -172,11 +165,8 @@ bd update thrum-abc --notes "$notes"
 
 ### Project-specific rules (already loaded)
 
-Project-local rules of kind `agent_rule` at `--scope role` were loaded at
-session start by your preamble (see your role template's Memory model block).
-If a project-local rule conflicts with a universal rule above, the
-project-local rule wins; surface the conflict in your reply so the user can
-decide whether to graduate or remove the override.
+Read the shared partial at the absolute path:
+`claude-plugin/commands/_project-rules-protocol.md`
 
 If you accumulate a new rule mid-session (the user corrects you), capture it
 via the `coordinator-maintaining-memory` skill — it references the

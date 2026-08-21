@@ -1,30 +1,27 @@
 ---
 name: thrum-memory
-description:
-  "Use when capturing or querying structured memories (session summaries,
-  architectural decisions, restart snapshots, agent rules) via the thrum memory
-  CLI. Loads decision flowchart, kind taxonomy, default-safe behaviors, and
-  pointers to advanced sub-skills."
+description: "Use when capturing or querying structured memories (session summaries, architectural decisions, restart snapshots, agent rules) via the thrum memory CLI. Loads decision flowchart, kind taxonomy, default-safe behaviors, and pointers to advanced sub-skills."
 # source: claude-plugin/skills/thrum-memory/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## thrum memory — capture and query structured memories
 
 ### When to use thrum memory vs. other stores
 
-Did you just learn something that future-you should respect? YES →
-`thrum memory create` (decide kind below) NO ↓
+Just learned something that future work should respect? → `thrum memory create`
+(decide kind below).
 
-Is this transient task state (in-progress work, current session context)? YES →
-`bd update` / `bd comments` (per-task notes) NO ↓
+Transient task state (in-progress work, current session context)? → `bd update`
+/ `bd comments` (per-task notes).
 
-Is this long-form project narrative (architecture decisions, release status)?
-YES → memory of kind `arch_decision` or `session_summary` (the integration
-brainstorm will wire these into prime-assembly later) NO ↓
+Long-form project narrative (architecture decisions, release status)? → memory
+of kind `arch_decision` or `session_summary` (the integration brainstorm will
+wire these into prime-assembly later).
 
-Is this code documentation (CLAUDE.md, READMEs, in-file comments)? YES → edit
-the file directly; memory is for structured records, not docs.
+Code documentation (CLAUDE.md, READMEs, in-file comments)? → edit the file
+directly; memory is for structured records, not docs.
 
 ### Kind taxonomy at a glance
 
@@ -51,8 +48,7 @@ thrum memory create --kind arch_decision \
   --tag substrate,sync
 ```
 
-`--short`/`--full` carry real prose — compose via heredoc or file, never
-double-quoted inline; see your role preamble's 🔴 PROSE INTO A COMMAND rule.
+See `memory-write-discipline` for prose-into-a-command conventions.
 
 Search by tag + kind, default limit 10:
 

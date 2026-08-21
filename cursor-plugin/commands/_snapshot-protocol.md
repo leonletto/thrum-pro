@@ -10,7 +10,7 @@ Consumers: run `grep -rl _snapshot-protocol claude-plugin/commands/` for the
 current set — do NOT hardcode it here. A list of consumers inside the consumed
 file is a second copy of a git-answerable fact and rots the moment a command is
 added or dropped. Note: plain `/thrum:restart` does NOT consume this partial; it
-carries its own inline snapshot template (stamped identically per the same convention).
+carries its own inline snapshot template.
 
 This is the canonical source-of-truth for snapshot composition discipline. The
 sibling commands that consume this partial compose: read this partial →
@@ -53,7 +53,7 @@ decisions, the cycles closed. Examples:
 > the lock-substrate fence is the right fix. Filed thrum-XXX with 4 BLOCKING
 > evidence points.
 >
-> Closed B-B1 E6.0 brainstormer-third pass. 2 BLOCKING + 5 IMPORTANT + 10 MINOR.
+> Closed <epic> E6.0 brainstormer-third pass. 2 BLOCKING + 5 IMPORTANT + 10 MINOR.
 > All three load-bearing traps PASSed. Standing by for E6.1 next batch.
 
 This section becomes YOUR OWN log entry, visible in `thrum agent sessions list`
@@ -84,9 +84,7 @@ no "I pushed X", "I fixed Y and verified it", "I ran Z". Write instead:
 "commit `<sha>` exists and does `<Y>`" / "`<sha>` addresses `<Y>`". Attribution
 of WHO performed a git action already lives in `command.jsonl` / `hooklog.jsonl`
 — restating it here would assert authorship the snapshot-writer has typically
-never mechanically verified. (This bit us once: a snapshot narrated a pairing
-session in first person for commits someone else actually pushed — the
-content/effect described was accurate, only the implied authorship was false.)
+never mechanically verified.
 
 After the §1 block:
 
@@ -170,8 +168,8 @@ Each section names a concern; write as prose, a table, or omit with an explicit
 §2.  Identity — agent_id / worktree path / branch / role / coordinator name / cut-point commit SHA
 §3.  Big picture — what shipped this session  [REQUIRED FIRST PROSE — mirrors standard §1]
 §4.  Mission state — where this work currently sits in its pipeline
-§5.  Locked design decisions — Leon-LOCKs, design-fork resolutions, with rationale
-§6.  Open L-questions parked for Leon — or "NONE: <reason>" with explicit note
+§5.  Locked design decisions — operator-LOCKs, design-fork resolutions, with rationale
+§6.  Open L-questions parked for the operator — or "NONE: <reason>" with explicit note
 §7.  Wire contracts — durable technical reference (types, signatures, file:line cites)
 §8.  Capability matrix — per-surface contracts (row-by-row table for fanout work; OMIT if N/A)
 §9.  Design inventory — locked taxonomy (entanglement classes, patterns, anti-patterns; OMIT if N/A)
@@ -202,8 +200,8 @@ Each section names a concern; write as prose, a table, or omit with an explicit
   specific, load-bearing-first) is identical.
 - **§4 Mission state.** Where this work sits in its pipeline. Not the pipeline
   DAG itself (that's §11) — the narrative status.
-- **§5 Locked design decisions.** Each LOCK gets a line: decision + Leon's
-  wording (when applicable) + rationale.
+- **§5 Locked design decisions.** Each LOCK gets a line: decision + the
+  operator's wording (when applicable) + rationale.
 - **§6 Open L-questions.** Numbered Q-list with researcher recommendations. OR
   "NONE: all locked per <evidence>" with the evidence cited.
 - **§7 Wire contracts.** Durable technical reference — types, function

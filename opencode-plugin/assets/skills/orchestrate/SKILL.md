@@ -191,10 +191,10 @@ thrum tmux launch <name> --runtime <runtime> --model sonnet
 > **Implementer lifecycle:** All implementers are ephemeral+stateless (no agent
 > folder). At NORMAL epic completion AND at a tier-swap, retire the agent with
 > `thrum agent set-phase retired --agent <name>` — this RETAINS the registry row
-> (phase=retired) so the agent stays visible in the Retired tab + auditable
+> (phase=retired) so the agent stays visible in the Retired tab + auditable.
 > ⚠️ **"Folderless" refers to the registry, NOT the worktree: a
 > worktree still carries UNTRACKED `.thrum/` state that must be salvaged before
-> any teardown (see Step 5: Cleanup) — enumerate the WHOLE `.thrum` pathspec,
+> any teardown (see Step 5) — enumerate the WHOLE `.thrum` pathspec,
 > not just `.thrum/agents/`; the preamble sits in `.thrum/context/`.**
 > `thrum agent delete` is operator-only (gated to the coordinator) and is NOT an
 > orchestrator tool — never use it for teardown or for a swap; `set-phase
@@ -215,27 +215,13 @@ it fails again, escalate to the human.
 If `--model` is dropped anywhere in the create/launch sequence, the implementer
 launches UNPINNED and the runtime defaults to Opus — the exact expensive
 failure this tier exists to prevent. Confirm the pin landed before assigning
-work:
+work, using `thrum tmux capture --format=annotated` (see CLAUDE.md "Launching
+an Agent — Verify the Model by Pane, Never by `runtime-config get`" for the
+full instrument: why `runtime-config get` cannot falsify a dropped pin, the
+NBSP fallback trap, and the by-position read):
 
 ```bash
-# NEVER `thrum agent runtime-config get` here — it reads the STORED INTENT the
-# flag wrote, not the model the runtime actually started with, and cannot
-# falsify a dropped pin (it will report "sonnet" on a pane displaying Opus).
-# Read the pane BY POSITION instead:
-# A NARROW FIXED TAIL WINDOW IS NOT SUFFICIENT. A running background sub-agent
-# appends lines BELOW the footer, so position-from-the-end returns the wrong
-# block — and the wrong block contains a PLAUSIBLE NUMBER (a sub-agent's token
-# spend) that a reader will accept. Use a wider window and select the footer line.
-# The `grep -v 'tmux capture'` guard is NOT OPTIONAL: without it the command you
-# just typed is itself in the pane buffer and matches your key.
-# Read the bare exit status BEFORE stdout: a FAILED capture is empty-and-silent,
-# so a stdout-only reader cannot tell "capture failed" from "pane is empty".
-out=$(thrum tmux capture <agent-name> --lines 12); rc=$?   # bare, NOT through a pipe
-[ $rc -ne 0 ] && echo "CAPTURE FAILED — this is NOT an empty pane" && exit 1
-printf '%s\n' "$out" | grep -v 'tmux capture' | grep 'Model:' | tail -1
-# Key is label-only ON PURPOSE. The footer's separators are U+00A0 NON-BREAKING
-# SPACES, so a key that SPANS one — `grep "Model: "` with a trailing space —
-# returns ZERO on a pane that plainly displays a model.
+thrum tmux capture <agent-name> --format=annotated --lines 12
 ```
 
 That prints the runtime's own footer line, e.g. `Model: Sonnet 5`. **Read the
@@ -244,21 +230,9 @@ If the footer shows a different tier (see the BLOCKED note under Step 2 — ther
 no valid `haiku` pin), the pin failed silently — re-pin with
 `thrum tmux create ... --model sonnet` (or
 `thrum agent runtime-config set <agent_name> --model sonnet`) and relaunch BEFORE
-assigning work. Do not dispatch an unpinned implementer.
-
-> **Daemon role-default backstop (a net, not a substitute).** The launch
-> precedence is `CLI --model > agent pin > ROLE DEFAULT > project default >
-> built-in` — the role default sits ABOVE the project default,
-> so an unpinned agent lands on its role tier even when the project default is a
-> premium model. 🛑 **The per-role values are NOT listed here — read them at the
-> moment you need them:** `jq -r '.runtime.role_models' .thrum/config.json`. A list
-> in this document has already gone stale once, in the direction that mattered.
-> The backstop caps a forgotten implementer pin at its role tier rather than a
-> premium default — it does NOT excuse skipping the explicit `--model` +
-> verify above (see the BLOCKED note under Step 2 — no rote-task pin exists).
-> An unrecognized role
-> falls through to the project default, so an empty `runtime-config get` is a
-> discipline failure to fix, not a pass.
+assigning work. **Do not dispatch an unpinned implementer** — the daemon's
+role-default backstop (`jq -r '.runtime.role_models' .thrum/config.json`) is a
+net for a forgotten pin, not a substitute for this check.
 
 ### Step 4: Set initial status
 
@@ -503,8 +477,8 @@ done
 ```
 
 **C. If conflicts arise:**
-You MAY read the conflicted files directly (merge-conflict carve-out in your
-Scope Boundaries). Analyze the conflict using your plan/intent context to
+Reading the conflicted files directly is permitted (merge-conflict carve-out
+in Scope Boundaries). Analyze the conflict using your plan/intent context to
 determine the correct resolution. Then spawn a targeted edit sub-agent:
 
 ```text
@@ -548,29 +522,21 @@ After merge completes, **remove each implementer's worktree now — do not
 leave it for a later coordinator audit.** Once an agent has exited, its
 in-session context is gone and unrecoverable; the pushed branch is the only
 artifact worth keeping, and by Step 4D above it is already merged into
-`<merge-target>` and pushed. ~~A restart snapshot sitting in a DONE
-implementer's worktree does not justify KEEPING THE TREE — the agent will not wake
-to use it.~~ **RETIRED — this rationale was WRONG: a snapshot's
-absence from the branch does NOT mean there is nothing worth saving. See the
-salvage correction immediately below — it is not optional.** **Scope:
-implementers only.** Brainstormer and researcher worktrees are kept (ongoing
-design-doc value) — do not apply this step to them.
+`<merge-target>` and pushed. **Scope: implementers only.** Brainstormer and
+researcher worktrees are kept (ongoing design-doc value) — do not apply this
+step to them.
 
-🔴 **BUT YOU MUST SALVAGE UNTRACKED AGENT STATE BEFORE REMOVING.**
+🔴 **BUT SALVAGE UNTRACKED AGENT STATE BEFORE REMOVING.**
 **Not keeping the tree is not the same as having nothing to save.** Restart
 snapshots and authored agent state live UNTRACKED under the worktree's own
 **`.thrum/` — NOT only `.thrum/agents/<self>/`.**
 
 🔴 **SALVAGE THE WHOLE `.thrum` PATHSPEC, NEVER JUST `.thrum/agents/`.** The
-preamble lives at **`.thrum/context/<name>_preamble.md`**, outside `agents/`. An
+preamble lives at `.thrum/context/<name>_preamble.md`, outside `agents/`. An
 `agents/`-scoped enumeration returns a confident, well-formed result that is
-missing it. **Measured 2026-07-31 (`orch_example_a`): a worktree FOUR MINUTES
-OLD and believed empty held a 1,088-byte launch snapshot AND a 34,202-byte
-preamble, neither in the main repo nor anywhere in git history** — the preamble
-is the file the narrow scope drops, and it is the larger of the two. **Being untracked,
-they are NOT on the branch — so EVERY branch / ancestry / push check above reads
-CLEAN while `worktree teardown` silently destroys them.** A live only-copy was
-caught on the first teardown after this rule was written.
+missing it. **Being untracked, they are NOT on the branch — so EVERY branch /
+ancestry / push check above reads CLEAN while `worktree teardown` silently
+destroys them.**
 
 **Precondition — verify durably-on-origin before removing, don't assume the
 Step 4D push covered it (e.g. a branch that never went through the merge
@@ -604,22 +570,14 @@ git -C <worktree-path> status --porcelain --untracked-files=all --ignored -- .th
 ```
 
 🔴 **THE GIT CHECK ABOVE IS NOT SUFFICIENT ALONE — IT CAN RETURN A CONFIDENT ZERO
-ON A GITIGNORED DIRECTORY THAT IS FULL.** Measured on a detached build worktree:
-`git status --porcelain -uall --ignored -- .thrum` returned **zero paths
-containing `.thrum`**, while `ls` on the same directory at the same moment
-showed a 32 MB `.thrum/` holding 512 agent directories. No mechanism is
-claimed for why the git check missed it here — only the observation and the
-remedy. **Both checks are required; neither alone clears a worktree:**
+ON A GITIGNORED DIRECTORY THAT IS FULL.** Both checks are required; neither
+alone clears a worktree:
 
 🔴 **THE GRANULARITY OF THE CHECK MUST MATCH THE GRANULARITY OF THE HAZARD. THE
 HAZARD IS A FILE, NOT A DIRECTORY.** A directory-name comparison (`comm` over
 `ls` of the agent-dir NAMES) returns a confident empty whenever the directory
 exists in both trees — which is the common case — while the FILES inside
-differ. Measured: dir-level comparison → 0 hits; file-level comparison, same
-worktree, same moment → 50 hits. **A dir-level check was run against three
-live worktrees on the strength of an earlier draft of this guidance and
-cleared all three for removal — all three held genuine only-copies.** Compare
-FILES:
+differ. Compare FILES:
 
 ```bash
 # STAGE 1 — DETECT at FILE granularity (never directory names):
@@ -745,10 +703,8 @@ Run review rounds; converge to zero BLOCKING:
 
 #### Reviewer capability contract — TWO SEPARATE AXES, do not conflate them
 
-Conflating these two is what let basic messaging ship broken: reviewers were
-told "read-only", they read that as "run nothing", and so nobody in the chain
-ever executed a test. "Read-only" is a statement about the TREE, not about
-whether the reviewer may observe behavior.
+"Read-only" is a statement about the TREE, not about whether the reviewer may
+observe behavior.
 
 | Axis | Setting | Why |
 | --- | --- | --- |
@@ -766,8 +722,7 @@ alone and expect the reviewer to infer the split — it will infer the wrong hal
 **Pin the ref, and make the reviewer prove which one it read.** `isolation:
 "worktree"` cuts from the DEFAULT branch, NOT from the branch under review. A
 reviewer dispatched without an explicit ref will happily review the wrong code
-and report a confident verdict about it. This is a real incident, not a
-hypothetical.
+and report a confident verdict about it.
 
 - Pin the exact SHA in the dispatch prompt: "Review commit `<sha>`. First run
   `git fetch origin`, then read the tree READ-ONLY at that SHA —
@@ -799,7 +754,7 @@ If BLOCKING findings remain after round 2:
   Step B.
 - Step B (escalate up): if the implementer fails to converge, escalate to coordinator
   with full review history. Non-convergence = under-specified plan; the
-  coordinator resolves or escalates to Leon.
+  coordinator resolves or escalates to the operator.
 
 ### Human doesn't respond at review gate
 

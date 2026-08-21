@@ -1,0 +1,4 @@
+interface:
+  display_name: "Thrum _generator Idempotency Protocol"
+  short_description: "Shared generator-skill idempotency invariant consumed by config/doc generator skills. Not user-invocable directly."
+  default_prompt: "Run the thrum _generator-idempotency-protocol workflow and summarize the result."

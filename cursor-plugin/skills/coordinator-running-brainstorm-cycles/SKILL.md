@@ -115,12 +115,8 @@ forwarding.
 
 5. **Authored-against stamp (required, top of every artifact):** Before writing
    a brainstorm.md or plan.md, derive and emit the stamp per
-   `claude-plugin/commands/_stamp-protocol.md`. Place these two lines at the top
-   of the artifact, immediately after its own date/frontmatter:
-
-   **Authored-against:** `<sha>` target: `<merge_target>`
-
-   > ⚠️ Verify base before acting: `git diff <sha>..origin/<merge_target> -- <files cited>` -- non-empty ⇒ cited code moved. (Resolve `<merge_target>` through its remote-tracking ref, never a bare local branch name — a local branch of the same name can be stale or absent.)
+   `claude-plugin/commands/_stamp-protocol.md` § "Stamp format" — the canonical
+   format, derivation commands, and never-type rule.
 
 ### Soft pre-flight greps (the SOFT enforcement tier)
 
@@ -305,7 +301,7 @@ the user wants to walk into. They hold only the final DECISION-LOCK for the
 user.
 
 ```text
-═══ INTERACTIVE-WITH-LEON BRAINSTORM PROTOCOL ═══
+═══ INTERACTIVE BRAINSTORM PROTOCOL ═══
 
 Research aggressively + prepare MEATY groundwork BEFORE <user> joins:
 survey the landscape, enumerate options + tradeoffs, gather evidence with
@@ -591,7 +587,7 @@ With plan LOCKED + reviewed AND project-setup complete + reviewed:
 2. Coord verifies the artifacts briefly + proceeds to Phase 0 implementer
    dispatch (worktree creation, hard-freeze if applicable, impl dispatch).
 3. Stand the researcher down at-pane (or keep on standby for impl-time Q&A if
-   Leon explicitly requests continuity). Don't leave brainstorm researchers
+   the user explicitly requests continuity). Don't leave brainstorm researchers
    spinning idle indefinitely; they consume tmux sessions.
 
 ## Anti-patterns
@@ -609,9 +605,7 @@ complete. Researcher fixes batch 1 and never sees batch 2.
 
 ❌ **Skipping the post-plan dual-review.** Treating `writing-plans` skill's
 internal reviewer as sufficient and proceeding directly to `project-setup`
-without an independent review of the plan doc. Documented gap as of S76
-(2026-05-20); see the `feedback-post-project-setup-review` memory via
-`thrum memory search feedback-post-project-setup-review`. The plan and the impl
+without an independent review of the plan doc. The plan and the impl
 prompt MUST get the same dual-axis review treatment the brainstorm gets — Phase
 6 + Phase 7 explicit.
 
@@ -631,10 +625,9 @@ B is never seen. Use `thrum message read <id> [<id>...]` with specific IDs
 instead, especially when juggling multiple researchers.
 
 ❌ **Sub-agents into the researcher's worktree.**
-`feedback_no_subagents_to_worktrees` applies. If you need code research in the
-brainstorm worktree, ask the researcher to do it; if you need broad codebase
-exploration, spawn an `Explore` sub-agent in the main repo path, not the
-worktree path.
+For code research in the brainstorm worktree, ask the researcher; for broader
+codebase exploration, spawn an `Explore` sub-agent in the main repo path, not
+the worktree path.
 
 ❌ **Skipping the coherence pass.** When ≥ 3 sibling brainstorms close in the
 same program, integration-layer issues that no single review can see are
@@ -649,29 +642,11 @@ don't rebind the agent name to a different topic in place.
 - `coordinator-plan-reconcile-gate` — when ≥2 plans for one program were
   authored in parallel (Phase 6 output) and must be verified to compose
   before `project-setup` (shared seams, no double-build, no gap).
-- `dev-docs/process/2026-07-22-idea-to-merged-end-to-end-process-capture.md`
-  — the full idea-to-merged pipeline this skill's Phases 1-8 map to Stages
-  1-2.
-
-## Reference: existing pattern in flight
-
-If you need a concrete reference for the briefing structure, dual-review cycles,
-and overarching coherence pass, look at the v0.11 personal-agent substrate
-program (started 2026-05-13):
-
-- Brainstorm docs:
-  `dev-docs/brainstorms/2026-05-13-thrum-agents-{a,b,c,d}-b1-brainstorm.md`
-- Tracking: `dev-docs/thrum-agents/brainstorming-roadmap.md`
-- Four parallel researchers (`@<researcher-1>`, `@<researcher-2>`,
-  `@<researcher-3>`, `@<researcher-4>`) ran the pattern end-to-end.
 
 ## Project-specific rules (already loaded)
 
-Project-local rules of kind `agent_rule` at `--scope role` were loaded at
-session start by your preamble (see your role template's Memory model block). If
-a project-local rule conflicts with this skill, the project-local rule wins;
-surface the conflict in your reply so the user can decide whether to graduate or
-remove the override.
+Read the shared partial at the absolute path:
+`claude-plugin/commands/_project-rules-protocol.md`
 
 If you accumulate a new rule mid-session about brainstorm orchestration, capture
 it via the `coordinator-maintaining-memory` skill — it references the

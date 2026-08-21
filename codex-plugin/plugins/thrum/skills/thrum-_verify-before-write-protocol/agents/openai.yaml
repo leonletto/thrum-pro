@@ -1,0 +1,4 @@
+interface:
+  display_name: "Thrum _verify Before Write Protocol"
+  short_description: "Shared \"Verify before you write\" invariant consumed by state-writing skills. Not user-invocable directly."
+  default_prompt: "Run the thrum _verify-before-write-protocol workflow and summarize the result."

@@ -450,11 +450,7 @@ bd create --title="Refactoring & DRY Opportunities" --type=epic --priority=3 -d 
 
 #### 2. Log the Opportunity
 
-`--description` is multi-line prose — never double-quoted inline. On
-`scripts/bd-shared`, `--stdin`/`--body-file` are refused (remote-path
-resolution + silent-empty-body hazards), so write it to a scratch file and
-pass `-d "$(cat <file>)"`; see your role preamble's 🔴 PROSE INTO A COMMAND
-rule.
+Same `--description` handling as §1 above (scratch file + `-d "$(cat <file>)"`).
 
 ```bash
 cat > /tmp/refactor-task-desc.md <<'EOF'
@@ -498,10 +494,11 @@ If a task is blocked:
 
 ```bash
 # Ask the blocking agent for help
-# NOTE: --mention @implementer is a message filter tag, not a delivery address.
-# The message is delivered to @{{SUPERVISOR_NAME}}; the mention tag lets implementers
-# filter for messages that mention their role. To address a specific agent directly,
-# use --to @<agent-name> instead.
+# NOTE: --mention @implementer (with no --to) delivers ONLY to agent(s) matching
+# that role/name — it does not go to the supervisor and does not broadcast. A
+# message with ZERO addressing (no --to, no mentions) routes to the local
+# coordinator instead. Broadcast to everyone requires an explicit
+# --to everyone / --mention @everyone.
 thrum send --mention @implementer --stdin <<'EOF'
 BLOCKED: {{TASK_ID}} — waiting for {{BLOCKER_ID}}. Can you prioritize?
 EOF
@@ -551,9 +548,8 @@ Need input: should X use approach A or B? Context: ...
 EOF
 
 # If you realize your work affects another agent's files
-# NOTE: --mention @implementer is a filter tag, not a delivery address.
-# This tags the message so implementers can filter for it; delivery goes to @everyone by default.
-# Use --to @<agent-name> to target a specific agent.
+# NOTE: delivers only to agent(s) matching @implementer — see the mention-delivery
+# note under "Handling Blockers" above for the full rule.
 thrum send --mention @implementer --stdin <<'EOF'
 Heads up: I'm modifying internal/daemon/rpc.go which may overlap with your work
 EOF

@@ -2,7 +2,6 @@
 name: thrum
 description: "Multi-agent coordination via messaging, groups, and shared context. Use when agents need to communicate, delegate work, or coordinate across worktrees."
 version: "0.10.6"
-author: "Leon Letto <https://github.com/leonletto>"
 license: "Apache-2.0"
 ---
 

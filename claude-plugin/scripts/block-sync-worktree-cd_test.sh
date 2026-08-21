@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Regression tests for the a-sync worktree guard (block-sync-worktree-cd.sh).
 #
-# The 2026-06-04 fix anchors cd/git at COMMAND POSITION so the hook stops
-# false-positiving on benign commands (docs, memory writes) that merely MENTION
-# the a-sync path next to the word "cd". Executable assertions:
+# This anchors cd/git at COMMAND POSITION so the hook stops false-positiving on
+# benign commands (docs, memory writes) that merely MENTION the a-sync path
+# next to the word "cd". Executable assertions:
 #   real destructive ops  -> DENY (exit 2)
-#   path mentioned in text -> ALLOW (exit 0)  [the false-positive that was fixed]
+#   path mentioned in text -> ALLOW (exit 0)
 #   safe git ops on a-sync -> ALLOW (exit 0)
 set -euo pipefail
 
@@ -42,8 +42,8 @@ run_case 2 "cd into a-sync after &&"   "git status && cd $ASYNC"
 run_case 2 "git -C a-sync checkout"    "git -C $ASYNC checkout main"
 run_case 2 "git -C a-sync reset"       "git -C $ASYNC reset --hard"
 
-# The fixed false-positive: the path appears as TEXT inside a quoted argument,
-# preceded by a bare space — not an actual cd/git command.
+# The path appears as TEXT inside a quoted argument, preceded by a bare
+# space — not an actual cd/git command.
 run_case 0 "bd remember mentions cd+path" "bd remember \"to inspect, cd $ASYNC and look\""
 run_case 0 "echo mentions the path"        "echo \"never cd $ASYNC\""
 

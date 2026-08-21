@@ -29,8 +29,8 @@ later ones.
 3. **Re-run-evolved** (doc present, project has drifted) — compute a sectional
    diff, present via `AskUserQuestion`, write only on confirmation.
 
-The modes are idempotent — running the skill repeatedly on a stable project
-should produce no file changes after the first run.
+Read the shared partial at the absolute path:
+`claude-plugin/commands/_generator-idempotency-protocol.md`
 
 > **Note: human-in-the-loop required.** This skill uses `AskUserQuestion` for
 > first-run project-specific prompts, re-run-evolved diff approval, and
@@ -244,22 +244,17 @@ word "attacker".
   BEFORE designing it. State the project's actual deployment shape here. |
 ```
 
-🔴 **WHY THE KEY MATTERS MORE THAN THE POINTER (thrum, 2026-07-24).** This
-project already had a security-model row and it read *"Does this design name
-an ATTACKER, or harden against one?"* — so it **could not fire** on a
-requirement that never named one. A permanence requirement arrived framed as
-*"forensic evidence must survive"*, read as durability rather than security,
-and produced an unratified never-rotate invariant that reached an implementer
-as a build instruction. **A control whose key excludes its own target
-population is decoration.** Security-shaped requirements usually arrive
-wearing non-security vocabulary: durability, forensics, compliance,
-"defence in depth", "must never be lost".
+**A control whose key excludes its own target population is decoration** —
+key the Decision Framework row on effect (adds a guard, retention rule,
+permanence claim, audit/forensic requirement, tamper-evidence, or
+authorization check), never on whether it names an attacker. Security-shaped
+requirements often arrive wearing non-security vocabulary: durability,
+forensics, compliance, "defence in depth", "must never be lost".
 
 🔴 **AND STATE THE DEPLOYMENT SHAPE POSITIVELY, not just the exclusions.** The
 dominant failure here is importing a SaaS/multi-tenant frame into a system
-that is not one — which **manufactures defects out of correct design**
-(recorded twice on this project; one instance invalidated a six-agent
-inventory). Write what the project IS, e.g. for thrum: *NOT SaaS, NOT
+that is not one — which **manufactures defects out of correct design**.
+Write what the project IS, e.g. for thrum: *NOT SaaS, NOT
 internet-facing, NOT product-oriented; single-user, localhost, multi-machine
 on the same network.* A reader who knows only what is out of scope will still
 import the wrong frame.

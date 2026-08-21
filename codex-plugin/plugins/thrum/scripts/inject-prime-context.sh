@@ -11,7 +11,7 @@
 #   1. Identity banner — agent / role / worktree / branch / module
 #   2. Directive — single "auto-loaded, do not re-prime" message.
 #      Always second so it lands inside the preview.
-#   3. First-turn ack instruction (thrum-zqw7) — tells the agent to
+#   3. First-turn ack instruction — tells the agent to
 #      emit a one-line ack as the first action of its turn. Produces
 #      visible scrollback so humans can distinguish a healthy launch
 #      from a stuck or failed one without probing. Pre-fills agent /
@@ -55,10 +55,10 @@ AGENT_WORKTREE=$(printf '%s' "$WHOAMI_JSON" | jq -r '.worktree // empty' 2>/dev/
 AGENT_BRANCH=$(printf '%s' "$WHOAMI_JSON" | jq -r '.branch // empty' 2>/dev/null || true)
 AGENT_MODULE=$(printf '%s' "$WHOAMI_JSON" | jq -r '.module // empty' 2>/dev/null || true)
 
-# thrum-x7rb: strip any backticks from identity fields before
-# interpolating into the markdown inline-code span in ACK_INSTRUCTION
-# below. The identity validator blocks backticks upstream, so this is
-# pure defensive hardening.
+# Strip any backticks from identity fields before interpolating into
+# the markdown inline-code span in ACK_INSTRUCTION below — the
+# identity validator blocks backticks upstream, so this is pure
+# defensive hardening.
 AGENT_ID="${AGENT_ID//\`/}"
 AGENT_ROLE="${AGENT_ROLE//\`/}"
 AGENT_MODULE="${AGENT_MODULE//\`/}"
@@ -94,10 +94,9 @@ append_to BANNER $'\n---\n\n'
 # Session Context block).
 #
 # This is a SHORT top-of-context POINTER only — it hoists the alert so the
-# agent sees it first. The substantive banner (numbered steps + rationale)
-# lives once, in-body, in the "# Previous Session Context" section emitted by
-# `thrum prime` (internal/cli/prime.go). Keeping the full prose in BOTH places
-# duplicated ~9 lines into every restart briefing (thrum-b0h1n Part 3a).
+# agent sees it first. The substantive banner lives once, in-body, in the
+# "# Previous Session Context" section emitted by `thrum prime` — keeping
+# the full prose in both places duplicates lines into every restart briefing.
 RESTART_PREAMBLE=""
 if printf '%s' "$PRIME_OUTPUT" | grep -q '^# Previous Session Context'; then
   append_to RESTART_PREAMBLE '# 🛑 ACTION REQUIRED — you left yourself a Resume Plan'$'\n'
@@ -129,7 +128,7 @@ append_to DIRECTIVE '> **Do NOT run `$thrum-prime` or `thrum prime` — the full
 append_to DIRECTIVE '> Only invoke them manually if this hook fell through to a degraded "auto-injection failed" notice.'$'\n'
 append_to DIRECTIVE $'\n'
 
-# First-turn ack (thrum-zqw7). Tells the agent to emit one visible
+# First-turn ack. Tells the agent to emit one visible
 # plain-text line before any tool calls so tmux pane scrollback shows
 # a clear launch signal. Identity fields are pre-filled from whoami;
 # the agent only fills <intent> from inbox or restart snapshot.

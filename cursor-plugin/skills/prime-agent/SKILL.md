@@ -5,8 +5,8 @@ description: "Use on scheduled-agent wake or lean prime restart - replaces the f
 
 # Thrum: Prime Scheduled Agent (Lean)
 
-This skill is the wake-time variant of `thrum prime` for scheduled agents (per
-canonical §8.5 + spec §7.4). Full `thrum prime` is too heavy when the agent is
+This skill is the wake-time variant of `thrum prime` for scheduled agents. Full
+`thrum prime` is too heavy when the agent is
 going to run for a few minutes and then exit — but the two pieces of state that
 matter MUST run literally, not as a discipline.
 
@@ -50,9 +50,7 @@ fi
 # boot, not since end-of-session (which might be drift-free if no
 # new skills shipped during the session).
 #
-# Atomic write via temp-file + mv to match the project's
-# shared-state-file convention (portfile.go, peer_registry.go,
-# scheduler/reload.go). A crash mid-cp would leave a partial
+# Atomic write via temp-file + mv. A crash mid-cp would leave a partial
 # last_seen_skills.txt; the next wake's diff would then emit
 # "all skills new" (false-positive drift). Temp+mv eliminates the
 # partial-write window.
@@ -61,9 +59,8 @@ cp /tmp/current_skills.txt "${LAST_SEEN}.tmp" && \
   mv "${LAST_SEEN}.tmp" "${LAST_SEEN}"
 ```
 
-The skill registry mirrors C-B1's auto-discovery (canonical §8.5): when a new
-skill ships to `.claude/skills/`, the next wake's lean-prime surfaces it.
-Writing `last_seen_skills.txt` at the END of Step 2 (after the diff) means each
+When a new skill ships to `.claude/skills/`, the next wake's lean-prime
+surfaces it. Writing `last_seen_skills.txt` at the END of Step 2 (after the diff) means each
 wake updates its own baseline — the diff at wake N+1 reflects what's NEW since
 wake N's boot, regardless of mid-session skill drift.
 
@@ -80,8 +77,8 @@ variant skips. The lean variant exists because scheduled agents run for a few
 minutes and exit; the full briefing's setup cost isn't recouped over the session
 lifetime.
 
-If your session is going to exceed ~30 minutes or you need to coordinate with
-other agents, defer to `thrum prime`.
+If the session will exceed ~30 minutes, or coordination with other agents is
+needed, defer to `thrum prime`.
 
 ## After Step 2
 

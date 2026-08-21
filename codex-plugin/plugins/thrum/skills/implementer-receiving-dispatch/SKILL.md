@@ -1,21 +1,19 @@
 ---
 name: implementer-receiving-dispatch
-description:
-  "Use when receiving a new task from the coordinator, starting implementation,
-  scoping a fresh task, or receiving dispatch. Loads implementer-specific
-  discipline for kicking off work cleanly."
+description: "Use when receiving a new task from the coordinator, starting implementation, scoping a fresh task, or receiving dispatch. Loads implementer-specific discipline for kicking off work cleanly."
 # source: claude-plugin/skills/implementer-receiving-dispatch/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Implementer: Receiving Dispatch
 
 ### Reconcile your queue first
 
-Before reading further: lift this dispatch into a bundle
-(`thrum queue add --from-message <msg-id>`, the exact id of the dispatch you're
-acting on), then `thrum queue start <bundle-id>`; drop/close any finished
-bundles. Full lifecycle: `using-the-queue`.
+Before reading further: lift this dispatch into a bundle (`thrum queue add
+--from-message <msg-id>`, the exact id of the dispatch you're acting on),
+then `thrum queue start <bundle-id>`; drop/close any finished bundles. Full
+lifecycle: `using-the-queue`.
 
 ### Read the full implementation prompt before any tool call
 
@@ -34,12 +32,8 @@ contradictory, reply `NEEDS_CONTEXT` rather than guessing.
 ### Search for existing abstractions before writing new helpers
 
 **Why:** A common failure mode is hand-rolling a helper for something the
-codebase already has. (In one case, an implementer wrote new
-`exec.CommandContext` blocks with custom timeout/`#nosec` annotations when
-`safecmd.GitConfig` already existed and was used in two other call sites. The
-reinvented code was deleted in review.) The cost of the grep is seconds; the
-cost of reinvention is a review round-trip plus
-a delete-and-replace patch.
+codebase already has. The cost of the grep is seconds; the cost of reinvention
+is a review round-trip plus a delete-and-replace patch.
 
 **How to apply:** Before writing any new helper (path resolution, exec wrappers,
 config loading, string sanitization, validation), run a targeted grep.
@@ -56,12 +50,13 @@ Three similar lines is better than a premature abstraction.
 
 **How to apply:** When you spot duplicated patterns, hardcoded values that
 should be shared, or missed abstractions during implementation, log them to the
-project's refactor backlog (typically a tracked beads epic):
+project's refactor backlog (a beads epic, e.g. `<refactor-epic-id>`):
 
 `--description` is multi-line prose — never double-quoted inline. On
 `scripts/bd-shared`, `--stdin`/`--body-file` are refused (remote-path
-resolution + silent-empty-body hazards), so write it to a scratch file and pass
-`-d "$(cat <file>)"`; see your role preamble's 🔴 PROSE INTO A COMMAND rule.
+resolution + silent-empty-body hazards), so write it to a scratch file and
+pass `-d "$(cat <file>)"`; see your role preamble's 🔴 PROSE INTO A COMMAND
+rule.
 
 ```bash
 cat > /tmp/refactor-task-desc.md <<'EOF'
@@ -104,11 +99,8 @@ related files.
 
 ### Project-specific rules (already loaded)
 
-Project-local rules of kind `agent_rule` at `--scope role` were loaded at
-session start by your preamble (see your role template's Memory model block). If
-a project-local rule conflicts with a universal rule above, the project-local
-rule wins; surface the conflict in your reply so the user can decide whether to
-graduate or remove the override.
+Read the shared partial at the absolute path:
+`claude-plugin/commands/_project-rules-protocol.md`
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `implementer-maintaining-memory` skill — it references the
@@ -120,8 +112,7 @@ Immediately after sending the dispatch ACK, write `agent_status="working"` to
 your local identity file. This is the Pattern D self-write that makes
 `agent_status` carry signal across the fleet — the sweep script +
 coordinator-context-monitoring skill use it to flag agents that go tmux-quiet
-despite claiming `working` (STUCK-WORKING classification, from a prior
-investigation).
+despite claiming `working` (STUCK-WORKING classification).
 
 ```bash
 # Step 1: ACK the dispatch within 2 minutes
@@ -133,7 +124,7 @@ EOF
 thrum agent set-status working
 ```
 
-The local-write path at `cmd/thrum/agent.go:671-690` updates your own identity
-file only — coord overrides remote agents via `--agent <name>` per L1. The
-companion `set-status idle` call on DONE handoff lives in the
+The local-write path updates your own identity file only — coord overrides
+remote agents via `--agent <name>`. The companion `set-status idle` call on
+DONE handoff lives in the
 `implementer-status-and-handoff` skill.

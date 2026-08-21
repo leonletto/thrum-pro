@@ -3,14 +3,13 @@ name: memory-audit-recover
 description: "Use when investigating change history (`memory history`), recovering a soft-deleted memory, recovering the losing side of a concurrent edit (MEM-009 LWW loser), or running a confirmed hard-delete. Loads the audit walk, LWW conflict-resolution semantics, undelete flow, and the `Type DELETE <id>` hard-delete gate."
 allowed-tools: "Bash(thrum memory:*)"
 version: "0.11.0"
-author: "Leon Letto <https://github.com/leonletto>"
 license: "Apache-2.0"
 ---
 
 # memory-audit-recover — history, undelete, hard-delete
 
-Load this sub-skill from `thrum-memory` (umbrella) when you need to look back at
-what changed or recover something that was deleted or overwritten.
+Load this sub-skill from `thrum-memory` (umbrella) to look back at what changed
+or recover something that was deleted or overwritten.
 
 ## The JSONL is the audit log
 
@@ -32,8 +31,7 @@ The full event timeline always comes from JSONL replay — per-memory event coun
 is typically <10, so replay is cheap.
 
 Provenance now lives in the durable `memory-events-v2/` lane and is read by
-`memory history` directly — it survives events.jsonl compaction and cold boot
-.
+`memory history` directly — it survives events.jsonl compaction and cold boot.
 
 ## Conflict resolution (LWW by event ULID)
 

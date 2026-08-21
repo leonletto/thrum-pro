@@ -4,7 +4,7 @@ description: "Use to update your personal State.md — 'update your State.md', '
 allowed-tools: "Bash(thrum:*)"
 ---
 
-# Thrum: Update Personal State (D10)
+# Thrum: Update Personal State
 
 Compose your resume-state directly from in-context knowledge — NO subagent
 spawn, NO git log / bd stats / worktree list — and write it via
@@ -21,9 +21,8 @@ update`; this writes YOUR freeform personal `State.md` — capital S — via
 State.md.** Never `cat`/heredoc/Edit the file directly. This is not a style
 preference: the CLI is what actually enforces the rules in this skill —
 rejecting an invented section, checking the size cap. A raw file write
-bypasses both silently, which is exactly how State.md files across the
-fleet grew unbounded in the first place (one agent's file reached 8,069
-lines this way). If you find yourself reaching for
+bypasses both silently, which is exactly how State.md files grow
+unbounded. If you find yourself reaching for
 `cat > State.md` or the Edit tool on this file, stop — that is the failure
 this skill exists to prevent, not an equally-valid alternative.
 
@@ -31,21 +30,10 @@ this skill exists to prevent, not an equally-valid alternative.
 
 ## Verify before you write
 
-A State.md fact is TRUE when written and can silently become FALSE later —
-the reader can't tell, because a note doesn't present itself as a time-bound
-claim (an internal incident: three agents burned by their own durable artifacts in one
-night). Before writing anything into State.md:
-
-- Only write what you've verified against current state — not what you
-  remember, assume, or were told once.
-- A note recording an UNEXPLAINED artifact must carry the unexplained-ness
-  forward — "not mine, cause unknown, nobody has traced this" — rather than
-  resolving it to a disposition like "ignore it." The note isn't wrong to
-  cope with noise you can't act on; the defect is closing the question when
-  nothing is actually known. "Ignore it" is unfalsifiable by construction —
-  an instruction to not look can't be caught by looking, because diligence is
-  exactly what it switches off — and it can silently train every future
-  session to stop looking at the one visible symptom of a live bug.
+Read the shared partial at
+`claude-plugin/commands/_verify-before-write-protocol.md` before writing
+anything into State.md — it is the canonical source for the
+verify-before-you-write invariant, applied here to State.md.
 
 ---
 
@@ -58,15 +46,10 @@ agent that keeps a State.md, regardless of role or lifespan.** A short
 implementer today can become a long-lived one; the write path does not know
 or care which it's talking to.
 
-There used to be a hand-rolled bash block here that re-derived the agent
-directory and the redirect target before every write. It is gone, not
-merely fixed: its primary line called a `--field thrum_dir` flag that
-**does not exist** on `thrum context show` (nor on `thrum whoami`) — every
-prior run of it silently fell through to the fallback and nobody noticed,
-because the fallback happened to work. Re-deriving that resolution by hand
-in a skill is the wrong layer for it: the CLI command already needs to get
-it right to find your `state.md` sibling file, so this skill just calls it
-rather than duplicating the logic error-prone-ly.
+Re-deriving that resolution by hand in a skill is the wrong layer for it:
+the CLI command already needs to get it right to find your `state.md`
+sibling file, so this skill just calls it rather than duplicating the
+logic error-prone-ly.
 
 **Your job ends at the write.** You write your own State.md via the command
 below; you do not commit it. This holds even for agents without git write
@@ -75,7 +58,7 @@ the coordinator's standing job (see the coordinator's repo-root state
 hygiene duty), not something an implementer, researcher, or watcher should
 reach for git to finish.
 
-## Step 2 — Compose and write State.md (D10 pointers-only, ≤ ~60 lines)
+## Step 2 — Compose and write State.md (pointers-only, ≤ ~60 lines)
 
 Compose the body directly from in-context knowledge. Two layers; no session
 history; **only the six sections below — the write is REFUSED if you invent
@@ -89,7 +72,7 @@ matching the surrounding convention feels safer than a bare instruction to
 compress. Rebuild from the template below, not from the existing file's
 sections, headings, or sentence length. If the existing file holds
 information that seems too valuable to drop, that is a signal it belongs in
-`thrum memory` (see D10 rules below) — not a reason to keep the file long.
+`thrum memory` (see size rules below) — not a reason to keep the file long.
 
 ```markdown
 # Agent State — <agent_id>
@@ -126,12 +109,12 @@ information that seems too valuable to drop, that is a signal it belongs in
 - **Key file locations:** <State.md path, worktree paths, spec/plan paths>
 - **Build / deploy:** <relevant make targets or deploy commands>
 - **Ownership / standing rules:** <standing facts unique to this agent>
-- **Reach collaborators:** <how to ping coordinator, Leon, etc.>
+- **Reach collaborators:** <how to ping coordinator, the project owner, etc.>
 
 ## Personal-relevance memory index
 
 <!-- IDs of role/group/project memories this agent finds valuable.           -->
-<!-- Cold-wake bundle (D6) auto-injects agent-scoped memories; State.md      -->
+<!-- Cold-wake bundle auto-injects agent-scoped memories; State.md           -->
 <!-- rides the bundle so the agent can pull exactly the broader ones it wants.-->
 
 - `<memory-id>` — <one-line label>
@@ -185,13 +168,9 @@ quoted `'EOF'` delimiter is what makes the body inert. Never drop the quotes.)
 written) if the body contains any `## ` heading outside the six above (the
 Durable/structural-facts section matches loosely — "Durable facts" or
 "Structural facts" both count, not only the exact canonical spelling). This
-is the fix for the actual failure this skill existed to prevent but
-couldn't: an earlier version of this file already said "no session-history
-section, ever" and "hard cap ≤ ~60 lines" as prose, and agents invented
-sections anyway (a real one grew to 8,069 lines around a
-`## Per-cycle log` section that this document never mentioned, because a
-short-cycle role had a genuine continuity need this file's schema didn't
-serve and no enforcement stopped it from inventing a destination for it).
+is enforcement, not prose: prose ("no session-history section, ever") did
+not stop agents inventing sections, because a genuine short-cycle
+continuity need had no schema destination.
 
 **If the CLI refuses your write:**
 
@@ -210,7 +189,7 @@ serve and no enforcement stopped it from inventing a destination for it).
 Retry after fixing. Do not work around a refusal by reaching for a raw file
 write — see the warning at the top of this skill.
 
-## D10 size rules (mandatory)
+## Size rules (mandatory)
 
 | Rule                           | What to do                                                          |
 | ------------------------------ | ------------------------------------------------------------------- |
@@ -232,7 +211,7 @@ Wrote /path/to/.thrum/agents/<id>/State.md (N lines)
 ```
 
 That N includes the CLI-rendered self-check block (a few fixed lines) plus
-your body — it is not the number CheckPersonalStateCap gated on (that
+your body — it is not the number the size-cap check gated on (that
 count excludes the self-check block and the Durable section), so do not
 compare it directly against 60. Still worth a glance:
 

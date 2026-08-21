@@ -1,13 +1,10 @@
 ---
 name: efficient-multi-agent-research
-description:
-  "Use when investigating, auditing, or reviewing more than 6 items across a
-  codebase - function call sites, pattern usage, file reviews, or any research
-  task with partitionable items that would pollute the main agent's context if
-  read directly"
+description: "Use when investigating, auditing, or reviewing more than 6 items across a codebase - function call sites, pattern usage, file reviews, or any research task with partitionable items that would pollute the main agent's context if read directly"
 # source: claude-plugin/skills/efficient-multi-agent-research/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Efficient Multi-Agent Research
 
@@ -21,8 +18,8 @@ single report.
 **Core principle:** The coordinator decides, sub-agents investigate. Keep
 investigation results out of the main context until consolidated.
 
-**REQUIRED BACKGROUND:** You MUST understand
-superpowers:dispatching-parallel-agents before using this skill. That skill
+**REQUIRED BACKGROUND:** Read superpowers:dispatching-parallel-agents before
+using this skill. That skill
 covers general parallel dispatch. This skill extends it with a specific research
 workflow: partition, investigate to disk, consolidate, then decide.
 
@@ -46,7 +43,7 @@ workflow: partition, investigate to disk, consolidate, then decide.
 #### Partition > Parallel Investigate > Consolidate > Decide
 
 1. **Create output directory:** `mkdir -p dev-docs/<topic>/` — if re-running,
-   archive previous `report_*.md` to a subdirectory (e.g., `run-01/`) before
+   archive previous `findings_*.md` to a subdirectory (e.g., `run-01/`) before
    starting so the consolidation glob only picks up current results.
 
 2. **Launch investigation agents** — all in one message, all
@@ -54,27 +51,28 @@ workflow: partition, investigate to disk, consolidate, then decide.
 
    ```text
    Agent(run_in_background=true,
-     prompt="Investigate items A-D. Write to dev-docs/<topic>/report_1.md
+     prompt="Investigate items A-D. Write to dev-docs/<topic>/findings_1.md
      using table schema: [columns]. Flag uncertainties.")
 
    Agent(run_in_background=true,
-     prompt="Investigate items E-H. Write to dev-docs/<topic>/report_2.md ...")
+     prompt="Investigate items E-H. Write to dev-docs/<topic>/findings_2.md ...")
    ```
 
    Specify exact table columns and consistent formatting in every prompt.
 
    **Every prompt MUST scope the read-only restriction around its own output
-   file, in the same breath:**
-   `READ-ONLY EVERYWHERE EXCEPT YOUR OUTPUT FILE — do not modify source, tests, config, git state, or the issue tracker; you MUST write exactly dev-docs/<topic>/report_N.md, and that write is expected and authorized.`
-   Omitting the exception is the most common cause of a fan-out that returns
-   nothing — see Common Mistakes.
+   file, in the same breath:** `READ-ONLY EVERYWHERE EXCEPT YOUR OUTPUT FILE —
+   do not modify source, tests, config, git state, or the issue tracker; you
+   MUST write exactly dev-docs/<topic>/findings_N.md, and that write is
+   expected and authorized.` Omitting the exception is the most common cause of
+   a fan-out that returns nothing — see Common Mistakes.
 
 3. **Wait** for all background agents to complete.
 
 4. **Launch consolidation agent** — always request these four elements:
 
    ```text
-   Agent(prompt="Read all dev-docs/<topic>/report_*.md.
+   Agent(prompt="Read all dev-docs/<topic>/findings_*.md.
      Create consolidated_report.md with:
      1. Unified table merging all agent tables
      2. Cross-cutting patterns across findings
@@ -92,7 +90,7 @@ workflow: partition, investigate to disk, consolidate, then decide.
 | Group size    | 4-5 items per agent                                       |
 | Agent count   | Typically 3-5                                             |
 | Agent mode    | Always `run_in_background=true`                           |
-| Output        | `dev-docs/<topic>/report_N.md` per agent                |
+| Output        | `dev-docs/<topic>/findings_N.md` per agent                |
 | Consolidation | Always a dedicated agent writing `consolidated_report.md` |
 
 ### Model tiers for this skill
@@ -101,14 +99,14 @@ See the `choosing-subagent-models` skill for the full policy. Applied to this
 skill's fan-out:
 
 - **Level 1 — researchers / gatherers:** scope each one DOWN to a narrow slice
-  so you can run MANY in parallel. Use `model: "sonnet"` (low effort) — bounded
-  gather-and-report. Smaller scope = cheaper, concurrent (faster), tighter
-  per-agent context.
+  so you can run MANY in parallel. Use `model: "sonnet"` (low effort) —
+  bounded gather-and-report. Smaller scope = cheaper, concurrent (faster),
+  tighter per-agent context.
 - **Level 2 / Level 3 — summarizers / synthesizers:** use `model: "sonnet"` —
   aggregating and reconciling Level-1 outputs is judgment work.
 
-Prefer many narrow sonnet-low gatherers over one broad subagent. This is the
-cheap, fast default — equivalent parallelism at a fraction of the token cost.
+Prefer many narrow sonnet-low gatherers over one broad subagent. This is the cheap,
+fast default — equivalent parallelism at a fraction of the token cost.
 
 ### Common Mistakes
 
@@ -132,17 +130,15 @@ or not at all. Always include the exact output path in every prompt.
 
 **Have sub-agents write their findings file with a Bash heredoc, not the Write
 tool.** The Write tool refuses subagent report files ("Subagents should return
-findings as text, not write report files") regardless of how the brief is
-worded. Measured 2026-07-24 across an 8-agent fan-out: 7 blocked on Write, and
-the one that succeeded did so by falling back to Bash. The filesystem is
-writable; the tool is what refuses.
+findings as text, not write report files") regardless of how the brief is worded.
+The filesystem is writable; the tool is what refuses.
 
 **Put this in every prompt:**
 
 ```text
 READ-ONLY EVERYWHERE EXCEPT YOUR OUTPUT FILE.
 Do not modify source, tests, config, git state, or the issue tracker.
-You MUST write your findings to exactly: dev-docs/<topic>/report_N.md
+You MUST write your findings to exactly: dev-docs/<topic>/findings_N.md
 Write it with a Bash heredoc (cat > <path> <<'EOF' ... EOF), NOT the Write tool —
 Write refuses report files. That single write is expected and authorized.
 ```
@@ -151,8 +147,8 @@ If an agent still returns text instead of a file, persist it yourself verbatim
 and mark the provenance in the file — do not paraphrase.
 
 Put the exception in the SAME breath as the restriction, not in a later
-paragraph. An agent that reads "read-only" first and the write instruction forty
-lines later has already formed its posture.
+paragraph. An agent that reads "read-only" first and the write instruction
+forty lines later has already formed its posture.
 
 ### Example: Auditing 17 Call Sites
 

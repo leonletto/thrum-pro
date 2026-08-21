@@ -52,7 +52,7 @@ the cycles closed. Examples:
 > the lock-substrate fence is the right fix. Filed thrum-XXX with 4 BLOCKING
 > evidence points.
 >
-> Closed B-B1 E6.0 brainstormer-third pass. 2 BLOCKING + 5 IMPORTANT + 10 MINOR.
+> Closed <epic> E6.0 brainstormer-third pass. 2 BLOCKING + 5 IMPORTANT + 10 MINOR.
 > All three load-bearing traps PASSed. Standing by for E6.1 next batch.
 
 This section becomes YOUR OWN log entry, visible in `thrum agent sessions list`
@@ -144,9 +144,9 @@ or `cat <<EOF` redirection is needed — write the file directly.
 ```bash
 SESSION_RAW=$(thrum whoami --field tmux_session)
 # thrum whoami --field tmux_session returns a PANE-QUALIFIED value
-# (e.g. "abc12-my-task:0.0"), not a session name. `thrum tmux restart`
+# (e.g. "thrum-xyz-lifecycle-cmds:0.0"), not a session name. `thrum tmux restart`
 # takes a session NAME and the daemon sanitizes ":"/"." to "-", so passing the
-# raw value produces a lookup key ("abc12-my-task-0-0") that does not
+# raw value produces a lookup key ("thrum-xyz-lifecycle-cmds-0-0") that does not
 # exist and every self-restart would fail. Strip to the bare session name:
 SESSION=${SESSION_RAW%%:*}
 ROLE=$(thrum whoami --field role)
@@ -218,8 +218,7 @@ thrum tmux restart "$SESSION"
 plain restart re-applies it at the readiness probe. A self-restarting agent
 that uses `--force` can come back on the WRONG MODEL, and `runtime-config get`
 will NOT reveal it — it reports the stored pin, not the delivered keystrokes.
-This is not theoretical: it has been caught live more than once, including via
-a plain restart that fixed it. The command above restarts your own pane; you
+The command above restarts your own pane; you
 will not see further output in this turn. Do not follow it with more commands.
 Only reach for `--force` if a plain restart genuinely does not take — and even
 then, immediately re-pin and **verify the model OFF THE PANE** after you come

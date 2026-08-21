@@ -69,12 +69,8 @@ later.
 
 ## Gate dispatch preamble
 
-Mandatory checklist handed to the GATE RUNNER (and to any sub-agent it spawns in
-turn) at dispatch time. Each
-rule below currently lives only as prose warnings scattered through
-`dev-docs/hotpath-gate-efficacy.md` and gets re-learned per session — hand this
-list to the sub-agent verbatim at dispatch time instead of relying on it
-rediscovering these the hard way:
+Mandatory checklist handed to the GATE RUNNER (and any sub-agent it spawns) at
+dispatch time — hand this list verbatim:
 
 1. Read code via `git show <target-sha>:<path>`, NEVER the working tree —
    tree state != the SHA under review. A plain `Read`/`grep` against the
@@ -375,7 +371,7 @@ fix-on-contact basis — don't carve out an unrelated existing violation because
 you noticed it while reviewing an adjacent change. "No manufactured urgency"
 applies here the same as anywhere else.
 
-## At merge time — COMMIT ACCUMULATED AGENT STATE (Leon, 2026-07-20)
+## At merge time — COMMIT ACCUMULATED AGENT STATE
 
 **Every coordinator, on every merge: stage and commit accumulated agent state
 under `.thrum/agents/` along with the merge.** Session snapshots, `State.md`
@@ -387,8 +383,7 @@ exactly ONE place — a working tree. Anything that touches that tree destroys i
 and several things routinely do:
 
 - A `git checkout` / `stash` / `reset` in the shared repo reverts every agent's
-  uncommitted state at once (this reverted an orchestrator's `State.md` to a
-  stale version on a populated box, 2026-07-20).
+  uncommitted state at once.
 - `git stash` is a SINGLE SHARED STACK across every worktree of a repo, so a
   stash taken anywhere can strand or clobber state everywhere.
 - A worktree teardown takes its uncommitted state with it, permanently.
@@ -439,11 +434,8 @@ block on any Lens 10b or 10d finding on NEW work.
 
 ## Project-specific rules (already loaded)
 
-Project-local rules of kind `agent_rule` at `--scope role` were loaded at
-session start by your preamble (see your role template's Memory model block). If
-a project-local rule conflicts with a universal rule above, the project-local
-rule wins; surface the conflict in your reply so the user can decide whether to
-graduate or remove the override.
+Read the shared partial at the absolute path:
+`claude-plugin/commands/_project-rules-protocol.md`
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `coordinator-maintaining-memory` skill — it references the

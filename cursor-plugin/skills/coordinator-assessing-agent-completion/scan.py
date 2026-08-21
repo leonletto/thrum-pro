@@ -30,12 +30,9 @@ TERMINAL = (
 
 
 def slug(path):
-    """Claude Code's project-dir naming (thrum-abc12): every character that is
-    not [A-Za-z0-9] becomes '-' -- not just '/' and '.'. Mirrors
-    internal/transcript/parsers/claude.go's EncodeClaudePath exactly for ASCII
-    input. The prior narrower rule silently produced the wrong directory name
-    (and a false "no transcript" result) for any worktree/agent path
-    containing an underscore, e.g. orch_*, impl_*, researcher_*.
+    """Claude Code's project-dir naming: every character that is
+    not [A-Za-z0-9] becomes '-' -- not just '/' and '.'.
+    Mirrors Claude Code's own path-encoding algorithm exactly for ASCII input -- must stay byte-for-byte in sync with it.
     """
     return re.sub(r"[^A-Za-z0-9]", "-", path)
 

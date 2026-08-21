@@ -1,15 +1,10 @@
 ---
 name: memory-read-discipline
-description:
-  "Use when an agent needs to find existing memory entries - load role-rules at
-  session start, recall a topic mid-session, or pull the full body of a specific
-  entry. Loads the canonical 3-step zoom-escalation read pattern (scan index,
-  triage short, fetch full on confirm) and covers the list / search / show
-  verbs. For advanced FTS5 plus embedding search options, see also the
-  memory-search-advanced skill."
+description: "Use when an agent needs to find existing memory entries - load role-rules at session start, recall a topic mid-session, or pull the full body of a specific entry. Loads the canonical 3-step zoom-escalation read pattern (scan index, triage short, fetch full on confirm) and covers the list / search / show verbs. For advanced FTS5 plus embedding search options, see also the memory-search-advanced skill."
 # source: claude-plugin/skills/memory-read-discipline/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Reading thrum memory entries
 
@@ -65,8 +60,7 @@ scanning and triaging. The index + short tiers exist to save context tokens.
 
 ### Use case 1: Session-start enumeration of role-rules
 
-When you need to load all role-rules at session start (deterministic, you know
-what scope + kind you want):
+To load all role-rules at session start (scope + kind known in advance):
 
 ```bash
 # Step 1: scan index
@@ -93,8 +87,7 @@ thrum memory show <id> --zoom full
 
 ### Use case 2: Topic-driven recall
 
-When you have a topic in mind but don't know which specific entry holds the
-answer, follow all 3 steps:
+For a topic without a known specific entry, follow all 3 steps:
 
 ```bash
 # Step 1: scan
@@ -154,9 +147,9 @@ thrum memory list --zoom oneline --kind agent_rule --scope project       # proje
 thrum memory list --zoom oneline --kind agent_rule                       # all visible scopes
 ```
 
-The CLI does not expose `--scope role:<other-role>` filtering. If you need to
-inspect another role's rules, query the broader scope and grep the result (or
-narrow with `thrum memory search --tag <slug>`).
+The CLI does not expose `--scope role:<other-role>` filtering. To inspect
+another role's rules, query the broader scope and grep the result (or narrow
+with `thrum memory search --tag <slug>`).
 
 ### Output discipline
 

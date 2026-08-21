@@ -81,15 +81,18 @@ unsure-list (unsure ⇒ keep, never delete on a guess):
    <id>`.
 2. `## Open Epics / Active Work` — `bd show` each bead ID; rows whose bead is
    CLOSED are stale.
-3. `## Worktree Layout` — cross-reference against `git worktree list` and
-   `thrum team`; rows for removed worktrees or dead agents are stale.
-4. `## DEPLOY STATE` — flag rows whose AS-OF timestamp predates the current
-   fleet pin.
 
-Consolidate the four delete-lists yourself, then fold the confirmed-stale
+Consolidate the delete-lists yourself, then fold the confirmed-stale
 rows into the section edits in Step 4. Fan-out keeps this fast without
-sacrificing thoroughness — a single-threaded pass over four independent
+sacrificing thoroughness — a single-threaded pass over independent
 sections is the slow path, not the safe one.
+
+**Deploy state, fleet topology, worktree layout, agent pool, and standing
+rulings are NOT maintained here anymore** — they live in `thrum state`
+(`--kind deploy_state|topology|worktree|agent_pool|ruling`), a cheap `thrum
+state set` upsert done at the moment a fact changes, not part of this
+end-of-session ritual. Staleness for those kinds is read-time (`as_of` +
+per-kind threshold), not something this command curates.
 
 ### Step 4: Edit the File In-Place, Yourself
 
@@ -100,13 +103,9 @@ updating.
 #### Sections to Update (use Edit tool for each)
 
 1. **Header line** — Update `Last Updated` date and `Phase` status summary. Also
-   derive and insert the Authored-against stamp per
-   `claude-plugin/commands/_stamp-protocol.md`, placing these two lines
-   immediately after the `Last Updated` line:
-
-   **Authored-against:** `<sha>` target: `<merge_target>`
-
-   > ⚠️ Verify base before acting: `git diff <sha>..origin/<merge_target> -- <files cited>` -- non-empty ⇒ cited code moved. (Resolve `<merge_target>` through its remote-tracking ref, never a bare local branch name — a local branch of the same name can be stale or absent.)
+   derive and insert the Authored-against stamp, placing it immediately after
+   the `Last Updated` line (see `claude-plugin/commands/_stamp-protocol.md`
+   for the exact two-line format).
 
 2. **Current State Summary — LIVE STATE ONLY, SUPERSEDED EACH SESSION.**
    Update version, branch, beads counts, and hold *only* what is currently
@@ -119,9 +118,8 @@ updating.
      "~~fixed in S42~~" line — remove the line entirely. The line's absence
      *is* the record that it's resolved; the memory record (rule 4 below) is
      where the resolution's story lives.
-   - **Why this is called out explicitly and not left implicit:** bounding
-     only the session-index entries (rule 4/5 below) is a point fix. If
-     narrative is merely blocked from `## Recent Sessions`, it reappears
+   - Bounding only the session-index entries (rule 4/5 below) is a point fix:
+     if narrative is merely blocked from `## Recent Sessions`, it reappears
      here under a different heading with no cap at all — the identical
      growth, one section over. This rule closes that sibling surface.
 
@@ -140,10 +138,7 @@ updating.
      only genuinely new capabilities, architectural shifts, or broken state
 
 4. **Recent Sessions** — EVERY session, including the one you are closing
-   right now, is **exactly ONE LINE**. There is no carve-out for the most
-   recent session — a prior version of this rule allowed a full prose block
-   for the latest session, and that carve-out is REMOVED. No session ever
-   gets a prose block.
+   right now, is exactly ONE LINE. No session ever gets a prose block.
    - For the session being closed, emit a `session_summary` memory record:
      ```
      thrum memory create \
@@ -162,10 +157,7 @@ updating.
      ```
    - **The cap is on WORDS, not on newlines.** A 200-word run-on sentence
      crammed onto one physical line VIOLATES this rule just as much as a
-     multi-line prose block does — line-count compliance is not the point,
-     and treating it as the point is the exact loophole a previous version
-     of this rule was walked through. Count words; keep the line ≤30 of
-     them.
+     multi-line prose block does. Count words; keep the line ≤30 of them.
    - The full body lives in the memory record and is retrieved on demand via
      `thrum memory show <id>` or surfaced by the progressive-disclosure prime.
    - **What goes where** — the mechanical tell for sorting content: if a
@@ -187,23 +179,17 @@ updating.
      **DELETED**, not archived in-file or moved to another section — the
      memory record IS the archive, so deleting the 11th line loses nothing.
    - **Adding this session's line and deleting the overflow line happen in
-     the SAME edit / SAME commit.** Rotation has never actually been
-     "broken" here — it has been *omitted*, and an omitted step that is
-     someone's later intention never runs. Do not split "append now, trim
-     later" into two steps; there is no later step. Emit the memory record,
-     append the new index line, and delete the 11th-oldest line (if present)
+     the SAME edit / SAME commit.** Do not split "append now, trim later"
+     into two steps; there is no later step. Emit the memory record, append
+     the new index line, and delete the 11th-oldest line (if present)
      together.
    - Do NOT re-write or re-consolidate the other index lines you keep — they
      are frozen once written. The section stays compact indefinitely because
      it is bounded at 10, not because entries shrink over time.
 
-6. **Worktree Layout** — Run `git worktree list` and rebuild the table with
-   current branches. Cross-reference with `thrum team` output to annotate
-   which agent is in each worktree.
+6. **Open Epics / Active Work** — Replace with current epic list from beads.
 
-7. **Open Epics / Active Work** — Replace with current epic list from beads.
-
-8. **What's Queued / Next Steps** — Update priorities based on current state.
+7. **What's Queued / Next Steps** — Update priorities based on current state.
 
 #### Edit Rules
 
@@ -262,9 +248,11 @@ State directly (no subagent summary to relay):
   part is SESSION HISTORY — those bodies now live in `session_summary` memories
   with a one-line index entry for the ~10 most recent, and older sessions are
   recoverable via `thrum memory search`. The rest (schema-compat contract,
-  merge protocol, deploy state, architecture decisions, worktree layout) is
-  DURABLE STRUCTURAL DATA that a restarting agent needs in order to act safely;
-  shrinking it costs more than it saves. Do not trim structural sections to hit
-  a line count.
+  merge protocol, architecture decisions) is DURABLE STRUCTURAL DATA that a
+  restarting agent needs in order to act safely; shrinking it costs more than
+  it saves. Do not trim structural sections to hit a line count. (Deploy
+  state, fleet topology, worktree layout, agent pool, and standing rulings
+  are no longer in this file at all — see the note above Step 4's section
+  list.)
 - **Do not delegate any part of this to a subagent.** See the reasoning at the
   top of this file — it is a deliberate, named exception, not an oversight.

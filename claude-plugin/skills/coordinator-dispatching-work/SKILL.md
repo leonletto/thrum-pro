@@ -47,8 +47,7 @@ never for implementation work in another agent's worktree.
 daemon nudge: `thrum send` enters the message in the daemon's state, the daemon
 nudges the pane, the agent reads the inbox and starts work. Injecting the prompt
 with `thrum tmux send` or `tmux send-keys` bypasses the inbox entirely, breaks
-the nudge for future messages, and strands the agent without a recorded
-message.
+the nudge for future messages, and strands the agent without a recorded message.
 
 **How to apply:** Correct flow: `thrum tmux launch <name>` → agent auto-primes →
 `thrum send --to @agent_name --body-file prompt.md` (body: work prompt) → daemon
@@ -121,8 +120,7 @@ Do this at SEQUENCING time, before dispatch messages go out. Afterwards the rout
 is committed and folding an item in costs more than the pass saves.
 
 > 🔴 **NEVER run `bd list --all`** while doing this, in any form — `--all --limit N`
-> is STILL unbounded (the limit is discarded) and has twice driven a box to seconds
-> from swap exhaustion. Get ground truth from `bd stats`, bound above that count,
+> is STILL unbounded — the limit is discarded. Get ground truth from `bd stats`, bound above that count,
 > and **verify the printed `Total:` is not equal to your limit** — equal means you
 > are at the ceiling and were silently truncated. Put these rules in the sub-agent's
 > brief; it cannot see the damage from where it runs.
@@ -143,8 +141,8 @@ and give each one its bead ID.
 What comes back: still-valid candidates get folded into the warm implementer;
 already-fixed ones return to you as COMPLETED with evidence so **you close the
 bead** — draining the queue with nobody implementing anything; ambiguous ones
-return as questions. You should receive a disposition for EVERY candidate,
-including the folded-in ones.
+return as questions. Expect a disposition for every candidate, including the
+folded-in ones.
 
 **Expect returns, and act on them.** A candidate returned as already-fixed is only
 half-drained until you actually close the bead.
@@ -168,6 +166,30 @@ re-dispatch overhead.
    CANDIDATES with their validity explicitly unverified — plus the instruction to
    check them against the merged-forward tip and either fold them in or return
    them as completed
+
+## Execution invariants — carry these in every implementation dispatch
+
+**Why:** A plan is a snapshot; trunk moves and reality drifts from it. Sprints
+stall when an implementer treats the plan as ground truth, hits one mismatch, and
+goes quiet.
+
+**How to apply:** Put these in every implementation dispatch, and require each
+implementer to propagate them to its own sub-agents:
+
+1. **Branch off current trunk** — cut the work branch from the current tip, never
+   the plan's authored-against base.
+2. **Re-anchor before trusting any line number** — re-run the plan's "verify base"
+   diff against the current tip and re-derive every file:line target. A moved
+   anchor is expected, not a blocker.
+3. **Run a spec-intent trace before grinding tasks** — walk every spec requirement
+   forward into the plan (PLANNED / NAME-ONLY / ABSENT / PARTIAL) and confirm the
+   tasks COMPOSE to the goal. A set of individually-passing tasks that does not
+   deliver the intent is a failed sprint that looks green.
+4. **Step back between increments** — re-check the whole against the intent, not
+   task-by-task.
+5. **Never go quiet on a mismatch** — when the plan diverges from reality, surface
+   it up the tree with a proposed adaptation and keep moving. A mismatch is a
+   routing event, never a stop.
 
 ## Never rename an agent tied to a worktree
 
@@ -253,21 +275,13 @@ EOF
 
 - You receive the orchestrator's merge report when all epics complete.
 - Run your merge-approval gate (see Merge Approval Gate in your preamble).
-- Monitor the orchestrator's status updates; escalate to Leon only for genuine
-  judgment calls (architectural pivot, scope change, budget concern).
-
-## See also
-
-- `dev-docs/process/2026-07-22-idea-to-merged-end-to-end-process-capture.md`
-  — the full idea-to-merged pipeline; this skill covers Stage 5 (dispatch).
+- Monitor the orchestrator's status updates; escalate to the operator only for
+  genuine judgment calls (architectural pivot, scope change, budget concern).
 
 ## Project-specific rules (already loaded)
 
-Project-local rules of kind `agent_rule` at `--scope role` were loaded at
-session start by your preamble (see your role template's Memory model block). If
-a project-local rule conflicts with a universal rule above, the project-local
-rule wins; surface the conflict in your reply so the user can decide whether to
-graduate or remove the override.
+Read the shared partial at the absolute path:
+`claude-plugin/commands/_project-rules-protocol.md`
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `coordinator-maintaining-memory` skill — it references the

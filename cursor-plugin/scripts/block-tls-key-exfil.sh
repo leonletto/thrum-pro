@@ -1,5 +1,5 @@
 #!/bin/bash
-# beforeShellExecution hook: protect the per-daemon CA private keys (D5 exfil guard).
+# beforeShellExecution hook: protect the per-daemon CA private keys.
 #
 # .thrum/var/tls/ holds the daemon's self-sovereign CA: ca.key (root, ~10y) and
 # leaf.key (~90d). These are SECRETS — peers pin the root, and possession of
@@ -7,19 +7,17 @@
 # must never enter git (the event JSONL bundle must stay secret-free so the
 # v0.12 push-bundle deploy stays possible) and must never leave the machine.
 #
-# DESIGN LESSON (observed live 2026-06-04, brainstorm D5 L86): the sibling
-# block-sync-worktree-cd.sh hook false-positived on a benign `bd remember` whose
-# TEXT merely contained a protected path next to "cd". A guard that keys on the
-# mere PRESENCE of a path string blocks legitimate commands (docs, memory
-# writes, grep) that just mention the path. So this guard matches the ACTUAL
-# DANGEROUS OPERATION SHAPE, never bare path-string presence:
+# A guard that keys on the mere PRESENCE of a path string blocks legitimate
+# commands (docs, memory writes, grep) that just mention the path — this guard
+# instead matches the ACTUAL DANGEROUS OPERATION SHAPE, never bare path-string
+# presence:
 #   1. git add/commit STAGING a path under .thrum/var/tls/  (not a -m message
 #      that merely mentions it — the quote boundary is excluded).
 #   2. a READ of a CA *.key PIPED into a network/transmit command, AND the
 #      command actually references the CA material (tls path or ca/leaf.key) —
 #      so `cat myapp.key | curl` (an unrelated key) is NOT blocked.
 #
-# Repair exception (D5): the agent NEVER auto-handles the private key. For a CA
+# Repair exception: the agent NEVER auto-handles the private key. For a CA
 # restore it emits the file-copy (never-git) commands for the user to run.
 set -euo pipefail
 
@@ -47,7 +45,7 @@ deny() {
   "hookSpecificOutput": {
     "permissionDecision": "deny"
   },
-  "systemMessage": "BLOCKED: $1 The per-daemon CA private keys under .thrum/var/tls/ are secrets — possession of ca.key lets an attacker impersonate this daemon to every paired peer. They must never enter git or leave the machine. For a CA restore, emit the file-copy (NEVER git) commands from daemontls.RestoreCommands for the user to run manually — keep your hands off the key."
+  "systemMessage": "BLOCKED: $1 The per-daemon CA private keys under .thrum/var/tls/ are secrets — possession of ca.key lets an attacker impersonate this daemon to every paired peer. They must never enter git or leave the machine. For a CA restore, emit the file-copy (NEVER git) commands for the user to run manually — keep your hands off the key."
 }
 EOF
   exit 2

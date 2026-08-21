@@ -1,6 +1,6 @@
 ---
 name: coordinator-plan-reconcile-gate
-description: "Use when N parallel plans (one researcher per program of a shared idea) are all LOCKED and about to feed project-setup, and the plans cross-talk at shared seams — an anchor contract produced by one plan and consumed by another, a shared struct field, a shared predicate. Verifies the plans COMPOSE (consistent seams, no double-build, no gap) before any bead or worktree exists. This is the multi-plan reconcile gate — the step that makes parallel plan-writing pay off instead of producing N colliding plans. It uses Fable, the single Leon-ratified standing exception (2026-07-22) to the never-select-Fable rule — see Step 2 for the cited scope of that exception."
+description: "Use when N parallel plans (one researcher per program of a shared idea) are all LOCKED and about to feed project-setup, and the plans cross-talk at shared seams — an anchor contract produced by one plan and consumed by another, a shared struct field, a shared predicate. Verifies the plans COMPOSE (consistent seams, no double-build, no gap) before any bead or worktree exists. This is the multi-plan reconcile gate — the step that makes parallel plan-writing pay off instead of producing N colliding plans. It uses Fable, the single standing exception to the never-select-Fable rule — see Step 2 for the cited scope of that exception."
 ---
 
 # Coordinator: Plan Reconcile Gate
@@ -65,13 +65,9 @@ reconciler's primary input alongside the plans themselves.
 
 Spawn **one** top-level agent, `model: "fable"`.
 
-This is not a self-granted exception. It originated as a Leon-directed ad hoc
-reconcile (see the source doc under "See also"), and Leon subsequently
-**ratified it as a standing gate on 2026-07-22**. His ruling, verbatim: *"This
-is the only place we're using it. It's there as a check and balance against
-everything else."* That is: this multi-plan reconcile is the single
-deliberate use of Fable anywhere in the system, kept as an independent
-check-and-balance against everything else, which runs on the sonnet ceiling.
+This is not a self-granted exception; it is the single deliberate use of
+Fable anywhere in the system, kept as an independent check-and-balance
+against everything else, which runs on the sonnet ceiling.
 Fable — a distinct, more-capable model — is the right instrument specifically
 because a holistic cross-plan reconcile (does seam X mean the same thing in
 plan ① as in plan ②?) benefits from a different model than the sonnet-run
@@ -82,8 +78,8 @@ This is the **one named, cited exception** to the standing "never SELECT
 Fable" rule, which otherwise forbids ad-hoc Fable selection anywhere. The
 exception is scoped to this gate's reconcile pass ONLY — do not select Fable
 elsewhere in the pipeline, or for any other step, on the strength of this
-skill. Any new use of Fable outside this gate needs its own Leon ruling, not
-an extension of this one.
+skill. Any new use of Fable outside this gate needs its own explicit
+approval, not an extension of this one.
 
 Give the fable agent:
 
@@ -100,10 +96,10 @@ verdict:
    (types, semantics, timing)? Prose agreement is not enough — check field
    names, ordering guarantees, and error/absence semantics too.
 2. **No double-build** — do two plans both intend to implement the same
-   thing, unaware of each other? This is the failure Discipline D14
-   (cross-critique) exists to catch: a solo researcher cannot see a sibling's
-   plan, so a duplicate build looks like sound scoping from inside either
-   plan alone.
+   thing, unaware of each other? This is the failure a cross-critique
+   discipline exists to catch: a solo researcher cannot see a sibling's plan,
+   so a duplicate build looks like sound scoping from inside either plan
+   alone.
 3. **No gap** — is there a seam that appears in one plan's "consumes" list
    but in NO plan's "owns" list? An unowned seam means the code that's
    supposed to produce it will not exist.
@@ -151,26 +147,6 @@ consistently** — that is exactly why "one artifact, two readers" is not two
 instruments. Only a check that asks a *different question* of the revised
 plans is a real second instrument.
 
-## Worked example (3-plan identity/authority arc, 2026-07-21)
-
-Three programs from one idea: ① identity/authority core, ②
-reconciler cwd-drift self-heal, ③ liveness inconclusive-signal
-axis. Shared seams: the **A2 anchor contract**, **the
-reconciler**, **the identity-file schema**, **the `PhaseOf` predicate**.
-
-Fable reconcile verdict: **YES-WITH-FIXES**. The consolidated fix list
-surfaced two problems no solo per-plan pass would have caught: (a) ①'s A2
-write-once was a bare non-empty guard, not the strict daemon-keyed CASE its
-own ruling required; (b) ③'s "positive control" stubbed the very
-hardcoded-`false` function it was meant to detect (green by accident — a
-false control that its own reviewer had passed).
-
-The delta re-gate (fable + the different-axis checks above) confirmed no
-struct-collision on the shared `Evidence` struct, confirmed the live PID→cwd
-read was platform-real on both darwin and linux, and caught two residuals a
-re-read could not have: a Windows-CI build-stub gap and a cwd-empty semantic
-gap, both folded into ②'s final micro-fix before Stage 5 (project-setup) ran.
-
 ## The meta-finding — why parallel-with-cross-talk beats serial
 
 Cross-critique among the plan authors caught false positive-controls that the
@@ -207,20 +183,14 @@ unambiguously so an implementer doesn't re-litigate them.
 
 ## See also
 
-- `dev-docs/process/2026-07-22-idea-to-merged-end-to-end-process-capture.md`
-  — the full 11-stage pipeline (Stage 0 + Stages 1–10) this gate is Stage 4
-  of, with the worked example traced end-to-end in Part C.
 - `coordinator-running-brainstorm-cycles` — Phase 5 (sibling coherence pass,
   runs earlier over brainstorms) and Phase 6 (per-plan dual-review, this
   gate's Step 3 input).
 
 ## Project-specific rules (already loaded)
 
-Project-local rules of kind `agent_rule` at `--scope role` were loaded at
-session start by your preamble (see your role template's Memory model block).
-If a project-local rule conflicts with this skill, the project-local rule
-wins; surface the conflict in your reply so the user can decide whether to
-graduate or remove the override.
+Read the shared partial at the absolute path:
+`claude-plugin/commands/_project-rules-protocol.md`
 
 If you accumulate a new rule mid-session about multi-plan reconciliation,
 capture it via the `coordinator-maintaining-memory` skill — it references the

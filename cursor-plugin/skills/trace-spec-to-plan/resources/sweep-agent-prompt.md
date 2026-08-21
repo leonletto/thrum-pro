@@ -11,7 +11,7 @@ For each assigned spec requirement: is it in the plan, and does the plan actuall
 
 Create it with headings before any analysis. **Your final message is a SUMMARY; the FILE is the deliverable.**
 
-*Measured: agents have completed full audits on this project whose final text never reached the parent — twice for one agent — and other dispatches left no artifact at all. That work is unrecoverable. The agent does not notice the failure, and neither does the parent: an idle notification is indistinguishable from "did nothing" and "did everything, and it vanished."*
+Agents have completed full audits whose final text never reached the parent, and other dispatches left no artifact at all — that work is unrecoverable, and an idle notification is indistinguishable from "did nothing" and "did everything, and it vanished."
 
 ## CONSTRAINTS
 

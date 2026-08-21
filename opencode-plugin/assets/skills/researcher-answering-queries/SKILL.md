@@ -17,9 +17,7 @@ lifecycle: `using-the-queue`.
 investigation. The cached `research_note` entries (tagged `research-<slug>`)
 exist precisely so repeat questions resolve cheaply. Skipping the cache and
 re-investigating duplicates effort, burns context, and introduces drift between
-the cached entry and the new answer. (Source: spec section "Researcher skills"
-row 3 — "Lookup order: (1) check `research.md` index, (2) fetch the cached
-memory by slug, (3) verify if stamp is stale, (4) respond".)
+the cached entry and the new answer.
 
 **How to apply:** When a query lands, work the steps in order:
 
@@ -77,11 +75,8 @@ where inlining is genuinely cheaper than the round-trip.
 
 ## Project-specific rules (already loaded)
 
-Project-local rules of kind `agent_rule` at `--scope role` were loaded at
-session start by your preamble (see your role template's Memory model block). If
-a project-local rule conflicts with a universal rule above, the project-local
-rule wins; surface the conflict in your reply so the user can decide whether to
-graduate or remove the override.
+Read the shared partial at the absolute path:
+`claude-plugin/commands/_project-rules-protocol.md`
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `researcher-maintaining-memory` skill — it references the
@@ -103,6 +98,3 @@ EOF
 # Step 2: Mark yourself idle (RPC-preferred; local-write fallback if daemon is unreachable)
 thrum agent set-status idle
 ```
-
-The local-write path is identical to the implementer side
-(`cmd/thrum/agent.go:671-690`).

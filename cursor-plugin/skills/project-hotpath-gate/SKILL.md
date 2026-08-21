@@ -23,8 +23,8 @@ later ones.
 3. **Re-run-evolved** (config present, project has drifted) — compute a
    sectional diff, present for approval, write only on confirmation.
 
-The modes are idempotent — running the skill repeatedly on a stable project
-should produce no file changes after the first run.
+Read the shared partial at the absolute path:
+`claude-plugin/commands/_generator-idempotency-protocol.md`
 
 > **Note: human-in-the-loop required.** This skill uses interactive prompts for
 > first-run incident-prose seeding and re-run-evolved diff approval. It cannot
@@ -253,5 +253,3 @@ On decline — do NOT write. Record the skipped proposal for future runs.
 - `project-philosophy` — the sibling skill that generates `.thrum/philosophy.md`
   (this skill follows the same generate-first / reconcile-on-reinvoke pattern;
   run both at the same onboarding moment)
-- `dev-docs/brainstorms/hotpath-merge-gate/` — the locked brainstorm with
-  evidence, lens details, and design decisions

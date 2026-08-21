@@ -44,7 +44,7 @@ Example:
 
 ### Open Questions
 
-> `thrum queue` now supersedes this free-text list for tracking open investigation threads (see an internal agent-status-wiring decision / the researcher role's Task Tracking delta) — keep entries here only for historical context.
+> `thrum queue` now supersedes this free-text list for tracking open investigation threads — keep entries here only for historical context.
 
 Researcher TODOs / things-to-investigate that haven't been resolved into
 findings yet. Each line ≤120 chars; cite a file area or epic if relevant.
@@ -52,8 +52,8 @@ findings yet. Each line ≤120 chars; cite a file area or epic if relevant.
 Example:
 
 ```text
-- Is the embedding adapter wired post-migration? (check internal/memory/embed/adapter_ollama.go)
-- the monitor reliability follow-up still has 4 child bugs open
+- Is the embedding adapter wired post-<epic>? (check internal/memory/embed/adapter_ollama.go)
+- thrum-abc monitor reliability follow-up still has 4 child bugs open
 - Open: does --scope role on memory.create auto-infer the role, or does it require explicit value?
 ```
 
@@ -126,8 +126,8 @@ amend / supersede the note (the claims have drifted).
 ## Namespace conventions for research_note entries
 
 When authoring research notes, use `--tag <slug>` where `<slug>` is kebab-case
-keywords describing the topic. Per D3 / D4 of the brainstorm, the title is
-free-form prose; the slug-style handle lives in tags.
+keywords describing the topic. The title is free-form prose; the slug-style
+handle lives in tags.
 
 **User captures:** `--tag <slug>` (just the slug; no prefix needed).
 
@@ -137,8 +137,7 @@ clobbering user-authored entries with the same slug.
 
 The legacy `research-<slug>` and `research-mod-<module>-<slug>` bd-key
 conventions are retired. Migrated entries carry the original bd-key as title
-(per an internal utility convention) + `--tag migrated-from-bd:<bd-key>` as the
-rollback handle.
++ `--tag migrated-from-bd:<bd-key>` as the rollback handle.
 
 ## Role-rule writes (researcher-specific)
 

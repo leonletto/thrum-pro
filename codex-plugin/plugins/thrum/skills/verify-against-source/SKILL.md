@@ -1,14 +1,10 @@
 ---
 name: verify-against-source
-description:
-  "Use when verifying that a prose artifact (brainstorm, design spec, plan, or
-  implementation prompt) honors its input/source artifact(s) - the prose
-  counterpart to verify-against-plan. Runs as the conformance axis of the
-  planning-skill review loop. Outputs structured findings - missing scope,
-  silent deviations from the source, scope creep, misunderstandings."
+description: "Use when verifying that a prose artifact (brainstorm, design spec, plan, or implementation prompt) honors its input/source artifact(s) - the prose counterpart to verify-against-plan. Runs as the conformance axis of the planning-skill review loop. Outputs structured findings - missing scope, silent deviations from the source, scope creep, misunderstandings."
 # source: claude-plugin/skills/verify-against-source/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Verify Against Source
 
@@ -20,10 +16,11 @@ implementation prompt faithfully translate the plan + bead descriptions.
 Use it as the **conformance axis** of the planning-skill review loop, paired in
 parallel with a prose-quality reviewer.
 
-This skill is **MANDATORY at plan-lock, not optional** — `project-setup`'s Phase
-0 hard-gates on the `THRUM-REVIEW` stamp's `verify=` field as evidence that this
-skill specifically ran on the plan (see `project-setup/SKILL.md` Phase 0).
-Skipping it is not a soft-enforcement gap; it blocks downstream dispatch.
+This skill is **MANDATORY at plan-lock, not optional** — `project-setup`'s
+Phase 0 hard-gates on the `THRUM-REVIEW` stamp's `verify=` field as evidence
+that this skill specifically ran on the plan (see `project-setup/SKILL.md`
+Phase 0). Skipping it is not a soft-enforcement gap; it blocks downstream
+dispatch.
 
 ### Inputs
 
@@ -113,31 +110,30 @@ Three questions per requirement:
 🔴 **`IMPOSSIBLE` is not a verdict and must never be reported.** If the struct
 lacks the field or the table lacks the column, that is a **MISSING-STEP in the
 artifact — never a defect in the source.** The source is owner-ruled; the plan
-is what is incomplete. Leon, 2026-07-31: _"The whole point of doing a plan is to
-make it possible… You're supposed to add the field if that's what the spec
-says."_ Reporting `IMPOSSIBLE` points the next reader at scoping down the spec,
-which is backwards.
+is what is incomplete. Reporting `IMPOSSIBLE` points the next reader at scoping
+down the spec, which is backwards.
 
-**Callers must supply the code side.** If the invocation gives you only prose
-sources, say so as a `BLOCKING` finding rather than silently running prose-only
-— a conformance pass that never opened a source file should not read as clean.
+**Callers must supply the code side.** If the invocation supplies only prose
+sources, report it as a `BLOCKING` finding rather than silently running
+prose-only — a conformance pass that never opened a source file should not
+read as clean.
 
 #### Third comparison unit: Primitive Ledger (required when hot-root I/O/SQL is present)
 
 For every I/O or SQL operation the code side introduces under a hot root
 (`Handle*`/tick/sweeper/`SyncApplier`/boot — see `.thrum/hotpath-gate.json`'s
-`lenses.existing_primitive_bypass.hot_root_indicators`), treat the implementer's
-Primitive Ledger row itself as a requirement to be verified, exactly like the
-field/struct/column checks above: raw op -> callee package searched -> primitive
-adopted (or none exists and a bounded cost formula at production scale).
+`lenses.existing_primitive_bypass.hot_root_indicators`), treat the implementer's Primitive Ledger row itself as
+a requirement to be verified, exactly like the field/struct/column checks
+above: raw op -> callee package searched -> primitive adopted (or none exists
+and a bounded cost formula at production scale).
 
 **Verdicts (same taxonomy as above):** `SATISFIED` — a valid ledger row exists
 for the op and, if a primitive is named as adopted, it is actually used at the
-cited call site. `PARTIAL` — a ledger row exists but is incomplete or unverified
-(e.g. a "none exists" claim whose cost formula uses a test-fixture number
-instead of production scale). `MISSING-STEP` — the op was introduced under a hot
-root and no ledger row accounts for it. `NOT-ADDRESSED` — not applicable to this
-artifact (no hot-root I/O/SQL was added).
+cited call site. `PARTIAL` — a ledger row exists but is incomplete or
+unverified (e.g. a "none exists" claim whose cost formula uses a test-fixture
+number instead of production scale). `MISSING-STEP` — the op was introduced
+under a hot root and no ledger row accounts for it. `NOT-ADDRESSED` — not
+applicable to this artifact (no hot-root I/O/SQL was added).
 
 ### Output format
 
@@ -190,16 +186,16 @@ who trusts the source be surprised by this?_ BLOCKING = yes, definitely;
 IMPORTANT = maybe, needs explanation.
 
 - **FEASIBILITY** — a requirement IS present in the source (honored in intent),
-  but the reviewer judges it too hard, too risky, or impractical to implement as
-  specified. This is a distinct routing signal, NOT a synonym for BLOCKING: a
-  BLOCKING finding says "the artifact dropped or contradicted a locked
+  but the reviewer judges it too hard, too risky, or impractical to implement
+  as specified. This is a distinct routing signal, NOT a synonym for BLOCKING:
+  a BLOCKING finding says "the artifact dropped or contradicted a locked
   decision"; a FEASIBILITY finding says "the artifact kept the decision, but
-  implementing it as written may not be achievable." Do not fold a FEASIBILITY
-  finding inline into the next revision as a silent scope cut — per
-  `coordinator-running-brainstorm-cycles/SKILL.md` § Loop semantics, it MUST
-  escalate to the coordinator/intent-owner for an explicit keep/cut/weaken
-  ruling; only BLOCKING/IMPORTANT/MINOR findings are the researcher's to resolve
-  inline.
+  implementing it as written may not be achievable." Do not fold a
+  FEASIBILITY finding inline into the next revision as a silent scope cut —
+  per `coordinator-running-brainstorm-cycles/SKILL.md` § Loop semantics, it
+  MUST escalate to the coordinator/intent-owner for an explicit keep/cut/weaken
+  ruling; only BLOCKING/IMPORTANT/MINOR findings are the researcher's to
+  resolve inline.
 
 ### Invariant: stdout only, no inline edits
 

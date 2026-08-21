@@ -121,11 +121,8 @@ next task anyway.
 
 ## Project-specific rules (already loaded)
 
-Project-local rules of kind `agent_rule` at `--scope role` were loaded at
-session start by your preamble (see your role template's Memory model block). If
-a project-local rule conflicts with a universal rule above, the project-local
-rule wins; surface the conflict in your reply so the user can decide whether to
-graduate or remove the override.
+Read the shared partial at the absolute path:
+`claude-plugin/commands/_project-rules-protocol.md`
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `implementer-maintaining-memory` skill — it references the
@@ -150,5 +147,4 @@ EOF
 thrum agent set-status idle
 ```
 
-The local-write path is identical to the ACK side
-(`cmd/thrum/agent.go:671-690`).
+The local-write path is identical to the ACK side.

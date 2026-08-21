@@ -1,14 +1,10 @@
 ---
 name: watcher-archetype
-description:
-  "Use when running as a watcher agent on a scheduled wake - the read-only,
-  wake-run-exit detection loop (scan, then triage plus fix-sketch, then emit,
-  then report, then job done). Loads the deterministic run-cycle discipline and
-  the domain skill-pack plug-in contract for security/lint/deps/etc. watchers
-  built on the v0.11 watcher substrate."
+description: "Use when running as a watcher agent on a scheduled wake - the read-only, wake-run-exit detection loop (scan, then triage plus fix-sketch, then emit, then report, then job done). Loads the deterministic run-cycle discipline and the domain skill-pack plug-in contract for security/lint/deps/etc. watchers built on the v0.11 watcher substrate."
 # source: claude-plugin/skills/watcher-archetype/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Watcher Archetype: the deterministic run cycle
 
@@ -19,15 +15,15 @@ wake is to run ONE cycle and exit — never to fix, never to write code.
 
 ### The non-negotiable invariants
 
-1. **Read-only (spec D6).** Never edit source, never write an in-code marker.
+1. **Read-only.** Never edit source, never write an in-code marker.
    Markers are implementer-side; you only read them (the scanner does) to
    re-link a finding after a rename.
-2. **Wake-run-exit (D1).** One cycle per wake. No resident loop, no polling.
-3. **Determinism (D11).** The scanner decides findings; you do not. Your only
+2. **Wake-run-exit.** One cycle per wake. No resident loop, no polling.
+3. **Determinism.** The scanner decides findings; you do not. Your only
    judgment is triage + fix-sketch authoring, both keyed by the stable
    fingerprint so they survive line drift.
 4. **Research, don't fix.** You detect and annotate; the implementer fixes.
-5. **Fail toward open (D14).** Never close a finding for a unit you didn't
+5. **Fail toward open.** Never close a finding for a unit you didn't
    actually re-scan.
 
 ### The loop
@@ -73,20 +69,19 @@ wake is to run ONE cycle and exit — never to fix, never to write code.
 An empty run (no `needs_triage`) is still valid: run `emit` (advances the
 cursor, records the run), `report`, print the pane line, then `thrum job done`.
 
-Scanner-failure, store-loss, and bd-down surface automatically as high-priority
-health-alerts (D13) — don't suppress them, nothing else to do.
+Scanner-failure, store-loss, and bd-down surface automatically as
+high-priority health-alerts — don't suppress them, nothing else to do.
 
 ### Domain skill-pack plug-in contract
 
 A DOMAIN watcher (security, lint, deps, web-routes, …) is built by composing
 this archetype skill with a domain skill-pack that supplies the domain's
 `enumerate.Enumerator`/`scan.ScannerAdapter` (the deterministic detector,
-compiled in at build time) and its triage guidance. Detection logic ALWAYS lives
-in the domain's scanner, never in agent prose (D11).
+compiled in at build time) and its triage guidance. Detection logic ALWAYS
+lives in the domain's scanner, never in agent prose.
 
 ### Config
 
-The watcher's config lives at `.thrum/agents/<id>/` at the repo root (resolve
-via `.thrum/redirect` from a worktree) — see the role preamble for the per-wake
-read. It runs as a `scheduled_agent` job; see
-`dev-docs/templates/watcher-scheduled-agent.json` for the reference cadence.
+The watcher's config lives at `.thrum/agents/<id>/` at the repo root
+(resolve via `.thrum/redirect` from a worktree) — see the role preamble for
+the per-wake read. It runs as a `scheduled_agent` job.

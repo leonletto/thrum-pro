@@ -107,14 +107,13 @@ Three questions per requirement:
 🔴 **`IMPOSSIBLE` is not a verdict and must never be reported.** If the struct
 lacks the field or the table lacks the column, that is a **MISSING-STEP in the
 artifact — never a defect in the source.** The source is owner-ruled; the plan
-is what is incomplete. Leon, 2026-07-31: *"The whole point of doing a plan is to
-make it possible… You're supposed to add the field if that's what the spec
-says."* Reporting `IMPOSSIBLE` points the next reader at scoping down the spec,
-which is backwards.
+is what is incomplete. Reporting `IMPOSSIBLE` points the next reader at scoping
+down the spec, which is backwards.
 
-**Callers must supply the code side.** If the invocation gives you only prose
-sources, say so as a `BLOCKING` finding rather than silently running prose-only
-— a conformance pass that never opened a source file should not read as clean.
+**Callers must supply the code side.** If the invocation supplies only prose
+sources, report it as a `BLOCKING` finding rather than silently running
+prose-only — a conformance pass that never opened a source file should not
+read as clean.
 
 ### Third comparison unit: Primitive Ledger (required when hot-root I/O/SQL is present)
 

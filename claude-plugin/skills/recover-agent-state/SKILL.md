@@ -1,6 +1,6 @@
 ---
 name: recover-agent-state
-description: "Use after suspected scheduled-agent crash, when state.md may be partial / malformed / unparseable - validates structure BEFORE writing, preserves corrupt content to state.md.broken, and routes the daemon-side §6.5 corruption flow (sets the auto-respawn gate flag plus pages the operator via the canonical Q3-D escalation). Also handles soft-recovery - when state.md parses cleanly but is missing the prior wake's entry (mid-wake kill), reconstructs that entry from the prior session's restart snapshot via the thrum agent state update command."
+description: "Use after suspected scheduled-agent crash, when state.md may be partial / malformed / unparseable - validates structure BEFORE writing, preserves corrupt content to state.md.broken, and routes the daemon-side corruption flow (sets the auto-respawn gate flag plus pages the operator). Also handles soft-recovery - when state.md parses cleanly but is missing the prior wake's entry (mid-wake kill), reconstructs that entry from the prior session's restart snapshot via the thrum agent state update command."
 allowed-tools: "Bash(thrum:*)"
 ---
 
@@ -21,11 +21,9 @@ State.md has a strict 19-session sliding-window format (4 verbatim plus
   rejects the input AND the writer would otherwise overwrite the partial data
   with a fresh state, destroying whatever was recoverable.
 
-Spec §6.5 mandates: do NOT silently overwrite. Validate first; if the parse
+Do NOT silently overwrite. Validate first; if the parse
 fails, preserve the corrupt content + page the operator + block auto-respawn
-until the operator clears the gate. This skill is one of the 5 escalation sites
-in the B-B1 substrate (spec §8: idle-nudge exhaust, stage-failure 3-consecutive,
-auto- respawn loop guard, state.md parse failure, nudge target offline).
+until the operator clears the gate.
 
 ## Step 1: Run the recover command
 
@@ -54,10 +52,10 @@ The CLI:
      lives + how to clear the flag.
 
 The skill does NOT call `RouteEscalation` directly — the daemon owns the routing
-decision (email vs. supervisor agent fallback per spec §8 Q3-D chain). The skill
+decision (email vs. supervisor agent fallback). The skill
 just invokes the CLI, which calls the RPC, which routes the alert.
 
-## Step 1.5: Soft-recovery — reconstruct a missing wake entry (spec §7.5)
+## Step 1.5: Soft-recovery — reconstruct a missing wake entry
 
 Hard-recovery (Step 1) handles a CORRUPT state.md. Soft-recovery handles a
 different, milder failure: state.md parses cleanly but is **missing the prior
@@ -110,16 +108,10 @@ no extra LLM call. Summarize the prior session's snapshot into a single
 `state.md`-style line (what that session accomplished), then record it through
 the normal write path.
 
-**Verify before you write:** a state.md fact is TRUE when written and can
-silently become FALSE later — the reader can't tell, because a summary
-doesn't present itself as a time-bound claim (a known incident pattern). Reconstruct only
-what the prior snapshot actually supports, not an assumption filled in to
-complete the entry. If the reconstructed line records an UNEXPLAINED
-artifact, carry the unexplained-ness forward — "not mine, cause unknown,
-nobody has traced this" — rather than resolving it to a disposition like
-"ignore it." "Ignore it" is unfalsifiable by construction (an instruction to
-not look can't be caught by looking) and can silently train the next wake to
-stop looking at the one visible symptom of a live bug.
+**Verify before you write:** see the shared partial at
+`claude-plugin/commands/_verify-before-write-protocol.md` for the general
+invariant. Reconstruct only what the prior snapshot actually supports, not an
+assumption filled in to complete the entry.
 
 ```bash
 thrum agent state update \

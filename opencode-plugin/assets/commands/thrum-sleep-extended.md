@@ -18,7 +18,7 @@ to sleep until the operator wakes it later. Same termination semantics as
 - **Use `/thrum:sleep` (standard)** for routine park-and-resume where future-you
   can reconstruct from project state + a compact 11-section snapshot.
 - **Use `/thrum:sleep-extended` (this variant)** for designer/architect-grade
-  work: parking a complex brainstorm with multiple Leon-decided forks, parking a
+  work: parking a complex brainstorm with multiple owner-decided forks, parking a
   fanout implementation (≥3 call sites or ≥2 epics), or any sleep where the next
   wake may be a fresh restart and must recover wire-contract precision without
   re-reading the source files.
@@ -81,12 +81,10 @@ auto-injects this file — same mechanism as restart wake.
 **Your worktree may be torn down while you sleep — and if it is, YOUR SNAPSHOT
 GOES WITH IT unless you do this step.**
 
-🔴 **READ THIS CAREFULLY; AN EARLIER VERSION OF THIS SKILL WAS WRONG.** It claimed
-your snapshot "survives because `.thrum/` redirects to the main repo." **That is
-false.** A worktree's `.thrum/` is a REAL LOCAL DIRECTORY. The `redirect` inside
-it is just a plain text FILE containing a path — a pointer thrum's code consults.
-The filesystem redirects nothing. Your worktree keeps its own local `agents/`,
-`context/`, `identities/`, and `restart/`.
+🔴 **READ THIS CAREFULLY.** A worktree's `.thrum/` is a REAL LOCAL DIRECTORY. The
+`redirect` inside it is just a plain text FILE containing a path — a pointer
+thrum's code consults. The filesystem redirects nothing. Your worktree keeps its
+own local `agents/`, `context/`, `identities/`, and `restart/`.
 
 **THE ACTUAL MECHANISM:** your snapshot at `<worktree>/.thrum/restart/<agent-id>.md`
 is **worktree-local**. It is copied into the main repo **only when you WAKE** —
@@ -117,20 +115,14 @@ anything your resume plan references.
 trust `cp`'s exit code — list the destination file. This step is your ONLY
 recoverability guarantee against teardown-while-asleep; the redirect is not one.
 
-*(Recorded from a prior investigation. Verified at source: an agent's sleep snapshot was found
-in `<worktree>/.thrum/restart/` and ABSENT from the main path. Its context survived
-only because it made this explicit copy.)*
-
 ### 5. Mark agent operational status idle
 
 ```bash
 thrum agent set-status idle
-# NOTE: idle-status write becomes observable after the agent-status-wiring change lands.
 ```
 
-Per an internal agent-status-wiring verdict, `idle` is the signal that this agent
-has parked. NO new "sleeping" state was added — `idle` covers both "no active
-work" and "parked for operator wake."
+`idle` is the signal that this agent has parked. NO new "sleeping" state was
+added — `idle` covers both "no active work" and "parked for operator wake."
 
 If `thrum agent set-status` returns an error, continue to Step 6 — the snapshot
 on disk is the load-bearing artifact.

@@ -62,10 +62,7 @@ that looks for it (see `project-setup/SKILL.md` Phase 0).
 
 Derive the block by DIFFING the artifact against its actual, currently-read
 source document or decision list — never by recalling from memory what was
-probably dropped. This mirrors the discipline an earlier stamp convention already
-established for a different axis (does the cited CODE still match), applied
-here to a different axis (what did the AUTHOR consciously drop vs. the
-source) — no git diff can see an absence, so the author must state it
+probably dropped. No git diff can see an absence, so the author must state it
 directly, freshly re-derived at authoring time, not carried forward from a
 prior cycle.
 

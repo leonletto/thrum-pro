@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Tests for the D5 CA-key exfil guard (block-tls-key-exfil.sh).
+# Tests for the CA-key exfil guard (block-tls-key-exfil.sh).
 #
 # The guard must match the DANGEROUS OPERATION SHAPE, not bare path-string
-# presence (brainstorm D5 L86). Executable assertions:
+# presence. Executable assertions:
 #   (a) `git add .thrum/var/tls/ca.key`            -> DENY (exit 2)
 #   (b) `bd remember "... .thrum/var/tls/ ..."`    -> ALLOW (exit 0) [no FP]
 #   (c) `cat .thrum/var/tls/ca.key | thrum send`   -> DENY (exit 2)

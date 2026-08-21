@@ -1,12 +1,10 @@
 ---
 name: coordinator-running-review-cycles
-description:
-  "Use when an implementer reports DONE, when consolidating review findings,
-  when handling implementer pushback on a finding, or when arriving at a review
-  gate. Loads coordinator-specific discipline for running review cycles cleanly."
+description: "Use when an implementer reports DONE, when consolidating review findings, when handling implementer pushback on a finding, or when arriving at a review gate. Loads coordinator-specific discipline for running review cycles cleanly."
 # source: claude-plugin/skills/coordinator-running-review-cycles/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Coordinator: Running Review Cycles
 
@@ -16,17 +14,16 @@ description:
 security, error-handling, idiom, and dead-code issues. `verify-against-plan`
 catches missing scope, unmet acceptance criteria, and silent deviations from the
 plan. Running them sequentially doubles review-cycle latency for no reason —
-they're independent reads of the same diff. (Source: project Code Review
-Protocol — "Run both review types in parallel for every agent branch".)
+they're independent reads of the same diff.
 
 **How to apply:** When an implementer reports DONE on a branch, dispatch both
 reviewers as parallel sub-agents in the same message. Pass each a clear scope
 ("review the diff at <BASE>...<HEAD> for <criteria>").
 
-> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet` (low
-> effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
-> operator-ask or a skill step that names it. See the `choosing-subagent-models`
-> skill for the full policy.
+> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet`
+> (low effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
+> operator-ask or a skill step that names it. See the
+> `choosing-subagent-models` skill for the full policy.
 
 ### Wait for both reviewers before sending anything to the implementer
 
@@ -145,17 +142,14 @@ AFTER they report DONE. They target different artifacts and both are needed.
 
 ### See also
 
-- `coordinator-branch-split-on-block` — when a Pass-3 gate or this skill's dual
-  review BLOCKS on one concern of a branch that bundles multiple independent
-  concerns, while the other concern(s) are clean.
+- `coordinator-branch-split-on-block` — when a Pass-3 gate or this skill's
+  dual review BLOCKS on one concern of a branch that bundles multiple
+  independent concerns, while the other concern(s) are clean.
 
 ### Project-specific rules (already loaded)
 
-Project-local rules of kind `agent_rule` at `--scope role` were loaded at
-session start by your preamble (see your role template's Memory model block). If
-a project-local rule conflicts with a universal rule above, the project-local
-rule wins; surface the conflict in your reply so the user can decide whether to
-graduate or remove the override.
+Read the shared partial at the absolute path:
+`claude-plugin/commands/_project-rules-protocol.md`
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `coordinator-maintaining-memory` skill — it references the

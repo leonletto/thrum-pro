@@ -1,13 +1,10 @@
 ---
 name: implementer-orchestrating-execution
-description:
-  "Use when starting execution of a scoped implementation task — about to
-  implement, ready to write code, executing a bd task. Loads the orchestration
-  procedure — dispatch research, implementation, and verification to sub-agents
-  and synthesize their output instead of doing the legwork inline."
+description: "Use when starting execution of a scoped implementation task — about to implement, ready to write code, executing a bd task. Loads the orchestration procedure — dispatch research, implementation, and verification to sub-agents and synthesize their output instead of doing the legwork inline."
 # source: claude-plugin/skills/implementer-orchestrating-execution/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Implementer: Orchestrating Execution
 
@@ -33,10 +30,10 @@ The size bound (~15 lines / 2 files) is the project default; a project-local
 
 ### Subagent model selection
 
-> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet` (low
-> effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
-> operator-ask or a skill step that names it. See the `choosing-subagent-models`
-> skill for the full policy.
+> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet`
+> (low effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
+> operator-ask or a skill step that names it. See the
+> `choosing-subagent-models` skill for the full policy.
 
 ### Step 1 — Dispatch research
 
@@ -51,8 +48,8 @@ From the report, decide exactly what changes where, then dispatch
 general-purpose sub-agent(s) to make the edits. Give each the bd task ID, the
 exact files, the acceptance criteria, and the relevant slice of the report.
 Model: `sonnet`; use `sonnet` (low effort) for purely mechanical edits
-(find/replace, rename). Label `description="implement: <what>"`. Parallelize
-independent edit-targets; serialize edits to shared files.
+(find/replace, rename). Label `description="implement: <what>"`. Parallelize independent
+edit-targets; serialize edits to shared files.
 
 ### Step 3 — Dispatch verification
 
@@ -93,11 +90,11 @@ hard size bound.
 
 ### Model tiers (always pass `model:` explicitly)
 
-| Dispatch           | Model                                                       |
-| ------------------ | ----------------------------------------------------------- |
-| research / explore | `sonnet` (or the `Explore` agent type)                      |
+| Dispatch           | Model                                              |
+| ------------------ | -------------------------------------------------- |
+| research / explore | `sonnet` (or the `Explore` agent type)             |
 | implementation     | `sonnet`; `sonnet` (low effort) for purely mechanical edits |
-| verification       | `sonnet`                                                    |
+| verification       | `sonnet`                                           |
 
 Use the bare `sonnet` alias (resolves to the current Sonnet); do not hard-pin a
 version id. Never let a sub-agent inherit the parent (Opus) model.
@@ -123,9 +120,9 @@ prefix, blinding the evaluation harness.
 
 ### Project-specific rules (already loaded)
 
-Project-local rules of kind `agent_rule` at `--scope role` were loaded at
-session start by your preamble (see your role template's Memory model block). If
-a project-local rule conflicts with this skill, the project-local rule wins;
-surface the conflict so the user can decide. Capture new rules mid-session via
-the `implementer-maintaining-memory` skill — it references the
-`memory-write-discipline` common for the canonical `thrum memory create` shape.
+Read the shared partial at the absolute path:
+`claude-plugin/commands/_project-rules-protocol.md`
+
+Capture new rules mid-session via the `implementer-maintaining-memory` skill —
+it references the `memory-write-discipline` common for the canonical
+`thrum memory create` shape.

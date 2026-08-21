@@ -232,18 +232,10 @@ before creating beads.** Do not decompose it into tasks; a bead makes an
 unratified premise look like ratified scope, and every downstream hop then
 reasons correctly from it.
 
-🔴 **WHY THIS IS A PHASE AND NOT A REMINDER (thrum, 2026-07-24, four instances
-in one session).** Requirements of this class do **not** arrive labelled
-"security" — they arrive as durability, forensics, hygiene, or "defence in
-depth". One example ran the whole chain: *"the audit lane must never be rotated,
-purged, or synced, and must outlive the purge machinery"* was an **agent's
-generalisation of an unrelated log's rotation failure**, ratified by nobody. It
-passed through a coordinator twice, became a dispatch instruction, and was about
-to become a **RED-first test pinning it as an executable invariant** — at which
-point changing the policy would have meant arguing with a passing test. **A
-conformance gate downstream cannot catch this: every hop reasons correctly from
-a false root, so the chain looks clean at every step.** The check has to happen
-where the premise ENTERS.
+Requirements of this class do not arrive labelled "security" — they arrive as
+durability, forensics, hygiene, or "defence in depth". A conformance gate
+downstream cannot catch this: every hop reasons correctly from a false root, so
+the check must happen where the premise enters.
 
 **Ask of any such requirement: WHO RATIFIED IT?** Trace it to an owner ruling or
 the threat model. "It appears in the source plan" is propagation, not
@@ -274,11 +266,11 @@ Explore the codebase and recent beads state in parallel. Partition the work so:
   identifies work related to `{{FEATURE_DESCRIPTION}}` — output:
   `output/planning/beads-context.md`. (Raw `bd ready` is deliberate here — this
   is a beads-state inventory alongside `bd list`/`bd blocked`, not work-queue
-  pickup; the kt-ready migration covers pickup prose only.)
+  pickup.)
 
 Invoke `efficient-multi-agent-research` for the launch-and-wait mechanics. After
 agents complete, read the two output files — do not fan-read individual beads
-entries into your main context.
+entries into the main context.
 
 Ask the user focused questions (prefer multiple choice) about anything the plan
 leaves ambiguous — constraints, scope boundaries, patterns to follow.
@@ -294,9 +286,9 @@ requirement is missing from the plan *and* absent from the beads, **the beads
 become the working set, nobody consults the spec again, and the gap stops being
 discoverable at all.**
 
-🚫 **You may not run it yourself if you authored the plan.** Self-review cannot
+🚫 **Never self-run this as the plan's author — dispatch it.** Self-review cannot
 catch a requirement the author never perceived — same person, same anchoring,
-same blind spot. **Dispatch it.**
+same blind spot.
 
 ⚠️ **This does NOT duplicate `verify-against-source`.** They read different
 things and catch different failures:
@@ -306,12 +298,7 @@ things and catch different failures:
 | `verify-against-source` | the ARTIFACT | does this honor its source? | drift, contradiction, scope creep |
 | **`trace-spec-to-plan`** | **the SPEC** | **where did each requirement land?** | **absence, name-only, missing substrate** |
 
-**A reviewer reading an artifact cannot see what isn't in it.** Measured
-2026-07-31: after eight prior audits — including two full Fable passes, a
-three-axis review, and a mandatory conformance gate — this found **eight more**
-gaps, among them an owner-ruled four-stage remediation posture with no task, no
-test, and no mention anywhere in a 4,400-line plan. Nobody was careless; **there
-was no text to be careless about.**
+**A reviewer reading an artifact cannot see what isn't in it.**
 
 ## Phase 2: Decompose into Epics & Tasks
 
@@ -443,7 +430,7 @@ If not found, create one:
 `--description` is multi-line prose — never double-quoted inline. On
 `scripts/bd-shared`, `--stdin`/`--body-file` are refused (remote-path
 resolution + silent-empty-body hazards), so write it to a scratch file and
-pass `-d "$(cat <file>)"`; see your role preamble's 🔴 PROSE INTO A COMMAND
+pass `-d "$(cat <file>)"`; see the role preamble's 🔴 PROSE INTO A COMMAND
 rule.
 
 ```bash
@@ -522,7 +509,7 @@ If no cross-epic dependencies exist, note that and move on.
 
 ## Phase 3: Select Worktrees & Agents
 
-**This phase is an interactive decision gate.** You MUST ask the user which
+**This phase is an interactive decision gate.** MUST ask the user which
 worktree and agent to use for each epic before generating prompts. Do not infer
 silently — present options and let the user choose.
 
@@ -614,7 +601,7 @@ thrum quickstart --name <agent-name> --role implementer \
 #### For new worktrees
 
 The preferred path is `thrum worktree create` (alias: `thrum worktree setup`).
-Both commands are interchangeable — use whichever you prefer. They create the
+Both commands are interchangeable. They create the
 worktree, set up thrum and beads redirects, register the agent identity, and
 enforce single-identity-per-worktree (registering a second identity in the same
 worktree is an error).
@@ -712,7 +699,7 @@ success, it's fine.
 
 ### Record Worktree Assignments
 
-At the end of this phase, you should have a confirmed assignment for each epic:
+At the end of this phase, confirm an assignment for each epic:
 
 | Epic        | Worktree Path | Branch     | Agent Name     |
 | ----------- | ------------- | ---------- | -------------- |
@@ -722,7 +709,7 @@ These values feed directly into the `{{PLACEHOLDER}}` resolution in Phase 4.
 
 ## Phase 4: Generate Implementation Prompts
 
-**CRITICAL: You MUST generate prompts yourself. Do NOT delegate prompt
+**CRITICAL: Generate prompts directly. Do NOT delegate prompt
 generation to sub-agents.** Sub-agents take shortcuts — they skip sections,
 leave template metadata in the output, fail to strip meta-sections, and produce
 prompts that confuse the implementation agent. The prompt is the most important
@@ -922,7 +909,7 @@ prompt file:
    ```
 
    This review happens **within the same project-setup session**: after Step 4
-   generates the prompt, you dispatch the prompt dual-review (per the
+   generates the prompt, dispatch the prompt dual-review (per the
    `coordinator-running-brainstorm-cycles` Phase 7 flow), wait for it to
    terminate, then append this stamp before closing out. Do NOT end the session
    at Step 4 and re-invoke project-setup later for the stamp.
@@ -955,7 +942,7 @@ the base branch itself, in priority order: an explicit `--base` flag (always
 wins) > `orchestration.merge_target` from `.thrum/config.json` > the main repo's
 current HEAD branch > `main` as a last resort. Passing an explicit `--base <branch>`
 here permanently overrides the config-driven resolution for every worktree this skill
-creates — only pass it explicitly when you need a one-off worktree based on
+creates — only pass it explicitly for a one-off worktree based on
 something other than the configured merge target.
 
 **Generating prompts before worktree setup:** Prompts embed the worktree path,
@@ -963,7 +950,7 @@ branch, and agent name. These must be confirmed in Phase 3 before generating
 prompts in Phase 4.
 
 **Skipping the plan file:** This skill reads the plan file (from writing-plans)
-as primary input. If you only have a design doc, use writing-plans first to
+as primary input. If only a design doc exists, use writing-plans first to
 produce the plan.
 
 **Delegating prompt generation to sub-agents:** The filled implementation prompt
@@ -989,7 +976,7 @@ found" errors for worktree agents.
 
 ## Output Summary
 
-When complete, you should have produced:
+When complete, the output is:
 
 1. **Beads epics and tasks** with dependency DAG and TDD-quality descriptions
 2. **Ready-to-use worktrees** with thrum/beads redirects and agents registered
@@ -1006,7 +993,7 @@ give it directly to the implementing agent.
 
 Implementation agents prefix every completion or escalation message with one of
 four status tokens defined in `implementation-agent.md`'s Phase 4 Status
-Vocabulary. Your response depends on the token:
+Vocabulary. Response depends on the token:
 
 | Token                | Coordinator Response                                                                                                                                                                                                                                     |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

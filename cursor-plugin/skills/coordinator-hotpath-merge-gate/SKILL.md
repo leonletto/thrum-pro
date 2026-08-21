@@ -104,34 +104,26 @@ list to the sub-agent verbatim at dispatch time instead of relying on it
 rediscovering these the hard way:
 
 1. Read code via `git show <target-sha>:<path>`, NEVER the working tree — tree
-   state != the SHA under review. Three independent gate sub-agents hit this
-   trap in one day (2026-07-17): the main repo was checked out on a different
-   branch than the one under review, and a plain `Read`/`grep` silently
-   returned pre-merge code that looked entirely normal.
+   state != the SHA under review.
 2. Build/test ONLY in a throwaway detached worktree
    (`git worktree add <tmp> <sha> --detach`), never the shared checkout.
-3. RUN any test you make a claim about — never judge from reading it. A
-   round-1 gate once judged RED tests "genuine regression guards" by reading
-   them; they were failing (feature/lantransport, 2026-07-17).
-4. Diff against `merge-base`, never two-dot against tip — hit 3x in one
-   session (a two-dot diff against tip pulls in unrelated lines from sibling
-   branches and manufactures a false regression signal).
+3. RUN any test you make a claim about — never judge from reading it.
+4. Diff against `merge-base`, never two-dot against tip — a two-dot diff
+   against tip pulls in unrelated lines from sibling branches and
+   manufactures a false regression signal.
 5. Run `git merge-base --is-ancestor` as an explicit gate condition (the
    fast-forward check) — git silently deduplicates content-identical commits
    on both sides of a rebase, so a tree that "builds clean" can still be
-   carrying dupes instead of the real content (`<sha>`/`<sha>`).
+   carrying dupes instead of the real content.
 6. Run full-package `-race`, not targeted `-run` — a targeted race run misses
-   cross-test races (a full-package `-race` run on
-   `<sha>` surfaced a real data race that a narrower `-run` would have
-   missed entirely).
+   cross-test races.
 7. Build+test the MERGED-tree result as a SEPARATE condition — neither gate
    currently runs a build of the actual post-merge tree; a clean pre-merge
    build/test does not prove the merged result compiles or passes.
 8. Use `rm -r`, NEVER `rm -rf`, and use `git worktree remove --force` to drop a
    worktree. A broad `ask` rule on `rm -rf *` outranks any narrow `/tmp` allow,
    so `rm -rf` raises a human permission prompt EVERY time regardless of path —
-   it cost an implementer 56 silent minutes once, and it stalls gate sub-agents
-   mid-run waiting on a keystroke. `rm -r` runs free. Do NOT widen the ask rule
+   it stalls gate sub-agents mid-run waiting on a keystroke. `rm -r` runs free. Do NOT widen the ask rule
    to work around this; that entry is the only deletion protection on the box.
 9. Check the discriminator before picking a scratch path, don't assume from
    the platform: `[ -L /tmp ]`. macOS (symlink) — create throwaway worktrees
@@ -147,9 +139,7 @@ rediscovering these the hard way:
     detached worktree. `git stash` is a SINGLE SHARED STACK across every
     worktree of a repo, so "cleaning up after myself" can strand or clobber
     another agent's live work; and the shared repo is POPULATED — live agents
-    hold uncommitted `State.md` they are actively re-authoring. This fired on a
-    populated box (2026-07-20): a review sub-agent's git ops reverted an
-    orchestrator's State.md. It presents as diligence, which is why it recurs.
+    hold uncommitted `State.md` they are actively re-authoring.
     If you believe you must mutate the shared tree, STOP and report instead —
     that is always a finding, never a step.
 12. **TEAR DOWN YOUR THROWAWAY WORKTREE WHEN THE GATE ENDS — after two checks,
@@ -165,14 +155,6 @@ rediscovering these the hard way:
         it. Usually fine (a gate merge is reproducible by redoing it) but say so
         in your report rather than doing it silently.
     Then `git worktree remove --force <wt>`.
-    **WHY THIS HAD TO BE WRITTEN DOWN (measured on <primary-box> 2026-07-22):** SEVEN
-    abandoned gate worktrees had accumulated under `/private/tmp` — two dirty (6
-    and 10 uncommitted paths), two with unreachable HEADs. Before this rule, the
-    ONLY mention of teardown across BOTH gates was a warning that teardown
-    destroys uncommitted state — a hazard notice with no paired procedure. **A
-    careful agent reads that as a reason NOT to tear down**, so the
-    safest-seeming behaviour was the accumulating one. A warning without a
-    procedure does not produce caution; it produces paralysis plus litter.
 
 ## Trigger-directory skip logic
 
@@ -185,15 +167,11 @@ every diff regardless of trigger directories. If the config has no
 
 ## Delta re-gate continuity — walk the whole branch, read the whole function
 
-**Why:** A fork-exec under `state.Lock()` in HandleRegister
-(`safecmd.GitConfig`, introduced `<sha-introduced>`, merged `<sha-merged>`,
-feature/lantransport, 2026-07-17) — the founding daemon-wedge class — passed
-TWO hotpath gate rounds CLEAN and was only found outside the gate (fixed
-`<sha-fixed>`, 07-18). Root cause: the gate is delta-scoped. The commit that
-introduced the `Lock()` was an ancestor of the round-2 delta base, so it was
-never in any walked diff — even though a later commit in that same delta
-edited the gating condition on that very call. The diff hunk showing the
-edited condition never revealed the enclosing locked span above it.
+**Why:** A commit introducing a lock can be an ancestor of a delta-re-gate's
+base and never appear in any walked diff, even when a later commit edits the
+gating condition on that call. Root cause: the gate is delta-scoped. The diff
+hunk showing the edited condition never revealed the enclosing locked span
+above it.
 
 **Rules:**
 

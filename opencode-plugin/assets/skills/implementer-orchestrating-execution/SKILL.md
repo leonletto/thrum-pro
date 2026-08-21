@@ -117,9 +117,9 @@ prefix, blinding the evaluation harness.
 
 ## Project-specific rules (already loaded)
 
-Project-local rules of kind `agent_rule` at `--scope role` were loaded at
-session start by your preamble (see your role template's Memory model block). If
-a project-local rule conflicts with this skill, the project-local rule wins;
-surface the conflict so the user can decide. Capture new rules mid-session via
-the `implementer-maintaining-memory` skill — it references the
-`memory-write-discipline` common for the canonical `thrum memory create` shape.
+Read the shared partial at the absolute path:
+`claude-plugin/commands/_project-rules-protocol.md`
+
+Capture new rules mid-session via the `implementer-maintaining-memory` skill —
+it references the `memory-write-discipline` common for the canonical
+`thrum memory create` shape.

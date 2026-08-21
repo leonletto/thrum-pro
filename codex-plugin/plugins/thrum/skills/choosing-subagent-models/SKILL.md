@@ -20,15 +20,13 @@ Every subagent you spawn MUST pass an explicit `model:` (plus effort where the
 runtime supports it). Omitting it runs the subagent on YOUR model (Opus) — the
 single biggest avoidable cost leak in agent work.
 
-**Haiku is banned entirely (Leon-ruled 2026-07-08).** There is no
+**Haiku is banned entirely.** There is no
 mechanical-task carve-out anymore — lint runs, grep-and-collect, file maps,
 config edits, and all other "simple" work now dispatch at sonnet-low, not Haiku.
-If you catch yourself reaching for Haiku out of habit, stop — use sonnet-low
-instead.
+Never select Haiku on own judgment — use sonnet-low instead.
 
-#### Agent tiers (Leon-ruled 2026-07-13 — the previous tiers were TOO LOW)
+#### Agent tiers
 
-Leon found orchestrators running sonnet-low that should have been running high.
 Effort tier governs whether an agent does the hard thing or the expedient thing.
 These are the tiers now:
 
@@ -46,8 +44,8 @@ These are the tiers now:
   Not low. A reviewer on low effort is a rubber stamp with extra steps, and
   rubber-stamped reviews are how a merge gate that ran zero tests survived six
   sessions.
-- **`model: "opus"` @ low — orchestrators.** Set by the operator on the agent's
-  runtime-config; you do not choose this for your own sub-agents.
+- **`model: "opus"` @ low — orchestrators.** Not selectable for sub-agents —
+  set by the operator on the agent's runtime-config.
 - **`model: "opus"` — NOT your call.** Allowed only when (a) the operator
   explicitly asked for a deep review or prose review in this task, or (b) a
   skill you are running prescribes Opus for the specific step you are currently
@@ -93,33 +91,23 @@ agent(prompt, { model: "sonnet", effort: "low" })             // mechanical sub-
 
 **THE DIRECTIVE, imperative and not a comment: REVIEWERS RUN SONNET AT MEDIUM
 EFFORT.** Pass `effort: "medium"` literally — under Workflow AND under the Agent
-tool. Never dispatch a reviewer "from memory" — that is exactly how five reviewers
-went out on unpinned effort (2026-07-20) with neither the orchestrator nor its
-coordinator noticing.
+tool. Never dispatch a reviewer "from memory".
 
 **AND VERIFY, DO NOT ASSERT:** any claim about what a tool does or does not expose
-must be checked against the schema in front of you. This skill's own bug was
-someone asserting from memory that "the Agent tool doesn't expose effort" — which
-happened to be TRUE, but was stated without checking, in a skill whose own
-pin-verification section forbids exactly that. Being accidentally right is not
-verification.
+must be checked against the schema in front of you.
 
-If you catch yourself reaching for Opus — or Haiku — on your own judgment, stop
-— use Sonnet, at the floor of sonnet-low.
+Never select Opus or Haiku on own judgment — use Sonnet, at the floor of
+sonnet-low.
 
-### Fleet model-tiering by runtime/role (Leon-ruled 2026-07-08)
+### Fleet model-tiering by runtime/role
 
-Different runtimes and roles pin different tiers. This is the canonical table —
-apply it wherever you're choosing a model/effort pair, not just in Claude Code.
+Different runtimes and roles pin different tiers. Claude tiers are canonical —
+see the Agent tiers table above (orchestrator/implementer/reviewer/sub-agent),
+plus brainstormer → opus-medium and brainstormer's own subagents → sonnet-low
+(except reviewers → sonnet-medium). Other runtimes:
 
 | Runtime      | Role                         | Model / effort                                      |
 | ------------ | ---------------------------- | --------------------------------------------------- |
-| Claude       | orchestrator                 | **opus-low**                                        |
-| Claude       | implementer                  | **sonnet-medium**                                   |
-| Claude       | verifier / reviewer          | **sonnet-medium** (always)                          |
-| Claude       | sub-agent (investigation)    | sonnet-low                                          |
-| Claude       | brainstormer                 | opus-medium                                         |
-| Claude       | brainstormer's own subagents | sonnet-low (except reviewers → sonnet-medium)       |
 | OpenCode     | default                      | GLM-5.2 (fine as-is)                                |
 | Codex        | orchestrator / reviewer      | gpt-5.5-medium                                      |
 | Codex        | implementer                  | gpt-5.5-low                                         |
@@ -131,16 +119,9 @@ Every orchestrator MUST pass an explicit `model:` and `effort:` on EVERY subagen
 it spawns. An unspecified subagent SILENTLY INHERITS THE PARENT'S MODEL — so an
 Opus orchestrator that forgets the pin just spent Opus tokens on a grep.
 
-**The floor is set by what the agent DOES, not by how deep it sits:**
-
-- **Implementer → `sonnet` / medium.** Not low. This applies recursively: an
-  implementer spawning its own helpers pins them by THEIR role, not by copying
-  its own tier down.
-- **Verifier / reviewer → `sonnet` / medium.** Never lowered, never skipped. A
-  reviewer on low effort is a rubber stamp with extra steps — and rubber-stamped
-  reviews are how a merge gate that ran zero tests survived six sessions.
-- **Investigation / grep / mechanical sub-agent → `sonnet` / low.** This is the
-  floor for a *sub-agent*, and only for a sub-agent.
+**The floor is set by what the agent DOES, not by how deep it sits** — see the
+Agent tiers table above. This applies recursively: an implementer spawning its
+own helpers pins them by THEIR role, not by copying its own tier down.
 
 The check before every spawn: what is this agent's ROLE? Reviewer or implementer?
 sonnet-medium. Pure investigation or mechanical work? sonnet-low. Never leave it
@@ -187,46 +168,51 @@ given ten tasks is the anti-pattern.
 `thrum agent runtime-config get <agent>` reports the **configured** value, not the
 **resolved** one.
 
-Observed 2026-07-13: `<implementer>` was **actually running Opus 4.8** while both the
-launch flag (`--model sonnet`) *and* `runtime-config get` **confirmed sonnet**. The
-check that exists to catch a bad pin is itself a false green.
+An implementer ran Opus 4.8 while both the launch flag (`--model sonnet`) and
+`runtime-config get` confirmed sonnet — the check that exists to catch a bad pin
+is itself a false green.
 
 This is the same defect class as every other surface that reports a value it never
 observed (`go test -count=0` reporting PASS while running zero tests; a health RPC
 reporting green off a path that cannot fail; `make ci` swallowing a critical CVE with
 a warning).
 
-**So: after launching an agent, READ THE RUNTIME'S PANE FOOTER FROM OUTSIDE, BY
-POSITION:**
+**So: after launching an agent, verify with `thrum tmux capture --format=annotated`
+(or `--format=json` for scripting).** It parses the footer server-side into
+NBSP-free fields — no positional-window guessing, no NBSP grep trap, and the
+header states `ok`/`FAILED` explicitly instead of leaving you to infer a failure
+from empty stdout:
 
 ```bash
-# Read the bare exit status BEFORE stdout. A FAILED capture is empty-and-silent on
-# stdout, so a caller that pipes it cannot tell "capture failed" from "pane is
-# empty" — both are zero lines.
-out=$(thrum tmux capture <agent-name> --lines 12); rc=$?   # bare, NOT through a pipe
-[ $rc -ne 0 ] && echo "CAPTURE FAILED — this is NOT an empty pane" && exit 1
-printf '%s\n' "$out" | grep -v 'tmux capture' | grep 'Model:' | tail -1
+thrum tmux capture <agent-name> --format=annotated --lines 12
+# ━━━ CAPTURE ok · agent=<name> · runtime=claude · lines=35 ━━━
+# <pane content, verbatim>
+# ─── FOOTER (parsed, NBSP-normalized) ───
+# Model: Sonnet 5 | Ctx: 478.3k | Ctx Used: 48.0%
+# ━━━ END CAPTURE ━━━
 ```
 
-⚠️ **Three things in that command are load-bearing, and a shorter form has already
-shipped wrong:**
-- **`--lines 12`, not 3.** A running background sub-agent appends lines BELOW the
-  footer, so a narrow position-from-the-end window returns the wrong block — and that
-  block contains a plausible-looking number a reader will accept.
-- **`grep -v 'tmux capture'` is not optional.** The command you just typed is in the
-  pane buffer and matches your own key.
-- **The key is label-only ON PURPOSE.** The footer's separators are U+00A0
-  non-breaking spaces, so `grep "Model: "` with a trailing space returns ZERO on a
-  pane that plainly displays a model.
+The FOOTER block is simply omitted when no footer resolved — never an empty or
+garbage line to misread. For scripting, `--format=json` gives the same data as a
+typed document: `{"agent","runtime","ok","line_count","footer":{"model","ctx","ctx_used_pct"}|null,"lines":[...]["error"]}`
+(`footer` is `null` when none resolved).
+
+```bash
+thrum tmux capture <agent-name> --format=json | python3 -c \
+  'import json,sys; b=json.load(sys.stdin); print(b["footer"]["model"] if b["footer"] else "NO FOOTER")'
+```
+
+Still check the exit status before trusting either form — a FAILED capture exits
+nonzero and the annotated header says `FAILED`, but don't discard that signal by
+piping straight into something that only inspects stdout.
 
 That is the runtime reporting its RESOLVED config, and it is the only check that has
 ever produced a true negative on this defect. If it disagrees with the pin, report it —
 those instances are a real bug and we want them counted.
 
 🔴 **DO NOT substitute "ask the agent what model it is running."** That is a model
-introspecting on its own identity — a categorically weaker instrument, and the previous
-wording here ("have it SELF-REPORT from inside its own session") invited exactly that
-reading. **A check built on self-report would be a THIRD instrument that cannot fail in
+introspecting on its own identity — a categorically weaker instrument.
+**A check built on self-report would be a THIRD instrument that cannot fail in
 the direction we need**, replacing a false green with a confident one. **SETTLED — and the reason is
 categorical, not a reliability judgement: self-report is the WRONG SHAPE for the
 question.** The agent sees exactly ONE value (its resolved model, injected into its own
@@ -234,20 +220,26 @@ system prompt); "does the pin disagree with the resolution?" is a question about
 RELATION between TWO values. **It cannot report a mismatch however honest it is — the
 disagreement is not representable in what it can observe.** No prompting rescues that.
 Only an outside comparator holding BOTH the pin AND the resolved status line answers it.
-⚠️ Note a self-report can LOOK right — tonight one correctly said "Opus 4.8" — but it was
-reading back an injected assertion, so it inherits whatever the injection got right or
-wrong. **A correct answer there is survivorship, not validation.**
+⚠️ A self-report can look right while reading back an injected assertion, so it
+inherits whatever the injection got right or wrong. **A correct answer there is
+survivorship, not validation.**
 
-⚠️ **NEVER audit the footer with a content grep** — the separators are U+00A0
-non-breaking spaces, so `grep "Model: "` returns ZERO on a pane that plainly displays a
-model (reproduced on two boxes, 13 NBSPs in one line). Read by POSITION.
+**Fallback — only if `--format` is unavailable (older binary):** read the bare
+exit status before stdout, then grep the raw pane by position, never by content
+(the raw footer's separators are U+00A0 non-breaking spaces, so `grep "Model: "`
+with a trailing space returns ZERO on a pane that plainly displays a model):
+
+```bash
+out=$(thrum tmux capture <agent-name> --lines 12); rc=$?   # bare, NOT through a pipe
+[ $rc -ne 0 ] && echo "CAPTURE FAILED — this is NOT an empty pane" && exit 1
+printf '%s\n' "$out" | grep -v 'tmux capture' | grep 'Model:' | tail -1
+```
 
 🔴 **PASS `--model` / `--effort` TO BOTH `tmux create` AND `tmux launch`.** They are
 separate cobra commands with separate flags, and **`launch` is what resolves the model**
 (`resolveLaunchSpec` runs in `HandleLaunch`, never in create). `create` persists the pin
 asynchronously, so a create-only pin can lose the race and leave the CLI value empty at
-launch **by construction** — measured at 0.87s between the two log lines. See CLAUDE.md
-§ "Launching an Agent."
+launch **by construction**.
 
 ⚠️ **And any FIX here must be verified with a pin the role default would NOT produce.**
 An implementer pinned to sonnet, with an implementer role-default of sonnet, comes up

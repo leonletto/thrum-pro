@@ -15,7 +15,7 @@ kills, or changes a phase, and it must not grow one — a script that recommends
 standing an agent down is read as having decided, and its phrasing then carries
 weight its evidence does not.
 
-You then apply the gate and containment checks below and reach your own
+Apply the gate and containment checks below and reach your own
 conclusion. Destructive steps still follow the standing reap preconditions and
 pacing rules; nothing here shortcuts them.
 
@@ -29,7 +29,7 @@ pacing rules; nothing here shortcuts them.
 | What is it waiting for? | its own last message, read as prose |
 
 **Do NOT use `thrum team`, `thrum agent list`, `phase`, or `last_seen_at` for any
-of this.** They are stale until the Reconciler epic lands, and they fail toward
+of this.** They are stale, and they fail toward
 reporting a live agent as absent.
 
 ## Locating an agent's transcript
@@ -92,6 +92,64 @@ reaping it destroys live context that nobody else holds.
 - no only-copy untracked state: `git -C <wt> status --porcelain --untracked-files=all --ignored -- .thrum` — **both flags**; the narrow form returns a false zero
 - no restart snapshot under `<worktree>/.thrum/restart/` — a snapshot means a
   sleeping agent that expects to wake with its context
+
+## Reaping many worktrees at once — the batch path
+
+The single-agent gate above still governs EACH worktree; batching changes only how you
+GATHER the evidence and EXECUTE, never the judgment.
+
+**Gather with read-only examiner sub-agents.** For dozens of candidates, partition them
+across background sub-agents that examine each worktree read-only and RETURN a verdict —
+they never reap. Per worktree each reports: sleeping-agent marker present?; branch
+containment (ancestor of trunk / pushed / UNMERGED-with-commit-list); only-copy authored
+content (docs/plans/specs, undelivered reports, restart snapshots), ignoring regenerable
+dirt (`scripts/thrum-*.sh`, `.thrum/redirect`, `runtime_config.json`). Fence them READ-ONLY
+(no checkout/reset/stash/clean/rebase/commit/push, no `worktree remove`, no `agent delete`,
+no `rm`). You consolidate and decide.
+
+**Cross-check the reap set against the live + sleeping roster before ANY deletion** — one
+protected agent in the set aborts the batch. Build the exclusion from the live-pid set +
+sleeping set + locked worktrees, not from names.
+
+**Salvage only-copy state FIRST, and diff by NAME.** Copy with `cp -a`, then compare source
+vs salvage with `find -type f | sort` (set-diff by NAME) BEFORE trusting per-file `cmp` — a
+flat copy of two same-basename files (e.g. `.thrum/restart/<a>.md` and
+`.thrum/context/<a>.md`) silently clobbers one, and `cmp` on what copied passes clean. Give
+salvaged files distinct names and land the salvage somewhere durable (the main repo, not
+`/private/tmp`).
+
+## 🔴 The reap is worktree-removal-only — and TEST every step on ONE item first
+
+**`thrum agent delete --force` is REFUSED by the CAS guard on a stale agent with an empty
+`agent_pid_start_time`** (*"expected-state premise is required … refusing rather than treating
+an empty/never-read premise as a match"*). `--force` does NOT bypass it; the guard is
+correct. So the reap that actually frees load is **`git worktree remove --force <path>`** —
+the delete best-effort-fails and leaves a **benign orphan DB row**, which you LEAVE (filtered
+at query per the fleet ruling; never `agent cleanup --force` to tidy them).
+
+⚠️ **After a large reap you may see a `DeadAgentSweeper` skip alert + elevated write-RPC
+latency — do NOT assume the reap caused it.** This box carries a standing single-writer
+contention condition (one serialized write conn, `SetMaxOpenConns(1)`) that spikes write-RPC
+latency recurrently and **reap-independently**. A large reap is at most ONE coincident spike: stranding dozens of stale
+agents (worktreeless, empty `pid_start_time` → always "due") stretches the sweep's
+evidence-gathering run-length (that is what `held=` measures — a run duration, mostly off-lock
+syscalls, not a lock hold or a deadlock; the skip is correct, the guard releases via `defer`),
+but it drives almost no writes of its own. The
+discriminator that it is contention and not poison: `write_pool in_use=0`,
+`selfheal_write_poison_detected=0`. **So do not chase the reap as the lever** — pacing/batching
+large reaps is mild hygiene at best (it trims run-length and a little pressure), a restart is
+transient relief only, and the durable fix is **writer-decontention**, owned by the
+daemon-perf agent. Symptom to recognize (reads and `daemon status` stay ~0.5s while
+`status --self` climbs — writes slow, not reads): hand it to the daemon-perf owner, don't
+re-diagnose the internals yourself.
+
+**Before running any batched destructive loop, run it on ONE item and verify the EFFECT**
+(agent gone from the registry / worktree gone from `git worktree list` and disk), not just
+the exit code. A batch can fail wholesale for a reason a single test surfaces instantly — a
+minimal-`PATH` loop/background context where `git`/`thrum`/`sleep` are `command not found`
+(set `PATH` explicitly or use absolute paths); a `read` that collapses a leading empty field.
+Batched worktree removal is also SLOW on a loaded box (seconds each) — run it in the
+background or in chunks, never one 2-minute foreground loop.
 
 ## ⚠️ Idle time is corrupted by your own traffic
 

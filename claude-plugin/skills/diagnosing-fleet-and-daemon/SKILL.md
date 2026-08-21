@@ -27,11 +27,10 @@ the only step here that can cause harm rather than merely waste time.
 
 ✅ **`daemon.log` now lives in the `log/` subdirectory, like every other log.**
 This was not always true — an older layout kept it at `.thrum/var/daemon.log`
-directly, and that mismatch previously produced a false "no crash evidence"
-that was used to justify a restart without knowing the cause. **A missing-file
-error is not a finding — it is a wrong path until you have proven the file's
-absence.** If you are on an old checkout or an unmigrated install, check both
-locations before concluding the file doesn't exist.
+directly. **A missing-file error is not a finding — it is a wrong path until
+you have proven the file's absence.** If you are on an old checkout or an
+unmigrated install, check both locations before concluding the file doesn't
+exist.
 
 Worktrees redirect `.thrum/` to the main repo via `.thrum/redirect` — read that
 file to find the real path before concluding anything is missing.
@@ -62,7 +61,7 @@ jq 'select(.tool_name=="Bash") | .tool_input.command'  # empty — same
 The decode that works is `.tool_input | fromjson | .command` — but prefer
 `thrum log search`, which needs no knowledge of the encoding and also matches
 record shapes a `tool_name=="Bash"` filter silently excludes (`PreToolUse` /
-`PostToolUse`). Four successive silent zeros have already been burned here.
+`PostToolUse`).
 
 **Whatever you search: if you get zero, run a control** (see § Controls).
 
@@ -121,8 +120,8 @@ it ride along on a decision about something else.**
 plus one `UPDATE` has been observed to trigger this. Do not reason "this upgrade
 is small, so it is safe."
 
-> *Dev-fleet note (ignore if you are running a release build): tracked
-> internally; the fix is a boot-seam pool recycle.*
+> *Dev-fleet note (ignore if you are running a release build): the fix is a
+> boot-seam pool recycle.*
 
 ⚠️ Read the DB with `mode=ro`. **Never `immutable=1`** — it reads the stale base
 file past a live `-wal` and answers confidently wrong.
@@ -136,8 +135,7 @@ grep -icE "SIGBUS|panic:|fatal error|walIndexRecover" .thrum/var/log/daemon.log
 tail -40 .thrum/var/log/daemon.log
 ```
 
-- **Hits** → a crash. Capture the trace before restarting; it may be the
-  known dev-fleet crash noted above.
+- **Hits** → a crash. Capture the trace before restarting.
 - **Zero, and the log simply stops** → it was *stopped*, not crashed. Look for
   who stopped it (§ Who did that) rather than hunting a nonexistent crash.
 
@@ -174,10 +172,9 @@ Read `cwd` on each hit — it identifies the worktree, and therefore the agent.
 | `last_seen` | age of last **RPC contact** | ❌ liveness — it advances only when the agent calls the daemon |
 | DB row / tombstone / state file | nothing | ❌ liveness — the DB is often the thing that is wrong |
 
-🔴 **`last_seen` is an RPC-activity proxy.** Measured: agents reading **838m** and
-**552m** stale while their panes were live and actively working. An agent in a
-long tool run, thinking, or sitting at a permission prompt looks identically
-"stale" to a dead one.
+🔴 **`last_seen` is an RPC-activity proxy.** An agent in a long tool run,
+thinking, or sitting at a permission prompt looks identically "stale" to a
+dead one.
 
 **Definitive-dead is by DIRECT OBSERVATION only.** Peek the pane.
 
@@ -187,12 +184,6 @@ long tool run, thinking, or sitting at a permission prompt looks identically
 
 **Every zero gets a control before you report it.** A control is a second
 instrument, aimed at something you KNOW is present, run the same way.
-
-Worked example from a real incident: a structured query for daemon invocations
-returned **0**, while `grep -c` on the same file returned **33**. Two instruments
-disagreeing about one file is what proved the *query* was broken rather than the
-answer being "nobody did it." Without that control, the report would have been a
-confident, well-formatted, wrong "no agent invoked a daemon command."
 
 If a must-exist control ALSO returns zero, **your instrument is broken, not your
 hypothesis confirmed.**

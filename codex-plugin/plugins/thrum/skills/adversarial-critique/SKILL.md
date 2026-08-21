@@ -1,13 +1,10 @@
 ---
 name: adversarial-critique
-description:
-  "Use when an implementer is blocked mid-work by a design flaw, contradiction,
-  or unforeseen fork with 2-3 ways to resolve it - produces a defended pick that
-  unblocks the work and leaves an audit trail so the decision can be revisited
-  if it later proves wrong"
+description: "Use when an implementer is blocked mid-work by a design flaw, contradiction, or unforeseen fork with 2-3 ways to resolve it - produces a defended pick that unblocks the work and leaves an audit trail so the decision can be revisited if it later proves wrong"
 # source: claude-plugin/skills/adversarial-critique/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Adversarial Critique: Resolving a Blocking Design Fork Mid-Implementation
 
@@ -26,8 +23,7 @@ future readers can see exactly why it was made and what was considered.
 - The resolution has 2-3 plausible paths, each with real tradeoffs
 - The decision is substantive enough that "just pick one" would likely be
   regretted
-- You want an audit trail so the decision can be revisited if it proves wrong
-  later
+- An audit trail lets the decision be revisited if it proves wrong later
 
 ### When NOT to use
 
@@ -49,8 +45,7 @@ future readers can see exactly why it was made and what was considered.
 
 - Context block: relevant file excerpts, prior art, schema snippets, constraints
 - Engagement axes: cross-cutting concerns the debate MUST address. Example axes
-  that worked on a real role-query-hardening debate (pick
-  analogues for your domain):
+  that worked on a real debate (pick analogues for your domain):
   - cross-daemon semantics
   - schema impact
   - test strategy
@@ -62,10 +57,10 @@ Pre-assembled context is the difference between a real debate and a shallow one.
 
 ### The three rounds
 
-> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet` (low
-> effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
-> operator-ask or a skill step that names it. See the `choosing-subagent-models`
-> skill for the full policy.
+> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet`
+> (low effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
+> operator-ask or a skill step that names it. See the
+> `choosing-subagent-models` skill for the full policy.
 
 Dispatch one sub-agent per option, in parallel (single message, multiple Agent
 tool calls). `model: "sonnet"` for all dispatches — quality matches Opus on
@@ -198,21 +193,21 @@ path. Keeps the caller's context lean.
 ### Post-resolution
 
 Once the debate resolves, the decision only unblocks the work if it lands in
-your working context in an actionable shape:
+the working plan/context in an actionable shape:
 
-- **Update your working plan/context with the invariants.** Paste the IF/THEN
+- **Update the working plan/context with the invariants.** Paste the IF/THEN
   invariants into the task prompt or plan that will carry forward, so the next
   implementer sees them alongside the code to write. A decision that only lives
   in the debate transcript is decide-shaped, not unblock-shaped.
 - **Sketch one acceptance test before implementing.** Write a single test — even
-  just a skeleton — that would fail if the invariants are violated. If you can't
-  write one, the invariants are under-specified; re-open R3 rather than
+  just a skeleton — that would fail if the invariants are violated. If none can
+  be written, the invariants are under-specified; re-open R3 rather than
   implementing against fuzzy constraints. Writing surfaces blind spots that
   reading never catches.
 - **Optional audit-trail enhancement:** when the decision affects multiple
   future tasks or will be referenced in a PR description, record it with
-  `bd create --type=decision` so the rationale is queryable from the beads graph
-  (not just from the brainstorm markdown).
+  `bd create --type=decision` so the rationale is queryable from the beads graph (not just
+  from the brainstorm markdown).
 
 ### Anti-patterns
 
@@ -224,8 +219,8 @@ your working context in an actionable shape:
   wasn't good enough. Embed quotes, paths, line numbers inline; don't make
   sub-agents re-grep.
 - **Synthesis dispatched to a sub-agent** — don't. The coordinator holds the
-  full debate; sub-agents only see what you pass them. Dispatch CRITIQUE, not
-  SYNTHESIS.
+  full debate; sub-agents only see what is passed to them. Dispatch CRITIQUE,
+  not SYNTHESIS.
 
 ### Model and cost
 

@@ -16,8 +16,7 @@ lifecycle: `using-the-queue`.
 **Why:** Reading 10 files into your main context to "understand the
 architecture" is the Context Hog trap. Sub-agents partition the search across
 multiple conversations that each report a focused finding back — the
-investigation gets done without polluting your context with raw file
-contents.
+investigation gets done without polluting your context with raw file contents.
 
 **How to apply:** When the question is "how does X work" or "what calls Y",
 spawn an `Explore` sub-agent with a clear partition: a specific directory, a
@@ -74,8 +73,7 @@ question. Don't guess. Don't investigate "what they probably meant" in parallel.
 **Why:** A finding sent only as a Thrum message is ephemeral — the coordinator
 may acknowledge and move on, and the next session has to re-investigate.
 Persisting as a `research_note` memory makes findings recoverable across
-sessions and re-readable by other agents — the same principle behind filing a
-beads issue for any bug you find rather than just mentioning it in passing.
+sessions and re-readable by other agents.
 
 **How to apply:** After reporting to the requester, write the finding as a
 `research_note` memory with cited file:line refs and a verification footer. Tag
@@ -99,7 +97,7 @@ thrum memory create --kind research_note --scope role \
 variable, never double-quoted inline like this; see your role preamble's 🔴
 PROSE INTO A COMMAND rule.
 
-Then add one line to `.thrum/context/research.md` under Tracked Topics (note: `thrum queue` now supersedes free-text Open Questions tracking, per an internal agent-status-wiring decision):
+Then add one line to `.thrum/context/research.md` under Tracked Topics (note: `thrum queue` now supersedes free-text Open Questions tracking):
 
 ```markdown
 - `research-<slug>` — <one-line description, ≤ 80 chars>
@@ -126,11 +124,8 @@ gaps — you surface them, the implementer ships them.
 
 ## Project-specific rules (already loaded)
 
-Project-local rules of kind `agent_rule` at `--scope role` were loaded at
-session start by your preamble (see your role template's Memory model block). If
-a project-local rule conflicts with a universal rule above, the project-local
-rule wins; surface the conflict in your reply so the user can decide whether to
-graduate or remove the override.
+Read the shared partial at the absolute path:
+`claude-plugin/commands/_project-rules-protocol.md`
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `researcher-maintaining-memory` skill — it references the

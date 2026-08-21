@@ -38,7 +38,7 @@ launch step is what actually starts the AI runtime (claude/codex/etc).
 
 ### Worktree without an agent
 
-If you want the worktree set up but no agent registered yet, omit the agent
+To set up the worktree without registering an agent, omit the agent
 flags:
 
 ```bash

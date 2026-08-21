@@ -11,8 +11,7 @@ description: "Use when an implementer reports DONE, when consolidating review fi
 security, error-handling, idiom, and dead-code issues. `verify-against-plan`
 catches missing scope, unmet acceptance criteria, and silent deviations from the
 plan. Running them sequentially doubles review-cycle latency for no reason —
-they're independent reads of the same diff. (Source: project Code Review
-Protocol — "Run both review types in parallel for every agent branch".)
+they're independent reads of the same diff.
 
 **How to apply:** When an implementer reports DONE on a branch, dispatch both
 reviewers as parallel sub-agents in the same message. Pass each a clear scope
@@ -146,11 +145,8 @@ AFTER they report DONE. They target different artifacts and both are needed.
 
 ## Project-specific rules (already loaded)
 
-Project-local rules of kind `agent_rule` at `--scope role` were loaded at
-session start by your preamble (see your role template's Memory model block). If
-a project-local rule conflicts with a universal rule above, the project-local
-rule wins; surface the conflict in your reply so the user can decide whether to
-graduate or remove the override.
+Read the shared partial at the absolute path:
+`claude-plugin/commands/_project-rules-protocol.md`
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `coordinator-maintaining-memory` skill — it references the

@@ -170,9 +170,8 @@ sub-agent cannot destroy what it was not asked to touch.
 ⚠️ **THIS IS NOT LIMITED TO DOCS.** It applies to every sync/generation script
 in the repo — skills, plugin assets, templates, generated reference files. Any
 script whose job is "make B look like A" will erase anything that exists only in
-B. The author of this skill ran a skills-sync script **twice while writing the
-rule against it** — the hazard does not announce itself, and knowing about it is
-demonstrably not sufficient to avoid it.
+B. The hazard does not announce itself, and knowing about it is demonstrably not
+sufficient to avoid it.
 
 **The trap:** the convention says "author in the source dir, then sync." Reality
 is that people edit the target directly too. So the target can hold changes the
@@ -213,11 +212,9 @@ git show --stat --format="" <sha> | grep <basename>
 can only damage the region you are editing; a regeneration can damage anything.
 
 ⚠️ Sync scripts commonly also invoke formatters (prettier, markdownlint,
-`gofmt -w`, `golangci-lint --fix`). Those are **write-capable** and have
-destroyed committed content in real incidents here — corrupted identifiers
-across nine files, and a doc comment truncated so a load-bearing invariant was
-deleted while the code still compiled. Check what the script actually invokes
-before running it, and treat any `--fix`/`-w` target as a mutator.
+`gofmt -w`, `golangci-lint --fix`). Those are **write-capable**. Check what the
+script actually invokes before running it, and treat any `--fix`/`-w` target as
+a mutator.
 
 ## State only what you measured
 

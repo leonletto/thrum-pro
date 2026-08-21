@@ -1,20 +1,18 @@
 ---
 name: researcher-answering-queries
-description:
-  "Use when another agent has asked you a research question, when fielding a
-  research request, or when responding to a query. Loads the lookup-and-respond
-  protocol so cached findings get reused before fresh investigation starts."
+description: "Use when another agent has asked you a research question, when fielding a research request, or when responding to a query. Loads the lookup-and-respond protocol so cached findings get reused before fresh investigation starts."
 # source: claude-plugin/skills/researcher-answering-queries/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Researcher: Answering Queries
 
 ### Reconcile your queue first
 
-Lift this query into a bundle (`thrum queue add --from-message <msg-id>`), then
-`thrum queue start <bundle-id>`; drop/close finished bundles. Full lifecycle:
-`using-the-queue`.
+Lift this query into a bundle (`thrum queue add --from-message <msg-id>`),
+then `thrum queue start <bundle-id>`; drop/close finished bundles. Full
+lifecycle: `using-the-queue`.
 
 ### Lookup order: index → thrum memory → staleness check → respond
 
@@ -22,19 +20,17 @@ Lift this query into a bundle (`thrum queue add --from-message <msg-id>`), then
 investigation. The cached `research_note` entries (tagged `research-<slug>`)
 exist precisely so repeat questions resolve cheaply. Skipping the cache and
 re-investigating duplicates effort, burns context, and introduces drift between
-the cached entry and the new answer. (Source: spec section "Researcher skills"
-row 3 — "Lookup order: (1) check `research.md` index, (2) fetch the cached
-memory by slug, (3) verify if stamp is stale, (4) respond".)
+the cached entry and the new answer.
 
 **How to apply:** When a query lands, work the steps in order:
 
 1. **Index check.** Read `.thrum/context/research.md`. Does any Tracked Topic
    line look relevant? Note the `research-<slug>` tag handles.
 2. **Content fetch.** For each candidate slug, escalate zoom per the shared
-   3-step read pattern (`memory-read-discipline`):
-   `thrum memory search --tag research-<slug>` returns the matching entry IDs;
-   triage with `thrum memory show <id> --zoom short` before fetching the full
-   body with `thrum memory show <id> --zoom full`.
+   3-step read pattern (`memory-read-discipline`): `thrum memory search --tag
+   research-<slug>` returns the matching entry IDs; triage with
+   `thrum memory show <id> --zoom short` before fetching the full body with
+   `thrum memory show <id> --zoom full`.
 3. **Staleness check.** Use the protocol from `researcher-maintaining-memory`:
    `git diff --name-only <stamp-sha> HEAD` filtered by the entry's cited paths.
    If empty, the entry stands. If any cited path appears, re-verify (re-read the
@@ -82,11 +78,8 @@ where inlining is genuinely cheaper than the round-trip.
 
 ### Project-specific rules (already loaded)
 
-Project-local rules of kind `agent_rule` at `--scope role` were loaded at
-session start by your preamble (see your role template's Memory model block). If
-a project-local rule conflicts with a universal rule above, the project-local
-rule wins; surface the conflict in your reply so the user can decide whether to
-graduate or remove the override.
+Read the shared partial at the absolute path:
+`claude-plugin/commands/_project-rules-protocol.md`
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `researcher-maintaining-memory` skill — it references the
@@ -108,6 +101,3 @@ EOF
 # Step 2: Mark yourself idle (RPC-preferred; local-write fallback if daemon is unreachable)
 thrum agent set-status idle
 ```
-
-The local-write path is identical to the implementer side
-(`cmd/thrum/agent.go:671-690`).

@@ -42,7 +42,7 @@ record fails regardless and nobody runs `bd restore` on a bead that looks
 complete.
 
 **How to apply:** When a RULING-GRADE decision lands in a bead — a substantive
-decision Leon or the coordinator makes that changes project direction (e.g. an
+decision the operator or the coordinator makes that changes project direction (e.g. an
 architecture ruling, a scope decision, a design approval), not a role-rule and
 not a routine status update — promote it to `dev-docs/specs/` (or a
 decision-record file) **at ruling time**, not deferred to session close. The
@@ -100,7 +100,7 @@ closes is hard to predict.
 aren't truly clean — there's always one more thing in flight. Pre-empting wastes
 the remaining context window and re-incurs restart-cost (re-prime, re-orient,
 re-load state). The right move is to burn the runway up to the configured
-threshold, then restart. (Source: feedback_restart_discipline.md.)
+threshold, then restart.
 
 **How to apply:** Don't restart at the first natural pause. Check the configured
 restart threshold (`thrum config show restart`) and let the session run until
@@ -123,9 +123,7 @@ tears down the **worktree** — and is intentionally not coupled to runtime
 lifecycle. If the agent's runtime is still running in tmux when you teardown,
 the runtime keeps executing zombie-style with its cwd pointing at a deleted
 directory. The next operation the user attempts in that tmux pane fails
-confusingly, and they have to manually `tmux kill-session` and exit. (Source:
-direct user correction — coordinator had reported an agent "removed" after
-running only the worktree teardown.)
+confusingly, and they have to manually `tmux kill-session` and exit.
 
 **How to apply:** When recycling an agent (epic done, agent should be removed),
 run the two-command destroy sequence **in this order**:
@@ -148,10 +146,10 @@ Done/idle agents on closed epics need no graceful shutdown.
 
 **Why:** Implementer worktrees used to accumulate because removal was left for
 a later coordinator sweep that never actually reduced the count — a
-hand-maintained cleanup rots. The fix (Leon, 2026-07-23) puts
-ownership on the agent that actually knows the work is finished: the
-**orchestrator** removes an implementer's worktree as soon as that
-implementer reports DONE and its branch is merged/pushed. This is not the
+hand-maintained cleanup rots. The fix puts ownership on the agent that
+actually knows the work is finished: the **orchestrator** removes an
+implementer's worktree as soon as that implementer reports DONE and its
+branch is merged/pushed. This is not the
 coordinator's own destroy sequence above (that section is for agents the
 coordinator manages directly) — it is the standing expectation you hold
 orchestrators to for the implementers **they** launched.
@@ -177,14 +175,6 @@ orchestrators to for the implementers **they** launched.
   worktree that is DONE, durably-on-origin, and still present, that is a
   finding against the orchestrator's discipline (raise it), not a task for
   you to silently absorb.
-- ~~Rationale worth carrying into any pushback: once an agent has exited, its
-  in-session context is gone and unrecoverable, so a restart snapshot in a DONE
-  implementer's worktree does not justify KEEPING THE TREE — the agent will not
-  wake to use it.~~ **RETIRED — this rationale was WRONG: a
-  snapshot's absence from the branch does NOT mean there is nothing worth
-  saving. It is not "rationale worth carrying" — it is the rationale the
-  paragraph below corrects. See the salvage correction immediately below; it
-  is not optional.**
 - 🔴 **But the pushed branch is NOT "the only artifact that matters".**
   Authored agent state lives UNTRACKED in the worktree's `.thrum/agents/<self>/`,
   so it is **not on the branch** — every ancestry/push check reads clean while a
@@ -194,11 +184,8 @@ orchestrators to for the implementers **they** launched.
 
 ## Project-specific rules (already loaded)
 
-Project-local rules of kind `agent_rule` at `--scope role` were loaded at
-session start by your preamble (see your role template's Memory model block). If
-a project-local rule conflicts with a universal rule above, the project-local
-rule wins; surface the conflict in your reply so the user can decide whether to
-graduate or remove the override.
+Read the shared partial at the absolute path:
+`claude-plugin/commands/_project-rules-protocol.md`
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `coordinator-maintaining-memory` skill — it references the

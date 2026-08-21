@@ -1,28 +1,25 @@
 ---
 name: researcher-investigating
-description:
-  "Use when investigating, exploring code, working on a research task, when
-  asked to find me X, or to investigate Y. Loads researcher-specific discipline
-  for running an investigation cleanly."
+description: "Use when investigating, exploring code, working on a research task, when asked to find me X, or to investigate Y. Loads researcher-specific discipline for running an investigation cleanly."
 # source: claude-plugin/skills/researcher-investigating/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Researcher: Investigating
 
 ### Reconcile your queue first
 
-Lift this query into a bundle (`thrum queue add --from-message <msg-id>`), then
-`thrum queue start <bundle-id>`; drop/close finished bundles. Full lifecycle:
-`using-the-queue`.
+Lift this query into a bundle (`thrum queue add --from-message <msg-id>`),
+then `thrum queue start <bundle-id>`; drop/close finished bundles. Full
+lifecycle: `using-the-queue`.
 
 ### Use Explore sub-agents for breadth-first searches
 
 **Why:** Reading 10 files into your main context to "understand the
 architecture" is the Context Hog trap. Sub-agents partition the search across
 multiple conversations that each report a focused finding back — the
-investigation gets done without polluting your context with raw file
-contents.
+investigation gets done without polluting your context with raw file contents.
 
 **How to apply:** When the question is "how does X work" or "what calls Y",
 spawn an `Explore` sub-agent with a clear partition: a specific directory, a
@@ -30,18 +27,18 @@ specific symbol, or a specific question. Get a focused report back. For research
 across N > 6 items, invoke `efficient-multi-agent-research` instead of bespoke
 dispatch — it handles partition + parallelization + consolidation.
 
-> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet` (low
-> effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
-> operator-ask or a skill step that names it. See the `choosing-subagent-models`
-> skill for the full policy.
+> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet`
+> (low effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
+> operator-ask or a skill step that names it. See the
+> `choosing-subagent-models` skill for the full policy.
 
 #### Prefer `efficient-multi-agent-research` for multi-part research
 
 When a research or investigation task has independent parts, reach for the
 `efficient-multi-agent-research` skill FIRST — it partitions the work across
-many cheap parallel subagents (sonnet-low gatherers, sonnet-medium synthesizers)
-instead of one expensive serial subagent. It is the preferred research path:
-cheaper, faster, and it keeps each subagent's context tight.
+many cheap parallel subagents (sonnet-low gatherers, sonnet-medium synthesizers) instead of
+one expensive serial subagent. It is the preferred research path: cheaper,
+faster, and it keeps each subagent's context tight.
 
 ### Verify the actual state — don't answer from recall
 
@@ -79,8 +76,7 @@ question. Don't guess. Don't investigate "what they probably meant" in parallel.
 **Why:** A finding sent only as a Thrum message is ephemeral — the coordinator
 may acknowledge and move on, and the next session has to re-investigate.
 Persisting as a `research_note` memory makes findings recoverable across
-sessions and re-readable by other agents — the same principle behind filing a
-beads issue for any bug you find rather than just mentioning it in passing.
+sessions and re-readable by other agents.
 
 **How to apply:** After reporting to the requester, write the finding as a
 `research_note` memory with cited file:line refs and a verification footer. Tag
@@ -100,13 +96,11 @@ thrum memory create --kind research_note --scope role \
   --full "@/tmp/research-note-body.md"
 ```
 
-`--full` here is multi-line prose — compose via heredoc or a captured variable,
-never double-quoted inline like this; see your role preamble's 🔴 PROSE INTO A
-COMMAND rule.
+`--full` here is multi-line prose — compose via heredoc or a captured
+variable, never double-quoted inline like this; see your role preamble's 🔴
+PROSE INTO A COMMAND rule.
 
-Then add one line to `.thrum/context/research.md` under Tracked Topics (note:
-`thrum queue` now supersedes free-text Open Questions tracking, per an
-internal agent-status-wiring decision):
+Then add one line to `.thrum/context/research.md` under Tracked Topics (note: `thrum queue` now supersedes free-text Open Questions tracking):
 
 ```markdown
 - `research-<slug>` — <one-line description, ≤ 80 chars>
@@ -133,11 +127,8 @@ gaps — you surface them, the implementer ships them.
 
 ### Project-specific rules (already loaded)
 
-Project-local rules of kind `agent_rule` at `--scope role` were loaded at
-session start by your preamble (see your role template's Memory model block). If
-a project-local rule conflicts with a universal rule above, the project-local
-rule wins; surface the conflict in your reply so the user can decide whether to
-graduate or remove the override.
+Read the shared partial at the absolute path:
+`claude-plugin/commands/_project-rules-protocol.md`
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `researcher-maintaining-memory` skill — it references the

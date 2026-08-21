@@ -620,7 +620,7 @@ thrum backup status                            # Show last backup info
 thrum backup config                            # Show effective backup config
 thrum backup schedule                          # Show current schedule
 thrum backup schedule 24h                      # Back up every 24 hours
-thrum backup schedule 8h --dir dev-docs/backup # Set interval + directory
+thrum backup schedule 8h --dir /path/to/backup # Set interval + directory
 thrum backup schedule off                      # Disable scheduled backups
 ```
 
@@ -993,9 +993,7 @@ binary**. The v0.11 role preambles load role-rules from `thrum memory`
 before this migration runs, it primes with EMPTY role-rule lists while the rules
 still sit orphaned in beads (silent loss, no error). Confirm the run reports
 MIGRATED > 0 before letting any agent reprime. If MIGRATED is 0, investigate the
-logs before re-running (the run may have partially succeeded). See the release
-runbook (PRE-RELEASE-STEPS.md §8a) for the binding migrate-before-reprime
-sequence.
+logs before re-running (the run may have partially succeeded).
 
 ```bash
 thrum memory migrate-from-bd [flags]
@@ -1053,10 +1051,6 @@ number of entries in the manifest. Mismatch aborts before any writes. Hard purge
 additionally requires a per-entry `DELETE <id>` token per the standard
 `thrum memory delete --hard` semantics; the rollback flow synthesizes these
 automatically from the manifest.
-
-Design reference:
-`dev-docs/brainstorms/2026-05-25-thrum-bd-to-memory-migration-brainstorm.md`
-(D1–D7).
 
 ---
 

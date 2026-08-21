@@ -26,9 +26,9 @@ Task(subagent_type="message-listener", run_in_background=true, prompt="...")
 
 ## 4. Sending Without an Explicit Recipient Flag
 
-`thrum send 'msg'` with no `--to` or `--broadcast` is a hard error (as of
-v0.10.6+). The previous default — silent broadcast to every team agent — was a
-real footgun, so the CLI now requires the recipient to be explicit:
+`thrum send 'msg'` with no `--to` or `--broadcast` is a hard error. The
+previous default — silent broadcast to every team agent — was a real footgun,
+so the CLI now requires the recipient to be explicit:
 
 ```bash
 # Wrong — hard-errors with a "missing recipient" prompt
@@ -127,8 +127,6 @@ from the role, e.g., `--name lead-agent --role coordinator`.
 ## 15. Trusting the Default Inbox Page to Find Old Messages
 
 **Wrong:** Reading `thrum inbox --unread` (default page: 10, newest-first) and
-concluding there's nothing important waiting. **Right:** Stale unread sorts
-LAST exactly when it has waited longest — the default page is structurally
-blind to the oldest backlog. Use `thrum message search "<term>"` (full-text,
-no page limit) or `thrum inbox -q "<term>"` to find it. `thrum message
-reindex` rebuilds the FTS index if search looks wrong.
+concluding there's nothing important waiting. **Right:** See MESSAGING.md
+"Message Lifecycle" step 6 (Search — do not page through the inbox) for why
+and how.

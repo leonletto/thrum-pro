@@ -1,12 +1,10 @@
 ---
 name: implementer-status-and-handoff
-description:
-  "Use when reporting status to the coordinator, marking a task done, or handing
-  off completed work. Loads implementer-specific discipline for closing the loop
-  cleanly."
+description: "Use when reporting status to the coordinator, marking a task done, or handing off completed work. Loads implementer-specific discipline for closing the loop cleanly."
 # source: claude-plugin/skills/implementer-status-and-handoff/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Implementer: Status and Handoff
 
@@ -57,8 +55,8 @@ Use the **subtask** ID (`thrum-abc.1`), not the parent epic ID. Run
 ### Push your branch before reporting DONE
 
 **Why:** once you exit, your in-session context is gone and the pushed branch is
-the only artifact that survives you. An unpushed branch is unreachable from
-every other machine and indistinguishable from work that was lost.
+the only artifact that survives you. An unpushed branch is unreachable from every
+other machine and indistinguishable from work that was lost.
 
 **How to apply:** commit, then push. Every time.
 
@@ -75,16 +73,16 @@ Branch pushed: <branch-name> @ <sha> (git ls-remote origin refs/heads/<branch-na
 **Never push `thrum-agents`, `main`, or `website-dev`** — the coordinator merges
 those.
 
-Never report DONE with the push status silently omitted — an orchestrator that
-removes a worktree assuming "DONE implies pushed" on a project that does NOT
-push feature branches would destroy the only copy of the work.
+Never report DONE with the push status silently omitted — an orchestrator
+that removes a worktree assuming "DONE implies pushed" on a project that
+does NOT push feature branches would destroy the only copy of the work.
 
 ### Mark queue items done as you commit, push, and report
 
-As each step lands, mark its queue item `done`. Do NOT `drop` the bundle at your
-own DONE report — a review finding can reopen the task (`start` reopens a done
-bundle). Drop the bundle only once the coordinator confirms the merge landed
-(R1); until then it is your live record of what's addressed vs. still open.
+As each step lands, mark its queue item `done`. Do NOT `drop` the bundle at your own
+DONE report — a review finding can reopen the task (`start` reopens a done bundle).
+Drop the bundle only once the coordinator confirms the merge landed (R1); until then
+it is your live record of what's addressed vs. still open.
 
 ### Cite SHAs and per-finding dispositions in status messages
 
@@ -126,11 +124,8 @@ next task anyway.
 
 ### Project-specific rules (already loaded)
 
-Project-local rules of kind `agent_rule` at `--scope role` were loaded at
-session start by your preamble (see your role template's Memory model block). If
-a project-local rule conflicts with a universal rule above, the project-local
-rule wins; surface the conflict in your reply so the user can decide whether to
-graduate or remove the override.
+Read the shared partial at the absolute path:
+`claude-plugin/commands/_project-rules-protocol.md`
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `implementer-maintaining-memory` skill — it references the
@@ -155,5 +150,4 @@ EOF
 thrum agent set-status idle
 ```
 
-The local-write path is identical to the ACK side
-(`cmd/thrum/agent.go:671-690`).
+The local-write path is identical to the ACK side.

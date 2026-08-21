@@ -1,18 +1,15 @@
 ---
 name: coordinator-maintaining-memory
-description:
-  "Use when the coordinator writes a role-rule, captures an observation about
-  agent behavior, or notes a state change. Loads coordinator-specific memory
-  discipline — when to write, the role-rule pattern, the kind-diversification
-  roadmap (deferred to follow-up)."
+description: "Use when the coordinator writes a role-rule, captures an observation about agent behavior, or notes a state change. Loads coordinator-specific memory discipline — when to write, the role-rule pattern, the kind-diversification roadmap (deferred to follow-up)."
 # source: claude-plugin/skills/coordinator-maintaining-memory/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
 
+
 ## Coordinator memory discipline
 
-You are the coordinator. You write role-rules (when the user corrects your
-judgment), capture observations about agent behavior, and periodically note
+As coordinator, write role-rules (when the user corrects your judgment),
+capture observations about agent behavior, and periodically note
 project-state changes. Common memory operations (write command shape, body
 conventions, lookup patterns, edit/delete) live in the common memory skills —
 invoke them for basics. THIS skill carries coordinator-specific extensions.
@@ -27,7 +24,7 @@ invoke them for basics. THIS skill carries coordinator-specific extensions.
 
 ### When the coordinator writes
 
-The coordinator's primary write trigger is **user correction**. When Leon
+The coordinator's primary write trigger is **user correction**. When the user
 corrects your judgment mid-session ("don't restart that agent early — they're
 mid-flight"), capture the rule:
 
@@ -35,7 +32,7 @@ mid-flight"), capture the rule:
 cat > /tmp/role-rule-body.md <<'EOF'
 <rule>
 
-Why: <reason — past incident, project policy, or Leon's strong preference>
+Why: <reason — past incident, project policy, or the user's strong preference>
 How to apply: <when/where this kicks in>
 EOF
 thrum memory create --kind agent_rule --scope role \
@@ -52,13 +49,13 @@ Body shape uniform across all role-rule writes — see `memory-write-discipline`
 
 Secondary write triggers:
 
-- **Confirmed-decision observations** — Leon explicitly affirms an approach you
-  proposed ("yes, that bundled PR was the right call"). Capture as
+- **Confirmed-decision observations** — the user explicitly affirms an approach
+  you proposed ("yes, that bundled PR was the right call"). Capture as
   `kind: agent_rule` with `--tag decision-confirmation` and the same Why/How
   shape.
-- **Mid-session policy clarifications** — Leon explains why an existing rule
-  applies in a new context. Edit the original entry to amend the `How to apply:`
-  line, rather than creating a duplicate.
+- **Mid-session policy clarifications** — the user explains why an existing
+  rule applies in a new context. Edit the original entry to amend the `How to
+  apply:` line, rather than creating a duplicate.
 
 ### Coordinator does NOT typically write
 
@@ -66,8 +63,8 @@ Secondary write triggers:
   `kind: research_note` writes.
 - **Per-task notes / TODOs** — put them in bd ticket comments or the
   conversation context; they're ephemeral.
-- **Refactoring opportunities** — file under a backlog refactoring epic,
-  not memory.
+- **Refactoring opportunities** — file under the bd refactoring epic, not
+  memory.
 
 ### Kind-diversification (deferred follow-up)
 
@@ -78,10 +75,8 @@ supports richer kinds:
 - `project_note` for state observations
 - `epic_status` for project-state updates
 
-**Status:** Deferred per brainstorm D3, sub-Q3b. For the v0.11 ship-day cutover,
-the coordinator's writes are uniform (`agent_rule`). A follow-up ticket will
-teach kind-diversification post-cutover. Until then, write all coordinator
-memory entries as `kind: agent_rule --scope role`.
+Until then, write all coordinator memory entries as
+`kind: agent_rule --scope role`.
 
 ### Session-end + project-state captures
 

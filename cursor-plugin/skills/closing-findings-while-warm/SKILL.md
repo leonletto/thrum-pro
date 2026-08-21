@@ -84,24 +84,18 @@ the fix now instead.
 
 ## Worked example: the bead that wasn't there
 
-During the .17 wedge-fix session, the fix split `redact.JSON`'s out-of-lock
-move out as a "P2 fast-follow" — the report said so, the restart snapshot
-recorded `(bead filed)` as settled fact, and the coordinator carried that
-fact forward across a restart. Nobody ran `bd show` against the ID before
-trusting it. The bead was never actually created. The finding sat as a
-sentence in a snapshot file, not as tracked work, until it was rediscovered
-independently. The paper trail read as closure; it wasn't.
+A fix once split off a sibling defect as a "P2 fast-follow"; the report
+claimed a bead was filed and a later snapshot carried that as settled fact,
+but the bead was never created and nobody ran `bd show` to confirm it. The
+paper trail read as closure; it wasn't.
 
 This is the failure mode part (c) exists to close: verify existence with the
 tool that can prove it, not by trusting the sentence that claims it.
 
 ## Project-specific rules (already loaded)
 
-Project-local rules of kind `agent_rule` at `--scope role` were loaded at
-session start by your preamble (see your role template's Memory model block).
-If a project-local rule conflicts with a universal rule above, the
-project-local rule wins; surface the conflict in your reply so the user can
-decide whether to graduate or remove the override.
+Read the shared partial at the absolute path:
+`claude-plugin/commands/_project-rules-protocol.md`
 
 If you accumulate a new rule mid-session (the user corrects you), capture it
 via the `implementer-maintaining-memory` skill (or `coordinator-maintaining-

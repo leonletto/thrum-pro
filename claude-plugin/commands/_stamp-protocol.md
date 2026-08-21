@@ -110,9 +110,3 @@ authoring time — the same diff-at-read discipline this file already establishe
 for the base stamp (`git diff <sha>..origin/<merge_target>`). A check that only
 ran once at write time cannot catch drift that accumulates afterward, as the
 tree keeps moving.
-
-Concrete motivating incident: a restart snapshot described an already-merged,
-month-old commit as the agent's own in-progress work, still awaiting a gate that
-no longer existed by the time the snapshot was read — an idle agent block that a
-re-derived merge-status check would have caught immediately on the very next
-read.

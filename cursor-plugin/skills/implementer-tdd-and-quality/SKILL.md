@@ -16,8 +16,8 @@ quality-gate practice.
 **Why:** Thrum's daemon has significant concurrent state (goroutines for
 WebSocket, Unix socket, sync, telegram bridge, peer transport). Race conditions
 that pass bare `go test` fail under `-race` — sometimes with silent data
-corruption that takes hours to track down later. The Makefile's `make test`
-includes `-race` by default for exactly this reason.
+corruption that takes hours to track down later. The
+Makefile's `make test` includes `-race` by default for exactly this reason.
 
 **How to apply:** Always run `go test -race ./...` (or scope to specific
 packages with `-race`). Never report tests passing without having run with
@@ -40,9 +40,9 @@ nothing else broke.
 ## Use `t.TempDir()` for filesystem fixtures — never hardcoded paths
 
 **Why:** Hardcoded absolute paths (especially the implementer's home directory)
-only work on one machine. For example, a test once shipped with a hardcoded
-absolute repo path like `/path/to/thrum`; review caught it as a SHOULD FIX,
-and the fix was two characters: `t.TempDir()`. The same pattern shows up with
+only work on one machine. A test that bakes in a literal path like
+`<repo-root>` passes locally and fails everywhere else — the fix is usually as
+small as swapping in `t.TempDir()`. The same pattern shows up with
 `os.UserHomeDir()` results being baked into expected values.
 
 **How to apply:** Any test that creates a temporary directory, writes files, or
@@ -66,11 +66,8 @@ small annotation or refactor to silencing the warning.
 ## Two-stage self-review before pinging the coordinator
 
 **Why:** A self-review pass before the coordinator's dual review reduces total
-review round-trips. (In one case, an internal review found and fixed a real
-`safecmd` injection issue via self-review before the coordinator's formal
-review, which meant fewer BLOCKING findings and fewer iterations.) Self-review
-is not ceremony; it pre-pays the cost of issues that would otherwise come back
-as findings.
+review round-trips. Self-review is not ceremony; it pre-pays the cost of issues
+that would otherwise come back as findings.
 
 **How to apply:** At task close, before sending DONE:
 
@@ -94,11 +91,8 @@ Fix what you find before sending the ping.
 
 ## Project-specific rules (already loaded)
 
-Project-local rules of kind `agent_rule` at `--scope role` were loaded at
-session start by your preamble (see your role template's Memory model block). If
-a project-local rule conflicts with a universal rule above, the project-local
-rule wins; surface the conflict in your reply so the user can decide whether to
-graduate or remove the override.
+Read the shared partial at the absolute path:
+`claude-plugin/commands/_project-rules-protocol.md`
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `implementer-maintaining-memory` skill — it references the

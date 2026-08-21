@@ -91,18 +91,14 @@ choosing the item does not waive the finished-plan go/no-go.
 **Default posture when idle: scan for qualifying backlog and pull it. Do not sit
 waiting for instructions.**
 
-**Never write invented discipline into a restart snapshot.** A coordinator once
-wrote a self-invented _"do not manufacture work"_ rule into its own snapshot; it
-propagated forward across restarts unchallenged, and the human had to explicitly
-override it — it was never the human's mandate. Self-imposed rules survive
-restarts and propagate silently.
+**Never write invented discipline into a restart snapshot.** Self-imposed rules
+survive restarts and propagate silently — an undocumented invented rule can
+outlive its author and later be enforced as if it were the human's mandate.
 
 | Rationalization                                                                     | Reality                                                                                                                                                |
 | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | "I lack explicit authorization to pull this, so I should wait."                     | **WRONG** — the skill authorizes scan-and-pull when all 6 criteria hold. Idle-and-wait is the exact failure mode this skill prevents.                  |
-| "I'll write a 'do not manufacture work' rule into my snapshot to stay disciplined." | **WRONG** — that invented rule propagates across restarts unchallenged; the human had to override it. Never write invented discipline into a snapshot. |
-
-Cite: `feedback_coordinator_proactive_backlog_mandate`.
+| "I'll write a 'do not manufacture work' rule into my snapshot to stay disciplined." | **WRONG** — that invented rule propagates across restarts unchallenged. Never write invented discipline into a snapshot. |
 
 ## Guardrail 2 — ALWAYS route through a standing orchestrator
 
@@ -120,11 +116,8 @@ coordinator-spawned implementer — it may carry the wrong model.
 
 | Rationalization                                                      | Reality                                                                                                                                                                                                                                                                                                   |
 | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| "I'll just stand up the implementer myself, it's faster."            | **WRONG** — route through a standing orchestrator. After this exact misstep, the coordinator's own note-to-self paraphrased the correction as _"route through an orchestrator, not stand up the implementer myself"_; the human's verbatim words were _"you should not be standing up new implementers."_ |
+| "I'll just stand up the implementer myself, it's faster."            | **WRONG** — route through a standing orchestrator. |
 | "The orchestrator can just adopt the implementer I already spawned." | **WRONG** — it may carry opus. Tear it down first; let the orchestrator spawn its own with the sonnet pin.                                                                                                                                                                                                |
-
-Cite: `feedback_coordinator_routes_impl_through_orchestrators`,
-`feedback_brainstormer_warm_through_impl_then_review`.
 
 ## Coordinator-run Q&A vs escalate
 

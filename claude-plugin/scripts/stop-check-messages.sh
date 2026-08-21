@@ -40,7 +40,7 @@ if command -v jq >/dev/null 2>&1; then
 fi
 
 # Phase 1: Resolve agent identity — must happen before inbox check so the
-# query is scoped to this agent only (resolveLocalAgentID checks THRUM_AGENT_ID).
+# query is scoped to this agent only.
 AGENT_ID="${THRUM_AGENT_ID:-${THRUM_NAME:-}}"
 if [ -z "$AGENT_ID" ]; then
   exit 0

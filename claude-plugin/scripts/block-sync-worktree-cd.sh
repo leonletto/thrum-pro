@@ -8,8 +8,6 @@
 # its contents — but since it lives inside .git/, this DESTROYS the git object
 # store, refs, and config. The entire repo and ALL worktrees are wiped.
 #
-# This happened once and required significant effort to recover.
-#
 # Blocked:
 #   1. cd/pushd into the a-sync worktree (prevents arbitrary commands there)
 #   2. git -C <a-sync-path> with branch-changing commands (checkout, switch,
@@ -32,12 +30,9 @@ command=$(echo "$input" | jq -r '.tool_input.command // empty')
 SYNC_PATTERN='\.git/thrum-sync/a-sync'
 
 # Command-position anchor: line start or immediately after a shell separator
-# (;, &&, ||), then optional whitespace. This matches `cd`/`git` only when they
-# are the actual command — NOT when those words appear inside a quoted argument
-# preceded by a bare space (the false-positive observed live 2026-06-04: a
-# `bd remember "... cd .git/thrum-sync/a-sync ..."` was wrongly denied because
-# the old anchor allowed a bare space before `cd`). Match op-shape, not the mere
-# presence of the path string (D5 design lesson).
+# (;, &&, ||), then optional whitespace. Matches `cd`/`git` only when they are
+# the actual command — not when those words appear inside a quoted argument.
+# Match op-shape, not mere presence of the path string.
 CMDPOS='(^|;|&&|\|\|)\s*'
 
 deny() {

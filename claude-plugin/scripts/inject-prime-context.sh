@@ -8,35 +8,25 @@
 # file with only the first ~2KB previewed inline (and a
 # `<persisted-output>` wrapper showing the full file path).
 #
-# Field-test history (<primary-box>):
-#   - thrum-tfrv tried the documented JSON output protocol
-#     (`hookSpecificOutput.additionalContext`) to bypass the size cap.
-#     Claude Code captured the JSON to attachment.stdout but
-#     attachment.additionalContext stayed null — the field is silently
-#     ignored for SessionStart hooks. Reverted in thrum-a6sw (this
-#     change).
-#   - thrum-a6sw: kept plain stdout but tried a size-aware directive
-#     (small body → "auto-loaded, do not re-prime"; large body →
-#     "MUST READ the persisted file"). Agents read the MUST-READ
-#     block but rationalized deferring the Read — system-reminder
-#     framing is treated as advisory, not imperative.
+#   - Uses plain stdout, not hookSpecificOutput.additionalContext —
+#     Claude Code silently ignores that field for SessionStart hooks
+#     (it lands in attachment.stdout, never attachment.additionalContext).
+#   - A size-aware MUST-READ directive in hook stdout is not reliable —
+#     system-reminder framing is treated as advisory, not imperative,
+#     so agents rationalize deferring the Read.
 #   - The MUST-READ directive moved to the daemon-emitted pane-typed
-#     identity banner (internal/identitybanner). That channel routes
-#     through the same input path as user prompts, which the model
-#     treats more imperatively. The hook-output directive reverted
-#     to a single unconditional "auto-loaded, do not re-prime"
-#     phrasing (accurate for small briefings; harmlessly redundant
-#     for large ones since the banner-side directive does the work).
+#     identity banner — that channel routes through the same input
+#     path as user prompts, which the model treats more imperatively.
 #
 # Hook-level timeout is enforced by plugin.json; this script does not
 # need a portable `timeout` wrapper.
 #
 # Output ordering for a registered agent (top → bottom):
-#   1. Identity banner — agent / role / worktree / branch / module
-#      (thrum-2qe2). Always first; renders inside the 2KB preview.
+#   1. Identity banner — agent / role / worktree / branch / module.
+#      Always first; renders inside the 2KB preview.
 #   2. Directive — single "auto-loaded, do not re-prime" message.
 #      Always second so it lands inside the 2KB preview.
-#   3. First-turn ack instruction (thrum-zqw7) — tells the agent to
+#   3. First-turn ack instruction — tells the agent to
 #      emit a one-line ack as the first action of its turn. Produces
 #      visible scrollback so humans can distinguish a healthy launch
 #      from a stuck or failed one without probing. Pre-fills agent /
@@ -53,9 +43,8 @@ if ! command -v thrum >/dev/null 2>&1; then
   exit 0
 fi
 
-# Capture whoami JSON ONCE, extract identity fields downstream. The
-# script ran a single `thrum whoami --json` previously; keeping the
-# RPC count at one preserves session-start latency.
+# Capture whoami JSON ONCE, extract identity fields downstream.
+# Keeping the RPC count at one preserves session-start latency.
 WHOAMI_JSON=""
 AGENT_ID=""
 if command -v jq >/dev/null 2>&1; then
@@ -79,10 +68,10 @@ AGENT_WORKTREE=$(printf '%s' "$WHOAMI_JSON" | jq -r '.worktree // empty' 2>/dev/
 AGENT_BRANCH=$(printf '%s' "$WHOAMI_JSON" | jq -r '.branch // empty' 2>/dev/null || true)
 AGENT_MODULE=$(printf '%s' "$WHOAMI_JSON" | jq -r '.module // empty' 2>/dev/null || true)
 
-# thrum-x7rb: strip any backticks from identity fields before
-# interpolating into the markdown inline-code span in ACK_INSTRUCTION
-# below. The identity validator blocks backticks upstream, so this is
-# pure defensive hardening.
+# Strip any backticks from identity fields before interpolating into
+# the markdown inline-code span in ACK_INSTRUCTION below — the
+# identity validator blocks backticks upstream, so this is pure
+# defensive hardening.
 AGENT_ID="${AGENT_ID//\`/}"
 AGENT_ROLE="${AGENT_ROLE//\`/}"
 AGENT_MODULE="${AGENT_MODULE//\`/}"
@@ -118,10 +107,9 @@ append_to BANNER $'\n---\n\n'
 # Session Context block).
 #
 # This is a SHORT top-of-context POINTER only — it hoists the alert so the
-# agent sees it first. The substantive banner (numbered steps + rationale)
-# lives once, in-body, in the "# Previous Session Context" section emitted by
-# `thrum prime` (internal/cli/prime.go). Keeping the full prose in BOTH places
-# duplicated ~9 lines into every restart briefing (thrum-b0h1n Part 3a).
+# agent sees it first. The substantive banner lives once, in-body, in the
+# "# Previous Session Context" section emitted by `thrum prime` — keeping
+# the full prose in both places duplicates lines into every restart briefing.
 RESTART_PREAMBLE=""
 if printf '%s' "$PRIME_OUTPUT" | grep -q '^# Previous Session Context'; then
   append_to RESTART_PREAMBLE '# 🛑 ACTION REQUIRED — you left yourself a Resume Plan'$'\n'
@@ -130,7 +118,7 @@ if printf '%s' "$PRIME_OUTPUT" | grep -q '^# Previous Session Context'; then
   append_to RESTART_PREAMBLE $'\n'
   append_to RESTART_PREAMBLE '> ⚠️ **If this briefing was persisted to a `tool-results/*.txt` file instead of delivered inline, read it with the `Read` tool (use `offset`/`limit` to page through it) — NOT with `sed`, `grep`, `head`, `tail`, or `cat` via Bash.**'$'\n'
   append_to RESTART_PREAMBLE '>'$'\n'
-  append_to RESTART_PREAMBLE '> Those paths live under `~/.claude/projects/**`, which the runtime treats as SENSITIVE. A Bash read of them raises a human permission prompt — misdescribed as a request to *edit* a sensitive file, even for a read-only `sed -n ...p` — and **the restart stalls there until a human answers.** This is the single most common way a coordinator restart dies before it starts. Permission `allow` rules do NOT clear it: `Bash`, `Read`, `Edit` and path-scoped `Read(//Users/.../projects/**)` rules can all be present and the prompt still fires, because the gate is the sensitive-path check, not the permission-rule system. The `Read` tool is not subject to it. **Use `Read`.**'$'\n'
+  append_to RESTART_PREAMBLE '> Those paths live under `~/.claude/projects/**`, which the runtime treats as SENSITIVE. A Bash read of them raises a human permission prompt — misdescribed as a request to *edit* a sensitive file, even for a read-only `sed -n ...p` — and **the restart stalls there until a human answers.** Permission `allow` rules do NOT clear it: `Bash`, `Read`, `Edit` and path-scoped `Read(//Users/.../projects/**)` rules can all be present and the prompt still fires, because the gate is the sensitive-path check, not the permission-rule system. The `Read` tool is not subject to it. **Use `Read`.**'$'\n'
   append_to RESTART_PREAMBLE $'\n---\n\n'
 fi
 
@@ -147,9 +135,8 @@ append_to BRIEFING "$PRIME_OUTPUT"$'\n'
 # Single directive: agents read this BEFORE the briefing body and act
 # on it. The MUST-READ-the-persisted-file directive that previously
 # lived here for the large-body case has moved to the daemon-emitted
-# pane-typed banner (internal/identitybanner) — that channel is
-# treated more imperatively by the model than hook-output system
-# reminders.
+# pane-typed banner, which is treated more imperatively by the model
+# than hook-output system reminders.
 DIRECTIVE=""
 append_to DIRECTIVE '> ✅ **Context auto-loaded by SessionStart hook.**'$'\n'
 append_to DIRECTIVE '>'$'\n'
@@ -157,7 +144,7 @@ append_to DIRECTIVE '> **Do NOT run `/thrum:prime` or `thrum prime` — the full
 append_to DIRECTIVE '> Only invoke them manually if this hook fell through to a degraded "auto-injection failed" notice.'$'\n'
 append_to DIRECTIVE $'\n'
 
-# First-turn ack (thrum-zqw7). Tells the agent to emit one visible
+# First-turn ack. Tells the agent to emit one visible
 # plain-text line before any tool calls so tmux pane scrollback shows
 # a clear launch signal. Identity fields are pre-filled from whoami;
 # the agent only fills <intent> from inbox or restart snapshot.

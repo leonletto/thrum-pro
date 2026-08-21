@@ -1,15 +1,10 @@
 ---
 name: update-queue
-description:
-  "Use to reconcile your own thrum queue against ground truth - 'update my
-  queue', 'audit my queue', 'my queue is stale', 'reconcile the queue', 'clean
-  up done bundles', or at any session start / lull when you are about to
-  conclude nothing is pending. Verifies each live bundle against git + beads +
-  merge state, drops rot, adds missing committed work. Any role. A repeatable
-  subset of a full multi-agent reconcile - scoped to YOUR queue only."
+description: "Use to reconcile your own thrum queue against ground truth - 'update my queue', 'audit my queue', 'my queue is stale', 'reconcile the queue', 'clean up done bundles', or at any session start / lull when you are about to conclude nothing is pending. Verifies each live bundle against git + beads + merge state, drops rot, adds missing committed work. Any role. A repeatable subset of a full multi-agent reconcile - scoped to YOUR queue only."
 # source: claude-plugin/skills/update-queue/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Thrum: Update Your Queue (reconcile against ground truth)
 
@@ -19,7 +14,7 @@ work that is missing. Scoped to your queue only — cross-agent reconciles are a
 larger pass (see the final section). Run it at session start, at a lull, or
 whenever the queue can no longer be trusted at a glance.
 
-You only ever edit your OWN queue. Handing work to another agent is a message,
+Edit only your OWN queue. Handing work to another agent is a message,
 never a write to their queue (see the `using-the-queue` skill).
 
 ---
@@ -31,12 +26,12 @@ thrum queue list
 thrum queue list | awk -F'\t' 'NF>1{print $2}' | sort | uniq -c   # status counts
 ```
 
-Read the whole list yourself. The status counts are the before-number you
+Read the whole list yourself. The status counts are the before-number to
 reconcile against and report the delta from. `-F'\t'` is load-bearing: bundle
 rows are tab-delimited, but `queue list` also prints a space-delimited footer
 (`Oldest bundle updated …`) to stdout — under default whitespace splitting that
-footer's second word lands in the status tally and corrupts the denominator. The
-tab delimiter drops it (footer has no tab ⇒ NF=1).
+footer's second word lands in the status tally and corrupts the denominator.
+The tab delimiter drops it (footer has no tab ⇒ NF=1).
 
 Two staleness classes to expect:
 
@@ -44,8 +39,8 @@ Two staleness classes to expect:
 - **zombie live** — bundles marked `in_progress`/`blocked` (or `pending`) whose
   work has actually landed or been superseded.
 
-`done` is a waypoint, not a resting place — it stays visible and `start` reopens
-it. Only `drop` removes a bundle, and it deletes every item inside.
+`done` is a waypoint, not a resting place — it stays visible and `start`
+reopens it. Only `drop` removes a bundle, and it deletes every item inside.
 
 ### Step 2 — Drop done-rot (cheap, no verification)
 
@@ -86,14 +81,14 @@ what separated the in-depth audit from a guess.
 
 Classify each bundle from the evidence:
 
-| Evidence                                 | Verdict    | Action                                |
-| ---------------------------------------- | ---------- | ------------------------------------- |
-| Bead closed AND content on trunk         | merged     | `done` then `drop`                    |
-| Bead open / branch not landed            | still open | keep (`start` if wrongly `done`)      |
-| Some work landed, more owed              | partial    | keep; make its status reflect reality |
-| Work replaced by newer bundle/approach   | superseded | `drop`                                |
-| Committed/dispatched work with NO bundle | missing    | add in Step 5                         |
-| Evidence unclear                         | unsure     | keep — never drop on a guess          |
+| Evidence | Verdict | Action |
+|---|---|---|
+| Bead closed AND content on trunk | merged | `done` then `drop` |
+| Bead open / branch not landed | still open | keep (`start` if wrongly `done`) |
+| Some work landed, more owed | partial | keep; make its status reflect reality |
+| Work replaced by newer bundle/approach | superseded | `drop` |
+| Committed/dispatched work with NO bundle | missing | add in Step 5 |
+| Evidence unclear | unsure | keep — never drop on a guess |
 
 Two-phase close for a landed bundle (make the state machine explicit):
 
@@ -105,8 +100,8 @@ thrum queue done <bundle-id> && thrum queue drop <bundle-id>
 
 More than ~6 live bundles to verify → dispatch read-only sub-agents, one slice
 each, rather than checking them inline (see `efficient-multi-agent-research`).
-You consume consolidated verdicts and make every drop/keep/add/start call
-yourself — the sub-agents only gather evidence.
+Consume consolidated verdicts and make every drop/keep/add/start call yourself
+— the sub-agents only gather evidence.
 
 Give each sub-agent:
 
@@ -125,8 +120,8 @@ Give each sub-agent:
 ### Step 5 — Add missing committed work
 
 Work you have actually committed to that has no bundle is invisible after a
-restart. Add each — branches you own, dispatches you accepted, in-flight epics —
-with its backlog ref:
+restart. Add each — branches you own, dispatches you accepted, in-flight epics
+— with its backlog ref:
 
 ```bash
 thrum queue add --title "<what>" --ref bead:<id> --priority <N>
@@ -134,9 +129,9 @@ thrum queue add --title "<what>" --ref bead:<id> --priority <N>
 
 ### Step 6 — Accept ambiguity, then report
 
-Anything still `unsure` stays. A false negative (keeping stale work) is cheap; a
-false positive (`drop` deletes the bundle and its items) is not — never drop on
-a guess.
+Anything still `unsure` stays. A false negative (keeping stale work) is cheap;
+a false positive (`drop` deletes the bundle and its items) is not — never drop
+on a guess.
 
 Re-run the status counts and report the delta:
 

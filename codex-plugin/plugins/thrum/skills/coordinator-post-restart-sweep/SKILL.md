@@ -35,7 +35,7 @@ cat /tmp/waiting-on-coord.txt
 ```
 
 The script enumerates alive Claude agents (Codex/Cursor/OpenCode runtimes are
-skipped at v1 — tracked as backlog), extracts each agent's latest assistant
+skipped at v1), extracts each agent's latest assistant
 message body from the JSONL transcript at
 `~/.claude/projects/<encoded-worktree>/<session>.jsonl`, and pattern-matches
 against the regex library. Exit code is `0` if zero flagged, `1` if any flagged
@@ -68,15 +68,14 @@ For each `===== @<agent_id> · ... =====` block in the report:
 | Situation                                     | Action                                                                                                                                             |
 | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | You know the answer / direction               | Respond directly via `thrum send --to @<agent> --body-file reply.md` (body contains your reply)                                                    |
-| Needs Leon's judgment (escalation)            | Add to PENDING LEON section; surface in next user turn (see `feedback_surface_pending_leon_questions`)                                             |
+| Needs the owner's judgment (escalation)       | Add to PENDING OWNER section; surface in next user turn                                                                                            |
 | Needs investigation before you can answer     | Ack via `thrum send --to @<agent> --body-file ack.md` (body: "investigating — back in <N>min") so they know they're seen                           |
 | False positive — agent isn't actually blocked | No action. Optionally capture the false-positive pattern as a `coordinator-rule-*` memory for future tuning (see `coordinator-maintaining-memory`) |
 | Agent's question is stale (already resolved)  | Reply briefly with the resolution + pointer to where it was decided                                                                                |
 
 The decision tree is judgment work, not script automation. The sweep does
 **not** auto-respond, auto-nudge, or auto-escalate — coord IS the recipient of
-the report, and the right next action is context-dependent (per a prior
-scope-clarification with @<implementer>: report-only, no auto-action).
+the report, and the right next action is context-dependent.
 
 ### Step 4 — Re-run the sweep after acting
 
@@ -99,11 +98,11 @@ either:
 ### Reference
 
 - **Sweep script**: `scripts/waiting-on-coord-agent-sweep.sh` (Claude-only at
-  v1; non-Claude runtimes via future runtime adapters when available)
+  v1; non-Claude runtimes via future epoch adapters when available)
 - **Pattern library source**: empirical mining of project conversation archive
-  via the episodic-memory plugin (2026-05-20). Patterns observed at
+  via the episodic-memory plugin. Patterns observed at
   least twice in real waiting-on-coord situations; literal examples include
-  PENDING LEON banners, "your call", "awaiting your <X>", "Standing by for
+  PENDING OWNER banners, "your call", "awaiting your <X>", "Standing by for
   coordinator's <X>", "Stopping here to surface". See the comment header in the
   script for the full list with specificity ratings.
 - **Test fixtures**: `tests/scripts/fixtures/waiting-on-coord/` — 6 positive and
@@ -114,11 +113,9 @@ either:
   waiting-on-coord). Future refactor opportunity: extract a shared
   identity-enumeration + JSONL-resolution helper when a third sweep variant
   lands.
-- **Motivating incident**: 2026-05-20 <researcher> sat blocked ~10min
-  with question fully visible at-pane but not in coord's inbox.
 - **Related discipline**:
-  - `feedback_surface_pending_leon_questions` — escalations to Leon go in a
-    top-level PENDING LEON section and re-surface every turn until answered
+  - Escalations to the owner go in a top-level PENDING OWNER section and
+    re-surface every turn until answered
   - `feedback_byte_equality_pane_detection` — when in doubt about an agent's
     state, prefer JSONL substrate over pane diffs
   - `reference_claude_jsonl_state_source` — the JSONL transcript is the

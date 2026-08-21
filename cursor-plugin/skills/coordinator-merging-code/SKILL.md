@@ -5,10 +5,26 @@ description: "Use the moment code is presented for merge - a merge report arrive
 
 # Coordinator: Merging Code — the full sequence, every time
 
-**You are the merge king. Nothing lands except through this sequence.** These gates
-exist because this project used to wedge its own daemon, poison its own reader pool
-and destroy its own data on a regular basis. Every step below is here because
-something got through without it.
+**Check whether you are the merge king for THIS branch before running this
+sequence.** Do not assume — read it from config:
+
+```bash
+jq -r --arg b "$(git branch --show-current)" \
+  '.orchestration.merge_kings[$b] // "unset"' .thrum/config.json
+```
+
+If it names you, you are the merge king for this branch — proceed with the
+sequence below. If it names someone else, route the merge to them instead of
+running it yourself. Nothing lands except through this sequence, run by
+whichever coordinator the map names.
+
+**`orchestration.merge_kings` may not be populated for every branch yet** (the
+jq command above will print `unset` in that case). An `unset` result does NOT
+mean "nobody is merge king, proceed" — it means the map hasn't caught up to
+this branch. Fall back to whichever coordinator has actually been the merge
+authority for this branch in practice (check with your team, or your
+project's own operational convention); if that is not you, route the merge
+to them the same as if the map had named them explicitly.
 
 > 🔴 **THE ONE THING MOST OFTEN GOT WRONG: YOU DO NOT RUN THE GATES. YOU DISPATCH
 > THEM TO THE GATE RUNNER.** See §3. A coordinator that walks the lenses inline
@@ -19,9 +35,7 @@ something got through without it.
 
 This is the **coordinator-facing index and running order.** The lens content lives
 in the two gate skills; the runner's own discipline lives in the `gate` role
-preamble. This skill exists because that knowledge was previously split across
-three partial surfaces, and a coordinator assembling from them got the shape wrong
-**while following each one correctly.**
+preamble.
 
 **Do not duplicate lens definitions here.** Point at them and keep the order.
 
@@ -59,8 +73,7 @@ git fetch origin 'refs/heads/<branch>:refs/remotes/origin/<branch>'
 git ls-remote origin <branch>
 
 # 3. PROVE THE OBJECT EXISTS *BEFORE* ANY ANCESTRY CLAIM. A fabricated sha and an
-#    unfetched one produce IDENTICAL not-ancestor output. Skipping this has produced
-#    a false confession on this repo.
+#    unfetched one produce IDENTICAL not-ancestor output.
 git cat-file -t <sha>
 
 # 4. ANCESTRY — MIND WHICH PAIR. Doubtful thing on the RIGHT, known base on the LEFT.
@@ -117,8 +130,7 @@ visible rather than invisible.
 
 ### What the dispatch must contain
 
-The gate answers the question you ask it. Four required sections, because four
-separate defects were once found in the dispatch text and **zero in the gates**:
+The gate answers the question you ask it. Four required sections:
 
 1. **The enumeration key AND any output filter.** A gate can narrow the key
    without touching the key — widest grep, then filter the *output* on incidental
@@ -138,8 +150,7 @@ separate defects were once found in the dispatch text and **zero in the gates**:
 
 Also supply **the SHA pair**, **specific questions** (a gate briefed with "review
 this" returns generic coverage), and **the pre-cleared non-findings list** — things
-already ruled zero-diff on purpose. Supplying that list has produced zero false
-positives on the items supplied.
+already ruled zero-diff on purpose.
 
 **Fence: split it.** The runner gets `commit`/`push` path-fenced to its own gate
 worktree; its sub-agents get READ-ONLY git. `checkout`/`reset`/`restore`/`stash`/
@@ -257,10 +268,8 @@ agreeing (`rev-parse origin/<branch>` and `ls-remote`). **Assert the branch TIP*
 
 ## 7a. BEFORE YOU ACCEPT A VERDICT — CONFIRM THE RUNNER TORE ITS OWN THINGS DOWN
 
-A gate leaves behind **worktrees, agents AND tmux sessions.** The worktree half is
-covered in the runner's preamble; the agent/session half accumulated unnoticed
-until nine idle gate sessions from three already-merged gates were found sitting
-in memory.
+A gate leaves behind worktrees, agents AND tmux sessions. The worktree half is
+covered in the runner's preamble; the agent/session half needs the same check.
 
 **Ask for it in the verdict, and verify it yourself — it is one command:**
 
@@ -287,8 +296,8 @@ template or skill is **dead until a binary carrying it runs**, and the running
 binary may rewrite generated files from its own stale embedded copy meanwhile.
 **A generated file is never admissible evidence of what is merged.**
 
-Say which of the three you verified. "Deployed" that silently covers all three is
-how a month-stale skill cache went unnoticed while serving a banned model tier.
+Say which of the three you verified. "Deployed" that silently covers all three
+hides staleness.
 
 ## 9. Red flags — STOP
 
@@ -314,7 +323,9 @@ how a month-stale skill cache went unnoticed while serving a banned model tier.
 
 ## Project-specific rules (already loaded)
 
-Project-local rules of kind `agent_rule` were loaded at session start by your
-preamble. If a project-local rule conflicts with anything above, the project-local
-rule wins; surface the conflict in your reply so the owner can decide whether to
-graduate or remove the override.
+Read the shared partial at the absolute path:
+`claude-plugin/commands/_project-rules-protocol.md`
+
+If you accumulate a new rule mid-session (the user corrects you), capture it via
+the `coordinator-maintaining-memory` skill — it references the
+`memory-write-discipline` common for the canonical `thrum memory create` shape.

@@ -6,7 +6,7 @@ description: "Use when the implementer writes a role-rule after user correction,
 # Implementer memory discipline
 
 You are the implementer. Your memory discipline is intentionally narrow: you
-READ rules at session start and you WRITE rules when Leon corrects your judgment
+READ rules at session start and you WRITE rules when the user corrects your judgment
 mid-implementation. Refactoring opportunities, lessons learned, design questions
 — those flow elsewhere. Common memory operations live in the common memory
 skills — invoke them for basics. THIS skill carries implementer-specific
@@ -48,8 +48,8 @@ reason to judge edge cases the rule doesn't literally cover.
 
 ## Implementer does NOT write
 
-- **Refactoring opportunities discovered mid-task** → file under the bd
-  refactoring epic (tracked separately), NOT memory. Memory is for AGENT
+- **Refactoring opportunities discovered mid-task** → file under the project's
+  refactoring epic, e.g. `<refactor-epic-id>`, NOT memory. Memory is for AGENT
   BEHAVIOR rules; bd tracks code work.
 - **Research findings about the codebase** → ping the researcher; they own
   `kind: research_note` writes.

@@ -25,8 +25,8 @@ thrum roles deploy                # re-renders preambles
 ```
 
 This writes **verbatim shipped templates** (faithful ~90% solution, correct for
-the upgrade use case). Use this skill (`/thrum:configure-roles`) when you want
-**environment-tailored templates** — injecting project-specific context such as
+the upgrade use case). Use this skill (`/thrum:configure-roles`) for
+environment-tailored templates — injecting project-specific context such as
 `bd` block syntax, MCP guidance, or custom scope wording. The CLI and the skill
 coexist; the skill's output is a superset of the CLI's.
 

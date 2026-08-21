@@ -82,13 +82,10 @@ needed, defer to `thrum prime`.
 
 ## After Step 2
 
-Once both steps complete, proceed with the work the wake-primer asked for. At
-end of session, before exiting, run `/thrum:update-agent-state` to record what
-happened in `.thrum/agents/<agent_id>/state.md`. The `last_seen_skills.txt`
-baseline is already bumped by Step 2 above — `/thrum:update-agent-state` owns
-the state.md half of the wake-loop bookkeeping, not the skill-library half.
+Once both steps complete, proceed with the work the wake-primer asked for.
 
-If the prior session crashed (no clean state.md write), run
-`/thrum:recover-agent-state` instead — it validates the existing state.md
-structurally and routes the spec §6.5 corruption flow if the parse fails (moves
-to `state.md.broken`, sets the auto-respawn gate flag, pages the operator).
+The `/thrum:update-agent-state` and `/thrum:recover-agent-state` skills that
+used to be invoked here (recording end-of-session continuity into
+`.thrum/agents/<agent_id>/state.md` via `thrum agent state update` /
+`recover`) were retired — superseded by `thrum state` (personal_state kind). The
+`last_seen_skills.txt` baseline write in Step 2 above is unaffected.

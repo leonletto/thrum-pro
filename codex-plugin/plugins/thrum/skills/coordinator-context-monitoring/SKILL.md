@@ -468,7 +468,7 @@ thrum tmux send <tmux_session_name> '$thrum-restart'
 ```
 
 (Find the tmux session name in sweep output — it's typically the worktree
-basename, e.g. `b-b1-impl`, NOT the agent_id.)
+basename, e.g. `myepic-impl`, NOT the agent_id.)
 
 This causes the runtime to immediately execute `$thrum-restart` as if the user
 typed it. The agent writes their snapshot + restarts.

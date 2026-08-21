@@ -60,8 +60,8 @@ the cycles closed. Examples:
 > the lock-substrate fence is the right fix. Filed thrum-XXX with 4 BLOCKING
 > evidence points.
 >
-> Closed <epic> E6.0 brainstormer-third pass. 2 BLOCKING + 5 IMPORTANT + 10 MINOR.
-> All three load-bearing traps PASSed. Standing by for E6.1 next batch.
+> Closed <epic> brainstormer-third pass. 2 BLOCKING + 5 IMPORTANT + 10 MINOR.
+> All three load-bearing traps PASSed. Standing by for <epic> next batch.
 
 This section becomes YOUR OWN log entry, visible in `thrum agent sessions list`
 alongside the archives of every other session you've ever restarted from.

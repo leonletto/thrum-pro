@@ -170,9 +170,10 @@ updating.
      | How you concluded it / verified it / why an earlier claim was wrong / what it taught | `thrum memory`, never project_state.md |
      | What's currently in flight, owed, blocked, or pending the owner | `## Current State Summary` (rule 2 above) |
 
-   **NOTE:** `update-agent-state` (State.md surface, MI1) is a separate
-   follow-on and is NOT part of this cutover. Personal State.md updates
-   continue to use `thrum:update-state`.
+   **NOTE:** the old `update-agent-state` / `update-state` skills (State.md
+   surface, MI1) were retired — superseded by `thrum state` (personal_state
+   kind). This command (`update-project`) is unaffected; it always governed
+   `project_state.md`, a separate surface.
 
 5. **Session History Update Rule** (CRITICAL — keeps this cheap):
    - **At most TEN index entries in `## Recent Sessions`.** Older entries are

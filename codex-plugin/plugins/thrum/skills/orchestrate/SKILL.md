@@ -19,9 +19,11 @@ Before executing anything, verify the handoff is complete.
 
 #### Step 0: Reconcile your queue
 
-Lift this plan handoff into a bundle (`thrum queue add --from-message
-<msg-id>`), then `thrum queue start <bundle-id>`; drop/close finished
-bundles. Full lifecycle: `using-the-queue`.
+`thrum queue list` and drop/close finished bundles. Do NOT lift the whole plan
+into one bundle — you create one bundle PER EPIC when you dispatch it (Phase 4),
+so a coordinator reading your queue sees which epic is live and at what stage.
+One bundle per epic, no sub-items: the bundle's STATUS carries the stage. Full
+lifecycle: `using-the-queue`.
 
 #### Step 1: Read the plan
 
@@ -282,13 +284,33 @@ EOF
 thrum agent set-status working --agent <agent_name>
 ```
 
+Then create THIS epic's own queue bundle and start it, so a coordinator reading
+`queue list --agent <you>` sees which epic is live (one bundle per epic, no
+sub-items — the bundle's status carries the stage):
+
+```bash
+thrum queue add --title "<epic-id>: <short what>" --ref bead:<epic-bead>  # prints the new bundle id
+thrum queue start <epic-bundle>                      # in_progress = you are actively driving this epic NOW
+```
+
 #### Step 2: Set own status
 
 ```bash
 thrum agent set-status idle
 ```
 
-You are now waiting. Monitor your inbox.
+You are now waiting. Monitor your inbox. Reflect the wait in the epic's bundle
+too — `set-status idle` is YOUR liveness; the bundle is what a coordinator reads
+to see WHICH epic is parked and on WHOM, so it does not dispatch you duplicate
+work or misread the idle as free:
+
+```bash
+thrum queue block <epic-bundle> --reason "waiting on @<agent>: initial implementation"
+```
+
+`start` the bundle again (back to `in_progress`) the moment work resumes — a
+completion report to review, a merge to run. Every such move also refreshes the
+bundle's `updated` time, so its age reads as "waiting since", not "last touched".
 
 #### Step 3: Process agent messages
 
@@ -319,10 +341,14 @@ Handle each message type:
 4. **Consolidate** both reviewers' findings into ONE numbered list (sequential
    numbering, severity-prefixed). Send once. Never send partial findings — the
    implementer fixes batch 1 and misses batch 2 if you split.
-5. If review passes → close the task (`bd close <task-id>`) AND advance this
-   epic's queue bundle toward `done`; `drop` it once the branch lands in Phase 5.
-6. If review has findings → send the consolidated list to the agent, wait for
-   fixes (max 2 rounds — see Review loop below)
+5. If review passes → close the task (`bd close <task-id>`) AND resume this
+   epic's bundle: `thrum queue start <epic-bundle>` (back to `in_progress` — you
+   are working the merge now, not waiting). `done` + `drop` the bundle once the
+   branch lands in Phase 5.
+6. If review has findings → send the consolidated list to the agent, then
+   `thrum queue block <epic-bundle> --reason "waiting on @<agent>: fixes round N"`
+   and wait for fixes (max 2 rounds — see Review loop below). `start` it again
+   when the fixes land.
 
 **Implementer pushback on a finding:**
 

@@ -163,6 +163,36 @@ crash-class job regardless, not this lens's. **ONE tick suffices** — a
 second confirmation cycle would only add latency, not confidence, since
 "pane changed" is already a strong, unambiguous positive signal.
 
+### Driving your cycle: `thrum monitor`, never a session-scoped background task
+
+Your capture loop must survive your own restarts and crashes, so it cannot
+live inside your own Claude Code session — a harness-level background task
+(e.g. a backgrounded shell command, or an in-session task-monitoring tool)
+dies the moment your session ends, and nothing signals that it happened.
+The roster then goes unwatched with no one positioned to notice — the exact
+failure this archetype exists to prevent, inflicted on itself by the wrong
+choice of plumbing.
+
+Register the loop as a `thrum monitor` instead — a daemon-scheduled job,
+independent of your session, that keeps running across your restarts:
+
+```bash
+thrum monitor start --name <descriptive-name> \
+  --match "<a regex matching your script's one-line ready signal>" \
+  --to @<you> \
+  -- <path-to-a-script-that-loops-and-emits-that-signal>
+```
+
+The script's job is mechanical only: loop, capture each roster member's
+pane to a file, and emit one matchable line per cycle. It does not judge or
+act — `thrum monitor` matches that line and delivers it to you as a thrum
+message, which is your wake signal. Judgment (duties 1-4 above) happens in
+your own turn when you read that message, not in the script.
+
+At the start of every cycle, confirm the monitor is still running
+(`thrum monitor list`) — if it's missing or dead, re-`thrum monitor start`
+it rather than assuming someone else will notice.
+
 ### Relationship to the deterministic context-monitoring sweep
 
 You are NOT a replacement for `scripts/error-and-context-agent-sweep.sh`

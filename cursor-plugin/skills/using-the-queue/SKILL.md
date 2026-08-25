@@ -141,6 +141,15 @@ merged/closed state, nothing more.
 
 ## Common Mistakes
 
+- **Treating `add`/`done` as the work itself.** The queue *tracks* your work; it
+  does not perform it. `add` is not dispatching — the dispatch is the
+  `thrum send` / merge / deploy the bundle *mirrors*. `done` means the tracked
+  work actually landed, not "I'm finished thinking about it." Marking bundles
+  `done` when nothing was dispatched or deployed is a false record, exactly like
+  filing a bead and calling the bug fixed — and it inflates the queue while
+  little actually ships. Verify the thing landed before `done` (branch merged /
+  bead closed / deploy confirmed); otherwise it is still `in_progress` or
+  `blocked`.
 - **Piping a guessed id into `--from-message` (e.g. `inbox --unread | head -1`).**
   That grabs whatever is newest - often a monitor alert or an unrelated message -
   and stores it as your bundle title. `--from-message` takes the EXACT id of the

@@ -1,10 +1,14 @@
 ---
 name: memory-audit-recover
-description: "Use when investigating change history (`memory history`), recovering a soft-deleted memory, recovering the losing side of a concurrent edit (MEM-009 LWW loser), or running a confirmed hard-delete. Loads the audit walk, LWW conflict-resolution semantics, undelete flow, and the `Type DELETE <id>` hard-delete gate."
+description:
+  "Use when investigating change history (`memory history`), recovering a
+  soft-deleted memory, recovering the losing side of a concurrent edit (MEM-009
+  LWW loser), or running a confirmed hard-delete. Loads the audit walk, LWW
+  conflict-resolution semantics, undelete flow, and the `Type DELETE <id>`
+  hard-delete gate."
 # source: claude-plugin/skills/memory-audit-recover/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
-
 
 ## memory-audit-recover — history, undelete, hard-delete
 

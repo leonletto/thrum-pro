@@ -101,11 +101,11 @@ preserved:
 
 - **Self-initiated:** Run `$thrum-restart` — saves snapshot, notifies
   coordinator
-- **Coordinator-initiated:** `thrum tmux restart <name>` — **PLAIN, not `--force`.**
-  `--force` **drops the `--model` pin**; a plain restart re-applies it at the
-  readiness probe. Only use `--force` if a plain restart does not take, and then
-  re-pin and verify the model **off the pane** (`runtime-config get` reports what
-  was requested, not what is running).
+- **Coordinator-initiated:** `thrum tmux restart <name>` — **PLAIN, not
+  `--force`.** `--force` **drops the `--model` pin**; a plain restart re-applies
+  it at the readiness probe. Only use `--force` if a plain restart does not
+  take, and then re-pin and verify the model **off the pane**
+  (`runtime-config get` reports what was requested, not what is running).
 - **Automatic:** Configure `restart.auto_threshold` in `.thrum/config.json`
 
 The snapshot is automatically included in `thrum prime` on the next session

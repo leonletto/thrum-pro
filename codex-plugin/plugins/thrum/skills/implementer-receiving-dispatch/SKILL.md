@@ -1,19 +1,21 @@
 ---
 name: implementer-receiving-dispatch
-description: "Use when receiving a new task from the coordinator, starting implementation, scoping a fresh task, or receiving dispatch. Loads implementer-specific discipline for kicking off work cleanly."
+description:
+  "Use when receiving a new task from the coordinator, starting implementation,
+  scoping a fresh task, or receiving dispatch. Loads implementer-specific
+  discipline for kicking off work cleanly."
 # source: claude-plugin/skills/implementer-receiving-dispatch/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
-
 
 ## Implementer: Receiving Dispatch
 
 ### Reconcile your queue first
 
-Before reading further: lift this dispatch into a bundle (`thrum queue add
---from-message <msg-id>`, the exact id of the dispatch you're acting on),
-then `thrum queue start <bundle-id>`; drop/close any finished bundles. Full
-lifecycle: `using-the-queue`.
+Before reading further: lift this dispatch into a bundle
+(`thrum queue add --from-message <msg-id>`, the exact id of the dispatch you're
+acting on), then `thrum queue start <bundle-id>`; drop/close any finished
+bundles. Full lifecycle: `using-the-queue`.
 
 ### Read the full implementation prompt before any tool call
 
@@ -54,9 +56,8 @@ project's refactor backlog (a beads epic, e.g. `<refactor-epic-id>`):
 
 `--description` is multi-line prose — never double-quoted inline. On
 `scripts/bd-shared`, `--stdin`/`--body-file` are refused (remote-path
-resolution + silent-empty-body hazards), so write it to a scratch file and
-pass `-d "$(cat <file>)"`; see your role preamble's 🔴 PROSE INTO A COMMAND
-rule.
+resolution + silent-empty-body hazards), so write it to a scratch file and pass
+`-d "$(cat <file>)"`; see your role preamble's 🔴 PROSE INTO A COMMAND rule.
 
 ```bash
 cat > /tmp/refactor-task-desc.md <<'EOF'
@@ -125,6 +126,5 @@ thrum agent set-status working
 ```
 
 The local-write path updates your own identity file only — coord overrides
-remote agents via `--agent <name>`. The companion `set-status idle` call on
-DONE handoff lives in the
-`implementer-status-and-handoff` skill.
+remote agents via `--agent <name>`. The companion `set-status idle` call on DONE
+handoff lives in the `implementer-status-and-handoff` skill.

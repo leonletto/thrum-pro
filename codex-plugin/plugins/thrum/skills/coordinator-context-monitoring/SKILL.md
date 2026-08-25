@@ -1,10 +1,18 @@
 ---
 name: coordinator-context-monitoring
-description: "Use when managing live implementer/brainstormer agents during a long coordination session, at epic merge gates, after a busy dispatch hour, or whenever you suspect an agent is approaching context limits. Prevents 97%-context silent blow-ups by running a sweep + pre-emptive restart before the agent degrades. Safe to wire into a recurring cron that INVOKES this skill — the skill applies tier-ladder judgment, surfacing (and, only when explicitly opted in via config, autonomously restarting) at the >85% tier. What's forbidden is a cron/script that fires restarts unconditionally without going through this skill's tier ladder."
+description:
+  "Use when managing live implementer/brainstormer agents during a long
+  coordination session, at epic merge gates, after a busy dispatch hour, or
+  whenever you suspect an agent is approaching context limits. Prevents
+  97%-context silent blow-ups by running a sweep + pre-emptive restart before
+  the agent degrades. Safe to wire into a recurring cron that INVOKES this skill
+  — the skill applies tier-ladder judgment, surfacing (and, only when explicitly
+  opted in via config, autonomously restarting) at the >85% tier. What's
+  forbidden is a cron/script that fires restarts unconditionally without going
+  through this skill's tier ladder."
 # source: claude-plugin/skills/coordinator-context-monitoring/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
-
 
 ## Coordinator: Context Monitoring and Pre-emptive Restart
 
@@ -13,8 +21,8 @@ description: "Use when managing live implementer/brainstormer agents during a lo
 Trigger this pattern at each of:
 
 - Receipt of an `ALERT: flagged=…` message from the `context-monitoring` thrum
-  monitor (the canonical scheduled sweep, outer tick `@every 30m`, self-gated
-  so effective rate is slower; see "How the scheduled sweep works")
+  monitor (the canonical scheduled sweep, outer tick `@every 30m`, self-gated so
+  effective rate is slower; see "How the scheduled sweep works")
 - Epic merge gates (after merging a sub-epic — E6.4, E6.5, etc.)
 - After dispatching 3+ tasks in quick succession
 - After any agent has been running for 60+ minutes without a restart
@@ -68,11 +76,10 @@ restart, which is unconditionally the extended form.
 
 The sweep runs as a daemon-managed `thrum monitor` job named
 `context-monitoring`, registered with an `@every 30m` schedule. The 30-min tick
-is the outer envelope — the sweep is self-gated: daytime ticks only fire
-when the fleet is busy (`agent_status=working`), and overnight ticks fire only
-every other tick (effective 60-min rate), so most ticks may be silent no-ops.
-There is a SINGLE monitor for ALL lenses in v1 — not one per lens. The job
-invokes
+is the outer envelope — the sweep is self-gated: daytime ticks only fire when
+the fleet is busy (`agent_status=working`), and overnight ticks fire only every
+other tick (effective 60-min rate), so most ticks may be silent no-ops. There is
+a SINGLE monitor for ALL lenses in v1 — not one per lens. The job invokes
 `scripts/error-and-context-agent-sweep.sh --no-nudge --out /tmp/agent-sweep.txt`.
 The script emits a single consolidated `ALERT:` line to stdout when ANY agent
 crosses a threshold (ctx >= 50% OR api-error OR capture-fail); when the fleet is
@@ -133,8 +140,8 @@ The full per-agent report stays at `/tmp/agent-sweep.txt` (overwritten each
 sweep) for on-demand drill-down — read it AFTER receiving an ALERT to see which
 specific panes are at risk.
 
-The previous keepalive-cron pattern (CronCreate `<id>`) is deprecated in
-favor of this scheduled monitor. The bookkeeping responsibility moves out of the
+The previous keepalive-cron pattern (CronCreate `<id>`) is deprecated in favor
+of this scheduled monitor. The bookkeeping responsibility moves out of the
 coordinator's per-session re-add chore and into the daemon's durable monitors
 table (survives daemon restart, no per-session re-init needed for this monitor —
 though OTHER CronCreate jobs may still require it per
@@ -149,14 +156,14 @@ is a single monitor for all lenses in v1, not one per lens.
 
 #### Default-ON lenses (implemented, E1–E6)
 
-| Lens                        | Default | Disposition                                                                                                                                                       |
-| --------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `context_tiers`             | ON      | The ctx%/stuck-working ladder (L1). Sole autonomous actuator when `restart_actuation=true`; otherwise RECOMMEND via `recommend-restart-extended` reason in ALERT. |
-| `idle_mid_task`             | ON      | L2 — 30-min idle-with-open-task detection (bead cross-ref). RECOMMEND `$thrum-sleep-extended`; a no-task variant REPORTs `idle-no-task` at lower priority.        |
-| `snapshot_awaiting_restart` | ON      | L3 — pane text + fresh-snapshot two-signal heuristic. RECOMMEND `thrum tmux restart <agent>` (never autonomous).                                                  |
-| `blocked_on_human_modal`    | ON      | L4 — detects spend-limit/permission/consent modal prompts. DETECTION ONLY, never auto-answers; routes into the L5 ledger.                                         |
+| Lens                        | Default | Disposition                                                                                                                                                                                                                                                                 |
+| --------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `context_tiers`             | ON      | The ctx%/stuck-working ladder (L1). Sole autonomous actuator when `restart_actuation=true`; otherwise RECOMMEND via `recommend-restart-extended` reason in ALERT.                                                                                                           |
+| `idle_mid_task`             | ON      | L2 — 30-min idle-with-open-task detection (bead cross-ref). RECOMMEND `$thrum-sleep-extended`; a no-task variant REPORTs `idle-no-task` at lower priority.                                                                                                                  |
+| `snapshot_awaiting_restart` | ON      | L3 — pane text + fresh-snapshot two-signal heuristic. RECOMMEND `thrum tmux restart <agent>` (never autonomous).                                                                                                                                                            |
+| `blocked_on_human_modal`    | ON      | L4 — detects spend-limit/permission/consent modal prompts. DETECTION ONLY, never auto-answers; routes into the L5 ledger.                                                                                                                                                   |
 | `pending_human_ledger`      | ON      | L5 — flat JSONL ledger of items awaiting a human. EXEMPT from D5 backoff — surfaces every tick. `hb_ledger_resolve` (the resolution path) is defined but has zero call sites — nothing marks an entry resolved, so the ledger is append-only-forever, not "until resolved." |
-| `waiting_on_coord`          | ON      | L9 — 21-rule pattern match (folded in from the standalone waiting-on-coord sweep) + warm-hold exemption. RECOMMEND coordinator answer.                            |
+| `waiting_on_coord`          | ON      | L9 — 21-rule pattern match (folded in from the standalone waiting-on-coord sweep) + warm-hold exemption. RECOMMEND coordinator answer.                                                                                                                                      |
 
 #### Default-OFF lenses (E8, flag-gated — NOT YET IMPLEMENTED as of E7)
 
@@ -210,19 +217,19 @@ The heartbeat system is configured under the `heartbeat` key in
 
 **Field reference:**
 
-| Field                                                    | Purpose                                                                                                                                                                |
-| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cadence_minutes_day`                                    | Daytime cadence target (default 30 min). The underlying monitor runs `@every 30m` and self-gates so only busy-fleet daytime ticks fire.                                |
-| `cadence_minutes_overnight`                              | Overnight cadence target (default 60 min). The monitor fires every other `@every 30m` tick overnight (effective 60-min rate).                                          |
-| `busy_only_daytime`                                      | When `true`, daytime ticks are skipped unless any agent has `agent_status=working` (D3 busy-signal gate).                                                              |
-| `busy_signal`                                            | Algorithm for "is the fleet busy?" Default `working_or_activity_30m`: any agent working OR activity in the last 30 min.                                                |
+| Field                                                    | Purpose                                                                                                                                                           |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cadence_minutes_day`                                    | Daytime cadence target (default 30 min). The underlying monitor runs `@every 30m` and self-gates so only busy-fleet daytime ticks fire.                           |
+| `cadence_minutes_overnight`                              | Overnight cadence target (default 60 min). The monitor fires every other `@every 30m` tick overnight (effective 60-min rate).                                     |
+| `busy_only_daytime`                                      | When `true`, daytime ticks are skipped unless any agent has `agent_status=working` (D3 busy-signal gate).                                                         |
+| `busy_signal`                                            | Algorithm for "is the fleet busy?" Default `working_or_activity_30m`: any agent working OR activity in the last 30 min.                                           |
 | `overnight_window.tz`                                    | **MUST be an explicit IANA timezone** (e.g. `"America/New_York"`). If unset, the sweep warns and falls back to always-daytime-rate rather than silently guessing. |
-| `backoff.start_after`                                    | Number of consecutive unchanged detections of the same problem before D5 progressive backoff begins.                                                                   |
-| `backoff.multiplier`                                     | Each backoff step multiplies the surface interval by this factor (default 2×).                                                                                         |
-| `backoff.floor_every`                                    | The surface interval is capped at this many ticks — the problem is never fully silenced (always surfaces at least once per `floor_every` ticks).                       |
-| `lenses.<name>.enabled`                                  | Enable/disable a lens individually.                                                                                                                                    |
-| `lenses.<name>.params`                                   | Per-lens parameters. The only actuation opt-in in the whole system is `context_tiers.params.restart_actuation` (default `false`).                                      |
-| `lenses.context_tiers.params.degrading_flag_after_ticks` | After this many consecutive tier3 surfaced ticks without a successful restart, a `degrading-no-restart` reason is added to the ALERT (default 3).         |
+| `backoff.start_after`                                    | Number of consecutive unchanged detections of the same problem before D5 progressive backoff begins.                                                              |
+| `backoff.multiplier`                                     | Each backoff step multiplies the surface interval by this factor (default 2×).                                                                                    |
+| `backoff.floor_every`                                    | The surface interval is capped at this many ticks — the problem is never fully silenced (always surfaces at least once per `floor_every` ticks).                  |
+| `lenses.<name>.enabled`                                  | Enable/disable a lens individually.                                                                                                                               |
+| `lenses.<name>.params`                                   | Per-lens parameters. The only actuation opt-in in the whole system is `context_tiers.params.restart_actuation` (default `false`).                                 |
+| `lenses.context_tiers.params.degrading_flag_after_ticks` | After this many consecutive tier3 surfaced ticks without a successful restart, a `degrading-no-restart` reason is added to the ALERT (default 3).                 |
 
 #### Editing the config (there is NO `thrum config set`)
 
@@ -252,9 +259,9 @@ only what you need.
 **2. `overnight_window.tz` MUST be an explicit IANA zone.** Default is `""` (the
 source comment reads "TZ set by operator"). Left unset, the sweep prints
 `warning: heartbeat.overnight_window.tz not configured — using local time for gating`
-and falls back to the box's local clock (warns rather than silently
-guessing). Set it to the operator's zone, e.g. `"America/Los_Angeles"` (PST/PDT)
-or `"America/New_York"` (EST/EDT). Never `"local"`.
+and falls back to the box's local clock (warns rather than silently guessing).
+Set it to the operator's zone, e.g. `"America/Los_Angeles"` (PST/PDT) or
+`"America/New_York"` (EST/EDT). Never `"local"`.
 
 **Procedure** — back up, write the full stanza, validate, done (no restart):
 
@@ -272,15 +279,14 @@ _script_, which reads `.thrum/config.json` directly on every tick — the new tz
 takes effect on the next sweep. (`thrum config show` reflects the daemon's
 in-memory config, cached at boot, so it will lag until the next daemon start;
 that lag does not affect the script-driven sweep.) Avoid a
-restart-just-for-config — it needlessly risks a cold-boot WAL-replay
-brick.
+restart-just-for-config — it needlessly risks a cold-boot WAL-replay brick.
 
 ### Subagent model selection
 
-> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet`
-> (low effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
-> operator-ask or a skill step that names it. See the
-> `choosing-subagent-models` skill for the full policy.
+> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet` (low
+> effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
+> operator-ask or a skill step that names it. See the `choosing-subagent-models`
+> skill for the full policy.
 
 ### Step 1 — Run the sweep
 
@@ -298,22 +304,22 @@ Claude Code status bar footer, normalizing UTF-8 non-breaking spaces
 
 #### 🔴 ORCHESTRATORS ARE NOT ON THE CONTEXT LADDER — they restart on a PLAN BOUNDARY
 
-**The context thresholds below are a COORDINATOR rule. Orchestrators inherited it
-rather than being chosen for it, and it is not cost-optimal for them.** Do not
-hold an orchestrator open to reach 70–75%, and do not restart one mid-plan to
-chase the cost curve.
+**The context thresholds below are a COORDINATOR rule. Orchestrators inherited
+it rather than being chosen for it, and it is not cost-optimal for them.** Do
+not hold an orchestrator open to reach 70–75%, and do not restart one mid-plan
+to chase the cost curve.
 
 **The orchestrator rule:**
 
 > **Restart an orchestrator at PLAN COMPLETION — where completion means the plan
-> is MERGED *and* the follow-up beads filed during that plan have been FIXED.**
+> is MERGED _and_ the follow-up beads filed during that plan have been FIXED.**
 > Not at the merge report. Not at the merge.
 
 **Why the follow-ups clause is load-bearing, not a detail.** The standing
 fix-while-warm rule says a bug found mid-work gets FIXED while warm, because
 file-and-move-on costs ~10x — the research has to be redone before the fix can
 start. Bugs found during a plan are therefore filed and swept up at the END of
-the plan, while the orchestrator *and its implementers* still hold the context.
+the plan, while the orchestrator _and its implementers_ still hold the context.
 **A restart at the merge boundary destroys exactly that warmth, and does so
 INVISIBLY — the follow-ups still get done, just cold and at the 10x price.** A
 restart rule keyed to "the merge" does not merely mistime a restart; it silently
@@ -326,38 +332,37 @@ repeals fix-while-warm.
   roughly QUADRATIC in how far context is allowed to grow. Break-even for a
   restart is **under one turn** once context is meaningfully above the re-prime
   floor.
-- **Orchestrators re-prime far cheaper than coordinators, and it is structural:**
-  `internal/cli/prime_filter.go` gives ONLY `role=="coordinator"` the full
-  project-state passthrough. Measured orchestrator re-prime ≈ 30k tokens.
+- **Orchestrators re-prime far cheaper than coordinators, and it is
+  structural:** `internal/cli/prime_filter.go` gives ONLY `role=="coordinator"`
+  the full project-state passthrough. Measured orchestrator re-prime ≈ 30k
+  tokens.
 - Coordinators keep the ladder below for a stated reason — larger re-entry cost,
   plus decision-dense context a snapshot cannot faithfully reconstruct.
 
 **What the plan boundary buys:** it is the one point where the cost argument and
-the preserve-in-flight-judgment argument AGREE. The work has just been handed off
-in a merge report and the follow-ups are closed, so in-flight judgment is at its
-minimum and state is externalised into beads.
+the preserve-in-flight-judgment argument AGREE. The work has just been handed
+off in a merge report and the follow-ups are closed, so in-flight judgment is at
+its minimum and state is externalised into beads.
 
 **Applying it in this sweep:** an orchestrator flagged in the 50–85% bands is
 NOT a restart candidate on context alone. Check whether its plan is complete
 (merged + follow-ups closed). If it is, restart regardless of how low its
 context is. If it is not, leave it alone regardless of how high.
 
-
-
-| ctx_tier | stuck_working | Action                                                                                                                                                                                                                                                                   |
-| -------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| < 50%    | N             | No action — agent has runway                                                                                                                                                                                                                                             |
-| < 50%    | Y             | Tmux-send "are you stuck? `/continue` if waiting" nudge; if not recovered in next sweep, surface to operator                                                                                                                                                             |
+| ctx_tier | stuck_working | Action                                                                                                                                                                                                                                         |
+| -------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| < 50%    | N             | No action — agent has runway                                                                                                                                                                                                                   |
+| < 50%    | Y             | Tmux-send "are you stuck? `/continue` if waiting" nudge; if not recovered in next sweep, surface to operator                                                                                                                                   |
 | 50-70%   | N             | **NOT a warning** — OPTIONAL restart-if-IDLE only: directed inbox restart request when the agent is idle. A BUSY agent (or a coordinator, or a warm-hold/on-call/parked consultant) at 50-70% gets no action — see role/state carve-out below. |
-| 50-70%   | Y             | Tmux-send nudge; defer the tier-1 directed restart request until the next sweep confirms the pane is active again AND ctx is still in this band                                                                                                                          |
-| 70-85%   | N             | Tmux-send `$thrum-restart` (bypasses inbox; more forceful) — for coordinators/warm-hold consultants ACTIVELY WORKING, this band doesn't apply until the role/state carve-out's higher floor (75%, see below)                                                             |
-| 70-85%   | Y             | Surface to operator immediately (degraded + stuck → human-eyes-needed)                                                                                                                                                                                                   |
-| > 85%    | any           | Snapshot-gated restart (opt-in): surface `recommend-restart-extended` by default; autonomous restart only when `restart_actuation=true` in config (see Step 5)                                                                                                       |
-| `(n/a)`  | any           | Pane capture failed OR runtime has no Ctx footer — check tmux session manually                                                                                                                                                                                           |
+| 50-70%   | Y             | Tmux-send nudge; defer the tier-1 directed restart request until the next sweep confirms the pane is active again AND ctx is still in this band                                                                                                |
+| 70-85%   | N             | Tmux-send `$thrum-restart` (bypasses inbox; more forceful) — for coordinators/warm-hold consultants ACTIVELY WORKING, this band doesn't apply until the role/state carve-out's higher floor (75%, see below)                                   |
+| 70-85%   | Y             | Surface to operator immediately (degraded + stuck → human-eyes-needed)                                                                                                                                                                         |
+| > 85%    | any           | Snapshot-gated restart (opt-in): surface `recommend-restart-extended` by default; autonomous restart only when `restart_actuation=true` in config (see Step 5)                                                                                 |
+| `(n/a)`  | any           | Pane capture failed OR runtime has no Ctx footer — check tmux session manually                                                                                                                                                                 |
 
-**Role/state-aware carve-out:** coordinators, and any agent explicitly standing by as a
-warm-hold:/on-call:/parked: consultant in an ongoing impl, are treated exactly
-like a coordinator — while ACTIVELY WORKING (not idle) they only flag at
+**Role/state-aware carve-out:** coordinators, and any agent explicitly standing
+by as a warm-hold:/on-call:/parked: consultant in an ongoing impl, are treated
+exactly like a coordinator — while ACTIVELY WORKING (not idle) they only flag at
 **ctx >= 75%**, not the normal 50% `CTX_THRESHOLD`. An IDLE coordinator (or idle
 consultant) still flags at the normal threshold — idle restarts are cheap, no
 exemption needed there. Implemented as `hb_effective_ctx_threshold` in
@@ -367,13 +372,14 @@ test scenarios: coord@72%+working → NOT flagged; coord@76%+working → flagged
 coord@60%+idle → flagged; non-coordinator roles are unaffected (still 50% while
 working or idle).
 
-**Warm-hold/on-call/parked exemption:** if the agent's `intent` field starts with `^warm-hold:`,
-`^on-call:`, or `^parked:`, skip nudge + restart for all tiers below >85% (and
-apply the coordinator-equivalent 75% floor above while working). The >85%
-bracket still fires regardless. These are EXPLICIT DECLARED states, not a
-heuristic guess at coordination intent — a consultant/on-call/done-planning
-researcher must set one of these prefixes ITSELF via
-`thrum agent set-intent "warm-hold: <reason>"` (or `on-call:`/`parked:`).
+**Warm-hold/on-call/parked exemption:** if the agent's `intent` field starts
+with `^warm-hold:`, `^on-call:`, or `^parked:`, skip nudge + restart for all
+tiers below >85% (and apply the coordinator-equivalent 75% floor above while
+working). The >85% bracket still fires regardless. These are EXPLICIT DECLARED
+states, not a heuristic guess at coordination intent — a
+consultant/on-call/done-planning researcher must set one of these prefixes
+ITSELF via `thrum agent set-intent "warm-hold: <reason>"` (or
+`on-call:`/`parked:`).
 
 **A coordinator CANNOT set another agent's intent.** `thrum agent set-intent`
 takes TEXT only — it sets the intent for the CURRENT SESSION and accepts no
@@ -381,19 +387,19 @@ agent argument and no `--to`. To get an intent onto another agent, message that
 agent and have it set its own; then verify by reading `thrum agent list --json`
 rather than by counting acks.
 
-**Background-child-aware busy detection:** an agent with an OPEN in-progress bead, a recent JSONL tool_use
-(`state == "working"`), or a pane showing it's driving background sub-agents
-(`Waiting for N background agent...`) is BUSY, not idle — even if pane-silent.
-This is checked BEFORE the idle/abandoned classification (`hb_idle_classify`'s
-`is_busy` param) so an orchestrator quietly waiting on its own dispatched
-sub-agents is never misread as abandoned just because it hasn't committed
-recently.
+**Background-child-aware busy detection:** an agent with an OPEN in-progress
+bead, a recent JSONL tool_use (`state == "working"`), or a pane showing it's
+driving background sub-agents (`Waiting for N background agent...`) is BUSY, not
+idle — even if pane-silent. This is checked BEFORE the idle/abandoned
+classification (`hb_idle_classify`'s `is_busy` param) so an orchestrator quietly
+waiting on its own dispatched sub-agents is never misread as abandoned just
+because it hasn't committed recently.
 
-**Finished-impl teardown:** a closed bead + idle + no
-new dispatch classifies as `finished`, which surfaces a `recommend-teardown`
-ALERT to the coordinator — it is a RECOMMENDATION only, never autonomous;
-teardown itself stays coordinator-actuated (kill-tmux → worktree-teardown per
-lifecycle discipline in `implementer-status-and-handoff`).
+**Finished-impl teardown:** a closed bead + idle + no new dispatch classifies as
+`finished`, which surfaces a `recommend-teardown` ALERT to the coordinator — it
+is a RECOMMENDATION only, never autonomous; teardown itself stays
+coordinator-actuated (kill-tmux → worktree-teardown per lifecycle discipline in
+`implementer-status-and-handoff`).
 
 ### Step 2.5 — Stuck-working axis
 
@@ -550,7 +556,8 @@ See "Post-restart procedure" below.
 When you run the sweep **manually** (the command in Step 1, no flags), it still
 auto-nudges every agent whose pane shows an `API Error` line — it types
 `continue` into the affected pane via `tmux send-keys` (bypassing the
-`thrum tmux send` wrapper queue, which stalls on fully-silent panes). The report header lists who was auto-nudged:
+`thrum tmux send` wrapper queue, which stalls on fully-silent panes). The report
+header lists who was auto-nudged:
 
 ```text
 # auto-nudged 3 agent(s) on api_errors with 'continue':
@@ -591,9 +598,9 @@ surface to operator as SUSPECTED-STUCK and investigate manually
 on, it raises this escalation for you.)
 
 **When NOT to nudge:** before shipping a release, to fold one more fix into the
-current cycle while an agent is stuck, run with `--no-nudge` (or hold the
-manual sweep). Once `continue` fires, the agent
-resumes its previous tool call immediately — there's no recovery window.
+current cycle while an agent is stuck, run with `--no-nudge` (or hold the manual
+sweep). Once `continue` fires, the agent resumes its previous tool call
+immediately — there's no recovery window.
 
 ### Pre-restart safety checks
 
@@ -635,18 +642,18 @@ thrum monitor add \
   -- bash "$SCRIPT" --no-nudge --out /tmp/agent-sweep.txt
 ```
 
-(Or substitute the literal absolute path if no shell is handy in the
-daemon's environment.) The monitor fires one-shot per scheduled tick; in between
-ticks the child does not run, so there's no continuous CPU cost from the sweep.
-Note that `@every 30m` is the outer envelope — the sweep script self-gates
-so most ticks produce no ALERT output and thus no message fires.
+(Or substitute the literal absolute path if no shell is handy in the daemon's
+environment.) The monitor fires one-shot per scheduled tick; in between ticks
+the child does not run, so there's no continuous CPU cost from the sweep. Note
+that `@every 30m` is the outer envelope — the sweep script self-gates so most
+ticks produce no ALERT output and thus no message fires.
 
 ### Post-restart procedure
 
 When a restart fires (Step 4 or 5 — tmux-send nudge or snapshot-gated restart):
 
-1. Surface a brief status note to the coordinator: "Restarted @\<agent_name\>
-   at \<ctx\>% — snapshot at
+1. Surface a brief status note to the coordinator: "Restarted @\<agent_name\> at
+   \<ctx\>% — snapshot at
    `.thrum/agents/<agent>/sessions/<timestamp>-restart.md`".
 2. Wait for the agent to come back online (`thrum team` shows them active again,
    or their pane shows the runtime prompt).

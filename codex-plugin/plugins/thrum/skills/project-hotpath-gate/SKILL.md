@@ -1,10 +1,17 @@
 ---
 name: project-hotpath-gate
-description: "Use when a project needs its hot-path gate configuration established or updated - the canonical config at .thrum/hotpath-gate.json defining trigger directories, per-concept detection patterns, and incident prose for the coordinator-hotpath-merge-gate skill. Detects every language present in the repo and drives detection off the shared reliability-class library, so the generated config is real for Go, Python, JS/TS, Rust, or any mix. First invocation generates from project inspection; subsequent invocations reconcile against current project state and propose diffs."
+description:
+  "Use when a project needs its hot-path gate configuration established or
+  updated - the canonical config at .thrum/hotpath-gate.json defining trigger
+  directories, per-concept detection patterns, and incident prose for the
+  coordinator-hotpath-merge-gate skill. Detects every language present in the
+  repo and drives detection off the shared reliability-class library, so the
+  generated config is real for Go, Python, JS/TS, Rust, or any mix. First
+  invocation generates from project inspection; subsequent invocations reconcile
+  against current project state and propose diffs."
 # source: claude-plugin/skills/project-hotpath-gate/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
-
 
 ## Project Hot-Path Gate
 
@@ -68,48 +75,45 @@ grep -rlE "app\.(get|post|put|delete|patch)\(|router\.(get|post|put|delete|patch
 ```
 
 Also scan for projection/writer, storage/DB, sync, and listener/boot
-directories, using each language's own idiom for those shapes (a database
-open call, a background sync loop, a process-boot entrypoint). Collapse
+directories, using each language's own idiom for those shapes (a database open
+call, a background sync loop, a process-boot entrypoint). Collapse
 subdirectories under their parent when the parent already matches. Record the
 deduplicated list as `trigger_directories`.
 
 #### Step 3: Walk the reliability class library
 
-Read `../project-philosophy/resources/reliability-class-library.md`, shared
-with `project-philosophy`. Walk every class tagged `Consumers: ... hotpath` —
-each names the lens it feeds and, where relevant, a hot-path facet within that
-lens.
+Read `../project-philosophy/resources/reliability-class-library.md`, shared with
+`project-philosophy`. Walk every class tagged `Consumers: ... hotpath` — each
+names the lens it feeds and, where relevant, a hot-path facet within that lens.
 
-For each such class and each language recorded in `languages_detected`, run
-the probe the library gives that class for that language, scoped to that
-language's own files within `trigger_directories` from Step 2 — a language
-with no hot-path directories of its own contributes no findings, even if it
-clears the repo-wide detection threshold. Where the library marks a language
-"none" or "open gap" for a class — this includes Go for some classes, such
-as the security concepts that don't apply to a perimeter-protected daemon —
-that language contributes no finding for that class and the walk moves to
-the next one.
+For each such class and each language recorded in `languages_detected`, run the
+probe the library gives that class for that language, scoped to that language's
+own files within `trigger_directories` from Step 2 — a language with no hot-path
+directories of its own contributes no findings, even if it clears the repo-wide
+detection threshold. Where the library marks a language "none" or "open gap" for
+a class — this includes Go for some classes, such as the security concepts that
+don't apply to a perimeter-protected daemon — that language contributes no
+finding for that class and the walk moves to the next one.
 
-A class whose `**Consumers:**` line names hotpath with no facet parenthetical
-IS its lens — e.g. Class 8 is the `silent_fail_open` lens. Record its matches
-into that lens's primary pattern field (the array of distinct
-patterns/identifiers actually found in the repo). A class with zero matches
-for a given language is not an error — record it as walked-and-not-found, and
-continue.
+A class whose `**Consumers:**` line names hotpath with no facet parenthetical IS
+its lens — e.g. Class 8 is the `silent_fail_open` lens. Record its matches into
+that lens's primary pattern field (the array of distinct patterns/identifiers
+actually found in the repo). A class with zero matches for a given language is
+not an error — record it as walked-and-not-found, and continue.
 
 A class whose `**Consumers:**` line names a hot-path facet in parentheses
-enriches the named lens's `context` field with the adapted finding. Where
-that class's own probe is the only detection the lens has for its primary
-pattern field, also record matches there (Class 1 into `subprocess_hot_path`,
-Class 5 into `dispatch_blocking` and `peer_dial_circuit_breaker`). The one
-exception is Class 2: `async_io_decoupling` carries its own independent,
-incident-derived detection for its primary fields, so Class 2 enriches
-`context` only and never touches a primary field.
+enriches the named lens's `context` field with the adapted finding. Where that
+class's own probe is the only detection the lens has for its primary pattern
+field, also record matches there (Class 1 into `subprocess_hot_path`, Class 5
+into `dispatch_blocking` and `peer_dial_circuit_breaker`). The one exception is
+Class 2: `async_io_decoupling` carries its own independent, incident-derived
+detection for its primary fields, so Class 2 enriches `context` only and never
+touches a primary field.
 
 A lens's secondary refinement fields (pre-flight guard patterns, native
-alternatives, and similar) populate only where a class gives a probe for
-them; a field with no probe for the detected language is left absent rather
-than guessed at.
+alternatives, and similar) populate only where a class gives a probe for them; a
+field with no probe for the detected language is left absent rather than guessed
+at.
 
 `async_io_decoupling`'s own primary fields (goroutine/boot-stage/cancellation
 patterns and dropped-context params) come from a Go-only detection pass
@@ -134,9 +138,8 @@ Use `AskUserQuestion` for per-lens prose seeding. Prefer sequential
 category→item questions (one prompt per lens, ≤4 options each) over packing
 every lens into a single prompt.
 
-Prompt the invoker for incident descriptions, fix patterns, and
-project-specific nuances for each lens. These become the `context` prose
-fields in the config.
+Prompt the invoker for incident descriptions, fix patterns, and project-specific
+nuances for each lens. These become the `context` prose fields in the config.
 
 If the invoker has no incident prose to seed (first-time setup on a new
 project), leave the `context` fields as empty strings with a
@@ -152,9 +155,9 @@ exception in `.gitignore` if needed, following the `.thrum/philosophy.md`
 pattern).
 
 Only emit `embed_aware_skip` for a language with a compiled-in-bundle concept
-and a derivable reachability command (Go's `go:embed` is the current
-example). Omit the field for a language with no such concept rather than
-writing a placeholder.
+and a derivable reachability command (Go's `go:embed` is the current example).
+Omit the field for a language with no such concept rather than writing a
+placeholder.
 
 If Step 3 found zero matching lenses across every detected language, do not
 write an empty-but-valid config — see the scaffold/refuse behavior in
@@ -165,21 +168,20 @@ which reliability classes were found vs. walked-and-not-found.
 
 ### Zero-match handling
 
-The generator never writes a config with an empty `lenses` object. When Step
-3 finds no matching lens across every detected language:
+The generator never writes a config with an empty `lenses` object. When Step 3
+finds no matching lens across every detected language:
 
 - **Default:** write a scaffold marked at the top level with
   `_UNAUTHORED_SCAFFOLD: true`. Populate `trigger_directories` from a
   language-neutral serving heuristic — route decorators, files matching
-  `*proxy*`/`*server*`/`*api*`, a `Dockerfile` with `EXPOSE`/`CMD`, and
-  detected entrypoints. Add a commented TODO stub per reliability-library
-  concept, keyed to the files the heuristic found.
+  `*proxy*`/`*server*`/`*api*`, a `Dockerfile` with `EXPOSE`/`CMD`, and detected
+  entrypoints. Add a commented TODO stub per reliability-library concept, keyed
+  to the files the heuristic found.
 - **Alternative, offered interactively:** refuse to write the file, with a
   message naming which languages were detected and why no lens matched.
 
 No downstream consumer relies on a zero-lens config meaning "clean" — a
-generator run either produces real findings, an explicit scaffold, or a
-refusal.
+generator run either produces real findings, an explicit scaffold, or a refusal.
 
 ### Re-run-unchanged mode
 
@@ -195,10 +197,10 @@ Re-run the detection steps from first-run mode, but compare rather than write:
 
 - Are the `languages_detected` still correct? Any new language crossing the
   threshold?
-- Are the `trigger_directories` still correct? Any new directories with
-  hot-path code?
-- Does each lens's primary pattern field still match what Step 3 finds? Any
-  new patterns per language?
+- Are the `trigger_directories` still correct? Any new directories with hot-path
+  code?
+- Does each lens's primary pattern field still match what Step 3 finds? Any new
+  patterns per language?
 - Are the `reference_patterns` still accurate? Any new established patterns?
 
 Each check is a boolean "matches" vs. "differs".

@@ -72,15 +72,14 @@ generator | thrum send --to @name -                  # '-' is a --stdin alias
 ```
 
 A recipient flag is REQUIRED — `thrum send 'msg'` with no `--to` or
-`--broadcast` is a hard error. `--to` and `--broadcast` are
-mutually exclusive.
+`--broadcast` is a hard error. `--to` and `--broadcast` are mutually exclusive.
 
-Shell-safe bodies: backticks, `$(...)`, `$VAR`, and quotes in a
-double-quoted message are interpreted by the shell BEFORE thrum runs, silently
-corrupting content. Read the body from stdin (`--stdin`, or pass the message as
-`-`) or a file (`--body-file`) with a QUOTED heredoc (`<<'EOF'`) to disable all
-shell interpretation. The three body sources are mutually exclusive. A single
-trailing newline is stripped from stdin/file bodies.
+Shell-safe bodies: backticks, `$(...)`, `$VAR`, and quotes in a double-quoted
+message are interpreted by the shell BEFORE thrum runs, silently corrupting
+content. Read the body from stdin (`--stdin`, or pass the message as `-`) or a
+file (`--body-file`) with a QUOTED heredoc (`<<'EOF'`) to disable all shell
+interpretation. The three body sources are mutually exclusive. A single trailing
+newline is stripped from stdin/file bodies.
 
 Flags:
 
@@ -107,9 +106,9 @@ thrum reply <msg-id> --body-file ./body.md           # Reply body (file)
 `reply` takes **no `--to`** — the recipient is derived from the parent message.
 To start a new thread to a specific agent, use `thrum send ... --to @name`.
 
-Shell-safe bodies: like `send`, `reply` accepts `--stdin` (or the
-response argument as `-`) and `--body-file` so backtick/`$(...)`/quote-bearing
-text survives the shell. Use a QUOTED heredoc (`<<'EOF'`).
+Shell-safe bodies: like `send`, `reply` accepts `--stdin` (or the response
+argument as `-`) and `--body-file` so backtick/`$(...)`/quote-bearing text
+survives the shell. Use a QUOTED heredoc (`<<'EOF'`).
 
 Flags:
 
@@ -136,9 +135,9 @@ thrum sent --to @agent                         # Filter by recipient or audience
 thrum message get <message-id>                 # Full recipient detail for one message
 ```
 
-**Search, don't just page.** Default `--page-size` is 10 newest-first, so
-stale unread sorts LAST exactly when it has waited longest — the oldest
-backlog is exactly what a default-page check can't see:
+**Search, don't just page.** Default `--page-size` is 10 newest-first, so stale
+unread sorts LAST exactly when it has waited longest — the oldest backlog is
+exactly what a default-page check can't see:
 
 ```bash
 thrum message search "<term>"                  # full-text across all messages (positional query, no --limit)

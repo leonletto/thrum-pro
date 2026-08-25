@@ -1,0 +1,4 @@
+interface:
+  display_name: "Brainstorm Steward"
+  short_description: "Use when running as the Brainstorm Steward — a persistent watcher on the coordinator's home box that manages a roster of remote brainstormers, multiplexes their NEED questions into one pane queue for the owner, routes ANSWERs back, and delegates launch and dual-review/project-setup to coordinators. Never decides content."
+  default_prompt: "Use when running as the Brainstorm Steward — a persistent watcher on the coordinator's home box that manages a roster of remote brainstormers, multiplexes their NEED questions into one pane queue for the owner, routes ANSWERs back, and delegates launch and dual-review/project-setup to coordinators. Never decides content."

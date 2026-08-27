@@ -82,16 +82,44 @@ if grep -q '^plugin_hooks[[:space:]]*=[[:space:]]*true' "${CONFIG}"; then
   say "features.plugin_hooks already enabled"
 elif grep -q '^\[features\]' "${CONFIG}"; then
   python3 - "${CONFIG}" <<'PY'
-import re, sys
+import os, re, sys, tempfile
 path = sys.argv[1]
 content = open(path).read()
 content = re.sub(r'(\[features\]\n)', r'\1plugin_hooks = true\n', content, count=1)
-open(path, 'w').write(content)
+
+# Write atomically: temp file in the SAME directory as the target (same
+# filesystem, so the rename is atomic), then os.replace() over the target.
+# Preserves the original file's permissions.
+config_dir = os.path.dirname(path) or "."
+orig_mode = None
+if os.path.exists(path):
+    orig_mode = os.stat(path).st_mode
+
+tmp_fd, tmp_path = tempfile.mkstemp(dir=config_dir, suffix=".tmp")
+try:
+    with os.fdopen(tmp_fd, "w") as f:
+        f.write(content)
+    if orig_mode is not None:
+        os.chmod(tmp_path, orig_mode)
+    os.replace(tmp_path, path)
+except BaseException:
+    try:
+        os.remove(tmp_path)
+    except OSError:
+        pass
+    raise
 PY
   say "Added plugin_hooks = true under [features] in ${CONFIG}"
 else
   printf '\n[features]\nplugin_hooks = true\n' >> "${CONFIG}"
   say "Added [features] block with plugin_hooks = true to ${CONFIG}"
+fi
+
+# 7. Ensure the thrum-workspace permission profile covers this repo's
+#    redirect-resolved audit-log dir (no-op skip if not run from a thrum repo).
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "${SCRIPT_DIR}/ensure-permission-profile.sh" ]]; then
+  bash "${SCRIPT_DIR}/ensure-permission-profile.sh" || say "warning: ensure-permission-profile.sh failed; you may need to add the thrum-workspace permission profile manually (see INSTALL.md)."
 fi
 
 cat <<EOF

@@ -5,7 +5,7 @@
         "matcher": "startup|resume|clear",
         "hooks": [{
           "type": "command",
-          "command": "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-${CODEX_PLUGIN_ROOT}}}/scripts/inject-prime-context.sh",
+          "command": "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/inject-prime-context.sh",
           "statusMessage": "Loading Thrum prime context",
           "timeout": 30
         }]
@@ -16,11 +16,11 @@
         "matcher": "Bash",
         "hooks": [{
           "type": "command",
-          "command": "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-${CODEX_PLUGIN_ROOT}}}/scripts/block-sync-worktree-cd.sh",
+          "command": "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/block-sync-worktree-cd.sh",
           "timeout": 5
         }, {
           "type": "command",
-          "command": "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-${CODEX_PLUGIN_ROOT}}}/scripts/block-tls-key-exfil.sh",
+          "command": "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/block-tls-key-exfil.sh",
           "timeout": 5
         }]
       }
@@ -29,7 +29,7 @@
       {
         "hooks": [{
           "type": "command",
-          "command": "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-${CODEX_PLUGIN_ROOT}}}/scripts/stop-check-messages.sh",
+          "command": "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/stop-check-messages.sh",
           "timeout": 15
         }]
       }

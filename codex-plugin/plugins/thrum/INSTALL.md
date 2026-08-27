@@ -25,8 +25,10 @@ bash <(curl -fsSL https://raw.githubusercontent.com/leonletto/thrum-pro/main/cod
 
 That's it. The script registers the marketplace, stages the per-plugin cache (a
 step codex 0.130.0 doesn't do automatically for third-party marketplaces),
-enables the plugin, and turns on the `plugin_hooks` feature. It's idempotent —
-re-run any time to pull the latest revision.
+enables the plugin, turns on the `plugin_hooks` feature, and (when run from
+inside a thrum repo/worktree) ensures the `thrum-workspace` sandbox permission
+profile covers that repo's audit-log dir — see "Sandbox permission profile"
+below. It's idempotent — re-run any time to pull the latest revision.
 
 Installs from the `main` branch — the only branch this distribution repo carries; there is no release-tag pinning yet.
 
@@ -112,6 +114,54 @@ above instead (recommended for runtime testing), or (b) manually stage:
 ```bash
 mkdir -p ~/.codex/plugins/cache/thrum-marketplace
 cp -R ./codex-plugin/plugins/thrum ~/.codex/plugins/cache/thrum-marketplace/thrum
+```
+
+## Sandbox permission profile
+
+Codex's default `:workspace` sandbox profile only covers the current
+worktree, and blocks two things thrum commands need:
+
+1. **Filesystem write to the redirected audit-log dir.** Every thrum command
+   (prime/inbox/send) appends a command-log entry to
+   `<main-repo>/.thrum/var/log/` — resolved via `.thrum/redirect` when run
+   from a worktree, so it can live outside the worktree codex sandboxes to.
+   Without an explicit permission for that directory, codex's auto-review
+   denies the write and blocks thrum commands.
+2. **Network access to the thrum daemon's UNIX socket**
+   (`<main-repo>/.thrum/var/thrum.sock`). Codex's sandbox also blocks
+   outbound UNIX-socket connections by default, so even with the filesystem
+   grant above, every RPC the thrum CLI makes to the daemon over that socket
+   (which is how `prime`/`inbox`/`send` actually talk to it) is denied.
+
+`install-plugin.sh` runs `scripts/ensure-permission-profile.sh` at the end of
+install to fix both automatically. It resolves this repo's redirect-aware
+audit-log dir and daemon-socket path and, in `~/.codex/config.toml`,
+append-if-absent:
+
+- ensures the root-level scalars `approval_policy = "on-request"`,
+  `approvals_reviewer = "auto_review"`, and
+  `default_permissions = "thrum-workspace"` exist (never clobbers a value
+  already set by the user);
+- ensures a `[permissions.thrum-workspace]` profile exists (`extends =
+  ":workspace"`) with:
+  - a `[permissions.thrum-workspace.filesystem]` table granting
+    `"<audit-log-dir>" = "write"` for this repo's resolved path;
+  - a `[permissions.thrum-workspace.network]` table with `enabled = true`,
+    **plus** a `[permissions.thrum-workspace.network.unix_sockets]` table
+    granting `"<daemon-socket-path>" = "allow"` for this repo's resolved
+    socket path. Both of these are required together — `unix_sockets` alone,
+    without `network.enabled = true`, loads as valid TOML but is inert (the
+    daemon calls still fail). This grant is additive to the filesystem
+    grant above, not a replacement for it.
+
+It's safe to re-run from multiple thrum repos over time — each repo's
+resolved paths are appended once; a path already present is left alone. If run
+outside a thrum repo/worktree (no `.thrum/` found), it skips gracefully.
+
+To run it standalone:
+
+```bash
+./codex-plugin/plugins/thrum/scripts/ensure-permission-profile.sh
 ```
 
 ## First-run hook approval

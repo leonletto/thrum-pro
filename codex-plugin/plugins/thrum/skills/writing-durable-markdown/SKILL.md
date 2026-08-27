@@ -67,3 +67,10 @@ not shorten data.
 No issue IDs, no dates, no agent names, no measurements in customer-facing
 files. The tracker references the change; the change never references the
 tracker.
+
+### A skill is generic — never specific to the repo you edit from
+
+Write the rule so it holds for any repo running the skill. No repo names, config
+keys, box names, agent names, or paths particular to the repo you happen to be
+in. Repo-specific values live in that repo's config or memory; the skill names
+them by role, not by literal.

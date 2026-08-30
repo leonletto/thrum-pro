@@ -33,10 +33,7 @@ claude plugin marketplace add ./claude-plugin
 claude plugin install thrum@thrum
 ```
 
-Verification steps (run 2026-08-06 against this bundle's build): fresh install
-via an isolated `CLAUDE_CONFIG_DIR`, `claude plugin list` reports `thrum@thrum`
-installed and enabled. Re-run the same two commands with `CLAUDE_CONFIG_DIR`
-pointed at a scratch dir to reproduce.
+Verify with `claude plugin list`; `thrum@thrum` must be installed and enabled.
 
 ## Codex
 
@@ -74,12 +71,22 @@ must report `thrum`, and `/skills list` must include the Thrum skills.
 
 ## Cursor
 
-Until Thrum is listed in the public Cursor Marketplace, pass this prompt to
-Cursor Agent:
+Install the Cursor Agent CLI, log in, and add this GitHub repository as a
+marketplace:
 
-```text
-Please install the Thrum Cursor plugin by following:
-https://github.com/leonletto/thrum-pro/blob/main/cursor-plugin/agent-instructions.md
+```bash
+curl https://cursor.com/install -fsS | bash
+agent login
+agent plugin marketplace add --git-ref main https://github.com/leonletto/thrum-pro.git
+agent
+```
+
+In Cursor Agent, open `/plugin list`, switch to **Marketplace**, search for
+`thrum`, open its details, and choose user or project scope. Verify that the
+plugin is marked installed. Update the repository index with:
+
+```bash
+agent plugin marketplace update thrum
 ```
 
 From an existing clone:
@@ -93,16 +100,21 @@ with an absolute path back into this bundle's `cursor-plugin/` directory — kee
 the extracted bundle in place after installing, or re-run the install script if
 you move it.
 
-Verification steps (run 2026-08-06 against this bundle's build): fresh install
-against a scratch git project populated `.cursor/hooks.json`,
-`.cursor/mcp.json`, `.cursor/skills/`, `.cursor/commands/`, `.cursor/agents/`,
-and `.cursor/rules/`. Re-run the same command with `--target` pointed at a
-scratch project dir to reproduce.
+For the local fallback, verify that `.cursor/hooks.json`, `.cursor/mcp.json`,
+`.cursor/skills/`, `.cursor/commands/`, `.cursor/agents/`, and `.cursor/rules/`
+exist in the target project.
 
 ## OpenCode
 
-After `opencode-thrum-pro` is published to npm, add it to the project or global
-configuration. OpenCode installs npm plugins automatically with Bun:
+Install the published package and update the current project's configuration:
+
+```bash
+opencode plugin opencode-thrum-pro
+```
+
+Use `opencode plugin opencode-thrum-pro --global` for the global configuration.
+OpenCode installs npm plugins automatically with Bun. To configure the package
+manually, add it to the project or global configuration:
 
 ```json
 {

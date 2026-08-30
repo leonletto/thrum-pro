@@ -80,15 +80,18 @@ copilot plugin install thrum@thrum
 
 Update with `copilot plugin update thrum`.
 
-### Cursor
+### Cursor — install straight from GitHub
 
-Until Thrum appears in the public Cursor Marketplace, give Cursor Agent this
-prompt:
-
-```text
-Please install the Thrum Cursor plugin by following:
-https://github.com/leonletto/thrum-pro/blob/main/cursor-plugin/agent-instructions.md
+```bash
+curl https://cursor.com/install -fsS | bash
+agent login
+agent plugin marketplace add --git-ref main https://github.com/leonletto/thrum-pro.git
+agent
 ```
+
+In Cursor Agent, open `/plugin list`, switch to **Marketplace**, search for
+`thrum`, and install it at user or project scope. Update the marketplace with
+`agent plugin marketplace update thrum`.
 
 From an existing clone, install into a project directly:
 
@@ -100,10 +103,17 @@ This copies the plugin into `<project>/.cursor/` and writes `.cursor/hooks.json`
 with an absolute path back into this repo's `cursor-plugin/` directory — keep the
 checkout in place after installing, or re-run the script if you move it.
 
-### OpenCode
+### OpenCode — install from npm
 
-After the npm package is published, add it to the project or global
-`opencode.json`; OpenCode installs npm plugins automatically:
+Install the published [`opencode-thrum-pro`](https://www.npmjs.com/package/opencode-thrum-pro)
+package and update the current project's configuration:
+
+```bash
+opencode plugin opencode-thrum-pro
+```
+
+Use `opencode plugin opencode-thrum-pro --global` for the global configuration.
+To configure it manually, add the package to `opencode.json`:
 
 ```json
 {

@@ -9,6 +9,7 @@ before the first turn.
 
 ```bash
 codex plugin marketplace add leonletto/thrum-pro
+codex plugin add thrum@thrum-marketplace
 ```
 
 See [INSTALL.md](./INSTALL.md) for prerequisites, the local-clone install path,

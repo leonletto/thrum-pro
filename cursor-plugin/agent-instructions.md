@@ -1,6 +1,22 @@
 # Install the Thrum Cursor plugin
 
-Install the plugin into the current Git project.
+Prefer Cursor's GitHub marketplace flow:
+
+1. Confirm `agent`, `git`, and the `thrum` CLI are on `PATH`; install Cursor
+   Agent with `curl https://cursor.com/install -fsS | bash` if needed, then run
+   `agent login`.
+2. Run:
+
+   ```bash
+   agent plugin marketplace add --git-ref main https://github.com/leonletto/thrum-pro.git
+   ```
+
+3. Start `agent`, open `/plugin list`, switch to **Marketplace**, search for
+   `thrum`, and install it at user or project scope.
+4. Confirm the plugin is marked installed.
+
+If marketplace installation is unavailable, install into the current Git
+project from a stable clone:
 
 1. Confirm `git` and the `thrum` CLI are on `PATH`.
 2. Clone `https://github.com/leonletto/thrum-pro.git` into the stable local path

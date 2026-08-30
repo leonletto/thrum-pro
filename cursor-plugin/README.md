@@ -9,15 +9,19 @@ Thrum multi-agent coordination plugin for Cursor Agent.
 
 ## Install
 
-Until the public marketplace listing is approved, give Cursor Agent this
-prompt:
+Add the repository marketplace with Cursor Agent CLI:
 
-```text
-Please install the Thrum Cursor plugin by following:
-https://github.com/leonletto/thrum-pro/blob/main/cursor-plugin/agent-instructions.md
+```bash
+curl https://cursor.com/install -fsS | bash
+agent login
+agent plugin marketplace add --git-ref main https://github.com/leonletto/thrum-pro.git
+agent
 ```
 
-From an existing clone:
+In Cursor Agent, open `/plugin list`, switch to **Marketplace**, search for
+`thrum`, and install it at user or project scope.
+
+### Local-clone fallback
 
 Run from any git repo where you want Thrum coordination:
 
@@ -41,11 +45,18 @@ This deploys into `.cursor/` with:
 
 ## Updating
 
-After upstream changes, re-sync and re-install:
+Refresh the repository index, then reopen `/plugin list` to apply an available
+plugin update:
 
 ```bash
-scripts/sync-skills.sh    # sync skills/commands from claude-plugin
-cursor-plugin/local-install.sh  # re-deploy to .cursor/
+agent plugin marketplace update thrum
+```
+
+For a local-clone installation, update the checkout and redeploy:
+
+```bash
+git pull --ff-only
+cursor-plugin/local-install.sh
 ```
 
 ## What's Included

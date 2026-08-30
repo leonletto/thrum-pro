@@ -5,7 +5,8 @@
 Thrum Pro is a multi-agent coordination system for AI coding assistants. It lets a
 fleet of agents — coordinators, implementers, researchers, orchestrators — message
 each other, share memory, track work, and merge code through review gates, all from
-inside your existing runtime (Claude Code, Codex, Cursor, or OpenCode).
+inside your existing runtime (Claude Code, Codex, Cursor, OpenCode, or GitHub
+Copilot CLI).
 
 This repository is where the **Thrum Pro plugin** lives, so anyone with access can
 install it straight from git. The plugin is the client side: skills, commands, agents,
@@ -27,6 +28,7 @@ Each supported runtime has its own plugin tree at the top level:
 | `codex-plugin/` | Codex |
 | `cursor-plugin/` | Cursor |
 | `opencode-plugin/` | OpenCode |
+| `claude-plugin/` | GitHub Copilot CLI (shared marketplace payload) |
 
 Every tree is plain text — skills (`SKILL.md`), slash commands, agent definitions,
 and hooks. No binaries. Pick the directory that matches your assistant and follow the
@@ -40,8 +42,8 @@ Every plugin talks to the `thrum` CLI on your `PATH`. This repo ships plugin tex
 only — no `thrum` binary. Install `thrum` first (see
 [Getting the Thrum binary](#getting-the-thrum-binary)).
 
-Each runtime installs differently — there is no single command that covers all
-four. Full per-runtime detail, including verification steps, lives in
+Each runtime installs differently. Full per-runtime detail, including
+verification steps, lives in
 [`INSTALL.md`](./INSTALL.md).
 
 ### Claude Code — install straight from GitHub (no clone)
@@ -59,33 +61,36 @@ claude plugin install thrum@thrum
 claude plugin marketplace update thrum
 ```
 
-### Codex, Cursor, OpenCode — clone first
-
-The other three runtimes install from a local checkout. Clone once:
+### Codex — install straight from GitHub
 
 ```bash
-git clone https://github.com/leonletto/thrum-pro.git
-cd thrum-pro
-```
-
-To **update** later, `git pull` in the checkout and re-run the runtime's
-install/build step below.
-
-#### Codex
-
-```bash
-codex plugin marketplace add ./codex-plugin
+codex plugin marketplace add leonletto/thrum-pro
 codex plugin add thrum@thrum-marketplace
 ```
 
-Optionally install the Codex skills into `~/.agents/skills` (used by some other
-runtimes' agents):
+Update with `codex plugin marketplace upgrade thrum-marketplace`, then repeat
+the `codex plugin add` command.
+
+### GitHub Copilot CLI — install straight from GitHub
 
 ```bash
-./codex-plugin/plugins/thrum/scripts/install-skills.sh
+copilot plugin marketplace add leonletto/thrum-pro
+copilot plugin install thrum@thrum
 ```
 
-#### Cursor
+Update with `copilot plugin update thrum`.
+
+### Cursor
+
+Until Thrum appears in the public Cursor Marketplace, give Cursor Agent this
+prompt:
+
+```text
+Please install the Thrum Cursor plugin by following:
+https://github.com/leonletto/thrum-pro/blob/main/cursor-plugin/agent-instructions.md
+```
+
+From an existing clone, install into a project directly:
 
 ```bash
 ./cursor-plugin/local-install.sh --target /path/to/your/project
@@ -95,7 +100,19 @@ This copies the plugin into `<project>/.cursor/` and writes `.cursor/hooks.json`
 with an absolute path back into this repo's `cursor-plugin/` directory — keep the
 checkout in place after installing, or re-run the script if you move it.
 
-#### OpenCode
+### OpenCode
+
+After the npm package is published, add it to the project or global
+`opencode.json`; OpenCode installs npm plugins automatically:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["opencode-thrum-pro"]
+}
+```
+
+Local-repo fallback:
 
 OpenCode loads the plugin as a Node package, so build it once:
 

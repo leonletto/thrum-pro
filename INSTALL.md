@@ -1,7 +1,7 @@
 # Thrum Plugin — Install Instructions
 
-This bundle contains the Thrum plugin for four coding-agent runtimes, each in
-its own top-level directory:
+This bundle contains the Thrum plugin for five coding-agent runtimes. GitHub
+Copilot CLI reuses the Claude marketplace payload.
 
 ```text
 claude-plugin/
@@ -41,14 +41,19 @@ pointed at a scratch dir to reproduce.
 ## Codex
 
 ```bash
-codex plugin marketplace add ./codex-plugin
+codex plugin marketplace add leonletto/thrum-pro
 codex plugin add thrum@thrum-marketplace
 ```
 
-Verification steps (run 2026-08-06 against this bundle's build): fresh install
-via an isolated `CODEX_HOME`, `codex plugin list` reports
-`thrum@thrum-marketplace` installed and enabled. Re-run the same two commands
-with `CODEX_HOME` pointed at a scratch dir to reproduce.
+Update with:
+
+```bash
+codex plugin marketplace upgrade thrum-marketplace
+codex plugin add thrum@thrum-marketplace
+```
+
+Verification: `codex plugin list` must report `thrum@thrum-marketplace` as
+`installed, enabled`.
 
 To install the Codex skills into `~/.agents/skills` as well (used by some
 other runtimes' agents, not required for Codex itself):
@@ -57,7 +62,27 @@ other runtimes' agents, not required for Codex itself):
 ./codex-plugin/plugins/thrum/scripts/install-skills.sh
 ```
 
+## GitHub Copilot CLI
+
+```bash
+copilot plugin marketplace add leonletto/thrum-pro
+copilot plugin install thrum@thrum
+```
+
+Update with `copilot plugin update thrum`. Verification: `copilot plugin list`
+must report `thrum`, and `/skills list` must include the Thrum skills.
+
 ## Cursor
+
+Until Thrum is listed in the public Cursor Marketplace, pass this prompt to
+Cursor Agent:
+
+```text
+Please install the Thrum Cursor plugin by following:
+https://github.com/leonletto/thrum-pro/blob/main/cursor-plugin/agent-instructions.md
+```
+
+From an existing clone:
 
 ```bash
 ./cursor-plugin/local-install.sh --target /path/to/your/project
@@ -74,7 +99,19 @@ against a scratch git project populated `.cursor/hooks.json`,
 and `.cursor/rules/`. Re-run the same command with `--target` pointed at a
 scratch project dir to reproduce.
 
-## Open Code
+## OpenCode
+
+After `opencode-thrum-pro` is published to npm, add it to the project or global
+configuration. OpenCode installs npm plugins automatically with Bun:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["opencode-thrum-pro"]
+}
+```
+
+Local-repo fallback:
 
 Open Code loads this plugin as a Node package, so it needs to be built once
 before use:
@@ -95,8 +132,5 @@ Then add it to your project's `opencode.json` (or global
 }
 ```
 
-Verification steps (run 2026-08-06 against this bundle's build): fresh install
-via isolated `XDG_CONFIG_HOME`/`XDG_DATA_HOME`/`XDG_CACHE_HOME`, `opencode run`
-logged `opencode-thrum v0.3.7 assets installed` and per-skill install lines.
-Re-run the same build + `opencode.json` `file:` reference with those three
-`XDG_*_HOME` vars pointed at scratch dirs to reproduce.
+Verification: start OpenCode and confirm its log contains the Thrum asset
+installation message and per-skill install lines.

@@ -9,6 +9,16 @@ Thrum multi-agent coordination plugin for Cursor Agent.
 
 ## Install
 
+Until the public marketplace listing is approved, give Cursor Agent this
+prompt:
+
+```text
+Please install the Thrum Cursor plugin by following:
+https://github.com/leonletto/thrum-pro/blob/main/cursor-plugin/agent-instructions.md
+```
+
+From an existing clone:
+
 Run from any git repo where you want Thrum coordination:
 
 ```bash

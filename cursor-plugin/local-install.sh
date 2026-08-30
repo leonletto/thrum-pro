@@ -45,7 +45,7 @@ if [ -d "$SCRIPT_DIR/agents" ] && [ "$(ls -A "$SCRIPT_DIR/agents" 2>/dev/null)" 
 fi
 
 # Write hooks.json with resolved absolute paths
-sed "s|__PLUGIN_ROOT__|${SCRIPT_DIR}|g" \
+sed "s|\./scripts/|${SCRIPT_DIR}/scripts/|g" \
   "$SCRIPT_DIR/hooks/hooks.json" > "$CURSOR_DIR/hooks.json"
 
 # Write mcp.json for thrum MCP server

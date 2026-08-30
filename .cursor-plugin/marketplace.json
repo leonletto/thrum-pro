@@ -1,0 +1,18 @@
+{
+  "name": "thrum",
+  "owner": {
+    "name": "Leon Letto",
+    "email": "leon@thrum.team"
+  },
+  "metadata": {
+    "description": "Thrum multi-agent coordination plugins"
+  },
+  "plugins": [
+    {
+      "name": "thrum",
+      "source": "cursor-plugin",
+      "description": "Git-backed messaging for AI agent coordination across sessions, worktrees, and machines.",
+      "version": "0.11.0-dev.1.69"
+    }
+  ]
+}

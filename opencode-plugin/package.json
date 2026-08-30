@@ -1,6 +1,6 @@
 {
   "name": "opencode-thrum-pro",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Thrum multi-agent coordination plugin for Open Code",
   "type": "module",
   "main": "./dist/index.js",

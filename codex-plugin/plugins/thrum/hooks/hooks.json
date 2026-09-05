@@ -5,6 +5,11 @@
         "matcher": "startup|resume|clear",
         "hooks": [{
           "type": "command",
+          "command": "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/ensure-permission-activation.sh",
+          "statusMessage": "Ensuring thrum permission profile",
+          "timeout": 15
+        }, {
+          "type": "command",
           "command": "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/inject-prime-context.sh",
           "statusMessage": "Loading Thrum prime context",
           "timeout": 30

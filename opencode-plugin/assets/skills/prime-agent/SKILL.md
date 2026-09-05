@@ -85,8 +85,6 @@ needed, defer to `thrum prime`.
 
 Once both steps complete, proceed with the work the wake-primer asked for.
 
-The `/thrum:update-agent-state` and `/thrum:recover-agent-state` skills that
-used to be invoked here (recording end-of-session continuity into
-`.thrum/agents/<agent_id>/state.md` via `thrum agent state update` /
-`recover`) were retired — superseded by `thrum state` (personal_state kind). The
+The former agent-state update and recovery skills were retired. Personal
+continuity now uses `thrum state` (personal_state kind). The
 `last_seen_skills.txt` baseline write in Step 2 above is unaffected.

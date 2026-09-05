@@ -420,6 +420,74 @@ circuit-breaker — **BLOCKING**. Peer call with timeout but no circuit-breaker 
 **Triage:**
 `git diff main...HEAD --name-only | xargs grep -n '{peer_call_patterns}'`
 
+## Lens 11 — Census classification coverage (mandatory test, not a pattern check)
+
+**Why:** `go test ./...` never runs in Pass-3 — targeted-test selection is
+scoped to files the diff touches, and `internal/daemon/rpc/testcensus` is an ad
+hoc test target nothing routes to. A merge that adds a `state.NewState(...)`
+call site in an `internal/daemon/rpc/*_test.go` file (test-fixture setup, not a
+handler) can leave it unclassified and desync the frozen census snapshot with
+no gate catching it — trunk went RED post-merge on 573mo v87 for exactly this
+reason (thrum-ykmly).
+
+**Relationship to Lenses 1–10:** every other lens in this file is an
+LLM-judgment pattern check — grep a pattern, read the surrounding code, apply
+judgment. This lens is MECHANICAL: run the command, read PASS/FAIL. It shares
+its evidentiary discipline with the philosophy gate's coincidence-detector-tests
+lens and preamble rule 3 (RUN any test you make a claim about) rather than with
+Lenses 1–10's pattern-matching shape.
+
+**Own narrower trigger — this lens does NOT fire on every gate run.**
+`internal/daemon/` is already a gate-wide `trigger_directories` entry, so this
+gate already RUNS on any `internal/daemon/rpc/` diff. This lens carries its OWN
+trigger on top of that (see `config.lenses.census_classification_coverage` and
+`lens_scope_semantics`): it fires only when the diff (against merge-base,
+preamble rule 4) either (a) touches `internal/daemon/rpc/testcensus/**`
+directly, or (b) touches an `internal/daemon/rpc/*_test.go` file AND an
+added/changed line matches `trigger_content_pattern` (bare `NewState(`,
+alias-agnostic on purpose — a renamed import of the state package would defeat
+a `state.`-prefixed match, and over-firing here costs one fast test run while
+under-firing reproduces the exact hole this lens exists to close). A diff
+elsewhere under `internal/daemon/` (state/, safedb/, scheduler/, or an
+`rpc/*_test.go` edit that never touches a `NewState(` call) fires the GATE but
+not THIS lens — record it walked-and-N/A. A non-test `.go` change in
+`internal/daemon/rpc/` alone (e.g. a handler edit with no test change) does not
+fire this lens either: `census.go`'s `Run()` only scans `*_test.go` source
+non-recursively, so a handler-only edit cannot desync the census by
+construction.
+
+**How to apply:** Read `config.lenses.census_classification_coverage`. Check
+the trigger per the paragraph above. If it fires, run
+`config.lenses.census_classification_coverage.mandatory_test_command` in the
+gate's throwaway worktree (preamble rule 2) and record the literal output.
+
+**Gates `TestCensusClassificationCoverage` ONLY — deliberately NOT the whole
+package.** `mandatory_test_command` is `-run`-scoped to
+`^TestCensusClassificationCoverage$`. The sibling test in the same package,
+`TestCensusRegeneration`, is an orthogonal count-snapshot drift detector — it
+reds on ANY new top-level test function added anywhere in
+`internal/daemon/rpc`, unrelated to whether any `NewState` site is classified.
+Gating the whole package would false-block the next unrelated census-surface
+diff on `TestCensusRegeneration`'s brittleness with zero added
+defect-prevention (`ClassificationCoverage` alone already catches the defect
+this lens exists for). `TestCensusRegeneration`'s own staleness is tracked
+separately (nd2j1/P1 owns the classification data; the brittle count-snapshot
+assertion itself is tracked as **thrum-33zzh** — "make advisory or drop the
+raw-count assertion"), not by this lens.
+
+**Severity:** Trigger fires and `mandatory_test_command` was not run before
+merge, OR was run and is RED — **BLOCKING**. A RED result means an unclassified
+`NewState` site: confirm `testdata/classifications.json` was regenerated per
+`internal/daemon/rpc/testcensus/README.md` and re-committed on the same branch
+before merge.
+
+**Triage:**
+```bash
+git diff <merge-base>...<tip> --name-only | grep -E 'internal/daemon/rpc/testcensus/|internal/daemon/rpc/.*_test\.go$'
+# for any *_test.go hit outside testcensus/, confirm content match:
+git diff <merge-base>...<tip> -- <file> | grep -E '^\+.*NewState\('
+```
+
 ## Cross-gate consolidation with the philosophy gate
 
 This gate runs **in parallel** with `coordinator-philosophy-merge-gate` (both

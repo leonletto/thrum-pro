@@ -33,6 +33,10 @@ member that is a coordinator escalates to the human, not to that coordinator).
 Everything below is additive — the brainstorm-specific duties layered on top of
 that base.
 
+Your roster is entirely remote (other boxes), so the base skill's remote
+modal-unblock note applies to every roster member by default — never reach for
+`thrum tmux key`, which is local-socket-only.
+
 ### Roster = brainstormers
 
 Your `watch_params.roster` is the list of brainstormer agent names you manage.
@@ -68,6 +72,17 @@ Two channels feed your queue, because either alone can silently drop a thread:
   thread this backstop exists to catch — inbox-only detection would miss it
   entirely if the send failed, was mis-addressed, or the brainstormer simply
   froze before sending.
+
+  This backstop's actual capture loop runs as the same `thrum monitor`-
+  scheduled script the base `persistent-watcher-archetype` skill ships —
+  `resources/thrum-watch-pane-capture.sh` — pointed at your own roster of
+  brainstormers via your own `watch_params.json`. One parameterized script
+  serves both archetypes; only the roster contents and cadence differ, and those
+  are already `watch_params.json` fields, not script forks. Follow that skill's
+  "Driving your cycle" section for the setup-copy step and the exact
+  `thrum monitor start` registration — **`--notify-on-success` is mandatory
+  there too**, for the identical reason: a `--schedule`d job delivers nothing on
+  `--match` alone (thrum-ruz1z §5c).
 
 ### The queue (your pane console)
 

@@ -176,6 +176,30 @@ executed half is **scoped to the change**:
 - Any `*_tripwire_test.go` the change touches must stay green or the diff must
   state why its premise changed; a tripwire edited to accommodate the change is a
   finding, not a fix.
+- 🔴 **The CLASS-firing governance gates, on the merged tree — they are BLIND to
+  changed-package scoping, exactly like the `//go:embed` asset in §5.**
+  `TestFixtureDriftGuard_NoUnlistedSchemaMirrors` (`internal/schema`) and
+  `TestEveryMirrorWriterIsSanctioned` (`tests/gate`) fire on a CLASS — a hand-rolled
+  `CREATE TABLE` for a real production table name, or a new durablelane / mirror
+  writer — so a diff adds the violation **without touching `internal/schema` or
+  `tests/gate`**, and the changed-package `-race` never runs them. Cheap trigger, run
+  it every merge: `git diff <base> <tip> | grep -iE 'CREATE TABLE|ALTER TABLE|durablelane|MirrorWriter|sanctionedMirrorWriters'`
+  — ANY hit ⇒ also run `go test ./internal/schema/ -run TestFixtureDriftGuard` and
+  `go test ./tests/gate/ -run TestEveryMirrorWriterIsSanctioned` on the MERGED tree.
+  Measured 2026-08-28: kgi7t (`TestEveryMirrorWriterIsSanctioned`) and xo58f
+  (`TestFixtureDriftGuard`) BOTH escaped per-merge Pass-3 this way and surfaced only
+  in the daily gate as trunk-reds. The changed-package rule below is necessary, not
+  sufficient — a class gate is a property of the TREE, not the neighbourhood.
+  🔴 **Also always-run, same class-gate reasoning:**
+  `TestNoMainStateDBWriteOwnerBypasses` (`internal/testgate`; corpus 5.1
+  owner-bypass-check) — a scanner ratchet over every raw main-State-DB write
+  site, blind to changed-package scoping the same way. Measured 2026-09-04:
+  thrum-mjmu3 Part a introduced a raw `r.db.ExecContext` outside
+  `safedb.WriteCoordinator` in a durable-lane cold-boot restore step; the
+  ratchet went 213→214 and gate_thrum's Pass-3 on that merge was CLEAN because
+  this test was not yet in the always-run set (thrum-wdt97). Run it on the
+  MERGED tree every merge: `go test ./internal/testgate/... -run
+  TestNoMainStateDBWriteOwnerBypasses`.
 
 **Establish branch-attributable vs pre-existing from the changed-package `-race`
 result** — a regression adds failures the same packages did not have before. Do

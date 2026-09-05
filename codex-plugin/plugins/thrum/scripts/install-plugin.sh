@@ -31,7 +31,7 @@ MARKETPLACE_NAME="thrum-marketplace"
 PLUGIN_NAME="thrum"
 REPO="${THRUM_INSTALL_REPO:-leonletto/thrum-pro}"
 REF="${THRUM_INSTALL_REF:-main}"
-CODEX_HOME="${HOME}/.codex"
+CODEX_HOME="${CODEX_HOME:-${HOME}/.codex}"
 CONFIG="${CODEX_HOME}/config.toml"
 STAGED_ROOT="${CODEX_HOME}/.tmp/marketplaces/${MARKETPLACE_NAME}"
 SOURCE_DIR="${STAGED_ROOT}/codex-plugin/plugins/${PLUGIN_NAME}"
@@ -117,9 +117,16 @@ fi
 
 # 7. Ensure the thrum-workspace permission profile covers this repo's
 #    redirect-resolved audit-log dir (no-op skip if not run from a thrum repo).
+#    ensure-permission-profile.sh exits 0 for its own documented benign skip
+#    (no .thrum/ found — nothing to do), so a nonzero exit here is always a
+#    GENUINE failure (I/O error, malformed redirect, etc.), never the skip
+#    case. Fail closed on it, mirroring this file's own `|| die "..."` idiom
+#    used everywhere else (see steps 2, 3-6) — a failing profile setup must
+#    never be swallowed into a "✓ Plugin installed" success banner.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [[ -f "${SCRIPT_DIR}/ensure-permission-profile.sh" ]]; then
-  bash "${SCRIPT_DIR}/ensure-permission-profile.sh" || say "warning: ensure-permission-profile.sh failed; you may need to add the thrum-workspace permission profile manually (see INSTALL.md)."
+  bash "${SCRIPT_DIR}/ensure-permission-profile.sh" \
+    || die "ensure-permission-profile.sh failed; the thrum-workspace permission profile was NOT applied. Add it manually (see INSTALL.md's \"Sandbox permission profile\" section) or fix the reported error and re-run this installer."
 fi
 
 cat <<EOF

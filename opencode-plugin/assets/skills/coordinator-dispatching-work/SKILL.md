@@ -1,6 +1,6 @@
 ---
 name: coordinator-dispatching-work
-description: "Use when starting an epic, dispatching to an implementer, creating a worktree for an agent, or spawning a sub-agent. Loads coordinator-specific discipline for kicking off implementation work."
+description: "Use when starting an epic, dispatching to an implementer or orchestrator, choosing or re-routing which orchestrator gets a task, creating a worktree for an agent, or spawning a sub-agent. Loads coordinator-specific discipline for kicking off implementation work - routing by requirement and checking the target's load first."
 ---
 
 # Coordinator: Dispatching Work
@@ -72,8 +72,10 @@ optimization.
 
 ## Check the target's queue before you dispatch (R3)
 
-Before dispatching, confirm the agent isn't already loaded: `thrum queue list --agent
-<target>` (message it to confirm if its state is unclear). An empty result does NOT
+Before dispatching, read the target's load two ways: its queue AND its pane. `thrum
+queue list --agent <target>` (a well-run orchestrator keeps its queue current) plus a
+quick `thrum tmux capture <target>` to see what it is mid-task on (message it to confirm
+if its state is unclear). An empty result does NOT
 mean free — it also shows for an agent that keeps no queue or that you mis-named;
 confirm by message before assigning. `assign` appends to `assigned_to` with no
 duplicate check, so this pre-dispatch read is the only guard against double-loading a
@@ -236,11 +238,21 @@ grep -E 'THRUM-REVIEW: stage=prompt verdict=Ready:Yes([[:space:]]|-->|$)' "$PROM
 ```
 
 - **Stamp present** → the pre-dispatch review is already satisfied; SKIP
-  re-running it and dispatch.
-- **Stamp absent** → fall through to the normal pre-dispatch dual review. Do NOT
-  block dispatch on the stamp — it is a shortcut that lets you skip a redundant
-  review, not a new hard requirement (pre-feature prompts and prompts from other
-  flows won't carry it).
+  re-running it and dispatch. (The binding check itself — does the stamp still
+  bind the exact prompt object and locked plan — is `project-setup`'s job, not
+  this gate's; see its canonical contract, `project-setup` SKILL.md § "Step 5:
+  Stamp the prompt for the review loop" + Phase 0. Do not restate that recipe
+  here.)
+- **Stamp absent on a project-setup-produced prompt is an ANOMALY, not a
+  sanctioned shortcut.** After the prompt-stamp fix (`project-setup` Step 5),
+  project-setup cannot report completion or dispatch-readiness without
+  appending this stamp — so a project-setup prompt reaching dispatch without
+  one means something skipped a step. Do not treat its absence as normal; run
+  the full pre-dispatch dual review AND surface the missing stamp as a finding.
+  The one legitimate, narrow carve-out: **pre-feature prompts and prompts from
+  non-project-setup flows** genuinely never carry this stamp — for those, fall
+  through to the normal pre-dispatch dual review same as before, with no
+  anomaly flag.
 
 This is the prose side of the boundary; the post-DONE dual-review (which reviews
 the implementer's CODE, a different artifact) always runs separately. The prompt
@@ -250,6 +262,14 @@ post-DONE side.)
 ## Dispatching to an Orchestrator (Manager-Tier Flow)
 
 When the fleet has standing orchestrators and the work is a full plan execution:
+
+🔴 **Route by what the work REQUIRES, not by which orchestrator is easiest to reach.**
+An orchestrator co-located with special resources - a build/signing/release box, the
+shared data store, a particular OS - is RESERVED for work that needs those resources;
+all other work goes to a general-purpose orchestrator, addressed BY NAME. The
+locally-visible orchestrator is the one you reach for by reflex, and that reflex
+overloads it. Enumerate the FULL set first (local and remote alike), then pick by
+requirement and by load - never by visibility.
 
 ### Step 1: Select an orchestrator
 

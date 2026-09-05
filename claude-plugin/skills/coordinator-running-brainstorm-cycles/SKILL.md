@@ -519,8 +519,11 @@ contract-drift and quality issues the internal reviewer misses.
    stamp. Any FEASIBILITY finding (see Loop semantics) routes to the
    coordinator instead of being folded inline.
 6. Researcher repeats only if cycle-1 introduces new design surface (rare for
-   bounded mechanical plans); otherwise v2 LOCKED, stamped
-   `<!-- THRUM-REVIEW: stage=plan verdict=Ready:Yes cycle=<N> date=<YYYY-MM-DD> verify=Ready:Yes -->`.
+   bounded mechanical plans); otherwise v2 LOCKED. Before stamping, compute
+   `plan_obj`/`src_lock` per `_stamp-protocol.md` § "Review-object binding"
+   (strip-then-hash the plan against itself for `plan_obj`; plain-hash the
+   LOCKED source for `src_lock`), then stamp
+   `<!-- THRUM-REVIEW: stage=plan verdict=Ready:Yes cycle=<N> date=<YYYY-MM-DD> verify=Ready:Yes plan_obj=<blob> src_lock=<blob> -->`.
 7. Researcher signals plan LOCKED back to coord, citing both review passes
    and the Deviations block.
 
@@ -561,11 +564,12 @@ review catches translation errors (plan → prompt) plus prompt-specific quality
      `requesting-code-review` SUPPLEMENTARY — clarity, scope language,
      dispatch-readiness, sub-agent model guidance, DONE-shape spec.
 3. Researcher consolidates → folds inline → re-issues prompt; `project-setup`
-   appends the prompt-stage stamps (it OWNS them — see that skill's Step 5):
-   first `<!-- THRUM-GATE: stage=prompt next=dispatch -->` immediately after the
-   prompt is generated, then
-   `<!-- THRUM-REVIEW: stage=prompt verdict=Ready:Yes cycle=<N> date=<YYYY-MM-DD> -->`
-   after this review terminates.
+   OWNS and applies the prompt-stage stamps — the gate footer, the
+   binding-bound verdict stamp, and the hard completion requirement that it
+   not exist without one — per that skill's canonical contract (`project-setup`
+   SKILL.md § "Step 5: Stamp the prompt for the review loop" + Phase 0). This
+   step does not restate that mechanics; it exists only to confirm the stamp
+   is applied within the same project-setup session, before signaling back.
 4. Researcher signals "project-setup complete + post-setup dual-review applied"
    back to coord, citing both review passes + final artifact paths.
 

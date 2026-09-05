@@ -17,26 +17,28 @@
 
 - `thrum` CLI on `PATH`
 
-## Recommended: native marketplace install
+## Recommended: one-command install
 
 ```bash
-codex plugin marketplace add leonletto/thrum-pro
-codex plugin add thrum@thrum-marketplace
+bash <(curl -fsSL https://raw.githubusercontent.com/leonletto/thrum-pro/main/codex-plugin/plugins/thrum/scripts/install-plugin.sh)
 ```
 
-Codex stages and enables the plugin from the repository marketplace. Confirm
-with `codex plugin list`.
+That's it. The script registers the marketplace, stages the per-plugin cache (a
+step codex 0.130.0 doesn't do automatically for third-party marketplaces),
+enables the plugin, turns on the `plugin_hooks` feature, and (when run from
+inside a thrum repo/worktree) ensures the `thrum-workspace` sandbox permission
+profile covers that repo's audit-log dir — see "Sandbox permission profile"
+below. It's idempotent — re-run any time to pull the latest revision.
 
 Installs from the `main` branch — the only branch this distribution repo carries; there is no release-tag pinning yet.
 
-To update:
+If you have the repo cloned already, you can run it locally instead:
 
 ```bash
-codex plugin marketplace upgrade thrum-marketplace
-codex plugin add thrum@thrum-marketplace
+bash ./codex-plugin/plugins/thrum/scripts/install-plugin.sh
 ```
 
-After installation, follow the "First-run hook approval" steps below.
+After the script completes, follow the "First-run hook approval" steps below.
 
 ### Have an AI agent do it
 
@@ -49,16 +51,45 @@ Please install the Thrum codex plugin by following:
 https://github.com/leonletto/thrum-pro/blob/main/codex-plugin/plugins/thrum/agent-instructions.md
 ```
 
-Your agent will read the file, run the commands, and tell you when it's time to
+Your agent will read the file, run the installer, and tell you when it's time to
 restart codex and approve hooks.
 
-## Compatibility installer
+## Manual: low-level marketplace flow — INCOMPLETE, ADVANCED-ONLY, UNSUPPORTED FOR PERMISSIONS
 
-Older Codex releases that register a marketplace without staging its plugin can
-use the compatibility installer:
+> ⚠️ **This flow does NOT set up the sandbox permission profile, and Codex's
+> plugin manifest schema has no post-install hook to do it for you.**
+> Confirmed by reading `.codex-plugin/plugin.json` in full: there is no
+> `postInstall`/`install`/`lifecycle`/`scripts` key anywhere in Codex's
+> marketplace-plugin manifest schema, so nothing in Codex's own native
+> install path can auto-run `ensure-permission-profile.sh` for you. The ONLY
+> supported routine that yields a fully-permissioned install is
+> **`install-plugin.sh`** (the "Recommended: one-command install" section
+> above) — it runs exactly the same marketplace steps below PLUS the required
+> permission-profile step at the end, and fails loudly if that step fails.
+> If you follow the raw steps below instead, you MUST run
+> `ensure-permission-profile.sh` yourself as a final, required step (step 4)
+> — skipping it leaves thrum commands blocked by Codex's sandbox (see
+> "Sandbox permission profile" below for exactly what it grants and why).
+
+If you'd rather drive the install steps yourself:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/leonletto/thrum-pro/main/codex-plugin/plugins/thrum/scripts/install-plugin.sh)
+# 1. Register marketplace
+codex plugin marketplace add leonletto/thrum-pro
+
+# 2. Stage cache (codex 0.130.0 doesn't do this for third-party marketplaces)
+VERSION=$(jq -r '.version' ~/.codex/.tmp/marketplaces/thrum-marketplace/codex-plugin/plugins/thrum/.codex-plugin/plugin.json)
+mkdir -p ~/.codex/plugins/cache/thrum-marketplace/thrum/$VERSION
+cp -R ~/.codex/.tmp/marketplaces/thrum-marketplace/codex-plugin/plugins/thrum/. ~/.codex/plugins/cache/thrum-marketplace/thrum/$VERSION/
+
+# 3. Enable plugin + plugin_hooks feature
+printf '\n[plugins."thrum@thrum-marketplace"]\nenabled = true\n' >> ~/.codex/config.toml
+# Then add plugin_hooks = true under [features] in ~/.codex/config.toml
+
+# 4. REQUIRED — install-plugin.sh does this automatically; the raw flow above
+#    does not, so you must run it yourself or thrum commands stay blocked by
+#    Codex's sandbox:
+./codex-plugin/plugins/thrum/scripts/ensure-permission-profile.sh
 ```
 
 The marketplace manifest at the repo root
@@ -67,6 +98,13 @@ The marketplace manifest at the repo root
 marketplace.json at the staging root, so the repo-root manifest is required (the
 `codex-plugin/.agents/plugins/marketplace.json` is kept for local-source
 installs from a clone).
+
+To upgrade later:
+
+```bash
+codex plugin marketplace upgrade thrum-marketplace
+# Then re-stage the cache (steps 2-4 above), or just re-run install-plugin.sh.
+```
 
 ## Alternative: Local-clone install (dev only)
 
@@ -114,20 +152,38 @@ worktree, and blocks two things thrum commands need:
    outbound UNIX-socket connections by default, so even with the filesystem
    grant above, every RPC the thrum CLI makes to the daemon over that socket
    (which is how `prime`/`inbox`/`send` actually talk to it) is denied.
+3. **Filesystem read to the redirect-resolved `.thrum` directory itself**
+   (allowlist). A codex agent's own sandboxed Read-tool calls need this to
+   load ordinary thrum monitor/support material (`.thrum/role_templates`,
+   `.thrum/hotpath-gate.json`, `.thrum/philosophy.md`, `.thrum/config.json`,
+   etc.) — in a worktree with a redirect, this directory lives outside the
+   current worktree/workspace root, the same way the audit-log dir and
+   daemon socket do, so it isn't covered by `extends = ":workspace"` either.
+   `.codex/skills` needs no equivalent grant: it is never redirected, so it
+   always lives inside the current worktree/workspace root and is already
+   covered by `extends = ":workspace"`.
 
 `install-plugin.sh` runs `scripts/ensure-permission-profile.sh` at the end of
-install to fix both automatically. It resolves this repo's redirect-aware
-audit-log dir and daemon-socket path and, in `~/.codex/config.toml`,
-append-if-absent:
+install to fix all three automatically. It resolves this repo's
+redirect-aware audit-log dir, daemon-socket path, and `.thrum` dir and, in
+`~/.codex/config.toml`, append-if-absent:
 
 - ensures the root-level scalars `approval_policy = "on-request"`,
   `approvals_reviewer = "auto_review"`, and
   `default_permissions = "thrum-workspace"` exist (never clobbers a value
   already set by the user);
+  **scoping note:** these three scalars are pre-existing —
+  this bead's diff only adds the `.thrum` filesystem-read grant below.
+  Codex has no Bash-pattern command allowlist; ordinary `thrum` command
+  invocations are not prompted because of the pre-existing
+  `approvals_reviewer = "auto_review"` policy, not because of anything this
+  bead added. Do not cite this profile as a command-level allowlist grant —
+  it is a filesystem/network scope grant only;
 - ensures a `[permissions.thrum-workspace]` profile exists (`extends =
   ":workspace"`) with:
   - a `[permissions.thrum-workspace.filesystem]` table granting
-    `"<audit-log-dir>" = "write"` for this repo's resolved path;
+    `"<audit-log-dir>" = "write"` and `"<thrum-dir>" = "read"` for this
+    repo's resolved paths;
   - a `[permissions.thrum-workspace.network]` table with `enabled = true`,
     **plus** a `[permissions.thrum-workspace.network.unix_sockets]` table
     granting `"<daemon-socket-path>" = "allow"` for this repo's resolved

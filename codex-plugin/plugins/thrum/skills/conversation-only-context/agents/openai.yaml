@@ -1,0 +1,4 @@
+interface:
+  display_name: "Conversation Only Context"
+  short_description: "Use at the START of any long-lived agent session (researcher, coordinator, orchestrator, brainstormer), and whenever the operator says we are going to have a long conversation, get a lot done, or keep many threads open - also when context is climbing, when several investigations are in flight at once, when you are about to read code or a multi-file doc set to investigate, or when you catch yourself opening a log to just check quickly."
+  default_prompt: "Use at the START of any long-lived agent session (researcher, coordinator, orchestrator, brainstormer), and whenever the operator says we are going to have a long conversation, get a lot done, or keep many threads open - also when context is climbing, when several investigations are in flight at once, when you are about to read code or a multi-file doc set to investigate, or when you catch yourself opening a log to just check quickly."

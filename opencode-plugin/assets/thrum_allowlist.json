@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "_supersedes": "the earlier watcher-settings allowlist spec (single-watcher restart-flow scope)",
+  "_comment": [
+    "This is the canonical, code-consumed source for the Thrum ordinary-operation allowlist (allowlist).",
+    "TWO-CAVEAT SPLIT (owner ruling) — read both before editing this file:",
+    "  1. SUPERSEDED: the original spec's 'scoped to one watcher's restart flow, not a general starting point' framing is superseded. This IS the general, code-consumed source every runtime generator draws from.",
+    "  2. STILL BINDING, NOT SUPERSEDED — BUT THE MODEL CHANGED (owner ruling via the fleet coordinator, allowlist consolidated round): command_patterns is no longer an enumerated per-subcommand list. The owner ruled ALL thrum commands are globally allowlisted — 'thrum' itself is the ONE entry, representing the whole command FAMILY (any subcommand). This is still bounded, never a blanket Bash(*): the ONLY thing that admits a candidate is an exact executable-token match (bare 'thrum', or the Part-C canonical-install-path forms) at an executable boundary, and the fail-closed metachar/alt-exec guard (containsForbiddenFragment + the alt-exec check in matchesCommandPattern) is now the PRIMARY scoping boundary, not a secondary one — it alone is what stops sh -c/bash -c, command substitution ($(...)/backticks), compound commands (&&, ;, |, ||), and alternate executable paths (./thrum, /tmp/thrum, arbitrary absolute paths, suffix/prefix lookalikes like thrum-evil). Every generator consuming this file must render the FAMILY grant in its native syntax (Claude/OpenCode: any-subcommand pattern, no shell composition; Codex: native profile only, §5.1, no invented Bash allowlist — command_patterns is not a Codex concept) and prove the negative controls above still hold — see each generator's test file.",
+    "READ-PATH INVARIANT: read_paths below (including the recursive '.thrum/**'-shaped grant every generator renders from '.thrum') MUST NEVER be allowed to carry secrets. .thrum is granted broad READ access across every supported runtime by this file — if any future change adds credentials, tokens, or private keys under .thrum, this allowlist makes them world-readable to every runtime this file feeds. Keep secrets out of .thrum, not out of this file.",
+    "GLOBAL READ PATHS (allowlist round-4, owner P0): global_read_paths grants ABSOLUTE, home-relative directories outside the project root — distinct from read_paths above, which are project-relative. Per-runtime because the underlying installed-plugin-cache layout differs by runtime (no shared portable form exists): claude = ~/.claude/plugins/cache/thrum (the thrum marketplace/plugin's OWN cache subtree, version-hash-stripped — NEVER pin a specific installed <version> segment, and never grant the broader ~/.claude/plugins/cache root, which also holds OTHER installed marketplaces' plugin payload); codex = ~/.codex/skills (Codex's flattened global skill install dir — granted in full because Codex's permission syntax has no glob/prefix-match primitive to scope it to thrum-named skills only; it also exposes non-thrum skill dirs as an accepted, documented trade-off) + ~/.codex/plugins/cache/thrum-marketplace/thrum (the versioned plugin-cache mirror, same version-hash-stripping rule as Claude's). OpenCode needs NO entry here — its own installer (opencode-plugin/src/installer.ts, opencodeGlobalReadPaths) already derives its global skill/command paths dynamically from its own resolved configDir at generation time, so a static path here would be redundant and could drift from the real value.",
+    "OWNER-AUTHORIZED EXCEPTION — /private/tmp (owner ruling, watcher-recovery P0; scope CONFIRMED all-runtimes by the fleet coordinator the same day — owner's wording was 'global configs for all agents', the operational-artifact class is runtime-independent): owner_authorized_exceptions grants EVERY supported runtime broad READ access to /private/tmp/* DESPITE it being a world-writable directory — explicitly ruled acceptable by the owner for coordinator/watcher operational artifacts. This is a DELIBERATE exception, not a template for widening elsewhere: it grants READ/ACCESS ONLY — never execute, never shell-interpolation, never a sibling root like /private or /private/tmpfoo, never write/delete. Codex renders this via its NATIVE filesystem-read profile mechanism, never as an invented Bash-pattern entry (still-binding caveat above). Every generator consuming this list must prove those boundaries by negative-control test AND by-effect (a real read actually succeeds; a real write/exec attempt actually fails), not merely by the shape of the grant string.",
+    "~/.local/bin OWNER CORRECTION (owner ruling, consolidated round): global_read_paths.<runtime> gains '~/.local/bin' for ALL THREE runtimes — the install location of the thrum binary itself, so PATH-resolved 'thrum' can actually execute under each runtime's sandbox. Granted in full (not scoped to just the thrum binary file) for the same reason as Codex's flattened ~/.codex/skills grant above: none of the three permission syntaxes has a single-file-only primitive that stays portable, so the directory is the smallest expressible unit. This is a FILESYSTEM READ/ACCESS/EXEC grant on the install directory — it is a SEPARATE axis from command_patterns matching, and does NOT loosen the alt-exec guard in approved.go beyond the tight, explicitly-scoped canonical-install-path carve-out documented in that file (canonicalInstallPathPrefixes) — a lookalike executable in the same directory (~/.local/bin/thrum-evil) is still rejected by that carve-out's own boundary check even though the DIRECTORY grant here would let a runtime read/access it."
+  ],
+  "command_patterns": [
+    "thrum"
+  ],
+  "read_paths": [
+    ".claude/skills",
+    ".claude/commands",
+    ".codex/skills",
+    ".opencode/skills",
+    ".thrum"
+  ],
+  "global_read_paths": {
+    "claude": ["~/.claude/plugins/cache/thrum", "~/.local/bin"],
+    "codex": ["~/.codex/skills", "~/.codex/plugins/cache/thrum-marketplace/thrum", "~/.local/bin"],
+    "opencode": ["~/.local/bin"]
+  },
+  "owner_authorized_exceptions": {
+    "claude": ["/private/tmp"],
+    "codex": ["/private/tmp"],
+    "opencode": ["/private/tmp"]
+  }
+}

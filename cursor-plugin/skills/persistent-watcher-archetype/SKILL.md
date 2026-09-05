@@ -42,6 +42,13 @@ every agent in your `roster`:
   pattern check, not a judgment call.
 - Never approve blind: read the actual command text first.
 - Verify by re-capture after acting — never trust exit status alone.
+- To unblock a REMOTE roster member's modal, use `thrum tmux send <agent> " "`
+  (proxies by agent name to the owning peer daemon and appends Enter, so a
+  space+Enter confirms the default-focused option) — never `thrum tmux key`,
+  which is local-socket-only and errors on a remote agent. This grants only
+  the leftmost/default option; the bright line above still applies. From the
+  CLI/peer-router path this send is QUEUED behind the conservative
+  monitor-silence wait, not instant — don't re-send while waiting it out.
 
 ## Your own restart (auto-restart-at-ctx-threshold)
 
@@ -171,24 +178,76 @@ failure this archetype exists to prevent, inflicted on itself by the wrong
 choice of plumbing.
 
 Register the loop as a `thrum monitor` instead — a daemon-scheduled job,
-independent of your session, that keeps running across your restarts:
+independent of your session, that keeps running across your restarts.
+
+**A ready-to-use script ships with this skill** — `resources/thrum-watch-
+pane-capture.sh` (paired with `resources/thrum-capture-fallback.sh`,
+thrum-3mhrt). It is generic and roster-driven: it reads your own
+`watch_params.json`, captures each roster member's pane (local `thrum tmux
+capture` first, always — that already reaches remote agents by name via the
+normal rpcrouter proxy; see "SSH fallback" below for what the second script
+is for), runs `thrum detect --category permission`, applies the two-capture
+stability check, writes one report file, and emits one matchable summary
+line. It is mechanical only — no auto-escalate, no auto-key — exactly the
+scope this section already describes; judgment stays in your own turn.
+
+**Setup (one-time per watcher instance):** `CLAUDE_PLUGIN_ROOT` is a
+Claude-Code-hook-only env var — it is NOT present in `thrum monitor`'s
+scheduled-process environment, so the script cannot locate itself inside
+the plugin tree at run time. Copy both scripts out of the skill's
+`resources/` into your own agent directory first:
 
 ```bash
-thrum monitor start --name <descriptive-name> \
-  --match "<a regex matching your script's one-line ready signal>" \
-  --to @<you> \
-  -- <path-to-a-script-that-loops-and-emits-that-signal>
+cp "${CLAUDE_PLUGIN_ROOT}/skills/persistent-watcher-archetype/resources/thrum-watch-pane-capture.sh" \
+   "${CLAUDE_PLUGIN_ROOT}/skills/persistent-watcher-archetype/resources/thrum-capture-fallback.sh" \
+   .thrum/agents/<you>/
+chmod +x .thrum/agents/<you>/thrum-watch-pane-capture.sh .thrum/agents/<you>/thrum-capture-fallback.sh
 ```
 
-The script's job is mechanical only: loop, capture each roster member's
-pane to a file, and emit one matchable line per cycle. It does not judge or
-act — `thrum monitor` matches that line and delivers it to you as a thrum
-message, which is your wake signal. Judgment (duties 1-4 above) happens in
-your own turn when you read that message, not in the script.
+Then register the monitor against that absolute copy path —
+**`--notify-on-success` is MANDATORY, not optional decoration**: a
+`--schedule`d job delivers NOTHING on `--match` alone (thrum-ruz1z §5c —
+this fails completely silently, every status field reads healthy, and it
+is exactly the trap a literal reading of the syntax below used to walk
+readers into):
+
+```bash
+thrum monitor start --name <you>-pane-watch \
+  --match "^watch-tick: (cycle done|RESOLUTION-FAIL)" \
+  --to @<you> \
+  --notify-on-success \
+  --schedule '*/15 * * * *' \
+  -- /absolute/path/to/.thrum/agents/<you>/thrum-watch-pane-capture.sh
+```
+
+(The `RESOLUTION-FAIL` alternative in `--match` is the script's own
+fork-default signal — see "SSH fallback" below.)
 
 At the start of every cycle, confirm the monitor is still running
 (`thrum monitor list`) — if it's missing or dead, re-`thrum monitor start`
 it rather than assuming someone else will notice.
+
+### SSH fallback (resilience net, not the primary path)
+
+`thrum tmux capture <agent>` already reaches remote agents by name via the
+rpcrouter proxy — that is how fleet-wide watching works today for a healthy
+peer. `thrum-capture-fallback.sh` exists for when that proxy path is
+broken on the caller's side (known bug classes: thrum-7vwgy same-host
+dual-daemon caller-identity collision; thrum-zkqut phantom-routing
+regression on a daemon build predating `EnsureProxies`). It is a strict
+FALLBACK, never primary and never SSH-first: `thrum-watch-pane-capture.sh`
+always tries the local proxy path first, and only retries via an SSH hop —
+using a per-agent SSH target resolved from `thrum state`
+(`agent_pool:<agent>` → box hostname → matched against `topology` →
+`ssh.target`/`ssh.user`/`repo_path`) — on the specific known proxy-failure
+error signature. Resolution fails CLOSED on any gap (missing box, no
+matching topology row, a placeholder `repo_path`) — that agent simply gets
+no SSH fallback for the run, it is not skipped from capture entirely, and
+local-only capture failures still show up in the report. If EVERY roster
+agent fails resolution in one run (likely a fleet-wide topology/agent_pool
+data gap, not routine per-agent degradation), the script flips its summary
+line to the `RESOLUTION-FAIL` marker so `--match` treats it as a real
+problem rather than a clean tick.
 
 ## Relationship to the deterministic context-monitoring sweep
 

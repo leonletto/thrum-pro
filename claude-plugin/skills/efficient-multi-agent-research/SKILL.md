@@ -125,10 +125,10 @@ hard to consolidate. Specify table columns in every prompt.
 **Not specifying output file paths** - Agents may write to the working directory
 or not at all. Always include the exact output path in every prompt.
 
-**Have sub-agents write their findings file with a Bash heredoc, not the Write
-tool.** The Write tool refuses subagent report files ("Subagents should return
-findings as text, not write report files") regardless of how the brief is worded.
-The filesystem is writable; the tool is what refuses.
+**Write is fine for a NEW findings file; a heredoc is the safe form for updating
+one.** Write refuses to overwrite a file it has not Read this session, so a
+round-2 agent updating an existing findings file fails unless it Reads it first.
+Prefer `cat >> <path> <<'EOF'` to append on later rounds.
 
 **Put this in every prompt:**
 
@@ -136,8 +136,9 @@ The filesystem is writable; the tool is what refuses.
 READ-ONLY EVERYWHERE EXCEPT YOUR OUTPUT FILE.
 Do not modify source, tests, config, git state, or the issue tracker.
 You MUST write your findings to exactly: dev-docs/<topic>/findings_N.md
-Write it with a Bash heredoc (cat > <path> <<'EOF' ... EOF), NOT the Write tool —
-Write refuses report files. That single write is expected and authorized.
+Write is fine for creating it. To UPDATE it on a later round, Read it first or
+append with a heredoc (cat >> <path> <<'EOF' ... EOF) — Write refuses to
+overwrite a file it has not Read. That single write is expected and authorized.
 ```
 
 If an agent still returns text instead of a file, persist it yourself verbatim

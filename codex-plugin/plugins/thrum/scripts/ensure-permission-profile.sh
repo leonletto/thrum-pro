@@ -23,11 +23,26 @@
 #      socket path — `unix_sockets` alone, without `network.enabled = true`,
 #      loads as valid TOML but is INERT (daemon calls still fail).
 #
-# This script resolves the redirect-aware audit-log dir and daemon-socket
-# path for the repo it's run from and appends both (append-if-absent,
-# matching install-plugin.sh's `[features]` insertion idiom) to a
-# `[permissions.thrum-workspace]` profile in ~/.codex/config.toml. It also
-# ensures the three root-level scalars (`approval_policy`,
+#   3. Filesystem READ to the redirect-resolved `.thrum` directory itself
+#      (Codex leg). A codex agent's own sandboxed Read-tool
+#      calls need this to load ordinary thrum monitor/support material —
+#      `.thrum/role_templates/*.md`, `.thrum/hotpath-gate.json`,
+#      `.thrum/philosophy.md`, `.thrum/config.json`, etc. In a worktree with
+#      a redirect, this directory lives OUTSIDE the current
+#      worktree/workspace root, exactly like the audit-log dir and daemon
+#      socket above, so it isn't covered by the profile's
+#      `extends = ":workspace"` baseline either. `.codex/skills` deliberately
+#      gets NO equivalent entry: only `.thrum` and `.beads` are ever
+#      redirected, so `.codex/skills` always lives inside the current
+#      worktree/workspace root and is already covered by
+#      `extends = ":workspace"` — an explicit entry for it would be a
+#      redundant duplicate of a grant that already applies.
+#
+# This script resolves the redirect-aware audit-log dir, daemon-socket path,
+# and `.thrum` dir for the repo it's run from and appends all of them
+# (append-if-absent, matching install-plugin.sh's `[features]` insertion
+# idiom) to a `[permissions.thrum-workspace]` profile in ~/.codex/config.toml.
+# It also ensures the three root-level scalars (`approval_policy`,
 # `approvals_reviewer`, `default_permissions`) exist, without clobbering any
 # pre-existing user value.
 #
@@ -110,6 +125,54 @@ audit_dir="${resolved_thrum_dir}/var/log"
 # MAIN repo's .thrum/var/, not a per-worktree one).
 socket_path="${resolved_thrum_dir}/var/thrum.sock"
 
+# Global plugin-skill cache roots (the allowlist effort round-4). These are the two
+# codex entries under global_read_paths in the canonical allowlist,
+# internal/permissions/thrum_allowlist.json (FROZEN — read only, never
+# edited by this script): "~/.codex/skills" (Codex's flattened global skill
+# install dir) and "~/.codex/plugins/cache/thrum-marketplace/thrum" (the
+# versioned plugin-cache mirror). Both are HOME-relative in the canonical
+# JSON, but Codex's config.toml has NO ~/env-var expansion — confirmed by
+# investigation: the live config only ever contains literal absolute paths
+# as table keys. So, exactly like CODEX_HOME_DIR above, interpolate the
+# literal ${HOME} value here at generation time rather than writing the
+# tilde form, which would load as valid TOML but grant nothing.
+codex_skills_dir="${HOME}/.codex/skills"
+codex_plugin_cache_dir="${HOME}/.codex/plugins/cache/thrum-marketplace/thrum"
+
+# Thrum-binary install-location read grant (consolidated round,
+# Part B). Owner correction (owner ruling): agents need read/access to
+# the thrum binary's install location so PATH-resolved `thrum` can execute
+# under the sandbox — this mirrors the canonical allowlist's
+# global_read_paths.codex entry (internal/permissions/thrum_allowlist.json),
+# which now lists "~/.local/bin" for all three runtimes. Same $HOME
+# interpolation rationale as codex_skills_dir/codex_plugin_cache_dir above:
+# config.toml has no ~/env-var expansion, so the literal absolute path is
+# rendered at generation time, never the tilde form. This is a filesystem
+# READ grant — a separate axis from command_patterns matching — and does not
+# touch the alt-exec carve-out in the permissions engine.
+local_bin_dir="${HOME}/.local/bin"
+
+# Owner-authorized /private/tmp exception (the allowlist effort round-4). Quoting the
+# canonical allowlist's own comment verbatim so nobody removes this later
+# thinking it's an accidental broad grant: "OWNER-AUTHORIZED EXCEPTION —
+# /private/tmp (owner ruling, watcher-recovery P0; scope CONFIRMED
+# all-runtimes by the fleet coordinator the same day — owner's wording was
+# 'global configs for all agents', the operational-artifact class is
+# runtime-independent): owner_authorized_exceptions grants EVERY supported
+# runtime broad READ access to /private/tmp/* DESPITE it being a
+# world-writable directory — explicitly ruled acceptable by the owner for
+# coordinator/watcher operational artifacts. This is a DELIBERATE exception,
+# not a template for widening elsewhere: it grants READ/ACCESS ONLY — never
+# execute, never shell-interpolation, never a sibling root like /private or
+# /private/tmpfoo, never write/delete." This path is already absolute, so no
+# interpolation is needed. Codex renders this via its NATIVE
+# filesystem-read profile mechanism (the same
+# [permissions.thrum-workspace.filesystem] table as every other grant in
+# this script) — NEVER as an invented Bash-pattern entry; per the project's
+# hard constraint, Codex has no Bash-pattern command allowlist and this
+# script must not add one.
+tmp_exception_dir="/private/tmp"
+
 # 3. Ensure root scalars + the permissions block/path line via python3
 #    (append-if-absent, single read+write pass — matches install-plugin.sh's
 #    existing `[features]` insertion idiom).
@@ -121,13 +184,15 @@ fi
 mkdir -p "$(dirname "${CODEX_CONFIG}")" || { err "could not create $(dirname "${CODEX_CONFIG}")"; exit 1; }
 [[ -f "${CODEX_CONFIG}" ]] || : > "${CODEX_CONFIG}"
 
-PY_OUT=$(python3 - "${CODEX_CONFIG}" "${audit_dir}" "${socket_path}" <<'PY'
+PY_OUT=$(python3 - "${CODEX_CONFIG}" "${audit_dir}" "${socket_path}" "${resolved_thrum_dir}" "${codex_skills_dir}" "${codex_plugin_cache_dir}" "${tmp_exception_dir}" "${local_bin_dir}" <<'PY'
 import os
 import re
 import sys
 import tempfile
 
-config_path, audit_dir, socket_path = sys.argv[1], sys.argv[2], sys.argv[3]
+(config_path, audit_dir, socket_path, thrum_dir,
+ codex_skills_dir, codex_plugin_cache_dir, tmp_exception_dir,
+ local_bin_dir) = sys.argv[1:9]
 
 with open(config_path, "r") as f:
     content = f.read()
@@ -166,8 +231,50 @@ for key, full_line in scalars:
 if to_insert:
     lines = lines[:insert_at] + to_insert + lines[insert_at:]
 
-# 2) Permissions block / path line, append-if-absent.
+# 2) Permissions block / path lines, append-if-absent.
+#
+# Two lines go in the SAME [permissions.thrum-workspace.filesystem] table:
+#   - path_line:      write access to the redirect-resolved audit-log dir
+#                      (pre-existing grant, unchanged).
+#   - thrum_read_line: READ access to the redirect-resolved `.thrum` dir
+#                       itself (Codex leg). This is what lets a
+#                       codex agent's own sandboxed Read-tool calls load
+#                       ordinary thrum monitor/support material
+#                       (.thrum/role_templates, .thrum/hotpath-gate.json,
+#                       .thrum/philosophy.md, .thrum/config.json, etc.)
+#                       without a permission denial — needed because, in the
+#                       worktree-redirect case, that directory lives OUTSIDE
+#                       the current worktree/workspace root the same way the
+#                       audit-log dir and daemon socket do, so it isn't
+#                       covered by the profile's `extends = ":workspace"`
+#                       baseline. (`.codex/skills` deliberately gets NO such
+#                       entry here: it is never redirected — only `.thrum`
+#                       and `.beads` are — so it always lives inside the
+#                       current worktree/workspace root and is therefore
+#                       already covered by `extends = ":workspace"`; adding
+#                       an explicit entry for it would be a redundant
+#                       duplicate of a grant that already applies.)
 path_line = '"%s" = "write"' % audit_dir
+thrum_read_line = '"%s" = "read"' % thrum_dir
+# Global plugin-skill cache read grants (the allowlist effort round-4) — literal,
+# $HOME-resolved absolute paths (see the shell-side comment above for why no
+# tilde form is used). Owner-authorized /private/tmp exception — literal
+# absolute path, no interpolation needed. All three use "read" only, never
+# "write"/"exec"/"allow" — same as the pre-existing .thrum-dir grant.
+codex_skills_read_line = '"%s" = "read"' % codex_skills_dir
+codex_plugin_cache_read_line = '"%s" = "read"' % codex_plugin_cache_dir
+tmp_exception_read_line = '"%s" = "read"' % tmp_exception_dir
+# Thrum-binary install-location read grant (Part B) — see the
+# shell-side comment above local_bin_dir for rationale.
+local_bin_read_line = '"%s" = "read"' % local_bin_dir
+fs_lines_to_ensure = [
+    (path_line, "already_present", "added_path"),
+    (thrum_read_line, "already_present_thrum_read", "added_thrum_read"),
+    (codex_skills_read_line, "already_present_codex_skills_read", "added_codex_skills_read"),
+    (codex_plugin_cache_read_line, "already_present_codex_plugin_cache_read", "added_codex_plugin_cache_read"),
+    (tmp_exception_read_line, "already_present_tmp_exception_read", "added_tmp_exception_read"),
+    (local_bin_read_line, "already_present_local_bin_read", "added_local_bin_read"),
+]
 
 MAIN_HEADER_RE = re.compile(r'^\[\s*permissions\.thrum-workspace\s*\]$')
 FS_HEADER_RE = re.compile(r'^\[\s*permissions\.thrum-workspace\.filesystem\s*\]$')
@@ -185,21 +292,26 @@ if fs_header_idx is not None:
     # The filesystem sub-table already exists somewhere in the file (main
     # header may or may not be contiguous with it — doesn't matter here).
     # Its own section runs from just after its header to the next '['
-    # line anywhere in the file, or EOF.
+    # line anywhere in the file, or EOF. Check each managed line
+    # independently (append-if-absent per-line, not per-table) and insert
+    # whichever ones are missing, all at once, right after the header.
     fs_section_end = len(lines)
     for idx in range(fs_header_idx + 1, len(lines)):
         if lines[idx].strip().startswith("["):
             fs_section_end = idx
             break
 
-    already_present = any(
-        l.strip() == path_line for l in lines[fs_header_idx + 1:fs_section_end]
-    )
-    if already_present:
-        messages.append("already_present")
-    else:
-        lines = lines[:fs_header_idx + 1] + [path_line] + lines[fs_header_idx + 1:]
-        messages.append("added_path")
+    existing_fs_lines = {l.strip() for l in lines[fs_header_idx + 1:fs_section_end]}
+    to_insert_fs = []
+    for line, present_msg, added_msg in fs_lines_to_ensure:
+        if line in existing_fs_lines:
+            messages.append(present_msg)
+        else:
+            to_insert_fs.append(line)
+            messages.append(added_msg)
+
+    if to_insert_fs:
+        lines = lines[:fs_header_idx + 1] + to_insert_fs + lines[fs_header_idx + 1:]
 else:
     # No filesystem sub-table anywhere yet. Look for the main header.
     header_idx = None
@@ -218,7 +330,7 @@ else:
         lines.append('extends = ":workspace"')
         lines.append("")
         lines.append("[permissions.thrum-workspace.filesystem]")
-        lines.append(path_line)
+        lines.extend(line for line, _, _ in fs_lines_to_ensure)
         messages.append("added_block")
     else:
         # Main header exists but no fs sub-table anywhere in the file, so
@@ -231,8 +343,11 @@ else:
                 section_end = idx
                 break
 
-        lines = lines[:section_end] + ["[permissions.thrum-workspace.filesystem]", path_line] + lines[section_end:]
-        messages.append("added_path")
+        lines = lines[:section_end] + ["[permissions.thrum-workspace.filesystem]"] + [
+            line for line, _, _ in fs_lines_to_ensure
+        ] + lines[section_end:]
+        for _, _, added_msg in fs_lines_to_ensure:
+            messages.append(added_msg)
 
 # 3) Network table (`network.enabled` + `network.unix_sockets` sub-table),
 #    append-if-absent. Runs as a third+fourth step AFTER the filesystem-grant
@@ -439,6 +554,36 @@ if [[ -n "${PY_OUT}" ]]; then
       added_path)
         say "added ${audit_dir} to existing [permissions.thrum-workspace] profile in ${CODEX_CONFIG}."
         ;;
+      already_present_thrum_read)
+        say "thrum-workspace read grant already present for ${resolved_thrum_dir}; leaving as-is."
+        ;;
+      added_thrum_read)
+        say "added ${resolved_thrum_dir} read grant to [permissions.thrum-workspace.filesystem] in ${CODEX_CONFIG}."
+        ;;
+      already_present_codex_skills_read)
+        say "thrum-workspace read grant already present for ${codex_skills_dir}; leaving as-is."
+        ;;
+      added_codex_skills_read)
+        say "added ${codex_skills_dir} read grant to [permissions.thrum-workspace.filesystem] in ${CODEX_CONFIG}."
+        ;;
+      already_present_codex_plugin_cache_read)
+        say "thrum-workspace read grant already present for ${codex_plugin_cache_dir}; leaving as-is."
+        ;;
+      added_codex_plugin_cache_read)
+        say "added ${codex_plugin_cache_dir} read grant to [permissions.thrum-workspace.filesystem] in ${CODEX_CONFIG}."
+        ;;
+      already_present_tmp_exception_read)
+        say "thrum-workspace read grant already present for ${tmp_exception_dir}; leaving as-is."
+        ;;
+      added_tmp_exception_read)
+        say "added owner-authorized ${tmp_exception_dir} read grant to [permissions.thrum-workspace.filesystem] in ${CODEX_CONFIG}."
+        ;;
+      already_present_local_bin_read)
+        say "thrum-workspace read grant already present for ${local_bin_dir}; leaving as-is."
+        ;;
+      added_local_bin_read)
+        say "added ${local_bin_dir} read grant to [permissions.thrum-workspace.filesystem] in ${CODEX_CONFIG}."
+        ;;
       already_present_socket)
         say "thrum-workspace network.unix_sockets grant already present for ${socket_path}; leaving as-is."
         ;;
@@ -457,4 +602,9 @@ fi
 
 say "✓ thrum-workspace permission profile ensured for: ${audit_dir}"
 say "✓ thrum-workspace network.unix_sockets grant ensured for: ${socket_path}"
+say "✓ thrum-workspace read grant ensured for: ${resolved_thrum_dir}"
+say "✓ thrum-workspace read grant ensured for: ${codex_skills_dir}"
+say "✓ thrum-workspace read grant ensured for: ${codex_plugin_cache_dir}"
+say "✓ thrum-workspace read grant (owner-authorized exception) ensured for: ${tmp_exception_dir}"
+say "✓ thrum-workspace read grant ensured for: ${local_bin_dir}"
 exit 0

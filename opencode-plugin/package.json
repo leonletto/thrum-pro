@@ -1,6 +1,6 @@
 {
   "name": "opencode-thrum-pro",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Thrum multi-agent coordination plugin for Open Code",
   "type": "module",
   "main": "./dist/index.js",
@@ -17,7 +17,8 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
-    "test": "npm run build && node --test dist",
+    "test": "npm run build && node --test 'dist/**/*.test.js'",
+    "test:integration": "npm run build && node --test dist/permission-fixture.integration.test.js",
     "prepublishOnly": "npm run build"
   },
   "files": [

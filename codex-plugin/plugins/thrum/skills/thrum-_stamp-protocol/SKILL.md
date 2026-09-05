@@ -92,6 +92,69 @@ parseable with `grep -F` semantics without regex. The reader-side regex in
 `verify-against-plan` anchors on this fixed format; do not reorder or recase any
 field.
 
+### Review-object binding (THRUM-REVIEW stamp — plan/prompt binding)
+
+A review stamp's PRESENCE proves a review happened; it does not prove the stamp
+still binds the artifact that was reviewed. An edit made after a `Ready:Yes`
+verdict leaves a stamp that still reads `Ready:Yes` while describing a document
+that no longer exists — the same class of staleness the Authored-against stamp
+solves for the tree, applied here to the artifact itself.
+
+The `THRUM-REVIEW` stamp carries two extra keys per stage, binding it to the
+exact git blob it reviewed and the exact source it was reviewed against:
+
+| Stage          | Self-binding key | Source-lock key |
+| -------------- | ---------------- | --------------- |
+| `stage=plan`   | `plan_obj`       | `src_lock`      |
+| `stage=prompt` | `prompt_obj`     | `plan_lock`     |
+
+#### Derivation (strip-then-hash, run at stamping time)
+
+```sh
+# self-object blob: strip EVERY THRUM-REVIEW line, hash the remainder, filters OFF
+obj=$(grep -v '^<!-- THRUM-REVIEW:' "$FILE" | git hash-object --no-filters --stdin)
+# source-lock blob: the source file is not mutated by the stamp -> plain hash
+lock=$(git hash-object --no-filters "$SOURCE_FILE")
+```
+
+- Strip set = every line matching `^<!-- THRUM-REVIEW:` (all cycles) — NOT
+  `THRUM-GATE`/`THRUM-DEFER`. The stamp cannot bind a hash that includes itself,
+  so its own lines are removed before hashing (chicken-and-egg).
+- `--no-filters --stdin` bypasses gitattributes clean filters / autocrlf so the
+  value emitted here and the value re-derived at read time agree byte-for-byte.
+- Hash the **working-tree** file, not a committed blob — an uncommitted
+  post-review edit must be caught before it is ever committed.
+- For `stage=plan`: `$SOURCE_FILE` is the LOCKED brainstorm (plus design spec,
+  if any); `src_lock` proves the plan was reviewed against the source that was
+  current at review time.
+- For `stage=prompt`: `$SOURCE_FILE` is the LOCKED plan; `plan_lock` proves the
+  prompt was reviewed against the plan that was current at review time.
+- When multiple cycles' `THRUM-REVIEW: stage=<S>` lines coexist, the
+  **highest-cycle (last-appended)** line is the binding verdict; earlier lines
+  are history, never re-checked. Stamps are only ever appended, never reordered,
+  so append-order == cycle-order — select with `tail -1`, never a sort
+  (`cycle=10` must beat `cycle=9`, which a lexical sort inverts).
+
+#### Null/unresolvable guard
+
+Same failure class as the Authored-against stamp above: if either `obj` or
+`lock` comes back empty or `null`, STOP and report — do NOT emit a stamp with an
+empty/`null` binding key. A `THRUM-REVIEW` line with `plan_obj=` (or any of the
+four binding keys) empty or literal `null` still matches a reader's regex and
+reads as a valid binding — the value a reader would trust to prove binding is
+exactly the value that never resolved.
+
+#### Extended stamp shape (fixed key order preserved)
+
+```text
+<!-- THRUM-REVIEW: stage=plan verdict=Ready:Yes cycle=<N> date=<YYYY-MM-DD> verify=<...> plan_obj=<blob> src_lock=<blob> [rev=... notes="..."] -->
+<!-- THRUM-REVIEW: stage=prompt verdict=Ready:Yes cycle=<N> date=<YYYY-MM-DD> prompt_obj=<blob> plan_lock=<blob> -->
+```
+
+`plan_obj`/`src_lock` and `prompt_obj`/`plan_lock` are appended after the
+stage's existing keys, in this order — keeping the fixed-key-order convention
+this file already establishes for the Authored-against stamp above.
+
 ### Read-time provenance re-derivation
 
 Both checks below are computable from the two fields the stamp already carries

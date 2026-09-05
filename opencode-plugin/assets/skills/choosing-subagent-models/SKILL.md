@@ -52,23 +52,29 @@ These are the tiers now:
 
 ## Worked examples — LITERAL ARGUMENTS, AND EFFORT IS TOOL-DEPENDENT
 
-**Pass `model` AND `effort` on every spawn, whichever mechanism you use.** Syntax
-per mechanism — re-check the schema in front of you rather than restating from
-memory, because it can change:
+**Pin `model` on every spawn. Pass `effort` wherever the mechanism exposes it.**
+Syntax per mechanism — re-check the schema in front of you rather than restating
+from memory, because it can change:
 
 | Mechanism | `model` | `effort` |
 |---|---|---|
-| **Agent tool** | ✅ settable | ✅ **settable — pass it** |
+| **Agent tool** | ✅ settable | ✖ **not exposed — do not pass it** |
 | **Workflow `agent()`** (opts: label, phase, schema, model, effort, isolation, agentType) | ✅ settable | ✅ settable |
 | **Agent DEFINITION** (`.claude/agents/*.md` / plugin `agents/*.md` frontmatter) | ✅ | ✅ — sets the default for that agent type |
+| **`thrum tmux create` / `launch`** | ✅ `--model` | ✅ `--effort` — pass on BOTH |
 
-**Agent tool — pass `effort` as a literal argument, alongside `model`.**
+**Agent tool — `model` only. It takes no `effort` argument.**
 
 ```python
-Agent(subagent_type="general-purpose", model="sonnet", effort="low",
+Agent(subagent_type="general-purpose", model="sonnet",
       description="Code-quality review of <branch>",
       prompt="...")
 ```
+
+**The tier philosophy still governs even where the Agent tool cannot express it:**
+sonnet-low for investigation and mechanical work, sonnet-medium for reviewers,
+verifiers and implementers. Where effort is not settable, carry the intent through
+the agent definition, the Workflow opts, or the tmux launch flags.
 
 An agent definition can also carry a default:
 
@@ -87,8 +93,9 @@ agent(prompt, { model: "sonnet", effort: "low" })             // mechanical sub-
 ```
 
 **THE DIRECTIVE, imperative and not a comment: REVIEWERS RUN SONNET AT MEDIUM
-EFFORT.** Pass `effort: "medium"` literally — under Workflow AND under the Agent
-tool. Never dispatch a reviewer "from memory".
+EFFORT.** Pass `effort: "medium"` literally under Workflow, in the agent
+definition, or on `thrum tmux create`/`launch`. Never dispatch a reviewer "from
+memory".
 
 **AND VERIFY, DO NOT ASSERT:** any claim about what a tool does or does not expose
 must be checked against the schema in front of you.
@@ -112,9 +119,10 @@ plus brainstormer → opus-medium and brainstormer's own subagents → sonnet-lo
 
 ## Pin every spawn explicitly — the floor depends on the ROLE, not the depth
 
-Every orchestrator MUST pass an explicit `model:` and `effort:` on EVERY subagent
-it spawns. An unspecified subagent SILENTLY INHERITS THE PARENT'S MODEL — so an
-Opus orchestrator that forgets the pin just spent Opus tokens on a grep.
+Every orchestrator MUST pass an explicit `model:` on EVERY subagent it spawns, and
+`effort` wherever the mechanism exposes it. An unspecified subagent SILENTLY
+INHERITS THE PARENT'S MODEL — so an Opus orchestrator that forgets the pin just
+spent Opus tokens on a grep.
 
 **The floor is set by what the agent DOES, not by how deep it sits** — see the
 Agent tiers table above. This applies recursively: an implementer spawning its

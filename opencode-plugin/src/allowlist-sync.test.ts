@@ -31,8 +31,15 @@ const REPO_ROOT = path.resolve(PLUGIN_ROOT, "..")
 const OPENCODE_COPY = path.join(PLUGIN_ROOT, "assets", "thrum_allowlist.json")
 const CANONICAL_SOURCE = path.join(REPO_ROOT, "internal", "permissions", "thrum_allowlist.json")
 
-test("opencode-plugin/assets/thrum_allowlist.json is byte-identical to internal/permissions/thrum_allowlist.json", () => {
-  assert.ok(fs.existsSync(CANONICAL_SOURCE), `canonical source not found at ${CANONICAL_SOURCE} — check path resolution`)
+test("opencode-plugin/assets/thrum_allowlist.json is byte-identical to internal/permissions/thrum_allowlist.json", (t) => {
+  // The canonical source only exists in the monorepo (github.com/leonletto/thrum);
+  // the public standalone opencode-thrum-pro repo this test also ships in does not
+  // carry internal/permissions/, so skip gracefully there instead of failing —
+  // mirrors the binary-absent skip idiom in permission-fixture.integration.test.ts.
+  if (!fs.existsSync(CANONICAL_SOURCE)) {
+    t.skip(`canonical source not found at ${CANONICAL_SOURCE} — expected outside the monorepo (e.g. public opencode-thrum-pro), skipping drift check`)
+    return
+  }
   assert.ok(fs.existsSync(OPENCODE_COPY), `synced copy not found at ${OPENCODE_COPY}`)
 
   const canonical = fs.readFileSync(CANONICAL_SOURCE)

@@ -113,12 +113,25 @@ opencode plugin opencode-thrum-pro
 ```
 
 Use `opencode plugin opencode-thrum-pro --global` for the global configuration.
-To configure it manually, add the package to `opencode.json`:
+To configure it manually, add the package to `opencode.json` (or the global
+`~/.config/opencode/opencode.jsonc`).
 
-```json
+The plugin provides the skills, commands, and hooks. To use Thrum's coordination
+tooling (messaging, memory, state) you also need to wire the `thrum` MCP server,
+which requires the `thrum` binary on your `PATH`. Add both the `plugin` entry and
+the `mcp.thrum` block:
+
+```jsonc
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["opencode-thrum-pro"]
+  "plugin": ["opencode-thrum-pro"],
+  "mcp": {
+    "thrum": {
+      "type": "local",
+      "command": ["thrum", "mcp", "serve"],
+      "enabled": true
+    }
+  }
 }
 ```
 

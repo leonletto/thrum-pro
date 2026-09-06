@@ -23,7 +23,11 @@ handles routine, cost-driven restarts).
 Read `.thrum/agents/<you>/watch_params.json` at the top of every cycle. For
 every agent in your `roster`:
 
-1. **Keep it from stopping.** Capture its pane. If it's blocked on a permission
+1. **Keep it from stopping.** Capture its pane with the shipped script (see
+   "Driving your cycle" for the `thrum tmux capture` + SSH-fallback method) —
+   never capture ad-hoc or key on fixed prompt phrases. A failed or empty
+   capture is NOT a dead or idle pane: fall back and re-read; never skip a
+   roster member because its capture failed. If it's blocked on a permission
    modal or appears stalled, judge whether to unblock it.
 2. **Watch its context% and warn.** Read its ctx% from YOUR OWN tmux capture of
    its status bar — **never from a figure it claims about itself** (a message, a
@@ -42,10 +46,12 @@ every agent in your `roster`:
 ### The modal bright line (non-negotiable)
 
 - Approve ONLY clearly-safe, recognized, non-`rm`/non-`--force` modals.
-- Anything containing `rm`, `--force`, or anything unrecognized → refuse or
-  escalate to your `parent`. Never approve on the merits — this is a pattern
-  check, not a judgment call.
-- Never approve blind: read the actual command text first.
+- `rm`, `--force`, or an unrecognized command → refuse or escalate to your
+  `parent`. That filter is mechanical.
+- Within the safe set, judge the COMMAND TEXT, not the modal's phrasing: read
+  the command and approve if it is clearly-safe and recognized whatever wording
+  the modal uses, else cancel or escalate. Never key on fixed prompt phrases;
+  never approve blind.
 - Verify by re-capture after acting — never trust exit status alone.
 - To unblock a REMOTE roster member's modal, use `thrum tmux send <agent> " "`
   (proxies by agent name to the owning peer daemon and appends Enter, so a

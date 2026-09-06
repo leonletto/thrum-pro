@@ -71,14 +71,29 @@ codex plugin add thrum@thrum-marketplace
 Update with `codex plugin marketplace upgrade thrum-marketplace`, then repeat
 the `codex plugin add` command.
 
-### GitHub Copilot CLI — install straight from GitHub
+### GitHub Copilot CLI — built into the Thrum binary (no plugin install)
 
-```bash
-copilot plugin marketplace add leonletto/thrum-pro
-copilot plugin install thrum@thrum
-```
+Unlike the other runtimes, the GitHub Copilot plugin is **embedded in the `thrum`
+binary** and installed automatically the first time you launch a Copilot runtime —
+there is no marketplace or manual plugin-install step.
 
-Update with `copilot plugin update thrum`.
+1. Install the GitHub Copilot CLI so `copilot` is on your `PATH`:
+
+   ```bash
+   npm install -g @github/copilot
+   ```
+
+2. Make sure the `thrum` binary is installed (see [Getting the Thrum binary](#getting-the-thrum-binary)).
+
+3. Launch a Copilot runtime — Thrum materializes and wires the plugin for you (via
+   its `SessionStart` hook), no further setup:
+
+   ```bash
+   thrum tmux create <name> --runtime copilot
+   ```
+
+If `copilot` is not found on your `PATH`, Thrum reports the runtime as unavailable
+rather than failing mid-launch.
 
 ### Cursor — install straight from GitHub
 
@@ -154,6 +169,44 @@ Then reference it as a local `file:` plugin in your project's `opencode.json`
   "plugin": ["file:/path/to/thrum-pro/opencode-plugin"]
 }
 ```
+
+### Muse — install with Muse's native plugin system
+
+Muse has its own plugin system and marketplace — it does **not** use the Claude Code
+marketplace. It installs the same Thrum plugin through Muse-native commands, so there
+is no separate Muse plugin to build.
+
+Prerequisites: the `muse` binary **1.0.3 or newer** (validated on `1.0.3-R2198.1`), a
+Muse account, and the `thrum` binary on your `PATH`. Run these as the same OS user
+that runs your agents.
+
+1. Add the marketplace and install the plugin:
+
+   ```bash
+   muse plugins marketplace add leonletto leonletto/thrum-pro
+   muse plugins install thrum@leonletto
+   ```
+
+2. Approve the four Thrum hooks. Append `--json` for headless / non-interactive use
+   (there is no `--yes` bypass — `--json` is the headless form):
+
+   ```bash
+   muse plugins approve plugin:thrum:hook:hook-603847d5ede54d44   # SessionStart prime
+   muse plugins approve plugin:thrum:hook:hook-9adcbbd425e3aba1   # Stop / inbox check
+   muse plugins approve plugin:thrum:hook:hook-b539dd5f1e491a55
+   muse plugins approve plugin:thrum:hook:hook-deb9e6678ddeeb86
+   ```
+
+   **Re-approve after every Thrum plugin update.** Approvals pin a content hash; when
+   the plugin changes they drop back to `review_needed` and the agent starts up
+   **silently unprimed** until you re-approve.
+
+3. On first run, Muse asks *"Do you trust the files in this folder?"* — priming is
+   blocked until you dismiss it. Muse launches Thrum worktrees with
+   `--disable-sandbox --trust-workspace`.
+
+An MCP config at `.muse/mcp.json` is optional (advanced use); basic operation primes
+through the `SessionStart` hook without it.
 
 ---
 

@@ -29,7 +29,7 @@
 #
 # DELIBERATE SCOPE LIMIT: this script is MECHANICAL ONLY — capture, detect,
 # emit. It never auto-escalates and never auto-approves/denies a modal
-# (never calls `thrum tmux key`/`thrum send`). The persistent-watcher-
+# (never sends keys or text — never calls `thrum tmux send`). The persistent-watcher-
 # archetype skill is explicit that judgment (approve/cancel/escalate/nudge)
 # happens in the watcher's OWN turn when it reads the wake message this
 # script's summary line triggers, not in a script. A bash script cannot

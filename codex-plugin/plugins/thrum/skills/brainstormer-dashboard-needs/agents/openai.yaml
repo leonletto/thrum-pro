@@ -1,0 +1,4 @@
+interface:
+  display_name: "Brainstormer Dashboard Needs"
+  short_description: "Use when running as a brainstormer or researcher whose steward/coordinator publishes NEEDs to the human via a dashboard board — author NEEDs as answerable action-picks, consume routed ANSWERS from dashboard results, and keep the board's view of your question in sync with reality."
+  default_prompt: "Use when running as a brainstormer or researcher whose steward/coordinator publishes NEEDs to the human via a dashboard board — author NEEDs as answerable action-picks, consume routed ANSWERS from dashboard results, and keep the board's view of your question in sync with reality."

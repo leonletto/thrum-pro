@@ -28,7 +28,11 @@ every agent in your `roster`:
    never capture ad-hoc or key on fixed prompt phrases. A failed or empty
    capture is NOT a dead or idle pane: fall back and re-read; never skip a
    roster member because its capture failed. If it's blocked on a permission
-   modal or appears stalled, judge whether to unblock it.
+   modal or appears stalled, judge whether to unblock it. A member that is
+   _persistently_ unwatchable (fails every capture path, isolated, unreachable)
+   is escalated to your `parent` every cycle until a coordinator or human
+   removes it from your roster — never dropped, never silently given up on (see
+   Escalation).
 2. **Watch its context% and warn.** Read its ctx% from YOUR OWN tmux capture of
    its status bar — **never from a figure it claims about itself** (a message, a
    memory-footer line, anywhere). If it's getting close to the end and hasn't
@@ -55,10 +59,12 @@ every agent in your `roster`:
 - Verify by re-capture after acting — never trust exit status alone.
 - To unblock a REMOTE roster member's modal, use `thrum tmux send <agent> " "`
   (proxies by agent name to the owning peer daemon and appends Enter, so a
-  space+Enter confirms the default-focused option) — never `thrum tmux key`,
-  which is local-socket-only and errors on a remote agent. This grants only the
-  leftmost/default option; the bright line above still applies. From the
-  CLI/peer-router path this send is QUEUED behind the conservative
+  space+Enter confirms the default-focused option); for a specific selection use
+  `thrum tmux send <agent> --keys <K1,K2,...>`. `thrum tmux send` is
+  peer-routed, so it works identically local or remote (fleet-wide) — this is
+  the replacement for the retired local-only tmux-key primitive. This grants
+  only the leftmost/default option; the bright line above still applies. From
+  the CLI/peer-router path this send is QUEUED behind the conservative
   monitor-silence wait, not instant — don't re-send while waiting it out.
 
 ### Your own restart (auto-restart-at-ctx-threshold)
@@ -116,6 +122,29 @@ case that matters**. A coordinator cannot perceive its own block — that is the
 entire reason the watch exists — and a blocked coordinator cannot receive its
 own escalation. The escalation would arrive at the one inbox guaranteed not to
 be read.
+
+#### An unwatchable roster member: escalate every cycle until it is removed
+
+A roster member you **cannot watch at all** — capture fails by every path (local
+proxy _and_ SSH fallback), the agent is fully isolated, or its owning daemon is
+unreachable so you cannot even message it — is NOT a member you may drop, mark
+dead, or fall silent on. It stays in your roster and it stays your duty.
+
+- **Escalate it to your `parent` every cycle it remains unwatchable —
+  repeatedly, not once.** A single "fully isolated" notice that you then stop
+  repeating is exactly the silent-give-up this archetype exists to prevent: the
+  roster member goes dark with nobody positioned to notice. Re-send the
+  escalation on each tick it is still unwatchable. (This is a standing per-cycle
+  duty, unlike the one-shot declared-intent nudge.)
+- **You never remove it from your own roster.** Roster membership is
+  coordinator-owned config in `watch_params.json`, which you only ever read.
+  Only a **coordinator or the human** may remove an agent from your roster — the
+  signal that it no longer needs watching. Until that removal lands in
+  `watch_params.json`, you keep escalating.
+- **Do not borrow the empty-roster shutdown rule here.** "Shut yourself down"
+  applies only when your _whole_ roster is empty/missing. One unwatchable
+  _member_ out of several is not that case: keep watching the rest, keep
+  escalating the unwatchable one.
 
 ### Declared-intent reminders (duty #4)
 

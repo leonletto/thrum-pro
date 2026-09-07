@@ -63,12 +63,16 @@ ssh_destination() {
 
 run_local() {
   case "$MODE" in
-    # "${EXTRA_ARGS[@]:-}" not "${EXTRA_ARGS[@]}": a DECLARED-EMPTY array
-    # subscripted with [@] is a fatal unbound-variable under `set -u` on
+    # "${EXTRA_ARGS[*]:-}" not "${EXTRA_ARGS[*]}": a DECLARED-EMPTY array
+    # subscripted with [*] is a fatal unbound-variable under `set -u` on
     # bash <4.4 (a real bug, not a style choice -- `key` mode with zero
     # key args crashes on this fleet's /bin/bash 3.2.57 without the ":-").
+    # key mode delivers named tmux keys via `thrum tmux send --keys` (the
+    # peer-routed replacement for the retired local-only tmux-key primitive);
+    # EXTRA_ARGS (one key per element) is comma-joined into a single --keys
+    # value inside a subshell so IFS="," never leaks into the caller.
     capture) thrum tmux capture "$AGENT" 2>&1 ;;
-    key)     thrum tmux key "$AGENT" "${EXTRA_ARGS[@]:-}" 2>&1 ;;
+    key)     thrum tmux send "$AGENT" --keys "$(IFS=,; printf '%s' "${EXTRA_ARGS[*]:-}")" 2>&1 ;;
   esac
 }
 
@@ -77,7 +81,7 @@ run_ssh() {
   dest="$(ssh_destination)"
   case "$MODE" in
     capture) cmd="thrum tmux capture '$AGENT'" ;;
-    key)     cmd="thrum tmux key '$AGENT' ${EXTRA_ARGS[*]:-}" ;;
+    key)     cmd="thrum tmux send '$AGENT' --keys $(IFS=,; printf '%s' "${EXTRA_ARGS[*]:-}")" ;;
   esac
   # Client-side expansion of REPO_PATH/cmd into the remote command string is
   # intentional -- that's how the resolved repo path and thrum invocation

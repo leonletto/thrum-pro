@@ -27,8 +27,9 @@ to that coordinator). Everything below is additive — the brainstorm-specific
 duties layered on top of that base.
 
 Your roster is entirely remote (other boxes), so the base skill's remote
-modal-unblock note applies to every roster member by default — never reach
-for `thrum tmux key`, which is local-socket-only.
+modal-unblock note applies to every roster member by default — use
+`thrum tmux send` (peer-routed, works fleet-wide); the local-only
+tmux-key primitive it replaces is retired.
 
 ## Roster = brainstormers
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Coordinator Dashboard Human Loop"
+  short_description: "Use when the coordinator publishes or maintains a dashboard board FOR the human owner (roster, NEED queue, owner decisions, pipeline) or routes owner answers from a dashboard back to agents. Loads the human-loop mandate - a posted question is a PROMISE — it stays answerable and visible until answered, and nothing on the board disappears silently on your side."
+  default_prompt: "Use when the coordinator publishes or maintains a dashboard board FOR the human owner (roster, NEED queue, owner decisions, pipeline) or routes owner answers from a dashboard back to agents. Loads the human-loop mandate - a posted question is a PROMISE — it stays answerable and visible until answered, and nothing on the board disappears silently on your side."

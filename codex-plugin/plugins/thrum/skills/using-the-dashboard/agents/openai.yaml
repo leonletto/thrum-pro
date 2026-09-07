@@ -1,0 +1,4 @@
+interface:
+  display_name: "Using The Dashboard"
+  short_description: "Use when you want to present an interactive board to the human user (status, options, NEEDs with A/B/C picks), or when you see a dashboard mention and wonder what is actually usable today. Carries the CLI surface, the write/read discipline, and the live-vs-coming honesty table."
+  default_prompt: "Use when you want to present an interactive board to the human user (status, options, NEEDs with A/B/C picks), or when you see a dashboard mention and wonder what is actually usable today. Carries the CLI surface, the write/read discipline, and the live-vs-coming honesty table."

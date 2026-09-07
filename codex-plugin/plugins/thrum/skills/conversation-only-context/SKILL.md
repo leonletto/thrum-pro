@@ -151,15 +151,18 @@ Write to the pane only when the human asked, or when the decision is one only
 the human can make. Everything else goes through `thrum send` / `thrum reply`.
 Surface an owner-only decision crisply, with a recommendation attached.
 
-### VM work
+### Remote and VM work
 
-Use a named persistent driver (`vmdriver_<slug>`) per
-`dev-docs/daemon-wedge-sync-audit/execution-pattern-driver-subagents-in-vm.md`:
-reach the VM only through the repo's tmux-ssh script, state the three-clause GO
-(execute now · drive to completion yourself · then stop and report), require the
-isolation proof and the 3-section report. VM specifics — profiles, first-boot
-re-key, isolation legs — are in `dev-docs/vm-dev-patterns/`. Never do VM work
-yourself.
+Use a named persistent driver (`vmdriver_<slug>`), continued by `SendMessage`
+across rounds. Reach the remote environment only through the persistent-session
+command your project sanctions, never a one-shot remote exec. State the
+three-clause GO (execute now · drive to completion yourself · then stop and
+report), require the isolation proof before anything touches a shared service,
+and require the 3-section report. Never do the remote work yourself.
+
+The full pattern is `resources/driver-subagent-pattern.md`; five worked shapes,
+including the restart handoff of a live driver, are in
+`resources/remote-environment-scenarios.md`.
 
 ### Restart handoff
 
@@ -181,6 +184,11 @@ Restart on a number read from the pane footer, never on a felt sense.
   that one runs a single pass.
 - `choosing-subagent-models` — the tier policy and source of the CONSTRAINTS
   block.
+- [driver-subagent-pattern.md](resources/driver-subagent-pattern.md) — the full
+  remote-work pattern: the named driver, the three-clause GO, the isolation
+  proof, the report contract, the parent's duties, the anti-patterns.
+- [remote-environment-scenarios.md](resources/remote-environment-scenarios.md) —
+  five worked shapes, from a long lab run to a restart handoff of a live driver.
 
 ### Failure modes
 

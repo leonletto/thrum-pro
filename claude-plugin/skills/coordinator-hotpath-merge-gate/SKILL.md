@@ -120,8 +120,8 @@ rediscovering these the hard way:
 7. Build+test the MERGED-tree result as a SEPARATE condition — neither gate
    currently runs a build of the actual post-merge tree; a clean pre-merge
    build/test does not prove the merged result compiles or passes.
-8. Use `rm -r`, NEVER `rm -rf`, and use `git worktree remove --force` to drop a
-   worktree. A broad `ask` rule on `rm -rf *` outranks any narrow `/tmp` allow,
+8. Use `rm -r`, NEVER `rm -rf`; use plain `git worktree remove` to drop a worktree, never
+   `--force` as the default (see item 12 below). A broad `ask` rule on `rm -rf *` outranks any narrow `/tmp` allow,
    so `rm -rf` raises a human permission prompt EVERY time regardless of path —
    it stalls gate sub-agents mid-run waiting on a keystroke. `rm -r` runs free. Do NOT widen the ask rule
    to work around this; that entry is the only deletion protection on the box.
@@ -154,7 +154,11 @@ rediscovering these the hard way:
         HEAD is a gate-produced merge reachable from no ref and removal orphans
         it. Usually fine (a gate merge is reproducible by redoing it) but say so
         in your report rather than doing it silently.
-    Then `git worktree remove --force <wt>`.
+    Then `git worktree remove <wt>` — **plain, no `--force`.** Its rc=128 refusal backstops
+    ONLY untracked/modified content (see rule 8 on `rm -r`) — it does NOT cover gitignored
+    content, which git removes silently with no refusal; a clean rc=0 is not proof nothing of
+    value was in there (see coordinator-assessing-agent-completion's reap procedure). `--force`
+    is a justified override only, never the default (see coordinator-merging-code §7a).
 
 ## Trigger-directory skip logic
 

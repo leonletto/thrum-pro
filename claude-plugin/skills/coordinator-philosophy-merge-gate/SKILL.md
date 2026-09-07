@@ -110,8 +110,8 @@ dispatch time — hand this list verbatim:
     (c) only if a pipeline is unavoidable, use `${pipestatus[1]}` on zsh /
         `${PIPESTATUS[0]}` on bash — and STATE WHICH SHELL, because the same
         string means different things in each.
-8. Use `rm -r`, NEVER `rm -rf`, and use `git worktree remove --force` to drop
-   a worktree. A broad `ask` rule on `rm -rf *` outranks any narrow `/tmp`
+8. Use `rm -r`, NEVER `rm -rf`; use plain `git worktree remove` to drop a worktree, never
+   `--force` as the default (see item 12 below). A broad `ask` rule on `rm -rf *` outranks any narrow `/tmp`
    allow, so `rm -rf` raises a human permission prompt EVERY time regardless
    of path and stalls gate sub-agents mid-run waiting on a keystroke. `rm -r`
    runs free. Do NOT widen the ask rule to work around this; that entry is
@@ -149,7 +149,11 @@ dispatch time — hand this list verbatim:
         HEAD is a gate-produced merge reachable from no ref and removal orphans
         it. Usually fine (a gate merge is reproducible by redoing it) but say so
         in your report rather than doing it silently.
-    Then `git worktree remove --force <wt>` (see rule 8 on `rm -r`). Rule 11's
+    Then `git worktree remove <wt>` — **plain, no `--force`.** Its rc=128 refusal backstops
+    ONLY untracked/modified content (see rule 8 on `rm -r`) — it does NOT cover gitignored
+    content, which git removes silently with no refusal; a clean rc=0 is not proof nothing of
+    value was in there (see coordinator-assessing-agent-completion's reap procedure). `--force`
+    is a justified override only, never the default (see coordinator-merging-code §7a). Rule 11's
     hazard notice on its own — teardown can destroy uncommitted state — reads
     as a reason NOT to tear down. A warning without a procedure does not
     produce caution; it produces paralysis plus litter.

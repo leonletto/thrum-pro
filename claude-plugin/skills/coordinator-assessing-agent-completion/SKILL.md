@@ -123,9 +123,30 @@ salvaged files distinct names and land the salvage somewhere durable (the main r
 **`thrum agent delete --force` is REFUSED by the CAS guard on a stale agent with an empty
 `agent_pid_start_time`** (*"expected-state premise is required … refusing rather than treating
 an empty/never-read premise as a match"*). `--force` does NOT bypass it; the guard is
-correct. So the reap that actually frees load is **`git worktree remove --force <path>`** —
-the delete best-effort-fails and leaves a **benign orphan DB row**, which you LEAVE (filtered
-at query per the fleet ruling; never `agent cleanup --force` to tidy them).
+correct. So the reap that actually frees load is worktree removal — but salvage BEFORE you remove,
+then remove PLAIN (no `--force`):
+
+1. Enumerate untracked+ignored `.thrum` content — BOTH flags, one flag alone misses a class
+   (thrum-j14q3): `git status --untracked-files=all --ignored -- .thrum`
+2. Salvage BOTH kinds to their canonical redirect paths, and `cmp`-verify each copy is
+   byte-identical to its source:
+   - `?? .thrum/agents/<agent>/sessions/*-restart.md` — the restart snapshot.
+   - `!! .thrum/context/<agent>.md` — gitignored, NOT daemon-held, the **only copy**;
+     losing it is permanent. (`_preamble.md` is regenerable — skip it.)
+3. THEN `git worktree remove <path>` — **plain, no `--force`.** ⚠️ This refusal is a REAL
+   backstop only for untracked/modified content (git's own rc=128 refusal) — it is NOT a
+   backstop for the gitignored `.thrum/context/<agent>.md` file: `git worktree remove`
+   silently deletes ignored-only content with exit 0, no refusal, no warning (verified by
+   direct reproduction). **Step 2's salvage is the ONLY protection for that file — there is
+   no git-level safety net behind it.** The rc=128 refusal still matters (it catches a stray
+   untracked restart-snapshot salvage missed, or any other unexpected untracked file), so
+   still read the BARE rc and still treat a refusal as a signal to investigate — just don't
+   mistake it for protecting the ignored-file class. (Not a pipe — a pipe returns the last
+   command's rc, not `git`'s.)
+
+The delete (`thrum agent delete`) best-effort-fails and leaves a **benign orphan DB row**,
+which you LEAVE (filtered at query per the fleet ruling; never `agent cleanup --force` to
+tidy them).
 
 ⚠️ **After a large reap you may see a `DeadAgentSweeper` skip alert + elevated write-RPC
 latency — do NOT assume the reap caused it.** This box carries a standing single-writer

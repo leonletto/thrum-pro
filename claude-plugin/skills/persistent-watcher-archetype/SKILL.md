@@ -227,18 +227,22 @@ stability check, writes one report file, and emits one matchable summary
 line. It is mechanical only — no auto-escalate, no auto-key — exactly the
 scope this section already describes; judgment stays in your own turn.
 
-**Setup (one-time per watcher instance):** `CLAUDE_PLUGIN_ROOT` is a
-Claude-Code-hook-only env var — it is NOT present in `thrum monitor`'s
-scheduled-process environment, so the script cannot locate itself inside
-the plugin tree at run time. Copy both scripts out of the skill's
-`resources/` into your own agent directory first:
+**Setup (one-time per watcher instance):** the script cannot locate itself
+inside the plugin tree at run time — `thrum monitor`'s scheduled-process
+environment has none of the plugin-root env vars a hook invocation gets
+(`CLAUDE_PLUGIN_ROOT`, codex's `PLUGIN_ROOT`), and neither is reliably set
+in an ordinary interactive turn either, so a shell `cp` against either
+variable is not runtime-safe in any host. Copy both scripts out of the
+skill's `resources/` into your own agent directory using your Read/Write
+tools instead — the same skill-relative resolution every other `resources/`
+reference in this plugin already uses, with no env var and no
+runtime-versioned path involved:
 
-```bash
-cp "${CLAUDE_PLUGIN_ROOT}/skills/persistent-watcher-archetype/resources/thrum-watch-pane-capture.sh" \
-   "${CLAUDE_PLUGIN_ROOT}/skills/persistent-watcher-archetype/resources/thrum-capture-fallback.sh" \
-   .thrum/agents/<you>/
-chmod +x .thrum/agents/<you>/thrum-watch-pane-capture.sh .thrum/agents/<you>/thrum-capture-fallback.sh
-```
+1. Read `resources/thrum-watch-pane-capture.sh` (relative to this skill) and
+   Write its exact content to `.thrum/agents/<you>/thrum-watch-pane-capture.sh`.
+2. Read `resources/thrum-capture-fallback.sh` and Write its exact content to
+   `.thrum/agents/<you>/thrum-capture-fallback.sh`.
+3. `chmod +x .thrum/agents/<you>/thrum-watch-pane-capture.sh .thrum/agents/<you>/thrum-capture-fallback.sh`
 
 Then register the monitor against that absolute copy path —
 **`--notify-on-success` is MANDATORY, not optional decoration**: a

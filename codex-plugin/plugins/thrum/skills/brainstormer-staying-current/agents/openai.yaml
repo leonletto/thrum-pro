@@ -1,0 +1,4 @@
+interface:
+  display_name: "Brainstormer Staying Current"
+  short_description: "Use when a long-lived brainstormer worktree may be behind its configured merge target, before review or handoff, or when asked to merge-forward and leave the worktree clean. Resolves the target and merge owner from Thrum config, preserves local work, and verifies freshness after the merge."
+  default_prompt: "Use when a long-lived brainstormer worktree may be behind its configured merge target, before review or handoff, or when asked to merge-forward and leave the worktree clean. Resolves the target and merge owner from Thrum config, preserves local work, and verifies freshness after the merge."

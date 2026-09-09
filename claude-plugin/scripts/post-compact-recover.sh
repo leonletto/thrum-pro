@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# PostCompact hook: emit orientation prompt + re-arm listener (multi-agent only)
+# PostCompact hook: reset context-window monotonicity floor + emit orientation
+# prompt + re-arm listener (multi-agent only)
 set -euo pipefail
 
 THRUM_HOME="${THRUM_HOME:-.}"
@@ -7,6 +8,21 @@ THRUM_CONFIG="$THRUM_HOME/.thrum/config.json"
 
 # Always emit orientation prompt
 echo "You were just compacted. Run \`thrum prime\` to restore your project context and session state." >&2
+
+# Reset the persisted context-window monotonicity floor for this session. A
+# real compaction legitimately drops used_percentage; without this, the NEXT
+# lower StatusLine reading is rejected forever by internal/statuswindow's
+# monotonicity guard as "producer computed a wrong value" (compaction is NOT
+# disabled fleet-wide, so the decrease is real — see thrum-r4b1b). Best-effort:
+# a missing/unparseable session_id, or a Reset failure, must never abort the
+# rest of this hook (orientation + listener re-arm below still matter).
+INPUT=$(cat 2>/dev/null || true)
+if command -v jq >/dev/null 2>&1; then
+  SESSION_ID=$(printf '%s' "$INPUT" | jq -r '.session_id // empty' 2>/dev/null || true)
+  if [ -n "$SESSION_ID" ]; then
+    thrum context reset-window --session "$SESSION_ID" >/dev/null 2>&1 || true
+  fi
+fi
 
 # Check single-agent mode — if so, done
 if [ -f "$THRUM_CONFIG" ] && command -v jq >/dev/null 2>&1; then

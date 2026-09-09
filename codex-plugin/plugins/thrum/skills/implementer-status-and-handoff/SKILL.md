@@ -1,22 +1,20 @@
 ---
 name: implementer-status-and-handoff
-description:
-  "Use when reporting status to the coordinator, marking a task done, or handing
-  off completed work. Loads implementer-specific discipline for closing the loop
-  cleanly."
+description: "Use when reporting status to the coordinator, marking a task done, or handing off completed work. Loads implementer-specific discipline for closing the loop cleanly."
 # source: claude-plugin/skills/implementer-status-and-handoff/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Implementer: Status and Handoff
 
 ### Use the four-token status vocabulary exactly
 
 **Why:** The coordinator uses your status token to decide whether to proceed,
-hold for review, or unblock. Vague reports like "I finished the work" or "mostly
-done" force the coordinator to re-read the full implementation to judge state,
-which adds latency to every dispatch they manage. The token is a 100ms decision
-instead of a five-minute re-read.
+hold for review, or unblock. Vague reports like "I finished the work"
+or "mostly done" force the coordinator to re-read the full implementation to
+judge state, which adds latency to every dispatch they manage. The token is a
+100ms decision instead of a five-minute re-read.
 
 **How to apply:** Every completion or escalation message starts with exactly one
 of:
@@ -34,10 +32,10 @@ exactly what would unblock you.
 ### Commit per task with the bead ID in the trailer
 
 **Why:** Beads links commits to issues via `Refs: <id>` trailers in the commit
-message body. Skipping the trailer breaks the audit chain; using the parent epic
-ID instead of the specific task ID flags as a traceability nit during review.
-Per-task commits also keep the diff small enough that the dual-review pass can
-reason about it without context exhaustion.
+message body. Skipping the trailer breaks the audit chain; using the
+parent epic ID instead of the specific task ID flags as a traceability nit
+during review. Per-task commits also keep the diff small enough that the
+dual-review pass can reason about it without context exhaustion.
 
 **How to apply:** Commit after each closed task — not in bulk at the end. Use
 the heredoc form so the trailer renders correctly:
@@ -57,8 +55,8 @@ Use the **subtask** ID (`thrum-abc.1`), not the parent epic ID. Run
 ### Push your branch before reporting DONE
 
 **Why:** once you exit, your in-session context is gone and the pushed branch is
-the only artifact that survives you. An unpushed branch is unreachable from
-every other machine and indistinguishable from work that was lost.
+the only artifact that survives you. An unpushed branch is unreachable from every
+other machine and indistinguishable from work that was lost.
 
 **How to apply:** commit, then push. Every time.
 
@@ -75,16 +73,16 @@ Branch pushed: <branch-name> @ <sha> (git ls-remote origin refs/heads/<branch-na
 **Never push `thrum-agents`, `main`, or `website-dev`** — the coordinator merges
 those.
 
-Never report DONE with the push status silently omitted — an orchestrator that
-removes a worktree assuming "DONE implies pushed" on a project that does NOT
-push feature branches would destroy the only copy of the work.
+Never report DONE with the push status silently omitted — an orchestrator
+that removes a worktree assuming "DONE implies pushed" on a project that
+does NOT push feature branches would destroy the only copy of the work.
 
 ### Mark queue items done as you commit, push, and report
 
-As each step lands, mark its queue item `done`. Do NOT `drop` the bundle at your
-own DONE report — a review finding can reopen the task (`start` reopens a done
-bundle). Drop the bundle only once the coordinator confirms the merge landed
-(R1); until then it is your live record of what's addressed vs. still open.
+As each step lands, mark its queue item `done`. Do NOT `drop` the bundle at your own
+DONE report — a review finding can reopen the task (`start` reopens a done bundle).
+Drop the bundle only once the coordinator confirms the merge landed (R1); until then
+it is your live record of what's addressed vs. still open.
 
 ### Cite SHAs and per-finding dispositions in status messages
 

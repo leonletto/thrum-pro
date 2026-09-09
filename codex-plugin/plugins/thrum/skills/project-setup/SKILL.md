@@ -1,11 +1,10 @@
 ---
 name: project-setup
-description:
-  "Use when converting a plan file (from writing-plans skill) into beads epics,
-  tasks, implementation prompts, and worktrees — before any coding begins"
+description: "Use when converting a plan file (from writing-plans skill) into beads epics, tasks, implementation prompts, and worktrees — before any coding begins"
 # source: claude-plugin/skills/project-setup/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Project Setup
 
@@ -28,9 +27,9 @@ This gate is different: project-setup is thrum-owned, so it is authored to
 genuinely refuse to run.
 
 Before doing anything else, verify the plan/spec doc carries a passing review
-stamp, a Deviations-from-Source block, AND evidence that `verify-against-source`
-specifically ran. Resolve the plan path first (it is the skill's primary input —
-the same path the caller passes), then:
+stamp, a Deviations-from-Source block, AND evidence that
+`verify-against-source` specifically ran. Resolve the plan path first (it is
+the skill's primary input — the same path the caller passes), then:
 
 ```bash
 # PLAN_FILE = the plan/spec doc this project-setup run is decomposing
@@ -48,13 +47,14 @@ grep -E 'verify=Ready:Yes([[:space:]]|-->|$)' "$PLAN_FILE" \
   || grep -E 'verify=PREDATES([[:space:]]|-->|$)' "$PLAN_FILE"
 ```
 
-**Fourth check — the stamp must BIND, not just be PRESENT.** A stamp's presence
-proves a review happened; it does not prove the stamp still describes the
-artifact in front of you. Parse the binding keys from the **highest-cycle**
-(last-appended) `stage=plan` line — stamps are only ever appended, never
-reordered, so `tail -1` is the binding verdict; never `sort` (a `cycle=10` line
-must beat `cycle=9`, which a lexical sort inverts) — then re-derive the current
-values per `_stamp-protocol.md` § "Review-object binding" and compare:
+**Fourth check — the stamp must BIND, not just be PRESENT.** A stamp's
+presence proves a review happened; it does not prove the stamp still
+describes the artifact in front of you. Parse the binding keys from the
+**highest-cycle** (last-appended) `stage=plan` line — stamps are only ever
+appended, never reordered, so `tail -1` is the binding verdict; never `sort`
+(a `cycle=10` line must beat `cycle=9`, which a lexical sort inverts) — then
+re-derive the current values per `_stamp-protocol.md` § "Review-object
+binding" and compare:
 
 ```bash
 # SOURCE_FILE = the LOCKED brainstorm (+ design spec, if any) this plan was reviewed against
@@ -81,9 +81,9 @@ if ! grep -qE 'verdict=OVERRIDE([[:space:]]|-->|$)' <<<"$LINE"; then
 fi
 ```
 
-An OVERRIDE on the matched `stage=plan` line already satisfies this fourth check
-(same escape as the first check) — the snippet above short-circuits before
-re-deriving or comparing in that case.
+An OVERRIDE on the matched `stage=plan` line already satisfies this fourth
+check (same escape as the first check) — the snippet above short-circuits
+before re-deriving or comparing in that case.
 
 All four checks must pass.
 
@@ -93,38 +93,39 @@ Notes on the check:
   (fixed-key-order) string. Never `grep -i`. The canonical verdict values are
   exactly `Ready:Yes` and `OVERRIDE` — a mis-cased stamp (`ready:yes`,
   `READY:YES`) does NOT pass.
-- **`OVERRIDE` is a valid pass** for the THRUM-REVIEW stamp and for `verify=` —
-  each independently. Neither substitutes for the Deviations marker. Surface any
-  `THRUM-DEFER` lines still present in the doc as part of the override audit.
-- **The Deviations block has no override.** Its absence always fails the gate —
-  see `claude-plugin/commands/_deviations-protocol.md` ("empty must be WRITTEN,
-  not omitted").
-- **`verify=` has no silent-omission path.** A stamp missing `verify=` entirely
-  FAILS this third check exactly like a missing stamp fails the first — there is
-  no carve-out for plans that predate the field. The field must be PRESENT with
-  one of exactly three values: `Ready:Yes` — the `verify-against-source`
-  conformance pass ran clean this cycle; `OVERRIDE` — a coordinator deliberately
-  waived `verify-against-source` for THIS review cycle (an active, in-the-moment
-  waiver, with a reason); `PREDATES` — this plan/stamp predates the `verify=`
-  convention entirely (the legacy case). Each is a distinct, auditable claim,
-  and none of them is the same as leaving the field out. A plan reviewed before
-  this convention existed must be re-stamped with `verify=PREDATES` (not
-  `OVERRIDE` — that value is reserved for an active per-cycle waiver, not the
-  legacy case) to pass, same as any other legacy plan bails on the first check
-  until it gets an `OVERRIDE`. This is what makes `verify-against-source`
-  mandatory in fact, not just in name: a plan could otherwise carry
-  `verdict=Ready:Yes` from some OTHER reviewer while `verify-against-source`
-  itself never ran.
-- **The binding check fails closed on either mismatch, with no silent-omission
-  path** — a stamp missing `plan_obj`/`src_lock` entirely fails exactly like a
-  missing `verify=` field (fourth check above). The remedy is the same shape as
-  the `verify=` remedy: re-run the plan review so the stamp is emitted with live
-  binding keys (`_stamp-protocol.md` § "Review- object binding"), or a
-  coordinator adds an explicit `verdict=OVERRIDE` (with `reason=`) to the
-  `stage=plan` line — the SAME auditable escape used for the first check, not a
-  new mechanism. There is no `PREDATES` value for the binding keys themselves; a
-  legacy plan without them either gets re-reviewed (which produces the keys) or
-  overridden.
+- **`OVERRIDE` is a valid pass** for the THRUM-REVIEW stamp and for
+  `verify=` — each independently. Neither substitutes for the Deviations
+  marker. Surface any `THRUM-DEFER` lines still present in the doc as part
+  of the override audit.
+- **The Deviations block has no override.** Its absence always fails the
+  gate — see `claude-plugin/commands/_deviations-protocol.md` ("empty must
+  be WRITTEN, not omitted").
+- **`verify=` has no silent-omission path.** A stamp missing `verify=`
+  entirely FAILS this third check exactly like a missing stamp fails the
+  first — there is no carve-out for plans that predate the field. The field
+  must be PRESENT with one of exactly three values: `Ready:Yes` — the
+  `verify-against-source` conformance pass ran clean this cycle; `OVERRIDE`
+  — a coordinator deliberately waived `verify-against-source` for THIS
+  review cycle (an active, in-the-moment waiver, with a reason); `PREDATES`
+  — this plan/stamp predates the `verify=` convention entirely (the legacy
+  case). Each is a distinct, auditable claim, and none of them is the same
+  as leaving the field out. A plan reviewed before this convention existed
+  must be re-stamped with `verify=PREDATES` (not `OVERRIDE` — that value is
+  reserved for an active per-cycle waiver, not the legacy case) to pass,
+  same as any other legacy plan bails on the first check until it gets an
+  `OVERRIDE`. This is what makes `verify-against-source` mandatory in fact,
+  not just in name: a plan could otherwise carry `verdict=Ready:Yes` from
+  some OTHER reviewer while `verify-against-source` itself never ran.
+- **The binding check fails closed on either mismatch, with no
+  silent-omission path** — a stamp missing `plan_obj`/`src_lock` entirely
+  fails exactly like a missing `verify=` field (fourth check above). The
+  remedy is the same shape as the `verify=` remedy: re-run the plan review so
+  the stamp is emitted with live binding keys (`_stamp-protocol.md` § "Review-
+  object binding"), or a coordinator adds an explicit `verdict=OVERRIDE`
+  (with `reason=`) to the `stage=plan` line — the SAME auditable escape used
+  for the first check, not a new mechanism. There is no `PREDATES` value for
+  the binding keys themselves; a legacy plan without them either gets
+  re-reviewed (which produces the keys) or overridden.
 
 If any check fails, **STOP — do not proceed.** Tell the user:
 
@@ -132,24 +133,25 @@ If any check fails, **STOP — do not proceed.** Tell the user:
 > (or carry a coordinator override), to carry a `## Deviations from Source`
 > block, to carry `verify=Ready:Yes`, `verify=OVERRIDE`, or `verify=PREDATES`
 > evidence that `verify-against-source` specifically ran (or was deliberately
-> waived, or the plan predates the convention), AND for the review stamp to BIND
-> the current plan object and current locked source (`plan_obj`/ `src_lock`).
-> The plan at `<PLAN_FILE>` is missing one or more of: the review stamp, the
-> Deviations block, the `verify=` field, or a valid binding — check which with
-> the commands above. Run the plan review first (making sure
-> `verify-against-source` runs, `verify=` is stamped, and `plan_obj`/ `src_lock`
-> are computed fresh), obtain a coordinator override, or stamp `verify=PREDATES`
-> if the plan predates the `verify=` convention, then re-invoke project-setup.
+> waived, or the plan predates the convention), AND for the review stamp to
+> BIND the current plan object and current locked source (`plan_obj`/
+> `src_lock`). The plan at `<PLAN_FILE>` is missing one or more of: the review
+> stamp, the Deviations block, the `verify=` field, or a valid binding — check
+> which with the commands above. Run the plan review first (making sure
+> `verify-against-source` runs, `verify=` is stamped, and `plan_obj`/
+> `src_lock` are computed fresh), obtain a coordinator override, or stamp
+> `verify=PREDATES` if the plan predates the `verify=` convention, then
+> re-invoke project-setup.
 
 **Fail closed, not open.** Plans that predate this feature, or that arrive from
-a different flow, will not carry the stamp, the Deviations block, the `verify=`
-field, or the binding keys — they still bail on all four checks. The caller must
-add an `OVERRIDE` stamp for the review-stamp check (which also covers the
-binding check, per the note above) and a `verify=PREDATES` (the legacy case —
-not `verify=OVERRIDE`, which is reserved for an active per-cycle waiver) for the
-verify check, and must author the Deviations block (there is no override for its
-absence), to proceed. Do not silently fall through when any of the four is
-absent.
+a different flow, will not carry the stamp, the Deviations block, the
+`verify=` field, or the binding keys — they still bail on all four checks. The
+caller must add an `OVERRIDE` stamp for the review-stamp check (which also
+covers the binding check, per the note above) and a `verify=PREDATES` (the
+legacy case — not `verify=OVERRIDE`, which is reserved for an active per-cycle
+waiver) for the verify check, and must author the Deviations block (there is
+no override for its absence), to proceed. Do not silently fall through when
+any of the four is absent.
 
 ### When to Use
 
@@ -267,8 +269,7 @@ contains ANY of the following — and note that NONE of them need name an
 attacker:**
 
 - a **guard**, cap, deadline, concurrency limit, backoff, or rate limit
-- a **retention, permanence, immutability, or "must never be deleted/rotated"**
-  rule
+- a **retention, permanence, immutability, or "must never be deleted/rotated"** rule
 - an **audit, forensic, tamper-evidence, or provenance** requirement
 - an **authorization, entitlement, or recipient/ownership check**
 
@@ -335,20 +336,20 @@ create a single epic or task until every gap it reports is closed or explicitly
 ruled by the owner.**
 
 **Why HERE:** this is the last moment the spec is still in the room. Once a
-requirement is missing from the plan _and_ absent from the beads, **the beads
+requirement is missing from the plan *and* absent from the beads, **the beads
 become the working set, nobody consults the spec again, and the gap stops being
 discoverable at all.**
 
-🚫 **Never self-run this as the plan's author — dispatch it.** Self-review
-cannot catch a requirement the author never perceived — same person, same
-anchoring, same blind spot.
+🚫 **Never self-run this as the plan's author — dispatch it.** Self-review cannot
+catch a requirement the author never perceived — same person, same anchoring,
+same blind spot.
 
 ⚠️ **This does NOT duplicate `verify-against-source`.** They read different
 things and catch different failures:
 
-| Gate                     | Reads        | Asks                                 | Catches                                   |
-| ------------------------ | ------------ | ------------------------------------ | ----------------------------------------- |
-| `verify-against-source`  | the ARTIFACT | does this honor its source?          | drift, contradiction, scope creep         |
+| Gate | Reads | Asks | Catches |
+|---|---|---|---|
+| `verify-against-source` | the ARTIFACT | does this honor its source? | drift, contradiction, scope creep |
 | **`trace-spec-to-plan`** | **the SPEC** | **where did each requirement land?** | **absence, name-only, missing substrate** |
 
 **A reviewer reading an artifact cannot see what isn't in it.**
@@ -383,16 +384,16 @@ bd dep add <later-epic-id> <earlier-epic-id>
 #### Create Tasks
 
 When creating > 6 tasks, delegate to parallel sub-agents — one per epic. Each
-sub-agent (sonnet-low is sufficient — the work is mechanical) gets the epic ID,
-the list of `bd create --title=... --type=task --priority=N --description=...`
+sub-agent (sonnet-low is sufficient — the work is mechanical) gets the epic ID, the
+list of `bd create --title=... --type=task --priority=N --description=...`
 commands to run, the within-epic `bd dep add <later_id> <earlier_id>` ordering
 commands, and instructions to return the created task IDs and titles. Invoke
 `efficient-multi-agent-research` § Core Pattern for launch-and-wait mechanics.
 
-> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet` (low
-> effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
-> operator-ask or a skill step that names it. See the `choosing-subagent-models`
-> skill for the full policy.
+> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet`
+> (low effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
+> operator-ask or a skill step that names it. See the
+> `choosing-subagent-models` skill for the full policy.
 
 After sub-agents return IDs, set cross-epic dependencies directly (requires IDs
 from multiple sub-agents):
@@ -482,8 +483,9 @@ If not found, create one:
 
 `--description` is multi-line prose — never double-quoted inline. On
 `scripts/bd-shared`, `--stdin`/`--body-file` are refused (remote-path
-resolution + silent-empty-body hazards), so write it to a scratch file and pass
-`-d "$(cat <file>)"`; see the role preamble's 🔴 PROSE INTO A COMMAND rule.
+resolution + silent-empty-body hazards), so write it to a scratch file and
+pass `-d "$(cat <file>)"`; see the role preamble's 🔴 PROSE INTO A COMMAND
+rule.
 
 ```bash
 cat > /tmp/refactor-epic-desc.md <<'EOF'
@@ -561,9 +563,9 @@ If no cross-epic dependencies exist, note that and move on.
 
 ### Phase 3: Select Worktrees & Agents
 
-**This phase is an interactive decision gate.** MUST ask the user which worktree
-and agent to use for each epic before generating prompts. Do not infer silently
-— present options and let the user choose.
+**This phase is an interactive decision gate.** MUST ask the user which
+worktree and agent to use for each epic before generating prompts. Do not infer
+silently — present options and let the user choose.
 
 #### Step 1: Gather Current State
 
@@ -653,10 +655,10 @@ thrum quickstart --name <agent-name> --role implementer \
 ##### For new worktrees
 
 The preferred path is `thrum worktree create` (alias: `thrum worktree setup`).
-Both commands are interchangeable. They create the worktree, set up thrum and
-beads redirects, register the agent identity, and enforce
-single-identity-per-worktree (registering a second identity in the same worktree
-is an error).
+Both commands are interchangeable. They create the
+worktree, set up thrum and beads redirects, register the agent identity, and
+enforce single-identity-per-worktree (registering a second identity in the same
+worktree is an error).
 
 ```bash
 # Preferred: single command via thrum CLI
@@ -761,12 +763,12 @@ These values feed directly into the `{{PLACEHOLDER}}` resolution in Phase 4.
 
 ### Phase 4: Generate Implementation Prompts
 
-**CRITICAL: Generate prompts directly. Do NOT delegate prompt generation to
-sub-agents.** Sub-agents take shortcuts — they skip sections, leave template
-metadata in the output, fail to strip meta-sections, and produce prompts that
-confuse the implementation agent. The prompt is the most important artifact this
-skill produces. It defines how the implementation agent behaves for the entire
-epic. Treat it with the same care as writing code.
+**CRITICAL: Generate prompts directly. Do NOT delegate prompt
+generation to sub-agents.** Sub-agents take shortcuts — they skip sections,
+leave template metadata in the output, fail to strip meta-sections, and produce
+prompts that confuse the implementation agent. The prompt is the most important
+artifact this skill produces. It defines how the implementation agent behaves
+for the entire epic. Treat it with the same care as writing code.
 
 For each epic/worktree assignment, generate a filled prompt file.
 
@@ -863,11 +865,7 @@ architecture notes specific to this feature:
 
 **Authored-against:** `<sha>` target: `<merge_target>`
 
-> ⚠️ Verify base before acting:
-> `git diff <sha>..origin/<merge_target> -- <files cited>` -- non-empty ⇒ cited
-> code moved. (Resolve `<merge_target>` through its remote-tracking ref, never a
-> bare local branch name — a local branch of the same name can be stale or
-> absent.)
+> ⚠️ Verify base before acting: `git diff <sha>..origin/<merge_target> -- <files cited>` -- non-empty ⇒ cited code moved. (Resolve `<merge_target>` through its remote-tracking ref, never a bare local branch name — a local branch of the same name can be stale or absent.)
 
 <!-- Derive stamp per `claude-plugin/commands/_stamp-protocol.md`. -->
 
@@ -979,9 +977,9 @@ keys in the fixed order `stage=`, `verdict=`, `cycle=`, `date=` so a literal
 **This stamp is a hard completion requirement, not an optional shortcut.**
 project-setup CANNOT report completion or dispatch-readiness for this session
 until the generated prompt carries a `stage=prompt verdict=Ready:Yes` (or
-`OVERRIDE`) THRUM-REVIEW line with valid `prompt_obj`/`plan_lock` bindings. Run
-the same binding check used at Phase 0 (§ "Fourth check" above), against the
-prompt instead of the plan:
+`OVERRIDE`) THRUM-REVIEW line with valid `prompt_obj`/`plan_lock` bindings.
+Run the same binding check used at Phase 0 (§ "Fourth check" above), against
+the prompt instead of the plan:
 
 ```bash
 # PROMPT_FILE = the generated prompt; PLAN_FILE = the LOCKED plan it was reviewed against
@@ -1012,15 +1010,16 @@ fi
 ```
 
 An OVERRIDE on the matched line already satisfies this check (same escape as
-Phase 0's fourth check) — the snippet above short-circuits before re-deriving or
-comparing in that case.
+Phase 0's fourth check) — the snippet above short-circuits before re-deriving
+or comparing in that case.
 
 At dispatch, the coordinator greps the prompt for this stamp. On a
-project-setup-produced prompt it is ALWAYS present — project-setup will not have
-reported completion without it — so its absence on such a prompt is an ANOMALY
-requiring the full pre-dispatch review, never a sanctioned shortcut for skipping
-it. (Pre-feature prompts and prompts from non-project-setup flows are a
-separate, narrower carve-out — see `coordinator-dispatching-work`.)
+project-setup-produced prompt it is ALWAYS present — project-setup will not
+have reported completion without it — so its absence on such a prompt is an
+ANOMALY requiring the full pre-dispatch review, never a sanctioned shortcut
+for skipping it. (Pre-feature prompts and prompts from non-project-setup
+flows are a separate, narrower carve-out — see
+`coordinator-dispatching-work`.)
 
 ### Common Mistakes
 
@@ -1041,10 +1040,10 @@ before proposing new ones. Never silently assign worktrees.
 **Base branch resolution:** Do NOT pass `--base` — `worktree.Create` resolves
 the base branch itself, in priority order: an explicit `--base` flag (always
 wins) > `orchestration.merge_target` from `.thrum/config.json` > the main repo's
-current HEAD branch > `main` as a last resort. Passing an explicit
-`--base <branch>` here permanently overrides the config-driven resolution for
-every worktree this skill creates — only pass it explicitly for a one-off
-worktree based on something other than the configured merge target.
+current HEAD branch > `main` as a last resort. Passing an explicit `--base <branch>`
+here permanently overrides the config-driven resolution for every worktree this skill
+creates — only pass it explicitly for a one-off worktree based on
+something other than the configured merge target.
 
 **Generating prompts before worktree setup:** Prompts embed the worktree path,
 branch, and agent name. These must be confirmed in Phase 3 before generating

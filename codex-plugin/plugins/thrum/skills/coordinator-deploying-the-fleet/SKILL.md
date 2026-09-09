@@ -1,55 +1,44 @@
 ---
 name: coordinator-deploying-the-fleet
-description:
-  "Use when rolling a build across ALL boxes - fleet deploy, fleet roll, rolling
-  the fleet, deploy everywhere, ship to every box, canary then the rest, promote
-  the canary, fleet rollout, deploying after a merge batch. Orchestrates the
-  staged multi-box order and the promotion gate between stages, and delegates
-  each individual box to the coordinator-deploying-a-box runbook. Load this
-  BEFORE dispatching any box."
+description: "Use when rolling a build across ALL boxes - fleet deploy, fleet roll, rolling the fleet, deploy everywhere, ship to every box, canary then the rest, promote the canary, fleet rollout, deploying after a merge batch. Orchestrates the staged multi-box order and the promotion gate between stages, and delegates each individual box to the coordinator-deploying-a-box runbook. Load this BEFORE dispatching any box."
 # source: claude-plugin/skills/coordinator-deploying-the-fleet/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Coordinator: Deploying a Build Across the WHOLE FLEET — staged order, canary, promotion gate
 
 **This skill is the ORCHESTRATION layer. It does not replace
 `coordinator-deploying-a-box` — it calls it, once per box.**
 
-- **This skill answers:** which box goes first, what must be true before the
-  next one goes, who runs each one, and what is owed after the last one.
+- **This skill answers:** which box goes first, what must be true before the next
+  one goes, who runs each one, and what is owed after the last one.
 - **`coordinator-deploying-a-box` answers:** how to deploy one box safely.
 
 > # 🔴🔴 LOAD `coordinator-deploying-a-box` FOR EVERY BOX — **INCLUDING THE BUILD BOX, YOUR OWN BOX. NO EXCEPTIONS.**
 >
-> **This is the #1 way this skill fails, and it has failed this way MORE THAN
-> ONCE (Leon, 2026-09-03).** You dispatch the per-box runbook to every REMOTE
-> coordinator — and then you drive your OWN box (the build box) by hand,
-> improvising the install and restart, because _"I'm the coordinator, I'll just
-> do it."_ **That improvisation IS the failure.** The per-box runbook carries
-> steps that are invisible until they bite:
+> **This is the #1 way this skill fails, and it has failed this way MORE THAN ONCE
+> (Leon, 2026-09-03).** You dispatch the per-box runbook to every REMOTE coordinator —
+> and then you drive your OWN box (the build box) by hand, improvising the install and restart,
+> because *"I'm the coordinator, I'll just do it."* **That improvisation IS the failure.**
+> The per-box runbook carries steps that are invisible until they bite:
+> - 🔴 **On macOS you MUST restart via `scripts/mac-daemon-restart-via-cron.sh`, NEVER a
+>   bare `thrum daemon restart`** — a terminal/VSCode-parented daemon is silently DENIED
+>   Local Network (TCC) permission and cannot dial LAN peers. A new binary is a new cdhash,
+>   so the "Allow devices on the local network" prompt MUST re-fire and the operator MUST
+>   click Allow. **A bare restart on the build box looks successful and leaves every LAN peer
+>   bridge hanging "connecting" forever** (§6b-mac of the per-box runbook).
+> - the backup sizing formula, the SHA-CONTAINS-the-fix ancestry check, the by-effect
+>   verification, the strand-gate, the phase reconcile — none of which you carry in your head.
 >
-> - 🔴 **On macOS you MUST restart via `scripts/mac-daemon-restart-via-cron.sh`,
->   NEVER a bare `thrum daemon restart`** — a terminal/VSCode-parented daemon is
->   silently DENIED Local Network (TCC) permission and cannot dial LAN peers. A
->   new binary is a new cdhash, so the "Allow devices on the local network"
->   prompt MUST re-fire and the operator MUST click Allow. **A bare restart on
->   the build box looks successful and leaves every LAN peer bridge hanging
->   "connecting" forever** (§6b-mac of the per-box runbook).
-> - the backup sizing formula, the SHA-CONTAINS-the-fix ancestry check, the
->   by-effect verification, the strand-gate, the phase reconcile — none of which
->   you carry in your head.
->
-> **⇒ THE MOMENT YOU REACH YOUR OWN BOX (or ANY box you drive yourself), STOP
-> AND LOAD `coordinator-deploying-a-box`.** Executing-directly (not dispatching)
-> is the ONLY thing that differs on your own box — you still LOAD IT AND FOLLOW
-> IT, step for step. Reaching for `thrum daemon restart`, `install.sh`, or
-> `thrum backup` on your own box WITHOUT the per-box runbook loaded is the red
-> flag; if you're doing that, you have already skipped this.
+> **⇒ THE MOMENT YOU REACH YOUR OWN BOX (or ANY box you drive yourself), STOP AND LOAD
+> `coordinator-deploying-a-box`.** Executing-directly (not dispatching) is the ONLY thing
+> that differs on your own box — you still LOAD IT AND FOLLOW IT, step for step. Reaching for
+> `thrum daemon restart`, `install.sh`, or `thrum backup` on your own box WITHOUT the per-box
+> runbook loaded is the red flag; if you're doing that, you have already skipped this.
 
-**Read both. Skipping the per-box runbook because you read this one — or because
-the box is your OWN and you'll "just do it" — is the failure this split is
-designed to prevent.**
+**Read both. Skipping the per-box runbook because you read this one — or because the box is
+your OWN and you'll "just do it" — is the failure this split is designed to prevent.**
 
 ---
 
@@ -64,23 +53,22 @@ SHA. The rule exists because the failure reports green.
 
 **So your job in a fleet roll is DISPATCH AND GATE, never execution — except on
 your own box, which you EXECUTE directly (not dispatch) but STILL under
-`coordinator-deploying-a-box`, loaded and followed step for step (see the 🔴🔴
-block above).** "Except on your own box" means you run the commands yourself
-instead of dispatching them — it does NOT mean you improvise them from memory.
-If you find yourself typing `ssh` and `make install` in the same command, stop —
-and if you find yourself running `thrum daemon restart` / `install.sh` /
-`thrum backup` on your own box without having loaded the per-box runbook, stop
-there too.
+`coordinator-deploying-a-box`, loaded and followed step for step (see the 🔴🔴 block
+above).** "Except on your own box" means you run the commands yourself instead of
+dispatching them — it does NOT mean you improvise them from memory. If you find
+yourself typing `ssh` and `make install` in the same command, stop — and if you find
+yourself running `thrum daemon restart` / `install.sh` / `thrum backup` on your own box
+without having loaded the per-box runbook, stop there too.
 
 ⚠️ **CLARIFICATION — an `scp` of the signed pro-bundle zip into a box's
 `~/.thrum/update/` is DISTRIBUTION OF AN ARTIFACT, not a remote build or
 install, and does NOT violate this rule.** The rule forbids driving a box's
 build/install/restart FROM another machine. Copying an already-built,
-already-signed bundle to where that box's own coordinator will unzip and install
-it FROM is the sanctioned distribution mechanism (see §4) — the box still does
-its own unzip + `install.sh` + `thrum daemon restart`, locally, on its own
-account. Never conflate "the bytes moved over the network" with "the box was
-remote-driven."
+already-signed bundle to where that box's own coordinator will unzip and
+install it FROM is the sanctioned distribution mechanism (see §4) — the box
+still does its own unzip + `install.sh` + `thrum daemon restart`, locally, on
+its own account. Never conflate "the bytes moved over the network" with "the
+box was remote-driven."
 
 ---
 
@@ -92,10 +80,10 @@ remote-driven."
 **EVERYTHING ELSE IS COMPOSED FRESH EACH TIME.** Recorded rolls disagree, and
 they disagree deliberately.
 
-🔴 **"COMPOSED FRESH" IS THE ORDER, NOT THE MEMBERSHIP.** Every box in the
-roster MUST be rolled — the roster is the fleet. Compose the order per roll,
-never the set. Deferring a box requires the owner's explicit sign-off for that
-roll and a message to that box's coordinator that it is deferred.
+🔴 **"COMPOSED FRESH" IS THE ORDER, NOT THE MEMBERSHIP.** Every box in the roster
+MUST be rolled — the roster is the fleet. Compose the order per roll, never the
+set. Deferring a box requires the owner's explicit sign-off for that roll and a
+message to that box's coordinator that it is deferred.
 
 ⚠️ **DO NOT WRITE "THE BUILD BOX GOES LAST" INTO YOUR PLAN AS A RULE. IT IS A
 DEFAULT, AND IT HAS BEEN DELIBERATELY OVERRIDDEN** — on 2026-07-28 the build box
@@ -103,19 +91,19 @@ went SECOND, because the owner needed the changes demonstrable at a meetup.
 **The owner sets the order; this skill sequences whatever order is set.**
 
 **Sensible default when nobody says otherwise:** the canary → the remaining
-boxes (parallel where they share no state) → the build box last. **Reason to
-keep the build box late:** it hosts the most agents and is the coordinator's own
-box, so a bad build there costs you the ability to drive the recovery. **That is
-a reason, not a law.**
+boxes (parallel where they share no state) → the build box last.
+**Reason to keep the build box late:** it hosts the most agents and is the
+coordinator's own box, so a bad build there costs you the ability to drive the
+recovery. **That is a reason, not a law.**
 
 Each box's coordinator and deploy target are defined in `.thrum/config.json`
-under `.fleet.deploy_roster` — read them there; **never hardcode box identities
-in this skill.**
+under `.fleet.deploy_roster` — read them there; **never hardcode box
+identities in this skill.**
 
 🔑 **This skill runs from the fleet orchestrator's own box (the build box); the
-roster lives in that box's config.** Resolve the box list and, for each box, its
-`ssh_alias` / `coordinator` / `daemon_id` from that same `.fleet.deploy_roster`
-entry:
+roster lives in that box's config.** Resolve the box list and, for each box,
+its `ssh_alias` / `coordinator` / `daemon_id` from that same
+`.fleet.deploy_roster` entry:
 
 ```bash
 jq -r '.fleet.deploy_roster | keys[] | select(startswith("_") | not)' .thrum/config.json
@@ -126,16 +114,15 @@ jq '.fleet.deploy_roster["<box>"]' .thrum/config.json            # one box's ent
                                                                   # (ssh_alias, coordinator, daemon_id)
 ```
 
-**Resolve coordinators by `daemon_id` JOIN, NEVER by name** — a name is a label
-somebody chose; an agent named for a box has been found resident on a different
-one. **The public-line box is EXCLUDED** (public 0.10.x line — see below).
+**Resolve coordinators by `daemon_id` JOIN, NEVER by name** — a name is a
+label somebody chose; an agent named for a box has been found resident on a
+different one. **The public-line box is EXCLUDED** (public 0.10.x line — see below).
 
 ⚠️ **At least one box's position in the roll is INCONSISTENT across rolls** —
 sometimes explicitly "in order", sometimes trailing. **Ask; do not assume.** It
 is always driven by its own coordinator, never dispatched around.
 
 #### PREP-AND-HOLD — the mechanism that makes a staged roll safe
-
 Dispatch several boxes at once to do **READ-ONLY prep only**: measure current
 state, take the backup, `git pull`, capture BEFORE readings. Then:
 
@@ -154,9 +141,10 @@ CACHED NAME.** A name is a label somebody chose; the authoritative method is a
 `thrum team`'s live roster, never match on name. An agent's NAME and its
 WORKTREE NAME are not its location — an agent named for a box has been found
 resident on a different one, and obeying that name would have driven the
-forbidden ssh path. ⚠️ **`thrum agent list --all` returns ZERO for agents that
-certainly exist** — do not use it as your roster instrument, and do not read its
-empty output as an absence.
+forbidden ssh path.
+⚠️ **`thrum agent list --all` returns ZERO for agents that certainly exist** —
+do not use it as your roster instrument, and do not read its empty output as an
+absence.
 
 ---
 
@@ -167,8 +155,8 @@ each measured BY EFFECT on that box:**
 
 - Installed binary `--version` **equals the pin exactly** — not "close", not
   "the branch".
-- Daemon restarted with a **NEW PID**, and `daemon status` reports the pin. ⇒
-  **MERGED == INSTALLED == RUNNING, all three agreeing.**
+- Daemon restarted with a **NEW PID**, and `daemon status` reports the pin.
+  ⇒ **MERGED == INSTALLED == RUNNING, all three agreeing.**
 - Schema **before AND after** — proves migrating-vs-not by effect rather than
   from the delta.
 - UI built for real (module count, signed) — **not the exit-127 shape**.
@@ -184,8 +172,8 @@ each measured BY EFFECT on that box:**
 proves the BINARY pass only. Say which passes you verified, every time.
 
 🔴 **THE CANARY RESULT DOES NOT TRANSFER. EVERY BOX IS MEASURED ON ITS OWN
-NUMBERS.** Measured instance: the canary came back green while another box had
-**207 matured tombstones over live agents**. The canary proves the BUILD is
+NUMBERS.** Measured instance: the canary came back green while another box
+had **207 matured tombstones over live agents**. The canary proves the BUILD is
 sound; it says nothing about any other box's state. **Do not let a green canary
 talk a box out of taking its own BEFORE readings.**
 
@@ -196,10 +184,9 @@ uninterpretable pass. **Pick the interval from what the mechanism needs, not
 from impatience.**
 
 #### The go/no-go has never been a fixed number — get it from the owner
-
-The go/no-go has never been a fixed number. **State YOUR bar explicitly before
-promoting, so it can be challenged.** An unstated bar is indistinguishable from
-no bar.
+The go/no-go has never been a fixed number. **State YOUR
+bar explicitly before promoting, so it can be challenged.** An unstated bar is
+indistinguishable from no bar.
 
 ---
 
@@ -208,10 +195,10 @@ no bar.
 **Every box owes all three. They fail independently and a box can be current on
 one and month-stale on another.**
 
-| Pass                                                                                                                                                          | What it updates             | Who runs it                                                       |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- | ----------------------------------------------------------------- |
-| 1. install the pre-built, Developer-ID-signed pro-bundle via its own `install.sh`, **then** `thrum daemon restart`                                            | the **binary**              | the box's own coordinator                                         |
-| 2. `thrum roles refresh` **then** `thrum roles deploy`                                                                                                        | **role preambles**          | the box's own coordinator                                         |
+| Pass | What it updates | Who runs it |
+|---|---|---|
+| 1. install the pre-built, Developer-ID-signed pro-bundle via its own `install.sh`, **then** `thrum daemon restart` | the **binary** | the box's own coordinator |
+| 2. `thrum roles refresh` **then** `thrum roles deploy` | **role preambles** | the box's own coordinator |
 | 3. plugin refresh / reinstall (installs the BUNDLE's plugins — already made correct/complete by the plugin-bundle spine — rather than the box's own checkout) | **skills, commands, hooks** | 🔴 **the OPERATOR (Leon)** — a coordinator CANNOT self-serve this |
 
 🔴 **THE BOX NEVER BUILDS OR SIGNS ITS OWN BINARY. IT INSTALLS A DELIVERED
@@ -245,20 +232,20 @@ do not improvise it.
 #### 🔴 THE BOX'S **REPO CHECKOUT** MUST BE AT THE PIN BEFORE PASS 3 — THE BINARY BEING AT THE PIN IS NOT SUFFICIENT
 
 The plugin source is a **LOCAL PATH**, so pass 3 reads the checkout, not the
-binary — a box whose binary is at the pin can still install a plugin version one
-bump behind if its working tree lags.
+binary — a box whose binary is at the pin can still install a plugin version
+one bump behind if its working tree lags.
 
 ⚠️ **AND THE BOX'S OWN VERIFICATION CANNOT SEE IT.** It compared installed
-skills against its own source, byte-for-byte, zero mismatches — and **both sides
-were the stale version.** That proves the box is internally consistent WITH
-ITSELF and is structurally incapable of detecting a stale source. Same shape as
-render-fidelity-vs-doctrine-currency for preambles, except **pass 3 has no
-equivalent of the ancestry check**, so nothing warns you.
+skills against its own source, byte-for-byte, zero mismatches — and
+**both sides were the stale version.** That proves the box is internally
+consistent WITH ITSELF and is structurally incapable of detecting a stale
+source. Same shape as render-fidelity-vs-doctrine-currency for preambles, except
+**pass 3 has no equivalent of the ancestry check**, so nothing warns you.
 
-🔴 **IT IS SELF-SEALING.** The cache is keyed by version, so at the stale
-version the installer sees a match and **skips the re-copy permanently.**
-Re-running the refresh does NOT fix it. Only bringing the checkout to the pin
-and re-running does.
+🔴 **IT IS SELF-SEALING.** The cache is keyed by version, so at the stale version
+the installer sees a match and **skips the re-copy permanently.** Re-running the
+refresh does NOT fix it. Only bringing the checkout to the pin and re-running
+does.
 
 **⇒ Before handing a box to the operator for pass 3, verify BY EFFECT that all
 FOUR manifests read the pin's version.** A partial bump is worse than none — the
@@ -281,39 +268,39 @@ silently covers all three is how staleness hides.
    makes every subsequent check (trunk-green, pin, schema) a check against the
    wrong tree.
 1. **Is trunk green?** Trunk-green is defined as `make gate` passing. A green
-   lane, a green package, or a clean dual review is **not** that claim. ⚠️
-   **Publishing a green without naming its invocation is the most common error
-   here:** 0-of-6 and 0-of-15 are different claims in identical words.
+   lane, a green package, or a clean dual review is **not** that claim.
+   ⚠️ **Publishing a green without naming its invocation is the most common
+   error here:** 0-of-6 and 0-of-15 are different claims in identical words.
 2. **PIN AN EXACT SHA. NEVER "tip".** Tip moves under boxes mid-roll — two boxes
    told to deploy "tip" ship different code and both report success.
 3. **Migrating or not?** Compare `CurrentVersion` at the pin against each box's
    running schema. A migrating roll pulls in the whole heavy-migration section
    of the per-box runbook; a non-migrating one does not.
-4. **Forward-only:** each box's current SHA must be an ancestor of the pin. Pair
-   the check with a control that MUST refuse (an invented SHA).
+4. **Forward-only:** each box's current SHA must be an ancestor of the pin.
+   Pair the check with a control that MUST refuse (an invented SHA).
 5. **Backup sizing** — the per-box runbook carries the formula. A percentage
    rule is not it, and a stale `current/` answers "are we protected?" with a
    wrong yes.
 6. **Announce the pin and the order** to every coordinator before starting, so
    nobody deploys a different SHA.
 7. 🔴 **BUILD ONCE, DISTRIBUTE THE SAME ZIP TO EVERY BOX.** The build box
-   produces exactly ONE `make pro-bundle` at the pinned SHA. That single zip —
-   never rebuilt per box — is what every box in the roll installs from. The
-   staged roll therefore orchestrates three phases in order: **build once** (the
-   build box, `make pro-bundle` at the pin) **→ distribute** (hand the same zip
-   to each box's coordinator, via drop-folder or direct hand-off — see below)
-   **→ each box installs from the delivered bundle** (§3 Pass 1). No box
-   re-derives the artifact; every box's binary is byte-identical because it came
-   from the same zip.
+   produces exactly ONE `make pro-bundle` at the pinned SHA. That
+   single zip — never rebuilt per box — is what every box in the roll installs
+   from. The staged roll therefore orchestrates three phases in order:
+   **build once** (the build box, `make pro-bundle` at the pin) **→ distribute**
+   (hand the same zip to each box's coordinator, via drop-folder or direct
+   hand-off — see below) **→ each box installs from the delivered bundle**
+   (§3 Pass 1). No box re-derives the artifact; every box's binary is
+   byte-identical because it came from the same zip.
    - **Distribution mechanism 1 — drop-folder:** the built zip is placed where
      each box's own sync/fetch path picks it up into its local
      `~/.thrum/update/` for that box's coordinator to find and unzip.
    - **Distribution mechanism 2 — hand-off:** the coordinator running the roll
      hands the zip directly to a box's coordinator (e.g. `scp` into
-     `~/.thrum/update/` — see §0's clarification: this is artifact distribution,
-     not remote build/install).
-   - Whichever mechanism is used, confirm the box installed from the SAME bundle
-     (matching version/checksum) that was built at the pin — never a
+     `~/.thrum/update/` — see §0's clarification: this is artifact
+     distribution, not remote build/install).
+   - Whichever mechanism is used, confirm the box installed from the SAME
+     bundle (matching version/checksum) that was built at the pin — never a
      locally-reconstructed one.
    - 🔴 **NEVER pass `PRO_BUNDLE_VERSION=$(git describe)` when building the pro
      bundle — trust the Makefile default** (`v0.11.0-rc.1` as of this writing,
@@ -350,8 +337,8 @@ Give each coordinator, explicitly:
 ### 6. AFTER THE LAST BOX
 
 - 🔴 **ROSTER COMPLETENESS GATE — first.** Re-enumerate the roster from config,
-  not from propagated deploy-state (a box with a wedged sync never propagates
-  its row). Confirm every box is rolled on the pin or owner-deferred with its
+  not from propagated deploy-state (a box with a wedged sync never propagates its
+  row). Confirm every box is rolled on the pin or owner-deferred with its
   coordinator notified. Name each box and its disposition in the roll-complete
   report.
 - **Agent phase reconciliation, per box.** A restart leaves recorded `phase`
@@ -362,12 +349,12 @@ Give each coordinator, explicitly:
   preambles and skills. 🔴 **Agents adopt a new preamble ON THEIR NEXT RESTART,
   not immediately** — a live agent keeps behaving per the identity it was born
   with. Track adoption by session birth time, never file mtime.
-- **Pre-release test suite — CHECK WHETHER IT IS OWED; do not assume it is.** It
-  is documented as a gate for cutting an RC/release, and a remote box runs it
+- **Pre-release test suite — CHECK WHETHER IT IS OWED; do not assume it is.**
+  It is documented as a gate for cutting an RC/release, and a remote box runs it
   after fleet deploys by standing arrangement. ⚠️ **A search of past rolls did
   NOT establish it as a mandatory step for a routine binary/preamble/plugin
-  roll.** Read the run index: if its newest entry predates this deploy, the
-  suite has not run against what is now deployed — then decide, with the owner,
+  roll.** Read the run index: if its newest entry predates this deploy, the suite
+  has not run against what is now deployed — then decide, with the owner,
   whether this roll warrants one. **Stated as a gap rather than invented as a
   rule.**
 - **Update the deploy-state record** — per box: serving SHA, schema, AS OF, and

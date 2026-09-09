@@ -1,21 +1,18 @@
 ---
 name: coordinator-maintaining-memory
-description:
-  "Use when the coordinator writes a role-rule, captures an observation about
-  agent behavior, or notes a state change. Loads coordinator-specific memory
-  discipline — when to write, the role-rule pattern, the kind-diversification
-  roadmap (deferred to follow-up)."
+description: "Use when the coordinator writes a role-rule, captures an observation about agent behavior, or notes a state change. Loads coordinator-specific memory discipline — when to write, the role-rule pattern, the kind-diversification roadmap (deferred to follow-up)."
 # source: claude-plugin/skills/coordinator-maintaining-memory/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
 
+
 ## Coordinator memory discipline
 
-As coordinator, write role-rules (when the user corrects your judgment), capture
-observations about agent behavior, and periodically note project-state changes.
-Common memory operations (write command shape, body conventions, lookup
-patterns, edit/delete) live in the common memory skills — invoke them for
-basics. THIS skill carries coordinator-specific extensions.
+As coordinator, write role-rules (when the user corrects your judgment),
+capture observations about agent behavior, and periodically note
+project-state changes. Common memory operations (write command shape, body
+conventions, lookup patterns, edit/delete) live in the common memory skills —
+invoke them for basics. THIS skill carries coordinator-specific extensions.
 
 ### When to invoke the commons
 
@@ -56,9 +53,9 @@ Secondary write triggers:
   you proposed ("yes, that bundled PR was the right call"). Capture as
   `kind: agent_rule` with `--tag decision-confirmation` and the same Why/How
   shape.
-- **Mid-session policy clarifications** — the user explains why an existing rule
-  applies in a new context. Edit the original entry to amend the `How to apply:`
-  line, rather than creating a duplicate.
+- **Mid-session policy clarifications** — the user explains why an existing
+  rule applies in a new context. Edit the original entry to amend the `How to
+  apply:` line, rather than creating a duplicate.
 
 ### Coordinator does NOT typically write
 

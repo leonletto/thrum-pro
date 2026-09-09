@@ -15,10 +15,9 @@ single report.
 **Core principle:** The coordinator decides, sub-agents investigate. Keep
 investigation results out of the main context until consolidated.
 
-**REQUIRED BACKGROUND:** Read superpowers:dispatching-parallel-agents before
-using this skill. That skill
-covers general parallel dispatch. This skill extends it with a specific research
-workflow: partition, investigate to disk, consolidate, then decide.
+This skill is self-contained: partition, investigate to disk, consolidate,
+then decide — the full dispatch mechanics (Agent tool syntax, background mode,
+read-only scoping) are in "Core Pattern" below.
 
 ## When to Use
 

@@ -1,53 +1,43 @@
 ---
 name: coordinator-hotpath-merge-gate
-description:
-  "Use when ABOUT TO START a hot-path Pass-3 gate - a gate has been dispatched
-  to you, you are picking up a queued gate, you are the Gate Runner beginning a
-  gate, you are about to walk hot-path lenses - and when a coordinator is about
-  to run git merge after dual review came back clean. Loads the gate-runner
-  restart rule (restart at ~50 percent, at a seam BETWEEN gates) plus the
-  hot-path and perf lenses read from .thrum/hotpath-gate.json. Trigger-scoped
-  lenses skip on a mechanical zero-match against the configured trigger
-  directories, paired with a firing positive control, for branches touching RPC
-  handlers, projection writers, storage openers, sync code, peer dial paths, or
-  daemon boot paths - not CLI helpers, tests-only, docs, or website. Any lens
-  flagged always_run in the config runs on EVERY commit regardless of directory,
-  including the master-giant-process batch-decomposition lens."
+description: "Use when ABOUT TO START a hot-path Pass-3 gate - a gate has been dispatched to you, you are picking up a queued gate, you are the Gate Runner beginning a gate, you are about to walk hot-path lenses - and when a coordinator is about to run git merge after dual review came back clean. Loads the gate-runner restart rule (restart at ~50 percent, at a seam BETWEEN gates) plus the hot-path and perf lenses read from .thrum/hotpath-gate.json. Trigger-scoped lenses skip on a mechanical zero-match against the configured trigger directories, paired with a firing positive control, for branches touching RPC handlers, projection writers, storage openers, sync code, peer dial paths, or daemon boot paths - not CLI helpers, tests-only, docs, or website. Any lens flagged always_run in the config runs on EVERY commit regardless of directory, including the master-giant-process batch-decomposition lens."
 # source: claude-plugin/skills/coordinator-hotpath-merge-gate/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
+
 
 ## Coordinator: Hot-Path Merge Gate
 
 ### Before you start this gate — restart if you cannot finish it
 
-**Finish the gate you are in. Never restart mid-gate.** A finding that exists
-only in your context is one restart from gone.
+**Finish the gate you are in. Never restart mid-gate.** A finding that exists only
+in your context is one restart from gone.
 
-**Then restart at the seam — after the report is delivered, before taking
-anything else.** Do not carry context across a gate boundary.
+**Then restart at the seam — after the report is delivered, before taking anything
+else.** Do not carry context across a gate boundary.
 
-**Do not START a new gate above ~50% context.** A full dual gate costs roughly
-14%. Starting one you cannot finish is how a gate ends thin on its own verdict.
+**Do not START a new gate above ~50% context.** A full dual gate costs roughly 14%.
+Starting one you cannot finish is how a gate ends thin on its own verdict.
 
-**Why the boundary is the gate and not a number - a gate runner is static.**
-Each gate is scoped, evidenced, and delivered self-contained; State.md carries
-what must persist. Nothing accumulates across gates, so context held past a gate
-boundary buys nothing and costs money.
+**Why the boundary is the gate and not a number - a gate runner is static.** Each gate
+is scoped, evidenced, and delivered self-contained; State.md carries what must persist.
+Nothing accumulates across gates, so context held past a gate boundary buys nothing and
+costs money.
 
-**This is NOT the orchestrator rule.** An orchestrator is building something and
-its context is the work - it pushes through until its current plan is
-implemented and restarts then, at 30% or at 60%. Interrupting an implementation
-to hit a number is the wrong move. A gate is short and self-contained, so its
-boundary comes often and costs nothing to take.
+**This is NOT the orchestrator rule.** An orchestrator is building something and its
+context is the work - it pushes through until its current plan is implemented and
+restarts then, at 30% or at 60%. Interrupting an implementation to hit a number is the
+wrong move. A gate is short and self-contained, so its boundary comes often and costs
+nothing to take.
 
-**The coordinator may overrule either rule for a sustained campaign** - a push
-to get trunk green, an incident, a release cutover - where continuity across
-many units is worth more than a clean seam. That is an explicit decision, stated
-at the time. It is never drift.
+**The coordinator may overrule either rule for a sustained campaign** - a push to get trunk
+green, an incident, a release cutover - where continuity across many units is worth more than
+a clean seam. That is an explicit decision, stated at the time. It is never drift.
 
-**Measure by pane, in the same command block that reports the number.** A figure
-carried forward from earlier in the session is a memory, not a measurement.
+**Measure by pane, in the same command block that reports the number.** A figure carried
+forward from earlier in the session is a memory, not a measurement.
+
+
 
 ### Why this is a separate pass, not a philosophy-gate lens
 
@@ -90,10 +80,10 @@ your own context.**
 
 The gate runner is a standing agent whose entire purpose is to hold gate work
 OUTSIDE the coordinator's context — resolve the current one from `thrum team` by
-its `gate` ROLE, never by a remembered name. It runs the lenses in an ephemeral
-worktree, produces a verdict, and tears the worktree down. **You read
-`.thrum/hotpath-gate.json` to build the dispatch, then you consolidate the
-verdict and decide. You do not run the lenses.**
+its `gate` ROLE, never by a remembered name. It runs the lenses in an ephemeral worktree, produces
+a verdict, and tears the worktree down. **You read `.thrum/hotpath-gate.json` to
+build the dispatch, then you consolidate the verdict and decide. You do not run
+the lenses.**
 
 **This is the default for EVERY diff size.** Diff size changes what you ask for;
 it never changes who runs it. A coordinator that walks the lenses inline burns
@@ -110,70 +100,68 @@ later.
 ### Gate dispatch preamble
 
 Mandatory checklist handed to the GATE RUNNER (and to any sub-agent it spawns in
-turn) at dispatch time. Each rule below currently lives only as prose warnings
-scattered through `dev-docs/hotpath-gate-efficacy.md` and gets re-learned per
-session — hand this list to the sub-agent verbatim at dispatch time instead of
-relying on it rediscovering these the hard way:
+turn) at dispatch time. Each
+rule below currently lives only as prose warnings scattered through
+`dev-docs/hotpath-gate-efficacy.md` and gets re-learned per session — hand this
+list to the sub-agent verbatim at dispatch time instead of relying on it
+rediscovering these the hard way:
 
 1. Read code via `git show <target-sha>:<path>`, NEVER the working tree — tree
    state != the SHA under review.
 2. Build/test ONLY in a throwaway detached worktree
    (`git worktree add <tmp> <sha> --detach`), never the shared checkout.
 3. RUN any test you make a claim about — never judge from reading it.
-4. Diff against `merge-base`, never two-dot against tip — a two-dot diff against
-   tip pulls in unrelated lines from sibling branches and manufactures a false
-   regression signal.
+4. Diff against `merge-base`, never two-dot against tip — a two-dot diff
+   against tip pulls in unrelated lines from sibling branches and
+   manufactures a false regression signal.
 5. Run `git merge-base --is-ancestor` as an explicit gate condition (the
-   fast-forward check) — git silently deduplicates content-identical commits on
-   both sides of a rebase, so a tree that "builds clean" can still be carrying
-   dupes instead of the real content.
+   fast-forward check) — git silently deduplicates content-identical commits
+   on both sides of a rebase, so a tree that "builds clean" can still be
+   carrying dupes instead of the real content.
 6. Run full-package `-race`, not targeted `-run` — a targeted race run misses
    cross-test races.
 7. Build+test the MERGED-tree result as a SEPARATE condition — neither gate
    currently runs a build of the actual post-merge tree; a clean pre-merge
    build/test does not prove the merged result compiles or passes.
-8. Use `rm -r`, NEVER `rm -rf`; use plain `git worktree remove` to drop a
-   worktree, never `--force` as the default (see item 12 below). A broad `ask`
-   rule on `rm -rf *` outranks any narrow `/tmp` allow, so `rm -rf` raises a
-   human permission prompt EVERY time regardless of path — it stalls gate
-   sub-agents mid-run waiting on a keystroke. `rm -r` runs free. Do NOT widen
-   the ask rule to work around this; that entry is the only deletion protection
-   on the box.
-9. Check the discriminator before picking a scratch path, don't assume from the
-   platform: `[ -L /tmp ]`. macOS (symlink) — create throwaway worktrees under
-   `/private/tmp`; a worktree under `/tmp` false-FAILs worktree-ancestor tests
-   via the symlink, producing a confident wrong gate result. Linux (real dir) —
-   `/tmp` is correct; `/private/tmp` may not exist there and must not be
-   created.
+8. Use `rm -r`, NEVER `rm -rf`; use plain `git worktree remove` to drop a worktree, never
+   `--force` as the default (see item 12 below). A broad `ask` rule on `rm -rf *` outranks any narrow `/tmp` allow,
+   so `rm -rf` raises a human permission prompt EVERY time regardless of path —
+   it stalls gate sub-agents mid-run waiting on a keystroke. `rm -r` runs free. Do NOT widen the ask rule
+   to work around this; that entry is the only deletion protection on the box.
+9. Check the discriminator before picking a scratch path, don't assume from
+   the platform: `[ -L /tmp ]`. macOS (symlink) — create throwaway worktrees
+   under `/private/tmp`; a worktree under `/tmp` false-FAILs worktree-ancestor
+   tests via the symlink, producing a confident wrong gate result. Linux (real
+   dir) — `/tmp` is correct; `/private/tmp` may not exist there and must not
+   be created.
 10. Your report reaches the coordinator ONLY as your final returned text.
     Side-channel output is discarded. Put the whole verdict in the return value.
 11. **NEVER run `git stash`, `git checkout`, `git reset`, or any working-tree
-    mutation in the SHARED repo.** Do read-only inspection there
-    (`git show <sha>:<path>`, `git log`, `git diff`) and do every build/test in
-    a throwaway detached worktree. `git stash` is a SINGLE SHARED STACK across
-    every worktree of a repo, so "cleaning up after myself" can strand or
-    clobber another agent's live work; and the shared repo is POPULATED — live
-    agents hold uncommitted `State.md` they are actively re-authoring. If you
-    believe you must mutate the shared tree, STOP and report instead — that is
-    always a finding, never a step.
+    mutation in the SHARED repo.** Do read-only inspection there (`git show
+    <sha>:<path>`, `git log`, `git diff`) and do every build/test in a throwaway
+    detached worktree. `git stash` is a SINGLE SHARED STACK across every
+    worktree of a repo, so "cleaning up after myself" can strand or clobber
+    another agent's live work; and the shared repo is POPULATED — live agents
+    hold uncommitted `State.md` they are actively re-authoring.
+    If you believe you must mutate the shared tree, STOP and report instead —
+    that is always a finding, never a step.
 12. **TEAR DOWN YOUR THROWAWAY WORKTREE WHEN THE GATE ENDS — after two checks,
     in this order.** A required final step, not cleanup etiquette. Each
     abandoned worktree pins its HEAD commit against `gc` and adds a
     `.git/worktrees` admin entry, so the object store grows monotonically.
-    Before removing: (a) `git -C <wt> status --porcelain` — if NON-EMPTY, **STOP
-    and report it instead of removing.** Uncommitted work in a throwaway
-    worktree exists NOWHERE else; this is the category that actually loses work.
+    Before removing:
+    (a) `git -C <wt> status --porcelain` — if NON-EMPTY, **STOP and report it
+        instead of removing.** Uncommitted work in a throwaway worktree exists
+        NOWHERE else; this is the category that actually loses work.
     (b) `git branch -a --contains $(git -C <wt> rev-parse HEAD)` — if EMPTY,
-    HEAD is a gate-produced merge reachable from no ref and removal orphans it.
-    Usually fine (a gate merge is reproducible by redoing it) but say so in your
-    report rather than doing it silently. Then `git worktree remove <wt>` —
-    **plain, no `--force`.** Its rc=128 refusal backstops ONLY
-    untracked/modified content (see rule 8 on `rm -r`) — it does NOT cover
-    gitignored content, which git removes silently with no refusal; a clean rc=0
-    is not proof nothing of value was in there (see
-    coordinator-assessing-agent-completion's reap procedure). `--force` is a
-    justified override only, never the default (see coordinator-merging-code
-    §7a).
+        HEAD is a gate-produced merge reachable from no ref and removal orphans
+        it. Usually fine (a gate merge is reproducible by redoing it) but say so
+        in your report rather than doing it silently.
+    Then `git worktree remove <wt>` — **plain, no `--force`.** Its rc=128 refusal backstops
+    ONLY untracked/modified content (see rule 8 on `rm -r`) — it does NOT cover gitignored
+    content, which git removes silently with no refusal; a clean rc=0 is not proof nothing of
+    value was in there (see coordinator-assessing-agent-completion's reap procedure). `--force`
+    is a justified override only, never the default (see coordinator-merging-code §7a).
 
 ### Trigger-directory skip logic
 
@@ -189,8 +177,8 @@ every diff regardless of trigger directories. If the config has no
 **Why:** A commit introducing a lock can be an ancestor of a delta-re-gate's
 base and never appear in any walked diff, even when a later commit edits the
 gating condition on that call. Root cause: the gate is delta-scoped. The diff
-hunk showing the edited condition never revealed the enclosing locked span above
-it.
+hunk showing the edited condition never revealed the enclosing locked span
+above it.
 
 **Rules:**
 
@@ -198,13 +186,13 @@ it.
   recent delta.
 - A delta re-gate MUST state the prior gated SHA and assert continuity:
   `prior-gated-sha == delta-base`, verified via `git merge-base --is-ancestor`
-  or direct SHA equality. If the prior-gated SHA is NOT the delta base, re-walk
-  from `merge-base` — there is unwalked history between the two.
+  or direct SHA equality. If the prior-gated SHA is NOT the delta base,
+  re-walk from `merge-base` — there is unwalked history between the two.
 - Lens 1 (subprocess hot path) and Lens 2 (dispatch-blocking) greps run at
-  changed-FILE scope, then READ THE FULL ENCLOSING FUNCTION — a diff hunk inside
-  a locked span cannot show you the `Lock()` above it. A changed line whose
-  semantics depend on a lock/defer/subprocess further up the function is only
-  visible at function scope, never at hunk scope.
+  changed-FILE scope, then READ THE FULL ENCLOSING FUNCTION — a diff hunk
+  inside a locked span cannot show you the `Lock()` above it. A changed line
+  whose semantics depend on a lock/defer/subprocess further up the function is
+  only visible at function scope, never at hunk scope.
 
 ### Lens 1 — Subprocess in the per-request hot path
 
@@ -445,8 +433,8 @@ circuit-breaker — **BLOCKING**. Peer call with timeout but no circuit-breaker 
 scoped to files the diff touches, and `internal/daemon/rpc/testcensus` is an ad
 hoc test target nothing routes to. A merge that adds a `state.NewState(...)`
 call site in an `internal/daemon/rpc/*_test.go` file (test-fixture setup, not a
-handler) can leave it unclassified and desync the frozen census snapshot with no
-gate catching it — trunk went RED post-merge on 573mo v87 for exactly this
+handler) can leave it unclassified and desync the frozen census snapshot with
+no gate catching it — trunk went RED post-merge on 573mo v87 for exactly this
 reason (thrum-ykmly).
 
 **Relationship to Lenses 1–10:** every other lens in this file is an
@@ -464,8 +452,8 @@ trigger on top of that (see `config.lenses.census_classification_coverage` and
 preamble rule 4) either (a) touches `internal/daemon/rpc/testcensus/**`
 directly, or (b) touches an `internal/daemon/rpc/*_test.go` file AND an
 added/changed line matches `trigger_content_pattern` (bare `NewState(`,
-alias-agnostic on purpose — a renamed import of the state package would defeat a
-`state.`-prefixed match, and over-firing here costs one fast test run while
+alias-agnostic on purpose — a renamed import of the state package would defeat
+a `state.`-prefixed match, and over-firing here costs one fast test run while
 under-firing reproduces the exact hole this lens exists to close). A diff
 elsewhere under `internal/daemon/` (state/, safedb/, scheduler/, or an
 `rpc/*_test.go` edit that never touches a `NewState(` call) fires the GATE but
@@ -475,8 +463,8 @@ fire this lens either: `census.go`'s `Run()` only scans `*_test.go` source
 non-recursively, so a handler-only edit cannot desync the census by
 construction.
 
-**How to apply:** Read `config.lenses.census_classification_coverage`. Check the
-trigger per the paragraph above. If it fires, run
+**How to apply:** Read `config.lenses.census_classification_coverage`. Check
+the trigger per the paragraph above. If it fires, run
 `config.lenses.census_classification_coverage.mandatory_test_command` in the
 gate's throwaway worktree (preamble rule 2) and record the literal output.
 
@@ -484,15 +472,15 @@ gate's throwaway worktree (preamble rule 2) and record the literal output.
 package.** `mandatory_test_command` is `-run`-scoped to
 `^TestCensusClassificationCoverage$`. The sibling test in the same package,
 `TestCensusRegeneration`, is an orthogonal count-snapshot drift detector — it
-reds on ANY new top-level test function added anywhere in `internal/daemon/rpc`,
-unrelated to whether any `NewState` site is classified. Gating the whole package
-would false-block the next unrelated census-surface diff on
-`TestCensusRegeneration`'s brittleness with zero added defect-prevention
-(`ClassificationCoverage` alone already catches the defect this lens exists
-for). `TestCensusRegeneration`'s own staleness is tracked separately (nd2j1/P1
-owns the classification data; the brittle count-snapshot assertion itself is
-tracked as **thrum-33zzh** — "make advisory or drop the raw-count assertion"),
-not by this lens.
+reds on ANY new top-level test function added anywhere in
+`internal/daemon/rpc`, unrelated to whether any `NewState` site is classified.
+Gating the whole package would false-block the next unrelated census-surface
+diff on `TestCensusRegeneration`'s brittleness with zero added
+defect-prevention (`ClassificationCoverage` alone already catches the defect
+this lens exists for). `TestCensusRegeneration`'s own staleness is tracked
+separately (nd2j1/P1 owns the classification data; the brittle count-snapshot
+assertion itself is tracked as **thrum-33zzh** — "make advisory or drop the
+raw-count assertion"), not by this lens.
 
 **Severity:** Trigger fires and `mandatory_test_command` was not run before
 merge, OR was run and is RED — **BLOCKING**. A RED result means an unclassified
@@ -501,7 +489,6 @@ merge, OR was run and is RED — **BLOCKING**. A RED result means an unclassifie
 before merge.
 
 **Triage:**
-
 ```bash
 git diff <merge-base>...<tip> --name-only | grep -E 'internal/daemon/rpc/testcensus/|internal/daemon/rpc/.*_test\.go$'
 # for any *_test.go hit outside testcensus/, confirm content match:
@@ -521,9 +508,9 @@ hot-path-specific analysis (is it in a per-RPC path? Is there a pre-flight
 guard? Is there a Peek+background-refresh?), not duplicate it.
 
 **Skip rule:** Skip the trigger-scoped lenses if the diff touches no configured
-trigger directories — but any lens with `"always_run": true` in the config still
-runs regardless of directories touched. Never skip the philosophy gate. Skip
-everything, including always-run lenses, only for trivial diffs (one-line
+trigger directories — but any lens with `"always_run": true` in the config
+still runs regardless of directories touched. Never skip the philosophy gate.
+Skip everything, including always-run lenses, only for trivial diffs (one-line
 config, typo, test-only).
 
 ### Scope discipline (gate-wide)
@@ -547,8 +534,8 @@ After every gate run, record the outcome in `dev-docs/hotpath-gate-efficacy.md`
 (created lazily on first run). This is a durable, committed, grep-queryable log
 that measures v1's real-world efficacy so we can iterate to v2 with data.
 
-**Format (structured header):** a structured header line, with essay content
-moved to an indented notes block underneath it:
+**Format (structured header):** a structured header line, with
+essay content moved to an indented notes block underneath it:
 
 ```
 - YYYY-MM-DD | lens=<hpN,phN,...> | bead=<id> | merged=<sha> | gate=<hotpath|philosophy|both> | outcome=<OUTCOME>
@@ -565,18 +552,19 @@ absence.
 **Coverage mandate:** a row is required for EVERY trigger-dir merge — not just
 gates the coordinator itself runs. This includes SKIPPED-with-evidence rows and
 orchestrator-run merges; the log measures gate COVERAGE, not just
-coordinator-run outcomes. Do not fabricate a per-merge outcome you cannot verify
-— if a past merge is missing a row and the outcome can't be reconstructed,
-record a single honest coverage-gap note instead of inventing rows.
+coordinator-run outcomes. Do not fabricate a per-merge outcome you cannot
+verify — if a past merge is missing a row and the outcome can't be
+reconstructed, record a single honest coverage-gap note instead of inventing
+rows.
 
 **Outcomes:**
 
-| Outcome                 | Meaning                                                     |
-| ----------------------- | ----------------------------------------------------------- |
-| `CLEAN`                 | Gate ran, zero findings, merge proceeded                    |
-| `REAL_DEFECT`           | Gate caught a genuine hot-path/perf anti-pattern            |
-| `FALSE_POSITIVE`        | Gate flagged something correct — record which lens and why  |
-| `SLIPPED`               | A wedge occurred AFTER merge that the gate did not catch    |
+| Outcome                 | Meaning                                                    |
+| ----------------------- | ---------------------------------------------------------- |
+| `CLEAN`                 | Gate ran, zero findings, merge proceeded                   |
+| `REAL_DEFECT`           | Gate caught a genuine hot-path/perf anti-pattern           |
+| `FALSE_POSITIVE`        | Gate flagged something correct — record which lens and why |
+| `SLIPPED`               | A wedge occurred AFTER merge that the gate did not catch   |
 | `SKIPPED_WITH_EVIDENCE` | Gate deliberately skipped (no trigger dirs), evidence cited |
 
 **Retrospective reclassification:** When triaging a new wedge or incident, grep

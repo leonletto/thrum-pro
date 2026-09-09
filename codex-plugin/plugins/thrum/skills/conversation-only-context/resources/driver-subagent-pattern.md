@@ -53,8 +53,7 @@ Clause 2 is the one that decides whether the round produces work or silence.
 3. The exact host or target, the working directories, and the revision under
    test. A stale host alias that resolves elsewhere will pass every check while
    measuring the wrong machine, so have the driver print the resolved hostname.
-4. An isolation gate, written as a numbered step, not as a caveat. See
-   section 4.
+4. An isolation gate, written as a numbered step, not as a caveat. See section 4.
 5. Fences that bind the driver and anything it dispatches: read-only version
    control outside its own workspace, no installs that touch shared binaries, no
    restart of a shared service, and no recursive delete flags.
@@ -118,14 +117,14 @@ follow-up round for any specific one.
 
 ## 8. Anti-patterns
 
-| Anti-pattern                              | What it produces                                 | Replacement                                                   |
-| ----------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------- |
-| Fire-and-forget subagent told to monitor  | Long runs, large token spend, no output          | Named driver, message rounds, clause 2                        |
-| One-shot remote exec instead of a session | Wrong path, wrong caller identity, wrong test    | The one sanctioned access path, stated in the GO              |
-| A stale host alias                        | Results from the wrong machine, all checks green | Print the resolved hostname in the isolation proof            |
-| Driving behavior from a raw shell         | Tests the unbound caller path, not the real one  | Send the command into the participant's own pane              |
-| Parent reading logs to help               | Spends the context the pattern exists to protect | Ask the driver for the one field you need                     |
-| Work committed on a stale base            | Invisible to everyone, diverges quietly          | Cut the workspace from current trunk, check the base revision |
+| Anti-pattern | What it produces | Replacement |
+|---|---|---|
+| Fire-and-forget subagent told to monitor | Long runs, large token spend, no output | Named driver, message rounds, clause 2 |
+| One-shot remote exec instead of a session | Wrong path, wrong caller identity, wrong test | The one sanctioned access path, stated in the GO |
+| A stale host alias | Results from the wrong machine, all checks green | Print the resolved hostname in the isolation proof |
+| Driving behavior from a raw shell | Tests the unbound caller path, not the real one | Send the command into the participant's own pane |
+| Parent reading logs to help | Spends the context the pattern exists to protect | Ask the driver for the one field you need |
+| Work committed on a stale base | Invisible to everyone, diverges quietly | Cut the workspace from current trunk, check the base revision |
 
 ## 9. Checklist before sending a GO
 

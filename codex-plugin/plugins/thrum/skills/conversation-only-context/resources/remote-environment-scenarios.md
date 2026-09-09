@@ -12,9 +12,8 @@ You want a multi-hour load or soak run and a verdict, not a log.
 
 1. Spawn `vmdriver_<slug>` with `model: "sonnet"`. The GO names the run, the
    revision under test, and the exact metrics to report.
-2. The driver opens a persistent session with
-   `<your-ssh-wrapper> <remote-host>`, starts the run detached, and writes the
-   exit code to its own file.
+2. The driver opens a persistent session with `<your-ssh-wrapper> <remote-host>`,
+   starts the run detached, and writes the exit code to its own file.
 3. The driver polls that file. You do not. You go on talking to the operator.
 4. The driver reports the three sections and stops.
 
@@ -46,8 +45,7 @@ rounds.
 2. You read a short report, decide, and send round 2 by message. The driver
    still holds its session, its build, and its earlier numbers, so round 2 costs
    almost nothing to set up.
-3. Round 3 asks for the comparison in the driver's own words plus the raw
-   fields.
+3. Round 3 asks for the comparison in the driver's own words plus the raw fields.
 
 Trap: re-dispatching a fresh subagent between rounds throws away the warm
 environment and the earlier context, then pays to rebuild both. Continue the
@@ -90,10 +88,10 @@ that gets skipped and the part that costs the most.
 
 ## Choosing between shapes
 
-| Signal                                      | Shape      |
-| ------------------------------------------- | ---------- |
-| One question, one long run                  | Scenario 1 |
-| Behavior only reproduces in a live system   | Scenario 2 |
-| You must judge between rounds               | Scenario 3 |
+| Signal | Shape |
+|---|---|
+| One question, one long run | Scenario 1 |
+| Behavior only reproduces in a live system | Scenario 2 |
+| You must judge between rounds | Scenario 3 |
 | The bound-caller path is what is under test | Scenario 4 |
-| Your context is the binding constraint      | Scenario 5 |
+| Your context is the binding constraint | Scenario 5 |

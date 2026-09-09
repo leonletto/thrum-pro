@@ -1,21 +1,17 @@
 ---
 name: prime-agent
-description:
-  "Use on scheduled-agent wake or lean prime restart - replaces the full thrum
-  prime briefing with a lean two-step warmup tuned for short-lived
-  scheduled-agent invocations. Step 1 reads the inbox literally (NOT a
-  discipline assumption); step 2 surfaces newly-shipped skills since the agent
-  last ran."
+description: "Use on scheduled-agent wake or lean prime restart - replaces the full thrum prime briefing with a lean two-step warmup tuned for short-lived scheduled-agent invocations. Step 1 reads the inbox literally (NOT a discipline assumption); step 2 surfaces newly-shipped skills since the agent last ran."
 # source: claude-plugin/skills/prime-agent/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
 
+
 ## Thrum: Prime Scheduled Agent (Lean)
 
 This skill is the wake-time variant of `thrum prime` for scheduled agents. Full
-`thrum prime` is too heavy when the agent is going to run for a few minutes and
-then exit — but the two pieces of state that matter MUST run literally, not as a
-discipline.
+`thrum prime` is too heavy when the agent is
+going to run for a few minutes and then exit — but the two pieces of state that
+matter MUST run literally, not as a discipline.
 
 ### Step 1: Read the inbox
 
@@ -66,10 +62,10 @@ cp /tmp/current_skills.txt "${LAST_SEEN}.tmp" && \
   mv "${LAST_SEEN}.tmp" "${LAST_SEEN}"
 ```
 
-When a new skill ships to `.claude/skills/`, the next wake's lean-prime surfaces
-it. Writing `last_seen_skills.txt` at the END of Step 2 (after the diff) means
-each wake updates its own baseline — the diff at wake N+1 reflects what's NEW
-since wake N's boot, regardless of mid-session skill drift.
+When a new skill ships to `.claude/skills/`, the next wake's lean-prime
+surfaces it. Writing `last_seen_skills.txt` at the END of Step 2 (after the diff) means each
+wake updates its own baseline — the diff at wake N+1 reflects what's NEW since
+wake N's boot, regardless of mid-session skill drift.
 
 Do not skip this step even if Step 1's inbox was empty. Skill drift between
 wakes is a real failure mode — agents can miss a critical new skill if the

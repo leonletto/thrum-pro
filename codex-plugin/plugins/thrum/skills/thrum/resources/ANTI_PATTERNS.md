@@ -26,9 +26,9 @@ Task(subagent_type="message-listener", run_in_background=true, prompt="...")
 
 ## 4. Sending Without an Explicit Recipient Flag
 
-`thrum send 'msg'` with no `--to` or `--broadcast` is a hard error. The previous
-default — silent broadcast to every team agent — was a real footgun, so the CLI
-now requires the recipient to be explicit:
+`thrum send 'msg'` with no `--to` or `--broadcast` is a hard error. The
+previous default — silent broadcast to every team agent — was a real footgun,
+so the CLI now requires the recipient to be explicit:
 
 ```bash
 # Wrong — hard-errors with a "missing recipient" prompt
@@ -128,5 +128,5 @@ from the role, e.g., `--name lead-agent --role coordinator`.
 
 **Wrong:** Reading `thrum inbox --unread` (default page: 10, newest-first) and
 concluding there's nothing important waiting. **Right:** See MESSAGING.md
-"Message Lifecycle" step 6 (Search — do not page through the inbox) for why and
-how.
+"Message Lifecycle" step 6 (Search — do not page through the inbox) for why
+and how.

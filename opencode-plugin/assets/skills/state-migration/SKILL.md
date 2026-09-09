@@ -1,6 +1,6 @@
 ---
 name: state-migration
-description: "Use when your agent-local thrum state is empty AND you have an existing State.md file in your agent directory - this is a ONE-TIME conditional onboarding that fires only on that exact combination. Do NOT use if thrum state already has entries (nothing to migrate) or if you have no State.md (brand-new agent, nothing to migrate). Triggers on: first session after the thrum state redesign lands, `thrum state list` returning empty while State.md exists on disk, being asked to migrate your personal state."
+description: "Use when your agent-local thrum state is empty AND you have an existing State.md file in your agent directory - this is a ONE-TIME conditional onboarding that fires only on that exact combination. Do NOT use if thrum state already has entries (nothing to migrate) or if you have no State.md (brand-new agent, nothing to migrate). Triggers on - first session after the thrum state redesign lands, `thrum state list` returning empty while State.md exists on disk, being asked to migrate your personal state."
 ---
 
 # Migrating personal State.md into `thrum state`

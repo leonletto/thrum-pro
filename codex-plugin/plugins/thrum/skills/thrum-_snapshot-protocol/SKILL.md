@@ -1,16 +1,15 @@
 ---
 name: thrum-_snapshot-protocol
-description:
-  Shared snapshot-composition protocol consumed by the snapshot-save commands.
-  Not user-invocable directly.
+description: Shared snapshot-composition protocol consumed by the snapshot-save commands. Not user-invocable directly.
 # source: claude-plugin/commands/_snapshot-protocol.md
 # generated-by: scripts/sync-skills.sh
 ---
 
-# Thrum \_snapshot Protocol
+# Thrum _snapshot Protocol
 
 This is a shared partial, not a user-invocable skill. Sibling Thrum skills
 consume it as a protocol reference; do not invoke it directly.
+
 
 ## Snapshot Composition Protocol (shared partial)
 
@@ -57,8 +56,8 @@ decisions, the cycles closed. Examples:
 > Q-Spec approvals, and Q-Spec-5 deferred to impl-time. Hand-off pending
 > coordinator final review.
 >
-> Investigated rc.9 inbox-race against <implementer>'s hypothesis: confirmed the
-> lock-substrate fence is the right fix. Filed thrum-XXX with 4 BLOCKING
+> Investigated rc.9 inbox-race against <implementer>'s hypothesis: confirmed
+> the lock-substrate fence is the right fix. Filed thrum-XXX with 4 BLOCKING
 > evidence points.
 >
 > Closed <epic> brainstormer-third pass. 2 BLOCKING + 5 IMPORTANT + 10 MINOR.
@@ -72,13 +71,13 @@ file paths, before patterns — because composing the §1 summary forces you to
 identify what was actually load-bearing about this session, and that priority
 shapes everything else you write below it.
 
-**Stamp your snapshot with the base it was authored against.** Derive and emit
-the **Authored-against** stamp per `claude-plugin/commands/_stamp-protocol.md`
-and place it at the very top of your §1 section (that protocol computes the SHA
-and merge_target for you — never hand-type them). This is what lets
-`thrum prime` diff your snapshot at the next wake and flag which cited files
-have MOVED; an unstamped snapshot reads as "current", indistinguishable from one
-that never drifted.
+**Stamp your snapshot with the base it was authored against.**
+Derive and emit the **Authored-against** stamp per
+`claude-plugin/commands/_stamp-protocol.md` and place it at the very top of your
+§1 section (that protocol computes the SHA and merge_target for you — never
+hand-type them). This is what lets `thrum prime` diff your snapshot at the next
+wake and flag which cited files have MOVED; an unstamped snapshot reads as
+"current", indistinguishable from one that never drifted.
 
 Any commit your snapshot names as its own stamped SHA must also be readable
 under `_stamp-protocol.md`'s "Read-time provenance re-derivation" section
@@ -87,11 +86,11 @@ its checks here.
 
 **Describe commits, don't claim them.** A snapshot's job is to describe what a
 commit's content and effect ARE — that's checkable by anyone re-reading it.
-Prohibit first-person narration of git actions in the body of a snapshot: no "I
-pushed X", "I fixed Y and verified it", "I ran Z". Write instead: "commit
-`<sha>` exists and does `<Y>`" / "`<sha>` addresses `<Y>`". Attribution of WHO
-performed a git action already lives in `command.jsonl` / `hooklog.jsonl` —
-restating it here would assert authorship the snapshot-writer has typically
+Prohibit first-person narration of git actions in the body of a snapshot:
+no "I pushed X", "I fixed Y and verified it", "I ran Z". Write instead:
+"commit `<sha>` exists and does `<Y>`" / "`<sha>` addresses `<Y>`". Attribution
+of WHO performed a git action already lives in `command.jsonl` / `hooklog.jsonl`
+— restating it here would assert authorship the snapshot-writer has typically
 never mechanically verified.
 
 After the §1 block:

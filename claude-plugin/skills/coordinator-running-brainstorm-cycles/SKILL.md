@@ -43,9 +43,10 @@ at every stage:
 each time (`verify-against-source` + a prose-quality reviewer, sonnet sub-agents
 in parallel — see "Review-loop mechanics" below). Skipping any review gate is a
 documented anti-pattern. The brainstorm review catches design issues; the plan
-review catches contract-drift and quality issues `writing-plans`' internal
-reviewer misses; the prompt review catches plan→prompt translation errors before
-the implementer executes against them.
+review is the SOLE quality gate on the plan doc — the researcher authors the
+plan directly (no external tool with its own internal reviewer sits upstream of
+this gate); the prompt review catches plan→prompt translation errors before the
+implementer executes against them.
 
 ## Subagent model selection
 
@@ -81,7 +82,7 @@ forwarding.
 ### Footer → commit → stamp (per stage)
 
 1. After the artifact is written, append the gate footer:
-   `<!-- THRUM-GATE: stage=<brainstorm|plan|prompt> next=<dual-review|writing-plans|project-setup|dispatch> -->`
+   `<!-- THRUM-GATE: stage=<brainstorm|plan|prompt> next=<dual-review|plan|project-setup|dispatch> -->`
 2. **Commit the artifact (WIP) including the footer** — this gives the
    supplementary `requesting-code-review` pass a real `HEAD~1..HEAD` range.
 3. Run the dual review against that range; each fix cycle commits its changes
@@ -120,7 +121,7 @@ forwarding.
 
 ### Soft pre-flight greps (the SOFT enforcement tier)
 
-Before invoking `writing-plans` (Phase 6) and before `project-setup` (Phase 7),
+Before writing the plan (Phase 6) and before `project-setup` (Phase 7),
 grep the prior artifact for `THRUM-REVIEW: stage=<S> verdict=Ready:Yes` (or
 `verdict=OVERRIDE`); absent → STOP and run the review first. Anchor the match —
 `grep -E '...verdict=Ready:Yes([[:space:]]|-->|$)'`, never `grep -F` — or an
@@ -150,32 +151,22 @@ structurally-enforceable gate is `project-setup` Phase 0 (it hard-bails).
   `## Deviations from Source` block with attribution `owner decision`, never
   silently absorbed.
 
-### Superpowers dependency (D6)
+### No external plugin drives this pipeline (D6)
 
-The wrapper drives `superpowers:brainstorming` / `writing-plans`. Two distinct
-pre-flight behaviors:
+Neither the brainstorm stage (Phase 2) nor the plan stage (Phase 6) invokes an
+external skill — the researcher writes both artifacts directly, governed by
+this skill's own protocol block (Phase 2) and structure/stamp/deviations
+requirements (Phase 6). There is nothing to pre-flight-check or bail on for
+either stage, and no `/plugin install` path: no such plugin is declared
+anywhere in this repo's `.claude-plugin/marketplace.json` (thrum-tsaq4).
 
-- `requesting-code-review` not resolvable → SKIP the supplementary quality pass
-  gracefully (the loop still runs on the general-purpose primary).
-- `brainstorming` / `writing-plans` not present → **BAIL** with an install
-  instruction (`/plugin install superpowers@<marketplace>`).
+The one genuinely optional external supplement is `requesting-code-review`
+(Review-loop mechanics, "Quality" row) — not resolvable → SKIP the
+supplementary quality pass gracefully; the loop still runs on the
+general-purpose primary, which is authoritative regardless.
 
-`verify-against-source` carries no superpowers dependency and always works.
-
-### Countermand the superpowers chain (outcome-based)
-
-`brainstorming` auto-chains to `writing-plans`, and `writing-plans` defaults
-pull toward subagent-driven execution — both bypass thrum's `project-setup`. At
-each invocation, inject (keyed on the concept, so it survives upstream
-rewording):
-
-> Regardless of any execution-handoff, "recommended" sub-skill, or save-location
-> default these skills emit, the ONLY downstream path in thrum is the next thrum
-> stage. After the artifact is written, STOP — do not auto-chain. Save to the
-> thrum path, not the superpowers default. For `writing-plans`: remove/replace
-> the plan-header line matching the stable substring
-> `REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development` and ignore
-> the Execution-Handoff offer — the plan feeds `project-setup`.
+`verify-against-source` and the general-purpose prose-quality pass carry no
+external-plugin dependency and always work.
 
 ## Phase 1 — Set up the worktree, branch, and agent
 
@@ -353,12 +344,10 @@ distinction in the inbox display):
 8. **Go-deep-then-ready instruction** — one sentence telling them to confirm
    readiness, research aggressively, and have meaty material ready when the user
    joins (not to sit idle waiting).
-9. **Countermand callout** — `superpowers:brainstorming`'s terminal state is
-   "invoke writing-plans". Tell the researcher explicitly: when brainstorming
-   reaches that terminal state, STOP at the design doc — do NOT auto-chain to
-   `writing-plans`. The brainstorm goes through the Phase 3 review gate first,
-   then Phase 6 runs `writing-plans` deliberately (with its own countermand).
-   See "Review-loop mechanics → Countermand the superpowers chain."
+9. **Stop-at-the-artifact instruction** — tell the researcher explicitly: once
+   the brainstorm design doc is drafted, STOP there. It goes through the
+   Phase 3 review gate before anything else happens; the plan doc is a
+   separate, deliberate Phase 6 step after the brainstorm is LOCKED.
 
 Send the whole thing as one `thrum send` call. The recipient's runtime will
 display it as a single inbox message; structure beats brevity here.
@@ -475,23 +464,21 @@ expensive footguns hide.
 ## Phase 6 — Researcher writes the plan (with dual-review gate)
 
 Once the brainstorm is LOCKED (and any companion design spec is LOCKED), the
-researcher runs `superpowers:writing-plans` to convert brainstorm + spec into
-the implementation plan doc. (First, the soft pre-flight grep: `grep -F` the
-brainstorm for its `THRUM-REVIEW: stage=brainstorm verdict=Ready:Yes` (or
-`OVERRIDE`) stamp — absent → STOP and finish the brainstorm review.) **Inject
-the outcome-based countermand** (see Review-loop mechanics) at the
-`writing-plans` invocation: stop when the plan is written, save to the thrum
-path, and strip the `subagent-driven-development` plan-header line — the plan
-feeds `project-setup`, not superpowers execution.
+researcher writes the implementation plan doc directly, converting the
+brainstorm + spec into concrete steps. (First, the soft pre-flight grep:
+`grep -F` the brainstorm for its `THRUM-REVIEW: stage=brainstorm
+verdict=Ready:Yes` (or `OVERRIDE`) stamp — absent → STOP and finish the
+brainstorm review.) The plan feeds `project-setup` — there is no other
+downstream path.
 
 **The plan doc gets the SAME dual-review treatment as the brainstorm.** This
-review step is mandatory — `writing-plans` has an internal reviewer, but real-
-world experience shows that's not sufficient. Independent review catches
-contract-drift and quality issues the internal reviewer misses.
+review step is mandatory: there is no internal reviewer upstream of it, so
+this gate is the plan's only quality check. Independent review catches
+contract-drift and quality issues a single author would miss.
 
 **The researcher (not coord) dispatches the dual-review** in their own worktree:
 
-1. Researcher writes plan v1 via `writing-plans` skill (countermand applied).
+1. Researcher writes plan v1 directly.
 2. Researcher authors the `## Deviations from Source` block per
    `claude-plugin/commands/_deviations-protocol.md`, diffing plan v1 against
    the brainstorm + design spec — BEFORE dual-review, so
@@ -573,9 +560,8 @@ review catches translation errors (plan → prompt) plus prompt-specific quality
 4. Researcher signals "project-setup complete + post-setup dual-review applied"
    back to coord, citing both review passes + final artifact paths.
 
-Reaffirmation (countermand at the prompt stage): `project-setup` is the only
-downstream path — do not adopt `subagent-driven-development` execution even if a
-superpowers skill suggests it.
+Reaffirmation (at the prompt stage): `project-setup` is the only downstream
+path for the implementer prompt.
 
 If the researcher signals "project-setup complete" WITHOUT mentioning the
 post-setup reviews, ASK explicitly: "did the post-setup dual-review run on the
@@ -607,9 +593,9 @@ encodes this; include the verbatim protocol block in every briefing.
 ❌ **Half-batched findings.** Sending review findings before BOTH dual reviews
 complete. Researcher fixes batch 1 and never sees batch 2.
 
-❌ **Skipping the post-plan dual-review.** Treating `writing-plans` skill's
-internal reviewer as sufficient and proceeding directly to `project-setup`
-without an independent review of the plan doc. The plan and the impl
+❌ **Skipping the post-plan dual-review.** Proceeding directly to
+`project-setup` without an independent review of the plan doc — there is no
+internal reviewer upstream of it to lean on. The plan and the impl
 prompt MUST get the same dual-axis review treatment the brainstorm gets — Phase
 6 + Phase 7 explicit.
 

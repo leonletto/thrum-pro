@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agent Messaging Protocol"
+  short_description: "Use when forwarding or relaying information between parties, routing an owner answer, carrying a decision or request through an intermediary, summarizing another author's message, or adding interpretation to someone else's words."
+  default_prompt: "Use when forwarding or relaying information between parties, routing an owner answer, carrying a decision or request through an intermediary, summarizing another author's message, or adding interpretation to someone else's words."

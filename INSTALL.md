@@ -69,8 +69,15 @@ copilot plugin marketplace add leonletto/thrum-pro
 copilot plugin install thrum@thrum
 ```
 
-Update with `copilot plugin update thrum`. Verification: `copilot plugin list`
-must report `thrum`, and `/skills list` must include the Thrum skills.
+Update the marketplace, then the installed plugin:
+
+```bash
+copilot plugin marketplace update thrum
+copilot plugin update thrum
+```
+
+Verification: `copilot plugin list` must report `thrum`, and `/skills list` must
+include the Thrum skills.
 
 Inside a Copilot CLI session, the same plugin-management actions are also
 available through:
@@ -100,6 +107,14 @@ muse plugins inspect thrum --json
 ```
 
 Run the approval command again after every plugin update.
+
+To update the installed plugin:
+
+```bash
+muse plugins marketplace update leonletto
+muse plugins update thrum
+muse plugins approve thrum
+```
 
 ## Cursor
 

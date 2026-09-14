@@ -76,38 +76,29 @@ codex plugin add thrum@thrum-marketplace
 Update with `codex plugin marketplace upgrade thrum-marketplace`, then repeat
 the `codex plugin add` command.
 
-### GitHub Copilot CLI — built into the Thrum binary (no plugin install)
+### GitHub Copilot CLI — install from the marketplace
 
-Unlike the other runtimes, the GitHub Copilot plugin is **embedded in the `thrum`
-binary** and installed automatically the first time you launch a Copilot runtime —
-there is no marketplace or manual plugin-install step.
+From a shell:
 
-1. Install the GitHub Copilot CLI so `copilot` is on your `PATH`:
+```bash
+copilot plugin marketplace add leonletto/thrum-pro
+copilot plugin install thrum@thrum
+```
 
-   ```bash
-   npm install -g @github/copilot
-   ```
-
-2. Make sure the `thrum` binary is installed (see [Getting the Thrum binary](#getting-the-thrum-binary)).
-
-3. Launch a Copilot runtime — Thrum materializes and wires the plugin for you (via
-   its `SessionStart` hook), no further setup:
-
-   ```bash
-   thrum tmux create <name> --runtime copilot
-   ```
-
-If `copilot` is not found on your `PATH`, Thrum reports the runtime as unavailable
-rather than failing mid-launch.
-
-Copilot also exposes plugin management inside its CLI. To add the published
-marketplace or manage an installed plugin there, use:
+Copilot also exposes these actions inside its CLI:
 
 ```text
 /plugin marketplace add leonletto/thrum-pro
 /plugin install thrum@thrum
 /plugin update thrum
 /plugin list
+```
+
+Refresh the marketplace before updating the installed plugin:
+
+```bash
+copilot plugin marketplace update thrum
+copilot plugin update thrum
 ```
 
 ### Cursor — install straight from GitHub

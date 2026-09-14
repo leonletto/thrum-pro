@@ -200,19 +200,15 @@ that runs your agents.
    muse plugins install thrum@leonletto
    ```
 
-2. Approve the four Thrum hooks. Append `--json` for headless / non-interactive use
-   (there is no `--yes` bypass — `--json` is the headless form):
+2. Approve Thrum's current runtime capabilities. This plugin-level form covers every
+   hook, including hooks introduced by a future plugin update:
 
    ```bash
-   muse plugins approve plugin:thrum:hook:hook-603847d5ede54d44   # SessionStart prime
-   muse plugins approve plugin:thrum:hook:hook-9adcbbd425e3aba1   # Stop / inbox check
-   muse plugins approve plugin:thrum:hook:hook-b539dd5f1e491a55
-   muse plugins approve plugin:thrum:hook:hook-deb9e6678ddeeb86
+   muse plugins approve thrum
    ```
 
-   **Re-approve after every Thrum plugin update.** Approvals pin a content hash; when
-   the plugin changes they drop back to `review_needed` and the agent starts up
-   **silently unprimed** until you re-approve.
+   Run the command again after every Thrum plugin update. Use
+   `muse plugins inspect thrum --json` to review the current capability status.
 
 3. On first run, Muse asks *"Do you trust the files in this folder?"* — priming is
    blocked until you dismiss it. Muse launches Thrum worktrees with

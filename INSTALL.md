@@ -89,8 +89,14 @@ muse plugins marketplace add leonletto leonletto/thrum-pro
 muse plugins install thrum@leonletto
 ```
 
-Verify with `muse plugins list --json`; approve any requested plugin capabilities
-in the Muse CLI after installation.
+Approve Thrum's current runtime capabilities, then verify the installation:
+
+```bash
+muse plugins approve thrum
+muse plugins inspect thrum --json
+```
+
+Run the approval command again after every plugin update.
 
 ## Cursor
 

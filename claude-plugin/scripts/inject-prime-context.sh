@@ -43,6 +43,11 @@ if ! command -v thrum >/dev/null 2>&1; then
   exit 0
 fi
 
+# Capture hook stdin ONCE, immediately — stdin can only be read once and
+# nothing downstream reads it directly. Used below to detect
+# SessionStart's `source: "compact"` case.
+HOOK_INPUT=$(cat 2>/dev/null || true)
+
 # Capture whoami JSON ONCE, extract identity fields downstream.
 # Keeping the RPC count at one preserves session-start latency.
 WHOAMI_JSON=""
@@ -76,14 +81,64 @@ AGENT_ID="${AGENT_ID//\`/}"
 AGENT_ROLE="${AGENT_ROLE//\`/}"
 AGENT_MODULE="${AGENT_MODULE//\`/}"
 
-PRIME_OUTPUT=$(thrum prime 2>/dev/null || true)
+# Post-/thrum:compact zero-turn light path: if this SessionStart fired
+# because of a compaction (source == "compact") AND a fresh restart
+# snapshot exists for this agent, run `thrum prime --light` and feed its
+# output through the SAME banner/directive/ack/briefing assembly used by
+# the full startup path below (LIGHT_MODE=1 just swaps a line of prose in
+# the BRIEFING envelope). This used to short-circuit with a one-line nudge
+# telling the agent to spend a turn reading a file + running a skill —
+# that cost a turn for something the hook can now inject directly. Any
+# other case (startup/resume/clear, or compact without a fresh snapshot)
+# falls through unchanged into the full-prime path.
+HOOK_SOURCE=""
+if command -v jq >/dev/null 2>&1; then
+  HOOK_SOURCE=$(printf '%s' "$HOOK_INPUT" | jq -r '.source // empty' 2>/dev/null || true)
+fi
 
-if [ -z "$PRIME_OUTPUT" ]; then
-  # Prime failed (daemon down, slow, etc.) — fall back to the manual
-  # nudge so session start never blocks on a broken thrum.
-  echo "Run /thrum:prime to load your session context, identity, and any restart snapshots."
-  echo "(Auto-injection failed — daemon may be unreachable. Run \`thrum daemon status\` to check.)"
-  exit 0
+LIGHT_MODE=0
+if [ "$HOOK_SOURCE" = "compact" ] && [ -n "$AGENT_WORKTREE" ]; then
+  SNAPSHOT="${AGENT_WORKTREE}/.thrum/restart/${AGENT_ID}.md"
+  if [ -s "$SNAPSHOT" ] && [ -r "$SNAPSHOT" ]; then
+    # mtime: choose the stat dialect explicitly (matches the dialect-detection
+    # approach used in claude-plugin/commands/compact.md's snapshot-verify step).
+    if stat -f %m . >/dev/null 2>&1; then
+      MTIME=$(stat -f %m "$SNAPSHOT" 2>/dev/null)
+    else
+      MTIME=$(stat -c %Y "$SNAPSHOT" 2>/dev/null)
+    fi
+    NOW=$(date +%s)
+    AGE=$(( NOW - ${MTIME:-0} ))
+
+    # Known limitation: mtime is a PROXY for "this snapshot was written for
+    # THIS compaction", not proof of it — a bare /compact fired within 300s
+    # of an unrelated /thrum:restart or /thrum:compact write on the same
+    # agent will also take the lean path and point at that older snapshot.
+    # Same proxy compact.md itself relies on; documented, not fixed here.
+    if [ "$AGE" -ge 0 ] && [ "$AGE" -le 300 ]; then
+      LIGHT_OUTPUT=$(thrum prime --light 2>/dev/null || true)
+      if [ -z "$LIGHT_OUTPUT" ]; then
+        # Light prime failed (daemon down, slow, etc.) — degrade to the
+        # nudge, never to silence.
+        echo "You were just compacted. Read \`${AGENT_WORKTREE}/.thrum/restart/${AGENT_ID}.md\` first, then run \`thrum:prime-agent\` — auto-injection failed (daemon may be unreachable; check \`thrum daemon status\`)."
+        exit 0
+      fi
+      PRIME_OUTPUT="$LIGHT_OUTPUT"
+      LIGHT_MODE=1
+    fi
+  fi
+fi
+
+if [ "$LIGHT_MODE" -ne 1 ]; then
+  PRIME_OUTPUT=$(thrum prime 2>/dev/null || true)
+
+  if [ -z "$PRIME_OUTPUT" ]; then
+    # Prime failed (daemon down, slow, etc.) — fall back to the manual
+    # nudge so session start never blocks on a broken thrum.
+    echo "Run /thrum:prime to load your session context, identity, and any restart snapshots."
+    echo "(Auto-injection failed — daemon may be unreachable. Run \`thrum daemon status\` to check.)"
+    exit 0
+  fi
 fi
 
 # Two-phase build: assemble BANNER, RESTART_PREAMBLE, and BRIEFING into
@@ -122,11 +177,15 @@ if printf '%s' "$PRIME_OUTPUT" | grep -q '^# Previous Session Context'; then
   append_to RESTART_PREAMBLE $'\n---\n\n'
 fi
 
-# 4. Briefing envelope + full prime output.
+# 4. Briefing envelope + full/light prime output.
 BRIEFING=""
 append_to BRIEFING '# Thrum Session Briefing (auto-loaded)'$'\n'
 append_to BRIEFING $'\n'
-append_to BRIEFING 'The complete `thrum prime` output is included below. You do NOT need to run `/thrum:prime` or `thrum prime` again this session — the briefing is already in your context. Read it in full; the session context section at the end is the most important.'$'\n'
+if [ "$LIGHT_MODE" -eq 1 ]; then
+  append_to BRIEFING 'The **light** `thrum prime --light` output is included below (auto-injected after compaction — the light render omits the full Resume Plan body, replacing it with a pointer to re-run full `thrum prime` if you need it). You do NOT need to run `/thrum:prime`, `thrum prime`, or `thrum:prime-agent` again this session — the briefing is already in your context. Read it in full.'$'\n'
+else
+  append_to BRIEFING 'The complete `thrum prime` output is included below. You do NOT need to run `/thrum:prime` or `thrum prime` again this session — the briefing is already in your context. Read it in full; the session context section at the end is the most important.'$'\n'
+fi
 append_to BRIEFING $'\n'
 append_to BRIEFING 'Only spawn additional commands if the inbox section shows unread messages that need processing.'$'\n'
 append_to BRIEFING $'\n---\n\n'

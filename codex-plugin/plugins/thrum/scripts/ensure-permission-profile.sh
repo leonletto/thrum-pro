@@ -126,10 +126,10 @@ audit_dir="${resolved_thrum_dir}/var/log"
 socket_path="${resolved_thrum_dir}/var/thrum.sock"
 
 # Global plugin-skill cache roots (the allowlist effort round-4). These are the two
-# codex entries under global_read_paths in the canonical allowlist,
-# internal/permissions/thrum_allowlist.json (FROZEN — read only, never
-# edited by this script): "~/.codex/skills" (Codex's flattened global skill
-# install dir) and "~/.codex/plugins/cache/thrum-marketplace/thrum" (the
+# codex entries under global_read_paths in the canonical allowlist source
+# (FROZEN — read only, never edited by this script): "~/.codex/skills"
+# (Codex's flattened global skill install dir) and
+# "~/.codex/plugins/cache/thrum-marketplace/thrum" (the
 # versioned plugin-cache mirror). Both are HOME-relative in the canonical
 # JSON, but Codex's config.toml has NO ~/env-var expansion — confirmed by
 # investigation: the live config only ever contains literal absolute paths
@@ -142,9 +142,9 @@ codex_plugin_cache_dir="${HOME}/.codex/plugins/cache/thrum-marketplace/thrum"
 # Thrum-binary install-location read grant (consolidated round,
 # Part B). Owner correction (owner ruling): agents need read/access to
 # the thrum binary's install location so PATH-resolved `thrum` can execute
-# under the sandbox — this mirrors the canonical allowlist's
-# global_read_paths.codex entry (internal/permissions/thrum_allowlist.json),
-# which now lists "~/.local/bin" for all three runtimes. Same $HOME
+# under the sandbox — this mirrors the canonical allowlist source's
+# global_read_paths.codex entry, which now lists "~/.local/bin" for all
+# three runtimes. Same $HOME
 # interpolation rationale as codex_skills_dir/codex_plugin_cache_dir above:
 # config.toml has no ~/env-var expansion, so the literal absolute path is
 # rendered at generation time, never the tilde form. This is a filesystem

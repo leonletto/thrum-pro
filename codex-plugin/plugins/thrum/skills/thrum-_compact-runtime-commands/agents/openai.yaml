@@ -1,0 +1,4 @@
+interface:
+  display_name: "Thrum _compact Runtime Commands"
+  short_description: "Per-runtime compact-equivalent command table consumed by compact.md, compact-extended.md, and scripts/sync-skills.sh. Not user-invocable directly."
+  default_prompt: "Run the thrum _compact-runtime-commands workflow and summarize the result."

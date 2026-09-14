@@ -1,0 +1,4 @@
+interface:
+  display_name: "Coordinator Deploying A Node"
+  short_description: "Use when deploying a build to a single node, migrating or not — deploying a build, schema-migrating deploy, pro-bundle install plus service restart on a node, roll out a build to a node, ship to a node, single-node canary. Loads the deploy runbook — verifying the artifact actually CONTAINS the fix, install-before-restart ordering, verify-by-effect, and preventing store corruption on migration."
+  default_prompt: "Use when deploying a build to a single node, migrating or not — deploying a build, schema-migrating deploy, pro-bundle install plus service restart on a node, roll out a build to a node, ship to a node, single-node canary. Loads the deploy runbook — verifying the artifact actually CONTAINS the fix, install-before-restart ordering, verify-by-effect, and preventing store corruption on migration."

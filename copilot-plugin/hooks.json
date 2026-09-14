@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "command": "scripts/session-start.sh"
+      }
+    ]
+  }
+}

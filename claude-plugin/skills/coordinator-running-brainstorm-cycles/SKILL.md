@@ -158,7 +158,7 @@ external skill — the researcher writes both artifacts directly, governed by
 this skill's own protocol block (Phase 2) and structure/stamp/deviations
 requirements (Phase 6). There is nothing to pre-flight-check or bail on for
 either stage, and no `/plugin install` path: no such plugin is declared
-anywhere in this repo's `.claude-plugin/marketplace.json` (thrum-tsaq4).
+anywhere in this repo's `.claude-plugin/marketplace.json`.
 
 The one genuinely optional external supplement is `requesting-code-review`
 (Review-loop mechanics, "Quality" row) — not resolvable → SKIP the
@@ -226,7 +226,7 @@ noise — start fresh.
 
 | Topic shape                                                                          | Base branch                                           |
 | ------------------------------------------------------------------------------------ | ----------------------------------------------------- |
-| Bug fix, hardening, infra cleanup belonging to the current line                       | The configured merge target — `jq -r '.orchestration.merge_target' .thrum/config.json` |
+| Bug fix, hardening, infra cleanup belonging to the current line                       | The configured merge target — `CONFIG=.thrum/config.json; [ -f .thrum/redirect ] && CONFIG="$(cat .thrum/redirect)/config.json"; jq -r '.orchestration.merge_target' "$CONFIG"` (a worktree's `.thrum/` holds only a `redirect` file, not its own `config.json`) |
 | Work belonging to a multi-epic version program                                       | The version's long-lived branch                       |
 | Work tied to an existing feature epic with its own long-lived branch                 | That branch                                           |
 

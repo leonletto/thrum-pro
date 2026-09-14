@@ -19,6 +19,30 @@ Apply the gate and containment checks below and reach your own
 conclusion. Destructive steps still follow the standing reap preconditions and
 pacing rules; nothing here shortcuts them.
 
+## Standing reap preconditions — ALL must hold
+
+Reaping an agent (removing its worktree) is safe only when every one of these is
+true. It is a gate, not a checklist to rationalize past:
+
+1. **Idle > 48h** — no activity in its transcript for more than two days (rank by
+   message CONTENT, not mtime; your own broadcasts reset mtime).
+2. **No messages exchanged in the last 24h** — nothing sent to it or from it.
+3. **Task complete AND nobody is waiting on it** — it finished and its
+   dispatcher/manager moved on, so a reply it waits for will never come. (A pushed
+   branch held on a still-queued merge is the one nuance — see the
+   held-pending-merge rule.)
+4. **Salvage done first** — its only-copy state is copied to a durable location and
+   verified (see Containment and the reap steps).
+
+**When a needed decision or merge is delayed, ESCALATE — never silently wait.** If an
+agent is parked past the 24h window on something its manager/owner has not acted on,
+raise it explicitly to whoever owns that decision, and re-raise on every subsequent
+run. If the human owner is unresponsive, escalate through your designated escalation
+contact (the human's proxy) rather than leaving the agent parked. A silent park is
+the failure this whole procedure exists to prevent: each run must drive a parked
+agent toward a terminal state — decision made / merge lands (reap-able) or deemed
+orphaned (reap).
+
 ## The instruments, in order of trust
 
 | Question | Instrument |
@@ -81,10 +105,42 @@ sentence IS the terminal statement; a working agent's merely contains one.
 **Name what it is waiting for, then prove that thing is dead or landed.**
 
 *"Held pending the coordinator merge"* is finished only if the merge landed or was
-abandoned. If the merge is still queued, the agent is **correctly** waiting and
-reaping it destroys live context that nobody else holds.
+abandoned. If the merge is still queued, whether the agent is *correctly* waiting
+depends on its branch and its idle time — see the held-pending-merge rule below.
 
-**If you cannot name the blocker, it is not a candidate.**
+**If you cannot name the blocker, it is not a candidate.** (This governs the
+*no-transcript* case — absence of evidence — not a named-but-stale merge wait.)
+
+## 🔴 The held-pending-merge case — a PUSHED branch changes the gate
+
+An agent parked "pending the merge" is judged by ONE thing first — **is its branch
+pushed?** — because a merge wait only makes sense if the merge king can reach the
+branch.
+
+- **Branch NOT pushed — broken at ANY idle age.** The merge king cannot access an
+  unpushed branch, so the wait can never resolve, and the agent's commits are also
+  the only copy (unsafe to reap). This is not a legitimate wait — it is a stuck one.
+  → Get the branch PUSHED (nudge the agent / its orchestrator to push it, or escalate
+  that it needs pushing). Never reap an unpushed held-pending-merge agent — pushing
+  first is both what unblocks the merge and what makes any later reap safe.
+- **Branch pushed, idle < 24h.** Legitimately waiting its turn in the merge queue.
+  Leave it (the pushed branch means the merge king can reach it and nothing is lost).
+- **Branch pushed, idle ≥ 24h.** The wait is no longer legitimate — a pushed branch
+  is not the only copy of anything, so any agent could carry the merge. Resolve it to
+  one of two clear states:
+  - **Merge HAPPENED** (branch is an ancestor of trunk, or was abandoned/superseded)
+    → the agent is **ORPHANED**, waiting for a response that will never come → **reap**
+    (salvage-first, and still subject to the standing reap preconditions).
+  - **Merge still PENDING** (branch not on trunk, not abandoned) → the merge king
+    forgot it or the queue is stuck → **ESCALATE** to the merge king (name the branch
+    tip + how long it has waited), and **re-escalate on every subsequent skill run**
+    until it resolves. Never leave it silently parked.
+
+**The escalation is the load-bearing half.** Because each skill run re-checks and
+re-escalates a still-pending merge, the condition is self-correcting: it drives toward
+one of two terminal states — the merge completes (agent then reap-able) or the agent
+is deemed orphaned (reap) — instead of a pushed-branch agent parked forever on a merge
+nobody is tracking. A silent park is exactly the failure this rule prevents.
 
 ## Containment, before anything is stood down
 
@@ -126,8 +182,8 @@ an empty/never-read premise as a match"*). `--force` does NOT bypass it; the gua
 correct. So the reap that actually frees load is worktree removal — but salvage BEFORE you remove,
 then remove PLAIN (no `--force`):
 
-1. Enumerate untracked+ignored `.thrum` content — BOTH flags, one flag alone misses a class
-   (thrum-j14q3): `git status --untracked-files=all --ignored -- .thrum`
+1. Enumerate untracked+ignored `.thrum` content — BOTH flags, one flag alone misses a class:
+   `git status --untracked-files=all --ignored -- .thrum`
 2. Salvage BOTH kinds to their canonical redirect paths, and `cmp`-verify each copy is
    byte-identical to its source:
    - `?? .thrum/agents/<agent>/sessions/*-restart.md` — the restart snapshot.
@@ -217,6 +273,42 @@ RSS-MB.
 - Same framing as the rest of this skill: the script **produces information,
   you decide**. It is read-only and dry-run — it prints a kill-list, it never
   kills anything.
+
+## 🔴 Footguns — never do these (each measured, each cost real time or state)
+
+- **Never glob/`cp` `.thrum/context/*.md` when salvaging** — the glob matches the
+  shared `project_state.md` and overwrites the canonical copy with a stale worktree
+  copy. Salvage the agent-specific `<agent>.md` by exact name only.
+- **A worktree's `.thrum/` holds a redirect file to the main repo AND a physical
+  stale local copy of shared files** (e.g. `project_state.md`) — the physical
+  worktree copy is NOT canonical; never treat it as the source of truth or copy it
+  upward.
+- **Never use shell-specific builtins in a reap loop without checking the shell** —
+  `mapfile`/`readarray` are bash-only and silently fail in zsh (`command not
+  found`), so the salvage you thought ran did not. Use portable `while read` and
+  verify each salvaged file actually landed.
+- **`rm -rf` raises a confirmation modal that blocks the PARENT pane invisibly** —
+  use `rm -r` for scratch cleanup (identical deletion, no modal). Never `rm -rf`.
+- **`git worktree remove` (plain) silently deletes gitignored-only content (rc=0)**
+  and refuses (rc=128) only on untracked/modified files — salvage is the ONLY
+  protection for gitignored only-copy state.
+- **`git worktree remove` refuses while a just-salvaged untracked snapshot still
+  sits in the worktree** — remove that salvaged copy from the worktree first, then
+  plain-remove.
+- **Never `checkout`/`reset`/`restore`/`stash`/`clean` in a shared tree, even to
+  undo** — to restore a file to its committed version, write it with a plain
+  redirect from `git show <ref>:<path>`, not a checkout.
+- **Test the reap on ONE agent first and verify the EFFECT** (gone from the worktree
+  list AND disk), not just the exit code.
+- **Rank candidates by last-message CONTENT, not elapsed time** — your own
+  broadcasts reset every recipient's idle clock.
+- **`--force` on agent-delete does NOT bypass the CAS guard** on a stale agent — the
+  reap that frees load is worktree removal, not the delete.
+- **Reap order is `thrum tmux kill <session>` FIRST, THEN `git worktree remove`** —
+  removing the worktree alone leaves the agent's tmux session alive with a
+  now-deleted cwd, which the fleet flags as recurring "cwd drift" and whose runtime
+  process keeps consuming RAM/CPU. Kill the session, verify it's gone, then remove
+  the worktree.
 
 ## Why this fails dangerously if you skip the gate
 

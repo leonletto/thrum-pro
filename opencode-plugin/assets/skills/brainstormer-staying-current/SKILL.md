@@ -21,10 +21,7 @@ Locate the canonical config from the current worktree:
 
 ```bash
 CONFIG=.thrum/config.json
-if [ ! -f "$CONFIG" ]; then
-  COMMON_DIR=$(git rev-parse --path-format=absolute --git-common-dir)
-  CONFIG="${COMMON_DIR%/.git}/.thrum/config.json"
-fi
+[ -f .thrum/redirect ] && CONFIG="$(cat .thrum/redirect)/config.json"
 test -f "$CONFIG"
 TARGET=$(jq -er '.orchestration.merge_target | select(type == "string" and length > 0)' "$CONFIG")
 MERGE_KING=$(jq -r --arg target "$TARGET" '.orchestration.merge_kings[$target] // "unset"' "$CONFIG")

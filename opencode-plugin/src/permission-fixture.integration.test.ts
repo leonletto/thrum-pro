@@ -172,10 +172,10 @@ async function buildDenyByDefaultFixtureConfig(): Promise<Record<string, any>> {
 }
 
 // ─── Representative acceptance-criteria commands ───────────────────────────
-// Mirrors internal/permissions/thrum_allowlist.json's command_patterns
-// (read-only reference — see that file's own comment for the canonical
-// list). These are the finding-6 acceptance commands, a representative
-// subset of the full canonical list.
+// Mirrors the canonical allowlist source's command_patterns (read-only
+// reference — see that file's own comment for the canonical list). These
+// are the finding-6 acceptance commands, a representative subset of the
+// full canonical list.
 
 const POSITIVE_COMMANDS = [
   "thrum inbox",

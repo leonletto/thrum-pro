@@ -126,6 +126,36 @@ resubmit — do not recompute the whole board inside one invocation.
 - HTML files: no script/style/iframe/event-handlers — the render side strips
   them, but author clean anyway.
 
+## Widget schema
+
+```json
+{"title": "<board title>", "widgets": [
+  {"id": "hdr",  "type": "stat-row", "stats": [{"label": "<label>", "value": "<value>"}]},
+  {"id": "rows", "type": "list",     "title": "<list title>", "rows": [{"id": "r0", "text": "<one-line markdown>"}]},
+  {"id": "note", "type": "card",     "title": "<card title>", "body": "<markdown>"},
+  {"id": "grp",  "type": "section",  "label": "<section label>"}
+]}
+```
+
+- `stat-row` takes `stats`, `list` takes `rows` (each row has its own `id`), `card` takes
+  `title` + `body`, `section` takes `label`. Widget `id`s are the upsert key — keep them stable.
+- Write the document to a file; `thrum dashboard set --doc-file <f>`. Pass `--replace` when one
+  generator owns the whole board.
+- Regenerate the board from a script that prints one summary line, run from the agent's own
+  session. A daemon-spawned monitor process is an unauthenticated caller (identity is
+  kernel-verified per process) and cannot write the board, whatever environment it carries, so
+  schedule the monitor as a reminder (`--schedule`, `--match`, `--notify-on-success`) and run
+  the generator when the reminder arrives. The cron schedule is evaluated in the daemon's local
+  time zone, not UTC.
+
+## The board is for the human reader, not an audit trail
+
+- Show what the reader needs to decide or know; filter out coordinator mechanics.
+- A "landed since deploy" list shows feature/fix branch landings only — no trunk-sync merges,
+  pull merges, or artifact commits.
+- An "orchestrators" view shows each orchestrator's open work, not liveness.
+- When the owner asks for a change, change the generator, not the snapshot.
+
 ## When to reach for the dashboard (vs a nudge vs a message)
 
 - **Dashboard:** state the human will consume VISUALLY and possibly answer

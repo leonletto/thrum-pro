@@ -432,7 +432,7 @@ hoc test target nothing routes to. A merge that adds a `state.NewState(...)`
 call site in an `internal/daemon/rpc/*_test.go` file (test-fixture setup, not a
 handler) can leave it unclassified and desync the frozen census snapshot with
 no gate catching it — trunk went RED post-merge on 573mo v87 for exactly this
-reason (thrum-ykmly).
+reason.
 
 **Relationship to Lenses 1–10:** every other lens in this file is an
 LLM-judgment pattern check — grep a pattern, read the surrounding code, apply
@@ -476,7 +476,7 @@ diff on `TestCensusRegeneration`'s brittleness with zero added
 defect-prevention (`ClassificationCoverage` alone already catches the defect
 this lens exists for). `TestCensusRegeneration`'s own staleness is tracked
 separately (nd2j1/P1 owns the classification data; the brittle count-snapshot
-assertion itself is tracked as **thrum-33zzh** — "make advisory or drop the
+assertion itself is a distinct open question — "make advisory or drop the
 raw-count assertion"), not by this lens.
 
 **Severity:** Trigger fires and `mandatory_test_command` was not run before
@@ -591,4 +591,4 @@ gaps and lens improvements for the next version.
   first gate run, appended after each run)
 
 <!-- THRUM-GATE: stage=skill next=review -->
-<!-- THRUM-REVIEW: stage=skill verdict=Ready:Yes cycle=2 date=2026-07-10 -->
+<!-- THRUM-REVIEW: stage=skill verdict=Ready:Yes cycle=2 -->

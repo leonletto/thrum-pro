@@ -1,0 +1,4 @@
+interface:
+  display_name: "Coordinator Rolling Out To Nodes"
+  short_description: "Use when rolling a build across all nodes — fleet deploy, rolling the nodes, deploy everywhere, ship to every node, canary then the rest, promote the canary, staged rollout, deploying after a merge batch. Orchestrates the staged order and the promotion gate between stages, and delegates each node to the coordinator-deploying-a-node runbook. Load this BEFORE dispatching any node."
+  default_prompt: "Use when rolling a build across all nodes — fleet deploy, rolling the nodes, deploy everywhere, ship to every node, canary then the rest, promote the canary, staged rollout, deploying after a merge batch. Orchestrates the staged order and the promotion gate between stages, and delegates each node to the coordinator-deploying-a-node runbook. Load this BEFORE dispatching any node."

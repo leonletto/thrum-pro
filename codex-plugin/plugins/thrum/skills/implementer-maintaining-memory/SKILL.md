@@ -1,18 +1,21 @@
 ---
 name: implementer-maintaining-memory
-description: "Use when the implementer writes a role-rule after user correction, or looks up implementer rules at session start. Loads implementer-specific memory discipline — single write path (agent_rule), refactoring opportunities go to bd not memory, stay minimal."
+description:
+  "Use when the implementer writes a role-rule after user correction, or looks
+  up implementer rules at session start. Loads implementer-specific memory
+  discipline — single write path (agent_rule), refactoring opportunities go to
+  bd not memory, stay minimal."
 # source: claude-plugin/skills/implementer-maintaining-memory/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
 
-
 ## Implementer memory discipline
 
 You are the implementer. Your memory discipline is intentionally narrow: you
-READ rules at session start and you WRITE rules when the user corrects your judgment
-mid-implementation. Refactoring opportunities, lessons learned, design questions
-— those flow elsewhere. Common memory operations live in the common memory
-skills — invoke them for basics. THIS skill carries implementer-specific
+READ rules at session start and you WRITE rules when the user corrects your
+judgment mid-implementation. Refactoring opportunities, lessons learned, design
+questions — those flow elsewhere. Common memory operations live in the common
+memory skills — invoke them for basics. THIS skill carries implementer-specific
 extensions only.
 
 ### When to invoke the commons

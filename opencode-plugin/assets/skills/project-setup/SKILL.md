@@ -604,8 +604,9 @@ Include in each option's description:
 
 - Path: `~/.workspaces/{repo}/{feature}` (from CLAUDE.md convention)
 - Branch: `feature/{feature-name}`, cut from the configured merge target
-  (`jq -r '.orchestration.merge_target' .thrum/config.json`) — never a
-  remembered branch name
+  (`CONFIG=.thrum/config.json; [ -f .thrum/redirect ] && CONFIG="$(cat .thrum/redirect)/config.json"; jq -r '.orchestration.merge_target' "$CONFIG"`
+  — a worktree's `.thrum/` holds only a `redirect` file, not its own
+  `config.json`) — never a remembered branch name
 
 **For agent names**, suggest a name derived from the feature in each option
 description (e.g., `impl_{feature}`). The user can override.
@@ -626,8 +627,11 @@ git status
 # (rebase onto a moved base is banned project-wide; see CLAUDE.md
 # "Rebase onto current tip before sending MERGE-READY")
 # Resolve the branch, never hardcode it — a name in a document goes stale and
-# this one already did:
-TARGET=$(jq -r '.orchestration.merge_target' .thrum/config.json)
+# this one already did. Resolve through .thrum/redirect when present -- a
+# worktree's .thrum/ holds only a `redirect` file, not its own config.json:
+CONFIG=.thrum/config.json
+[ -f .thrum/redirect ] && CONFIG="$(cat .thrum/redirect)/config.json"
+TARGET=$(jq -r '.orchestration.merge_target' "$CONFIG")
 git fetch origin "$TARGET"
 git merge "origin/$TARGET"
 # OR if branches diverged: ask user before merging

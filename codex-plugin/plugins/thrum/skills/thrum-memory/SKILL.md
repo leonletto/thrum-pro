@@ -1,10 +1,13 @@
 ---
 name: thrum-memory
-description: "Use when capturing or querying structured memories (session summaries, architectural decisions, restart snapshots, agent rules) via the thrum memory CLI. Loads decision flowchart, kind taxonomy, default-safe behaviors, and pointers to advanced sub-skills."
+description:
+  "Use when capturing or querying structured memories (session summaries,
+  architectural decisions, restart snapshots, agent rules) via the thrum memory
+  CLI. Loads decision flowchart, kind taxonomy, default-safe behaviors, and
+  pointers to advanced sub-skills."
 # source: claude-plugin/skills/thrum-memory/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
-
 
 ## thrum memory — capture and query structured memories
 
@@ -59,7 +62,7 @@ thrum memory search --tag substrate --kind arch_decision
 Show a single memory by ID:
 
 ```bash
-thrum memory show thrum-mem-01HQXZP3V8K2N7M0YJWQ8R5T6F
+thrum memory show thrum-mem-01EXAMPLE00000000000000000
 ```
 
 Edit a single field (other zoom levels stay intact; only changed-zoom embeddings

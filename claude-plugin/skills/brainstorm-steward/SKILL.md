@@ -27,9 +27,29 @@ to that coordinator). Everything below is additive — the brainstorm-specific
 duties layered on top of that base.
 
 Your roster is entirely remote (other boxes), so the base skill's remote
-modal-unblock note applies to every roster member by default — use
-`thrum tmux send` (peer-routed, works fleet-wide); the local-only
-tmux-key primitive it replaces is retired.
+modal-unblock note applies to every roster member by default — cross-peer
+send-keys is refused by design, so you cannot `thrum tmux send` into a
+roster member's pane yourself; route the unblock to that box's local
+coordinator instead.
+
+## Available skills (situational — you MUST invoke when triggered)
+
+These skills deepen role discipline for specific situations. They do NOT
+auto-load — when a trigger condition below applies, you MUST invoke the
+matching skill via the Skill tool BEFORE taking action.
+
+- `agent-messaging-protocol` — forwarding or relaying information between
+  parties, routing an owner answer, carrying a decision or request through an
+  intermediary, summarizing another author's message, or adding
+  interpretation to someone else's words
+- `brainstormer-staying-current` — the safe way to merge forward: a
+  long-lived worktree may be behind its configured merge target, before
+  review or handoff, or when asked to merge-forward and leave the worktree
+  clean
+- `conversation-only-context` — at the START of any long-lived session, when
+  told you'll have a long conversation or get a lot done, when context is
+  climbing, when several investigations are in flight, or before reading code
+  or a multi-file doc set to investigate
 
 ## Roster = brainstormers
 
@@ -77,7 +97,7 @@ thread:
   that skill's "Driving your cycle" section for the setup-copy step and the
   exact `thrum monitor start` registration — **`--notify-on-success` is
   mandatory there too**, for the identical reason: a `--schedule`d job
-  delivers nothing on `--match` alone (thrum-ruz1z §5c).
+  delivers nothing on `--match` alone.
 
 ## The queue (your pane console)
 
@@ -97,6 +117,23 @@ answers by number —
 convention doc) via `thrum reply <need-message-id> --stdin` addressed to the
 original NEED message, in the owner's own words. Once relayed, drop the item
 from your queue and surface the next.
+
+## Dashboard board (rehearsal-only today — see gate below)
+
+<!-- DASHBOARD-SHIP-GATE: the paragraph below is AWARENESS-safe now, but the
+     USE-mandate (publish the NEED queue as a dashboard board) activates only
+     when the web UI Dashboard tab (E3) AND the answer round-trip (E4) are
+     actually DEPLOYED, not merely landed on trunk — per `using-the-dashboard`'s
+     honesty table, publishing today is still a no-op for the human on any box
+     running a pre-E3/pre-E4 binary. Re-check that table before flipping this
+     to a mandate. -->
+Your pane console above is the mechanism today. `using-the-dashboard`
+documents an owner-facing board surface for the SAME NEED-multiplexing this
+skill already does — invoke it (with `coordinator-dashboard-human-loop`,
+since a steward is launched coordinator-shaped and inherits that skill too)
+to check what is actually usable before treating a board as a second channel
+for your queue. Until the honesty table's E3+E4 rows read DEPLOYED, keep
+routing owner Q&A through the pane console, not a board.
 
 ## Idle nudge
 
@@ -152,6 +189,18 @@ pane — the same two channels you use every cycle. `watch_params.json` is
 your entire durable resume state (watcher/parent/model/roster/cadence);
 nothing else needs to survive a restart, because nothing else is
 authoritative.
+
+## Persist state + queue before compacting
+
+Before running `/thrum:compact` or `/thrum:compact-extended`, first persist
+your load-bearing context to the durable store — it survives compaction;
+your conversation context does not. Update your personal state
+(`thrum state set --kind personal_state ...` — see the `using-thrum-state`
+skill) and your committed work (`thrum queue` — see the `using-the-queue`
+skill) BEFORE composing your snapshot. This is distinct from the restart
+recovery above (compaction keeps your daemon binding and live session
+intact, unlike a restart) but the same durable stores are what a
+post-compact render reads back.
 
 ## Keep the pipeline flowing (stalled-handoff detection)
 

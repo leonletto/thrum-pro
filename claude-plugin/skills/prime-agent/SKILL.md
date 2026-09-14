@@ -81,6 +81,16 @@ lifetime.
 If the session will exceed ~30 minutes, or coordination with other agents is
 needed, defer to `thrum prime`.
 
+**Exception: post-`/thrum:compact` resume — MANUAL FALLBACK ONLY.** After
+`/thrum:compact` or `/thrum:compact-extended`, the SessionStart hook now
+auto-injects a zero-turn light briefing (`thrum prime --light`) directly into
+context on a healthy daemon — no turn spent reading a file or running a skill.
+This skill is the correct choice here only as a **fallback**, when that
+auto-injection didn't fire or failed (e.g. the hook's "auto-injection failed"
+notice, daemon unreachable). In that fallback case: read the snapshot first,
+then run this skill. See `claude-plugin/commands/compact.md`'s "How resume
+works" section.
+
 ## After Step 2
 
 Once both steps complete, proceed with the work the wake-primer asked for.

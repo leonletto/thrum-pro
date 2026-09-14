@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # thrum-capture-fallback.sh — capture/key an agent, falling back to an SSH
 # hop when the local `thrum tmux capture|key` proxy path fails with a known
-# cross-daemon proxy-routing error signature (thrum-7vwgy / thrum-zkqut
-# class bugs: same-host dual-daemon caller-identity collision, and a
+# cross-daemon proxy-routing error signature (known bug classes:
+# same-host dual-daemon caller-identity collision, and a
 # phantom-routing regression on daemon builds predating EnsureProxies).
 #
 # `thrum tmux capture <agent>` ALREADY reaches remote agents by name via the

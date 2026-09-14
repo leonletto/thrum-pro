@@ -90,9 +90,11 @@ merge target before merging.
 
 ## 3. PASS-3 GATES — DISPATCH BOTH TO THE GATE RUNNER
 
-**Resolve the Gate Runner from `thrum team` by its `gate` ROLE — never by a
-remembered agent name.** A name in a skill goes stale exactly like a copied model
-tier.
+1. Select from your team of established long-running gate agents.
+2. Choose an available pair for hot-path and philosophy.
+3. Tell those agents where sensitive tests must execute.
+4. Launch a new gate agent only if the persistent set is genuinely unavailable —
+   never merely because an old candidate-specific session is stale.
 
 Record the dispatch on your own queue (`thrum queue assign <bundle>
 <gate-runner>`) per `coordinator-dispatching-work`'s queue step before
@@ -186,18 +188,18 @@ executed half is **scoped to the change**:
   it every merge: `git diff <base> <tip> | grep -iE 'CREATE TABLE|ALTER TABLE|durablelane|MirrorWriter|sanctionedMirrorWriters'`
   — ANY hit ⇒ also run `go test ./internal/schema/ -run TestFixtureDriftGuard` and
   `go test ./tests/gate/ -run TestEveryMirrorWriterIsSanctioned` on the MERGED tree.
-  Measured 2026-08-28: kgi7t (`TestEveryMirrorWriterIsSanctioned`) and xo58f
+  Measured previously: kgi7t (`TestEveryMirrorWriterIsSanctioned`) and xo58f
   (`TestFixtureDriftGuard`) BOTH escaped per-merge Pass-3 this way and surfaced only
   in the daily gate as trunk-reds. The changed-package rule below is necessary, not
   sufficient — a class gate is a property of the TREE, not the neighbourhood.
   🔴 **Also always-run, same class-gate reasoning:**
   `TestNoMainStateDBWriteOwnerBypasses` (`internal/testgate`; corpus 5.1
   owner-bypass-check) — a scanner ratchet over every raw main-State-DB write
-  site, blind to changed-package scoping the same way. Measured 2026-09-04:
-  thrum-mjmu3 Part a introduced a raw `r.db.ExecContext` outside
+  site, blind to changed-package scoping the same way. Measured previously:
+  a merged branch introduced a raw `r.db.ExecContext` outside
   `safedb.WriteCoordinator` in a durable-lane cold-boot restore step; the
   ratchet went 213→214 and gate_thrum's Pass-3 on that merge was CLEAN because
-  this test was not yet in the always-run set (thrum-wdt97). Run it on the
+  this test was not yet in the always-run set. Run it on the
   MERGED tree every merge: `go test ./internal/testgate/... -run
   TestNoMainStateDBWriteOwnerBypasses`.
 

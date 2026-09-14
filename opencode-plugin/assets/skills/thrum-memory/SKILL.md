@@ -59,7 +59,7 @@ thrum memory search --tag substrate --kind arch_decision
 Show a single memory by ID:
 
 ```bash
-thrum memory show thrum-mem-01HQXZP3V8K2N7M0YJWQ8R5T6F
+thrum memory show thrum-mem-01EXAMPLE00000000000000000
 ```
 
 Edit a single field (other zoom levels stay intact; only changed-zoom embeddings

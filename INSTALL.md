@@ -69,6 +69,29 @@ copilot plugin install thrum@thrum
 Update with `copilot plugin update thrum`. Verification: `copilot plugin list`
 must report `thrum`, and `/skills list` must include the Thrum skills.
 
+Inside a Copilot CLI session, the same plugin-management actions are also
+available through:
+
+```text
+/plugin marketplace add leonletto/thrum-pro
+/plugin install thrum@thrum
+/plugin update thrum
+/plugin list
+```
+
+## Muse Code
+
+Muse installs Thrum from its native marketplace; no separate `muse-plugin/`
+directory is needed:
+
+```bash
+muse plugins marketplace add leonletto leonletto/thrum-pro
+muse plugins install thrum@leonletto
+```
+
+Verify with `muse plugins list --json`; approve any requested plugin capabilities
+in the Muse CLI after installation.
+
 ## Cursor
 
 Install the Cursor Agent CLI, log in, and add this GitHub repository as a

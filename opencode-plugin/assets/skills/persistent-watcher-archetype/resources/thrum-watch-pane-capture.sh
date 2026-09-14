@@ -3,7 +3,7 @@
 # thrum-watch-pane-capture.sh
 #
 # The generic, roster-driven pane-watch capture-loop script that ships with
-# the persistent-watcher-archetype plugin skill (thrum-3mhrt). Works for
+# the persistent-watcher-archetype plugin skill. Works for
 # BOTH a persistent-watcher-archetype watcher and the brainstorm-steward
 # (one parameterized script serves both — the only differences, roster
 # contents and cadence, are already `watch_params.json` fields, not script
@@ -18,8 +18,8 @@
 #   capture each member's pane (local `thrum tmux capture` first, ALWAYS —
 #   `thrum tmux capture <agent>` already reaches remote agents by name via
 #   the normal rpcrouter proxy; the SSH hop below is a resilience FALLBACK
-#   for when that path is broken on the caller's side, e.g. thrum-7vwgy/
-#   thrum-zkqut-class bugs, never a fleet-wide-watching enabler in its own
+#   for when that path is broken on the caller's side, e.g. known
+#   cross-daemon proxy-routing bug classes, never a fleet-wide-watching enabler in its own
 #   right, and never SSH-first) -> run each capture through `thrum detect
 #   --category permission` -> for a STABLE (unchanged across two captures,
 #   two seconds apart) detected permission prompt, flag it in the report ->
@@ -55,7 +55,7 @@
 #
 # THRUM MONITOR EXAMPLE (see SKILL.md for the full, current recipe —
 # --notify-on-success is MANDATORY: a --schedule'd job delivers NOTHING on
-# --match alone, thrum-ruz1z/S5c):
+# --match alone):
 #   thrum monitor start --name <you>-pane-watch \
 #     --match "^watch-tick: (cycle done|RESOLUTION-FAIL)" \
 #     --to @<you> \
@@ -139,7 +139,7 @@ fi
 # script (no mapfile/readarray, no `local -n`, no bash-4 associative
 # arrays -- parallel indexed arrays instead). Test with `/bin/bash
 # thrum-watch-pane-capture.sh`, not just `bash ...` or `./...`, or this
-# class of bug only surfaces on the live scheduled run (thrum-dnatz).
+# class of bug only surfaces on the live scheduled run.
 ROSTER=()
 while IFS= read -r line; do
   [ -n "${line}" ] && ROSTER+=("${line}")
@@ -267,7 +267,7 @@ resolve_roster_targets() {
 build_topology_table
 resolve_roster_targets
 
-# Fork default (coordinator-resolved, thrum-3mhrt plan): if EVERY roster
+# Fork default (coordinator-resolved plan): if EVERY roster
 # agent failed resolution, that is itself worth surfacing as a real
 # problem (likely a fleet-wide topology/agent_pool data gap), not a clean
 # tick -- flip the summary line's marker so `--match` treats it as a

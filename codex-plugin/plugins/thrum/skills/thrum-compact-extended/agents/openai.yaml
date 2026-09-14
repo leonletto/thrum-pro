@@ -1,0 +1,4 @@
+interface:
+  display_name: "Thrum Compact Extended"
+  short_description: "Stage a comprehensive 16-section snapshot, verify it landed, then send /compact to this agent's OWN tmux pane so it stays alive and resumes at low context. Use for designer/architect-grade work needing wire contracts, capability matrix, and design rationale that the standard $thrum-compact format cannot carry."
+  default_prompt: "Run the thrum compact-extended workflow and summarize the result."

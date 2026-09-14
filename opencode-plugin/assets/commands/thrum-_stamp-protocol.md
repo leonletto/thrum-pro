@@ -46,8 +46,15 @@ diffs if the remote-tracking ref might be stale.
 # SHA of the current HEAD
 git rev-parse HEAD
 
-# Configured merge target
-jq -r '.orchestration.merge_target' .thrum/config.json
+# Configured merge target -- resolve through .thrum/redirect when present.
+# A worktree's .thrum/ holds only a `redirect` file (a single line: the
+# absolute path to the MAIN REPO'S .thrum directory itself), not its own
+# config.json -- reading .thrum/config.json directly from a worktree
+# silently returns empty. Root repos have no redirect file, so CONFIG falls
+# through to the direct path.
+CONFIG=".thrum/config.json"
+[ -f .thrum/redirect ] && CONFIG="$(cat .thrum/redirect)/config.json"
+jq -r '.orchestration.merge_target' "$CONFIG"
 ```
 
 The author must never type or remember either value by hand — both come from the

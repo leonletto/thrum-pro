@@ -57,8 +57,11 @@ created from origin, unpushed commits can be lost or inaccessible.
 
 **How to apply:** Session close protocol — push the coordination branch every
 session end. **Read the branch name, never recall it:**
-`jq -r '.orchestration.merge_target' .thrum/config.json` (or your project's
-CLAUDE.md § Branching Strategy). Push every `feature/*` and `fix/*` branch too.
+`CONFIG=.thrum/config.json; [ -f .thrum/redirect ] && CONFIG="$(cat .thrum/redirect)/config.json"; jq -r '.orchestration.merge_target' "$CONFIG"`
+(a worktree's `.thrum/` holds only a `redirect` file pointing at the main
+repo's `.thrum` dir, so reading `.thrum/config.json` directly there returns
+empty) — or your project's CLAUDE.md § Branching Strategy. Push every
+`feature/*` and `fix/*` branch too.
 A docs/site branch pushes only when the site is ready to deploy; `main` and
 `release/*` go through the release flow.
 

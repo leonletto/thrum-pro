@@ -1,15 +1,17 @@
 ---
 name: thrum
-description: "Multi-agent coordination via messaging, groups, and shared context. Use when agents need to communicate, delegate work, or coordinate across worktrees."
+description:
+  "Multi-agent coordination via messaging, groups, and shared context. Use when
+  agents need to communicate, delegate work, or coordinate across worktrees."
 # source: claude-plugin/skills/thrum/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
 
-
 ## Thrum - Git-Backed Multi-Agent Coordination (Messaging, Groups, Shared Context)
 
-Run `thrum prime` for full session context (auto-injected by hooks on
-SessionStart and PreCompact).
+Run `thrum prime` for full session context (auto-injected by the SessionStart
+hook; also fires on post-compact resume). PreCompact is not registered — use
+`$thrum-compact` to save a snapshot before deliberately compacting.
 
 ### Quick Command Reference
 
@@ -140,8 +142,10 @@ processing. See [LISTENER_PATTERN.md](resources/LISTENER_PATTERN.md).
 #### Context Management
 
 - `thrum prime` gathers identity, team, inbox, git context, sync health
-- SessionStart hook auto-runs `thrum prime` on session start
-- PreCompact hook saves state to thrum context + `/tmp` backup before compaction
+- SessionStart hook auto-runs `thrum prime` on session start (including
+  post-compact resume)
+- PreCompact is NOT registered — run `$thrum-compact` to save a restart snapshot
+  deliberately before compacting
 - **After compaction:** run `$thrum-load-context` to restore your work context
 - Agent identity persists in `.thrum/identities/`
 

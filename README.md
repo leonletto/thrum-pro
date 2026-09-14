@@ -5,8 +5,8 @@
 Thrum Pro is a multi-agent coordination system for AI coding assistants. It lets a
 fleet of agents — coordinators, implementers, researchers, orchestrators — message
 each other, share memory, track work, and merge code through review gates, all from
-inside your existing runtime (Claude Code, Codex, Cursor, OpenCode, or GitHub
-Copilot CLI).
+inside your existing runtime (Claude Code, Codex, Cursor, OpenCode, Muse Code,
+or GitHub Copilot CLI).
 
 This repository is where the **Thrum Pro plugin** lives, so anyone with access can
 install it straight from git. The plugin is the client side: skills, commands, agents,
@@ -29,6 +29,9 @@ Each supported runtime has its own plugin tree at the top level:
 | `cursor-plugin/` | Cursor |
 | `opencode-plugin/` | OpenCode |
 | `claude-plugin/` | GitHub Copilot CLI (shared marketplace payload) |
+
+Muse Code discovers and installs Thrum from its marketplace; it has no separate
+`muse-plugin/` tree in this repository.
 
 Every tree is plain text — skills (`SKILL.md`), slash commands, agent definitions,
 and hooks. No binaries. Pick the directory that matches your assistant and follow the
@@ -94,6 +97,16 @@ there is no marketplace or manual plugin-install step.
 
 If `copilot` is not found on your `PATH`, Thrum reports the runtime as unavailable
 rather than failing mid-launch.
+
+Copilot also exposes plugin management inside its CLI. To add the published
+marketplace or manage an installed plugin there, use:
+
+```text
+/plugin marketplace add leonletto/thrum-pro
+/plugin install thrum@thrum
+/plugin update thrum
+/plugin list
+```
 
 ### Cursor — install straight from GitHub
 

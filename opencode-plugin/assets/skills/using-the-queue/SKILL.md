@@ -63,21 +63,45 @@ Three distinct fields, do not conflate them:
 | `thrum queue add --title "..."` | Create a bundle in your queue |
 | `thrum queue add --from-message <msg_id>` | Special case: lift ONE specific message you received (content->title, author->assigned_by, refs->refs). Use the exact msg-id you're acting on - never head-1 of the inbox |
 | `thrum queue add --ref bead:<id>` | Promote a backlog item into active work |
-| `thrum queue list [--status <s>] [--agent <id>]` | List your queue (or another agent's) |
+| `thrum queue list [--status <s>] [--stage <s>] [--agent <id>]` | List your queue (or another agent's); `--status`/`--stage` AND-combine when both given |
 | `thrum queue show <bundle-id> [--agent <id>]` | Full detail for one bundle |
 | `thrum queue start <bundle-id>` | -> in_progress (clears block_reason) |
-| `thrum queue block <bundle-id> [--reason "..."]` | -> blocked (records the reason) |
+| `thrum queue block <bundle-id> [--reason "..."]` | -> blocked (records the reason; `--reason` required) |
 | `thrum queue done <bundle-id>` | -> done (TEMPORARY waypoint, not deleted; `start` reopens it; clears block_reason) |
+| `thrum queue wait <bundle-id> [--reason "..."]` | -> waiting (alias for `queue update --status=waiting`; `--reason` optional) |
+| `thrum queue ready <bundle-id>` | -> ready (alias for `queue update --status=ready`) |
+| `thrum queue update <bundle-id> [flags]` | General partial update: `--status`, `--stage`, `--reason` (status_reason), `--title`, `--ref` (repeatable, replaces existing refs), `--priority`, `--assigned-by`, `--assigned-to-remove` - at least one required; `--status=blocked` requires `--reason` |
 | `thrum queue drop <bundle-id>` | DELETE bundle + all its items, any status (the one destructive verb - drop promptly once a done bundle's record stops being useful) |
 | `thrum queue assign <bundle-id> <agent-id>...` | Append agent(s) to assigned_to (routing metadata only) |
+| `thrum queue note <bundle-id> --stdin` (or `--body-file <f>`) | Append a dated progress note (append-only; shown by `show`, last note previewed by `list`) |
 | `thrum queue item add <bundle-id> --title "..."` | Add one embedded item |
 | `thrum queue item batch-add <bundle-id> --title "..." --title "..."` | Add several items in one call (shared --ref/--priority) |
 | `thrum queue item start/block/done <bundle-id> <item-id>` | Item-level status (start/done clear the item's block_reason) |
+| `thrum queue item update <bundle-id> <item-id> [flags]` | Partial item update: `--title`, `--assigned-by`, `--ref` (repeatable, replaces existing refs), `--priority` - at least one required |
 
 Optional: `--ref <type>:<value>` (repeatable), `--priority N` (higher sorts
 first), and `--from-message` (special case, below). `add` / `item add` require at
 least one of `--title` or `--from-message`; explicit `--title` wins over
 `--from-message`. **`--title` is the normal way to add work.**
+
+### Status and stage: two independent axes
+
+A bundle carries two orthogonal fields, both settable via `queue update`:
+
+- **`status`** - `pending`, `in_progress`, `waiting`, `ready`, `blocked`,
+  `done`. Says whether the owning agent can or must act now. `start` / `block`
+  / `done` / `wait` / `ready` are all just `queue update --status=<x>` under a
+  short name; `wait` and `ready` are exact aliases with no independent
+  behavior of their own.
+- **`stage`** - `intake`, `planning`, `dispatched`, `implementation`,
+  `integration`, `review`, `rework`, `gate`, `merge`, `deploy`,
+  `verification`, `cleanup`. Says where the bundle sits in its workflow,
+  independent of status. Optional; never set on items, bundle-only. Set/read
+  via `queue update --stage <s>` / `queue list --stage <s>` / `queue show`.
+
+`status_reason` (set via `--reason` on `update`/`block`/`wait`) is the
+general reason field; `--status=blocked` requires it, `wait` accepts it
+optionally, other transitions clear it.
 
 ## Common Flows
 
@@ -139,6 +163,50 @@ close only the bundles a check proves done, and skip the rest. Two checks only:
 Do NOT read each bundle's full history - the sweep is those two checks against
 merged/closed state, nothing more.
 
+## Identity-field mutation: queue vs. state (two intentional shapes)
+
+`queue update` / `queue item update` and `state set` handle identity-field
+mutation differently. This is an intentional two-shape convention chosen per
+domain, not an inconsistency - do not "fix" one to match the other.
+
+**`queue.update` / `queue.item.update`**: wrapped by `RejectIdentityKeysHandler`,
+which returns a typed `*queue.ErrImmutableField` error (`queue: cannot modify
+immutable field %q`) if a raw identity key (`id`, `agent_id`, `created_at` for
+bundles; `id`, `created_at` for items) appears in the wire payload at all -
+checked BEFORE decode, fail-closed. Note: `QueueUpdateRequest`/
+`QueueItemUpdateRequest` have no JSON fields for these identity keys anyway,
+so this wrapper is defense-in-depth, not load-bearing on its own.
+
+**`state.set`**: no reject path at all, and that is by design, per field:
+- **Kind/Scope** are the addressing key - a different `(Kind,Scope)` pair
+  addresses a DIFFERENT record, so setting them isn't a mutation attempt and
+  there's nothing to reject.
+- **Class** is derived server-side from the kind registry; no wire field
+  exists for a caller to even attempt to set it.
+- **CreatedAt** is server-stamped once at creation (on the fleet tier it's
+  actually derived from `UpdatedAt` at read time rather than stored
+  independently); not client-spoofable, and `StateSetRequest` has no field to
+  smuggle it through.
+- **EstablishedBy** is influenceable only via `CallerAgentID` on a
+  non-peercred transport (browser/WS, unit tests) - but that is a general,
+  already-documented property of the RPC layer (identity trust depends on
+  transport), not something unique to `state.set`, and it is explicitly out
+  of scope per `docs/security_model/master.md` §1.5: "Thrum does not attempt
+  to prevent agent identity forgery" is an owner ruling, stated as
+  [INTENDED] and permanent, not tracked as debt.
+
+**The convention, stated plainly:** queue rejects raw identity keys at the
+wire as defense-in-depth (even though its request types don't have those
+fields anyway); state has no reject path because its identity/system-derived
+fields are either addressing semantics (not a mutation) or server-derived/
+unspoofable (nothing to reject). Two different but each internally-consistent
+shapes, chosen by domain, not an oversight.
+
+Non-goal: fail-closed reject-symmetry for `state.set` (mirroring queue's
+`RejectIdentityKeysHandler`) is a possible future non-security hardening
+preference, not built here - out of scope per `docs/security_model/master.md`
+§1.5.
+
 ## Common Mistakes
 
 - **Treating `add`/`done` as the work itself.** The queue *tracks* your work; it
@@ -162,9 +230,12 @@ merged/closed state, nothing more.
   bundle stays, and only `drop` deletes it. Drop each done bundle promptly once
   its record stops being useful; a queue full of undropped done bundles is the
   primary rot mode.
-- **Reaching for a `remove`/`rename`/item-`drop` verb.** They do not exist by
-  design: removal happens only at the bundle level via `drop`; titles are set at
-  creation and not edited.
+- **Reaching for a `remove`/item-`drop` verb.** Removal (of a bundle and every
+  item inside it) happens only at the bundle level via `drop` - there is no
+  finer-grained delete. Renaming/re-titling is NOT in this category: `queue
+  update --title` and `queue item update --title` are the supported post-create
+  edit path for a bundle's or item's title (and other fields - stage, refs,
+  priority, assigned-by).
 - **Trying to edit another agent's queue.** Impossible by design - you only
   write your own. Cross-agent work is messaging plus the recipient's own `add`.
 - **Treating the queue as durable/shared history.** It is local, private, and

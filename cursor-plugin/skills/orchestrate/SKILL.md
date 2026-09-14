@@ -53,8 +53,11 @@ grep "## Review Gate:" <prompt-file-path>
 # 4. Dependencies configured
 bd dep tree <epic-id>
 
-# 5. Merge target in config
-cat .thrum/config.json | grep merge_target
+# 5. Merge target in config (resolve through .thrum/redirect when present --
+#    a worktree's .thrum/ holds only a `redirect` file, not its own config.json)
+CONFIG=.thrum/config.json
+[ -f .thrum/redirect ] && CONFIG="$(cat .thrum/redirect)/config.json"
+cat "$CONFIG" | grep merge_target
 ```
 
 ### Step 2b: Triage CANDIDATE beads (if the dispatch carries any)
@@ -618,18 +621,30 @@ can act on, which is how a guard gets disabled. Classify every hit — only a
 classifier failure is a real only-copy:
 
 ```bash
-# STAGE 2 — CLASSIFY every hit from stage 1 against ALL HISTORY, not the tip
-# tree (a tip-only check like `git cat-file -e origin/<ref>:<path>` flags
-# every file the 19-session sliding window has legitimately trimmed as
-# unrecoverable — over-reporting, not under-reporting, but still an alarm
-# nobody can act on):
-git log --all --oneline -- ".thrum/agents/<path>" | head -1
-#   NON-EMPTY -> RECOVERABLE (in git history)
-#   EMPTY     -> ONLY-COPY — SALVAGE BEFORE REMOVAL
+# STAGE 2 — classify every stage-1 hit. Test that a BLOB IS RETRIEVABLE,
+# never that the path merely appears in the log: `git log -- <path>` also
+# matches the commit that DELETED the file, and `| head -1` returns exactly
+# that for a trimmed file.
+git log --all --oneline --name-status -- ".thrum/agents/<path>"   # read the A/M/D column; do NOT head -1
+git cat-file -e "<add-or-modify-sha>:.thrum/agents/<path>"        # rc=0 proves the BLOB EXISTS
+git show "<that-sha>:.thrum/agents/<path>" > /tmp/x && cmp /tmp/x "<worktree-copy>"
+#   blob retrievable AND byte-identical -> RECOVERABLE
+#   otherwise                           -> ONLY-COPY — SALVAGE BEFORE REMOVAL
+# Always check rc explicitly on git show/cat-file; never infer from output size.
+# Form the cmp control from two files KNOWN to differ — comparing an
+# accidentally-empty extraction against /dev/null reports "identical" and
+# reads as a passing control.
 
-# CONTROLS — the classifier must be able to both affirm and refuse:
-git log --all --oneline -- ".thrum/agents/<a-real-trimmed-path>"   # must be NON-EMPTY
-git log --all --oneline -- ".thrum/agents/__nope__/x"              # must be EMPTY
+# CONTROLS — the classifier must be able to both affirm and refuse.
+# Exercise BOTH halves of the decision: existence (cat-file -e) AND
+# byte-identity (cmp). Controlling only existence leaves the cmp step
+# unguarded — and cmp is where an accidentally-empty extraction reads
+# as "identical" and passes.
+git cat-file -e "<add-or-modify-sha>:.thrum/agents/<path>";      echo "rc=$? (must be 0)"
+git cat-file -e "<add-or-modify-sha>:.thrum/agents/__nope__/x";  echo "rc=$? (must be NON-ZERO)"
+printf 'x' > /tmp/ctl-differs
+cmp -s /tmp/x /tmp/ctl-differs; echo "rc=$? (must be NON-ZERO — proves cmp CAN detect a difference)"
+cmp -s /tmp/x /tmp/x;           echo "rc=$? (must be 0 — proves cmp CAN affirm)"
 ```
 
 ```bash

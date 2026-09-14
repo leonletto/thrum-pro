@@ -1,10 +1,15 @@
 ---
 name: coordinator-running-autonomous-feature-development
-description: "Use when the coordinator is idle or in a post-merge lull and a small, self-contained, reversible backlog item exists that could plausibly be developed and planned autonomously, with the finished plan still going to the human for go/no-go. Not for inventing work to stay busy, for cross-cutting / schema / release-gating items, for items the human flagged as theirs, or for the dispatch and execution mechanics themselves."
+description:
+  "Use when the coordinator is idle or in a post-merge lull and a small,
+  self-contained, reversible backlog item exists that could plausibly be
+  developed and planned autonomously, with the finished plan still going to the
+  human for go/no-go. Not for inventing work to stay busy, for cross-cutting /
+  schema / release-gating items, for items the human flagged as theirs, or for
+  the dispatch and execution mechanics themselves."
 # source: claude-plugin/skills/coordinator-running-autonomous-feature-development/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
-
 
 ## Coordinator: Running Autonomous Feature Development
 
@@ -98,10 +103,10 @@ waiting for instructions.**
 survive restarts and propagate silently — an undocumented invented rule can
 outlive its author and later be enforced as if it were the human's mandate.
 
-| Rationalization                                                                     | Reality                                                                                                                                                |
-| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| "I lack explicit authorization to pull this, so I should wait."                     | **WRONG** — the skill authorizes scan-and-pull when all 6 criteria hold. Idle-and-wait is the exact failure mode this skill prevents.                  |
-| "I'll write a 'do not manufacture work' rule into my snapshot to stay disciplined." | **WRONG** — that invented rule propagates across restarts unchallenged. Never write invented discipline into a snapshot. |
+| Rationalization                                                                     | Reality                                                                                                                               |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| "I lack explicit authorization to pull this, so I should wait."                     | **WRONG** — the skill authorizes scan-and-pull when all 6 criteria hold. Idle-and-wait is the exact failure mode this skill prevents. |
+| "I'll write a 'do not manufacture work' rule into my snapshot to stay disciplined." | **WRONG** — that invented rule propagates across restarts unchallenged. Never write invented discipline into a snapshot.              |
 
 ### Guardrail 2 — ALWAYS route through a standing orchestrator
 
@@ -117,10 +122,10 @@ live in **`coordinator-dispatching-work`**.
 before handing to the orchestrator.** Do not let the orchestrator adopt a
 coordinator-spawned implementer — it may carry the wrong model.
 
-| Rationalization                                                      | Reality                                                                                                                                                                                                                                                                                                   |
-| -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| "I'll just stand up the implementer myself, it's faster."            | **WRONG** — route through a standing orchestrator. |
-| "The orchestrator can just adopt the implementer I already spawned." | **WRONG** — it may carry opus. Tear it down first; let the orchestrator spawn its own with the sonnet pin.                                                                                                                                                                                                |
+| Rationalization                                                      | Reality                                                                                                    |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| "I'll just stand up the implementer myself, it's faster."            | **WRONG** — route through a standing orchestrator.                                                         |
+| "The orchestrator can just adopt the implementer I already spawned." | **WRONG** — it may carry opus. Tear it down first; let the orchestrator spawn its own with the sonnet pin. |
 
 ### Coordinator-run Q&A vs escalate
 

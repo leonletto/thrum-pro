@@ -275,7 +275,7 @@ export function readFilePatternFor(filePath: string): string {
 
 // loadAllowlist reads the canonical allowlist JSON asset bundled with this
 // plugin (opencode-plugin/assets/thrum_allowlist.json — a byte-for-byte
-// copy of internal/permissions/thrum_allowlist.json, kept in sync by
+// copy of the Go-owned canonical allowlist source, kept in sync by
 // scripts/sync-skills.sh's sync_opencode step; see that script's comment
 // for why a copy is needed instead of a live cross-language import).
 export function loadAllowlist(assetPath: string = ALLOWLIST_ASSET_PATH): AllowlistSource {
@@ -357,9 +357,9 @@ export function mergePermissions(
   // coordinator/watcher operational artifacts. This is a DELIBERATE
   // exception, not a template for widening elsewhere: it grants READ/ACCESS
   // ONLY — never execute, never shell-interpolation, never a sibling root
-  // like /private or /private/tmpfoo, never write/delete. See
-  // internal/permissions/thrum_allowlist.json's own "OWNER-AUTHORIZED
-  // EXCEPTION" comment for the full ruling this quotes from. Rendered
+  // like /private or /private/tmpfoo, never write/delete. See the canonical
+  // allowlist source's own "OWNER-AUTHORIZED EXCEPTION" comment for the full
+  // ruling this quotes from. Rendered
   // through the same readPatternFor() glob as canonical read_paths (e.g.
   // "/private/tmp" -> "/private/tmp/**") so it goes through the identical
   // preserveBareScalarAsDefault-aware merge machinery above — never a

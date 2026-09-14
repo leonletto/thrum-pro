@@ -52,15 +52,21 @@ every agent in your `roster`:
   the modal uses, else cancel or escalate. Never key on fixed prompt phrases;
   never approve blind.
 - Verify by re-capture after acting — never trust exit status alone.
-- To unblock a REMOTE roster member's modal, use `thrum tmux send <agent> " "`
-  (proxies by agent name to the owning peer daemon and appends Enter, so a
-  space+Enter confirms the default-focused option); for a specific selection
-  use `thrum tmux send <agent> --keys <K1,K2,...>`. `thrum tmux send` is
-  peer-routed, so it works identically local or remote (fleet-wide) — this is
-  the replacement for the retired local-only tmux-key primitive. This grants only
-  the leftmost/default option; the bright line above still applies. From the
-  CLI/peer-router path this send is QUEUED behind the conservative
-  monitor-silence wait, not instant — don't re-send while waiting it out.
+- Cross-peer send-keys is refused BY DESIGN ("rpcrouter: caller-peer lacks
+  required capability") — a deliberate security boundary, not a bug or a gap
+  to work around. A peer can CAPTURE another peer's panes read-only, but
+  cannot send-keys into them.
+- For a LOCAL (same-box) roster member, you remain approver-of-record and act
+  directly on the pane: use `thrum tmux send <agent> " "` (appends Enter, so a
+  space+Enter confirms the default-focused option) or, for a specific
+  selection, `thrum tmux send <agent> --keys <K1,K2,...>`. This grants only
+  the leftmost/default option; the bright line above still applies. This send
+  is QUEUED behind the conservative monitor-silence wait, not instant — don't
+  re-send while waiting it out.
+- To unblock a REMOTE roster member's modal, you cannot send-keys into its
+  pane yourself — route the request to the owning box's LOCAL coordinator
+  (e.g. `<box>` → `coord_<box>` — generalize the pattern to whichever box
+  actually owns the member), which CAN send-keys locally on its own box.
 
 ## Your own restart (auto-restart-at-ctx-threshold)
 
@@ -217,8 +223,8 @@ Register the loop as a `thrum monitor` instead — a daemon-scheduled job,
 independent of your session, that keeps running across your restarts.
 
 **A ready-to-use script ships with this skill** — `resources/thrum-watch-
-pane-capture.sh` (paired with `resources/thrum-capture-fallback.sh`,
-thrum-3mhrt). It is generic and roster-driven: it reads your own
+pane-capture.sh` (paired with `resources/thrum-capture-fallback.sh`).
+It is generic and roster-driven: it reads your own
 `watch_params.json`, captures each roster member's pane (local `thrum tmux
 capture` first, always — that already reaches remote agents by name via the
 normal rpcrouter proxy; see "SSH fallback" below for what the second script
@@ -246,10 +252,10 @@ runtime-versioned path involved:
 
 Then register the monitor against that absolute copy path —
 **`--notify-on-success` is MANDATORY, not optional decoration**: a
-`--schedule`d job delivers NOTHING on `--match` alone (thrum-ruz1z §5c —
-this fails completely silently, every status field reads healthy, and it
+`--schedule`d job delivers NOTHING on `--match` alone — this fails
+completely silently, every status field reads healthy, and it
 is exactly the trap a literal reading of the syntax below used to walk
-readers into):
+readers into:
 
 ```bash
 thrum monitor start --name <you>-pane-watch \
@@ -272,8 +278,8 @@ it rather than assuming someone else will notice.
 `thrum tmux capture <agent>` already reaches remote agents by name via the
 rpcrouter proxy — that is how fleet-wide watching works today for a healthy
 peer. `thrum-capture-fallback.sh` exists for when that proxy path is
-broken on the caller's side (known bug classes: thrum-7vwgy same-host
-dual-daemon caller-identity collision; thrum-zkqut phantom-routing
+broken on the caller's side (known bug classes: a same-host
+dual-daemon caller-identity collision; a phantom-routing
 regression on a daemon build predating `EnsureProxies`). It is a strict
 FALLBACK, never primary and never SSH-first: `thrum-watch-pane-capture.sh`
 always tries the local proxy path first, and only retries via an SSH hop —

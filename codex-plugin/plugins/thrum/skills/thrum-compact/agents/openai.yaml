@@ -1,0 +1,4 @@
+interface:
+  display_name: "Thrum Compact"
+  short_description: "Stage a standard 11-section snapshot, verify it landed, then send /compact to this agent's OWN tmux pane so it stays alive (subagents, loops, crons survive) and resumes at low context. Use for in-place context relief when you do NOT want to kill the session."
+  default_prompt: "Run the thrum compact workflow and summarize the result."

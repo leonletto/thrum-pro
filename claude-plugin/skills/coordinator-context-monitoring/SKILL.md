@@ -26,40 +26,51 @@ What's forbidden is a script that bypasses this skill and fires
 `thrum tmux restart --force` unconditionally (that violates
 `feedback_restart_discipline` — burn the runway, don't restart on schedule).
 
-## Coordinator self-restart — ALWAYS `/thrum:restart-extended`
+## Coordinator self-restart — ALWAYS the EXTENDED form, compact-extended FIRST
 
 This skill's tier ladder (Steps 3–5) governs how the coordinator restarts
 **other** agents. When the **coordinator restarts ITSELF**, a different rule
-applies and it is absolute:
+applies and it is absolute — but D5 (owner-ruled)
+REVERSES which command that is:
 
-> **The coordinator ALWAYS self-restarts via `/thrum:restart-extended`, NEVER
-> `/thrum:restart`.**
+> **The coordinator ALWAYS uses the EXTENDED snapshot grade for itself — never
+> the standard/compact form. Which command carries that grade is
+> runtime-directed: `/thrum:compact-extended` on any runtime with a verified
+> compact-equivalent skill (D6, the default), `/thrum:restart-extended` ONLY
+> as the fallback on a runtime without one (today: muse, copilot).**
+
+This is a REVERSAL of the prior absolute rule ("ALWAYS restart-extended, NEVER
+compact") — that rule is retired, not merely relaxed. Do not restore it.
 
 Rationale: the coordinator is the nerve center. Its handoff must carry the full
 16-section snapshot (wire contracts, capability matrix, cycle history, open
 L-questions, anticipated Q&A, design rationale) so the next session resumes
-steady-state coordination without re-deriving fleet state. The standard
-`/thrum:restart` compact format drops that load-bearing context and strands the
-next session. This holds regardless of which tier the coordinator's own context
-sits in — there is no ctx-band at which the coordinator downgrades to the
-compact restart.
+steady-state coordination without re-deriving fleet state — that requirement
+is UNCHANGED and is what "EXTENDED" governs; only the compact-vs-restart choice
+changed. Compacting (rather than restarting) additionally keeps the SAME
+process/session alive — sub-agents, background loops, and cron schedules the
+coordinator owns survive the compaction, where a restart would drop them.
+There is no ctx-band at which the coordinator downgrades to the standard/
+compact-grade snapshot — the tier ladder below governs OTHER agents, not this.
 
-Practical trigger points for coordinator self-restart:
+Practical trigger points for coordinator self-restart/compact:
 
 - A warn-tier context nudge fires on the coordinator's own pane (e.g. 70%+).
 - The coordinator hits a clean checkpoint and elects a fresh session.
 - Rate-limit / stuck-state recovery on the coordinator itself.
 
-In every one of these, run `/thrum:restart-extended`. (Captured as role-rule
-`coord-always-restart-extended` /
-`Coordinator ALWAYS uses /thrum:restart-extended`; this skill is the
-always-loaded home so the rule survives even when memory isn't consulted.)
+In every one of these: run `/thrum:compact-extended` if the coordinator's
+runtime has a compact equivalent (the default); `/thrum:restart-extended` only
+if it does not. (The role-rule `coord-always-restart-extended` — `Coordinator
+ALWAYS uses /thrum:restart-extended` — is RETIRED as of D5; see
+`thrum memory` for its retirement record. This skill is the always-loaded home
+so the CURRENT rule survives even when memory isn't consulted.)
 
 Note the distinction from Steps 3–5 below: those steps drive `/thrum:restart`
 (Step 4) and `/thrum:restart-extended` (Step 5) into
 **implementer/brainstormer** panes per their ctx tier — that tiering is correct
 for worker agents. The carve-out here is ONLY about the coordinator's own
-restart, which is unconditionally the extended form.
+restart/compact, which is unconditionally the extended grade, compact-first.
 
 ## How the scheduled sweep works (v0.10.6+ — thrum monitor)
 

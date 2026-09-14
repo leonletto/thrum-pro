@@ -38,8 +38,7 @@ launch step is what actually starts the AI runtime (claude/codex/etc).
 
 ### Worktree without an agent
 
-To set up the worktree without registering an agent, omit the agent
-flags:
+To set up the worktree without registering an agent, omit the agent flags:
 
 ```bash
 thrum worktree create my-feature

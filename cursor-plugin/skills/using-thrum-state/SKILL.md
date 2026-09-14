@@ -71,6 +71,48 @@ when you're stating it without a live check; a write relayed from a message
 is forced to `--method relayed` (low-trust) — never choose `relayed`
 yourself.
 
+## Field Mutability Matrix
+
+`Entry` (`internal/state/types.go`) has five mutability classes, not one
+uniform "immutable field" guard:
+
+- **immutable-identity** — part of the `(Kind, Scope)` addressing key, or
+  fixed at creation with no update path. "Changing" one of these isn't an
+  edit, it addresses a different record.
+- **mutable-whole-object** — caller-settable via `state set`, which is
+  always a full upsert (overwrite), never a field-level PATCH. Need a
+  partial update? GET, edit client-side, SET the full value back.
+- **mutable** — caller-settable via specific `state set` flags,
+  independent of Value.
+- **system-derived** — recomputed server-side from non-caller input
+  (registry declaration, resolved caller identity); any caller-supplied
+  value for these is ignored, not merely defaulted.
+- **derived** — set only as an automatic side effect of a `state set`
+  call, never independently caller-directed.
+
+| Field | Class | How it's set/changed | Notes |
+|---|---|---|---|
+| `Kind` | immutable-identity | Parsed from the CLI/RPC target at call time | Part of the addressing key; a new `Kind` is a new record, not an edit. |
+| `Scope` | immutable-identity | Parsed from the CLI/RPC target at call time | Same addressing-key reasoning as `Kind`. No error on "change" — it creates an independent entry (`TestStateHandler_HandleSet_DifferentScope_CreatesIndependentEntry`). |
+| `Value` | mutable-whole-object | `state set --value` | Every `state set` is a full upsert; no field-level PATCH RPC/CLI surface exists. |
+| `AsOf` | mutable (fleet only) | `state set --as-of` | Server only checks that it *parses* as a timestamp; nothing compares it against the previous stored `AsOf` or rejects a bump with no real change — a documented, deliberately unenforced soft-gap. |
+| `Method` | mutable (fleet only) | `state set --method` | Forced to `relayed` server-side whenever the request carries `FromMessage`, overriding any caller-claimed value. Outside that one rule, a caller-supplied `Method` is accepted as-is with no check that it reflects how the value was actually established. |
+| `VerifyCmd` | mutable (fleet only) | `state set --verify-cmd` | Plain caller-settable field. |
+| `FreshnessOwner` | mutable (fleet only) | `state set --freshness-owner` | Plain caller-settable field. |
+| `OriginDaemon` | system-derived | Stamped by sync/durable-lane plumbing | Exact assignment site outside `internal/state` is unconfirmed; not caller-settable via `state set`. |
+| `Class` | system-derived, immutable-per-caller | Declared per-`Kind` in the code registry (`registry.go` `KindDef.Class`), stamped server-side on every write | `StateSetRequest` has no `class` wire field at all — a raw request that smuggles an unrecognized `class` key is silently dropped, not rejected (`TestStateHandler_HandleSet_ClassFieldOnWireIsSilentlyDropped`). Changes only if the registry declaration itself changes. |
+| `EstablishedBy` | system-derived, immutable-per-caller | Re-resolved from the caller's identity on every write (`resolveCallerAgent` / `guard.DaemonResolve`), fleet tier only | No dedicated wire field to set directly — only `CallerAgentID`, fed through identity resolution, can influence it. On peercred transports the claim is verified against kernel evidence; on non-peercred transports (browser/WS, unit tests) an unverified claim is accepted verbatim. Local tier never populates this field (always `""`). |
+| `CreatedAt` | immutable-identity (local tier only) | Stamped once at first insert | Local tier: preserved across updates by the store's rewrite path (`local_store.go` `Set`), not validated/rejected — it's simply never reassigned. Fleet tier: **not** independently preserved — there's no separate `created_at` column, so `fleet_store.go`'s `toEntry()` derives it from `UpdatedAt` on every read; do not assume local/fleet parity here. |
+| `UpdatedAt` | derived | Automatic side effect of every `state set` | Never independently caller-directed. |
+
+None of this is a uniform "reject the write" guard (that mechanism —
+`RejectIdentityKeysHandler` / `ErrImmutableField` — belongs to `thrum queue`,
+a different subsystem, not state). State's actual enforcement is a mix:
+addressing semantics for the identity fields (no error, just a different
+record), silent wire-level drop for `Class`/`EstablishedBy` (no field to
+send them on), and preserve-on-rewrite for local-tier `CreatedAt` (no
+validation, just never overwritten).
+
 ## Common Flows
 
 **Deploy runbook, after verifying a box's serving SHA:**

@@ -58,6 +58,11 @@ shorten data.
 No issue IDs, no dates, no agent names, no measurements in customer-facing files.
 The tracker references the change; the change never references the tracker.
 
+## A directive has no author and no history
+
+State the rule; never name who ruled it. Never show a before-and-after — the
+previous wording is deleted, not exhibited.
+
 ## A skill is generic — never specific to the repo you edit from
 
 Write the rule so it holds for any repo running the skill. No repo names, config

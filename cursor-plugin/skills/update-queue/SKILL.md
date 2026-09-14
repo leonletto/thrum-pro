@@ -20,15 +20,13 @@ never a write to their queue (see the `using-the-queue` skill).
 
 ```bash
 thrum queue list
-thrum queue list | awk -F'\t' 'NF>1{print $2}' | sort | uniq -c   # status counts
+thrum queue list --json | jq -r '.bundles[].status' | sort | uniq -c   # status counts
 ```
 
 Read the whole list yourself. The status counts are the before-number to
-reconcile against and report the delta from. `-F'\t'` is load-bearing: bundle
-rows are tab-delimited, but `queue list` also prints a space-delimited footer
-(`Oldest bundle updated …`) to stdout — under default whitespace splitting that
-footer's second word lands in the status tally and corrupts the denominator.
-The tab delimiter drops it (footer has no tab ⇒ NF=1).
+reconcile against and report the delta from. Use `--json` for the tally, not
+the text table: the JSON machine surface (`{"bundles": [...]}`) is a stable
+contract, while the text table's column layout and footer line are not.
 
 Two staleness classes to expect:
 
@@ -135,7 +133,7 @@ on a guess.
 Re-run the status counts and report the delta:
 
 ```bash
-thrum queue list | awk -F'\t' 'NF>1{print $2}' | sort | uniq -c
+thrum queue list --json | jq -r '.bundles[].status' | sort | uniq -c
 ```
 
 One line: dropped N, added M, reclassified K; note anything left deliberately

@@ -1,17 +1,21 @@
 ---
 name: prime-agent
-description: "Use on scheduled-agent wake or lean prime restart - replaces the full thrum prime briefing with a lean two-step warmup tuned for short-lived scheduled-agent invocations. Step 1 reads the inbox literally (NOT a discipline assumption); step 2 surfaces newly-shipped skills since the agent last ran."
+description:
+  "Use on scheduled-agent wake or lean prime restart - replaces the full thrum
+  prime briefing with a lean two-step warmup tuned for short-lived
+  scheduled-agent invocations. Step 1 reads the inbox literally (NOT a
+  discipline assumption); step 2 surfaces newly-shipped skills since the agent
+  last ran."
 # source: claude-plugin/skills/prime-agent/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
 
-
 ## Thrum: Prime Scheduled Agent (Lean)
 
 This skill is the wake-time variant of `thrum prime` for scheduled agents. Full
-`thrum prime` is too heavy when the agent is
-going to run for a few minutes and then exit — but the two pieces of state that
-matter MUST run literally, not as a discipline.
+`thrum prime` is too heavy when the agent is going to run for a few minutes and
+then exit — but the two pieces of state that matter MUST run literally, not as a
+discipline.
 
 ### Step 1: Read the inbox
 
@@ -62,10 +66,10 @@ cp /tmp/current_skills.txt "${LAST_SEEN}.tmp" && \
   mv "${LAST_SEEN}.tmp" "${LAST_SEEN}"
 ```
 
-When a new skill ships to `.claude/skills/`, the next wake's lean-prime
-surfaces it. Writing `last_seen_skills.txt` at the END of Step 2 (after the diff) means each
-wake updates its own baseline — the diff at wake N+1 reflects what's NEW since
-wake N's boot, regardless of mid-session skill drift.
+When a new skill ships to `.claude/skills/`, the next wake's lean-prime surfaces
+it. Writing `last_seen_skills.txt` at the END of Step 2 (after the diff) means
+each wake updates its own baseline — the diff at wake N+1 reflects what's NEW
+since wake N's boot, regardless of mid-session skill drift.
 
 Do not skip this step even if Step 1's inbox was empty. Skill drift between
 wakes is a real failure mode — agents can miss a critical new skill if the
@@ -82,6 +86,16 @@ lifetime.
 
 If the session will exceed ~30 minutes, or coordination with other agents is
 needed, defer to `thrum prime`.
+
+**Exception: post-`$thrum-compact` resume — MANUAL FALLBACK ONLY.** After
+`$thrum-compact` or `$thrum-compact-extended`, the SessionStart hook now
+auto-injects a zero-turn light briefing (`thrum prime --light`) directly into
+context on a healthy daemon — no turn spent reading a file or running a skill.
+This skill is the correct choice here only as a **fallback**, when that
+auto-injection didn't fire or failed (e.g. the hook's "auto-injection failed"
+notice, daemon unreachable). In that fallback case: read the snapshot first,
+then run this skill. See `claude-plugin/commands/compact.md`'s "How resume
+works" section.
 
 ### After Step 2
 

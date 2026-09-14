@@ -1,10 +1,13 @@
 ---
 name: memory-maintenance
-description: "Use when an agent needs to update, delete, supersede, or audit an existing memory entry — e.g., after verification, when a finding becomes stale, or when a rule needs amendment. Loads the edit/delete/history protocol + when to retire vs amend."
+description:
+  "Use when an agent needs to update, delete, supersede, or audit an existing
+  memory entry — e.g., after verification, when a finding becomes stale, or when
+  a rule needs amendment. Loads the edit/delete/history protocol + when to
+  retire vs amend."
 # source: claude-plugin/skills/memory-maintenance/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
-
 
 ## Maintaining thrum memory entries
 

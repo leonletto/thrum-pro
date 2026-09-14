@@ -1,10 +1,12 @@
 ---
 name: implementer-receiving-review-feedback
-description: "Use when receiving review findings, when a reviewer flagged an issue, during a review cycle, or when responding to review. Loads implementer-specific discipline that complements superpowers:receiving-code-review."
+description:
+  "Use when receiving review findings, when a reviewer flagged an issue, during
+  a review cycle, or when responding to review. Loads implementer-specific
+  discipline that complements superpowers:receiving-code-review."
 # source: claude-plugin/skills/implementer-receiving-review-feedback/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
-
 
 ## Implementer: Receiving Review Feedback
 
@@ -29,9 +31,9 @@ explicit GREENLIT or APPROVED message.
 ### Batch all review fixes into ONE commit
 
 **Why:** A single fix commit makes re-review straightforward — the coordinator
-inspects one diff against the numbered finding list. Per-finding commits multiply the surface the re-review has to traverse
-and increase the chance that a finding fixed in commit A is regressed by commit
-B.
+inspects one diff against the numbered finding list. Per-finding commits
+multiply the surface the re-review has to traverse and increase the chance that
+a finding fixed in commit A is regressed by commit B.
 
 **How to apply:** Read the full numbered finding list before writing any code.
 Fix all BLOCKING and IMPORTANT findings in scope. Run tests once they're all
@@ -84,8 +86,8 @@ Don't reach for "deferred" as a shortcut to ship faster.
 **Why:** Reviewers reading large diffs sometimes cite wrong line numbers,
 describe behavior that doesn't match the current code, or apply a universal rule
 to a project-specific exception. Pushback is welcome — it's how the feedback
-loop stays calibrated. But pushback without verification is just
-opinion against opinion.
+loop stays calibrated. But pushback without verification is just opinion against
+opinion.
 
 **How to apply:** When you disagree with a finding, verify against the source
 first:

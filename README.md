@@ -58,10 +58,12 @@ claude plugin marketplace add leonletto/thrum-pro
 claude plugin install thrum@thrum
 ```
 
-**Updating is one command** — Claude Code re-pulls the repo's latest commit:
+**Updating has two steps** — refresh the marketplace, then update the installed
+plugin and restart Claude Code:
 
 ```bash
 claude plugin marketplace update thrum
+claude plugin update thrum@thrum
 ```
 
 ### Codex — install straight from GitHub

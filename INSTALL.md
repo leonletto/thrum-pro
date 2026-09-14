@@ -23,7 +23,10 @@ extracted bundle.
 claude plugin marketplace add leonletto/thrum-pro
 claude plugin install thrum@thrum
 claude plugin marketplace update thrum
+claude plugin update thrum@thrum
 ```
+
+Restart Claude Code after updating the plugin.
 
 Offline / local-path alternative (no GitHub access needed — points at this
 extracted bundle instead of cloning `leonletto/thrum-pro`):

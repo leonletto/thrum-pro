@@ -577,7 +577,6 @@ Before proceeding to the next epic:
    {{EPIC_ID}} complete. Ready for review.")
 4. Set status: `thrum agent set-status idle`
 5. **STOP.** Wait for review approval before continuing.
-
 <!-- REVIEW_GATE_TEMPLATE_END -->
 
 ---

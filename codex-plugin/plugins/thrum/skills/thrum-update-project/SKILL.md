@@ -170,12 +170,12 @@ updating.
    - **What goes where** — the mechanical tell for sorting content: if a
      sentence contains "because", "I verified", "the mechanism was", "caught
      by", or "control fired", that sentence is DERIVATION, not state, and it
-     belongs in the memory record, never in project_state.md.
-     | Content                                                                              | Destination                               |
-     | ------------------------------------------------------------------------------------ | ----------------------------------------- |
-     | What changed                                                                         | The one-line session index entry          |
-     | How you concluded it / verified it / why an earlier claim was wrong / what it taught | `thrum memory`, never project_state.md    |
-     | What's currently in flight, owed, blocked, or pending the owner                      | `## Current State Summary` (rule 2 above) |
+     belongs in the memory record, never in project_state.md. | Content |
+     Destination | | --- | --- | | What changed | The one-line session index
+     entry | | How you concluded it / verified it / why an earlier claim was
+     wrong / what it taught | `thrum memory`, never project_state.md | | What's
+     currently in flight, owed, blocked, or pending the owner |
+     `## Current State Summary` (rule 2 above) |
 
    **NOTE:** the old `update-agent-state` / `update-state` skills (State.md
    surface, MI1) were retired — superseded by `thrum state` (personal_state

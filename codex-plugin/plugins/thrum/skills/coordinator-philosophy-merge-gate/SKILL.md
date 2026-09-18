@@ -105,17 +105,15 @@ dispatch time — hand this list verbatim:
    (`cmd | tail; echo $?` reports _tail's_ status, not cmd's). **Do NOT "fix"
    this with `${PIPESTATUS[0]}` — that is BASH-ONLY and this fleet runs zsh 5.9,
    where it expands to an EMPTY STRING.** Verified empirically:
-   `zsh -c 'false | true; echo "${PIPESTATUS[0]}"'` → `` (empty), because zsh
-   names the array `pipestatus` (lowercase) AND indexes from 1, so the bash form
-   is wrong twice over. The failure direction is what makes it dangerous: an
-   empty rc in a typical `[ -z "$rc" ] || [ "$rc" = 0 ]` guard reports SUCCESS,
-   so **the remedy for the silent-false-green class is itself a silent false
-   green.** In priority order: (a) gate on OUTPUT — shell-agnostic, and the
-   thing that actually catches real failures (e.g. read the "OK — copies match
-   source" line, not the rc); (b) if a status is genuinely needed, run it with
-   NO PIPE: `cmd >/dev/null 2>&1; echo $?`; (c) only if a pipeline is
-   unavoidable, use `${pipestatus[1]}` on zsh / `${PIPESTATUS[0]}` on bash — and
-   STATE WHICH SHELL, because the same string means different things in each.
+   `zsh -c 'false | true; echo "${PIPESTATUS[0]}"'` →
+   ``(empty), because zsh     names the array`pipestatus`(lowercase) AND indexes from 1, so the bash form     is wrong twice over. The failure direction is what makes it dangerous: an     empty rc in a typical`[
+   -z "$rc" ] || [ "$rc" = 0
+   ]`guard reports SUCCESS,     so **the remedy for the silent-false-green class is itself a silent false     green.** In priority order:     (a) gate on OUTPUT — shell-agnostic, and the thing that actually catches         real failures (e.g. read the "OK — copies match source" line, not the rc);     (b) if a status is genuinely needed, run it with NO PIPE:        `cmd >/dev/null
+   2>&1; echo
+   $?`;
+    (c) only if a pipeline is unavoidable, use `${pipestatus[1]}`on zsh /        `${PIPESTATUS[0]}`
+   on bash — and STATE WHICH SHELL, because the same string means different
+   things in each.
 8. Use `rm -r`, NEVER `rm -rf`; use plain `git worktree remove` to drop a
    worktree, never `--force` as the default (see item 12 below). A broad `ask`
    rule on `rm -rf *` outranks any narrow `/tmp` allow, so `rm -rf` raises a

@@ -7,7 +7,7 @@ description:
 # generated-by: scripts/sync-skills.sh
 ---
 
-# Thrum _verify Before Write Protocol
+# Thrum \_verify Before Write Protocol
 
 This is a shared partial, not a user-invocable skill. Sibling Thrum skills
 consume it as a protocol reference; do not invoke it directly.

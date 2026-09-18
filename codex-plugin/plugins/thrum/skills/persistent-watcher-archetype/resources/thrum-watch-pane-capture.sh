@@ -72,7 +72,19 @@ AGENT_NAME="$(basename -- "${SCRIPT_DIR}")"
 # -- never hardcode REPO_ROOT (the prior box-specific adaptation this
 # script generalizes did, and that was exactly the thing to fix).
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../../.." >/dev/null 2>&1 && pwd)"
-PARAMS_FILE="${SCRIPT_DIR}/watch_params.json"
+# thrum-y5nto: resolve watch_params.json through .thrum/redirect. The
+# agents/ tree is the SHARED, redirect-resolved (main-repo) tree, not
+# per-worktree (see internal/paths/paths.go AgentDir) -- reading it
+# straight off SCRIPT_DIR (this copy's own worktree-local location) reads
+# the wrong, stale file whenever this script is deployed into a feature
+# worktree that redirects: a roster-editing agent's Edit-tool write lands
+# in the redirect-resolved main-repo copy, and this script would silently
+# keep reading the worktree-local one and never see the edit.
+THRUM_DIR="${REPO_ROOT}/.thrum"
+if [ -f "${THRUM_DIR}/redirect" ]; then
+  THRUM_DIR="$(tr -d '[:space:]' < "${THRUM_DIR}/redirect")"
+fi
+PARAMS_FILE="${THRUM_DIR}/agents/${AGENT_NAME}/watch_params.json"
 FALLBACK_SCRIPT="${SCRIPT_DIR}/thrum-capture-fallback.sh"
 
 LOG_DIR="${REPO_ROOT}/.thrum/var/log"

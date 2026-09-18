@@ -169,6 +169,23 @@ re-dispatch overhead.
    check them against the merged-forward tip and either fold them in or return
    them as completed
 
+## Anti-pattern-removal epics must ship a ratchet lens
+
+**Why:** thrum-no6ub — during the 5flat owner-bypass remediation, judgment
+review alone let 11 new instances of the exact anti-pattern being removed
+land through the merge gate mid-sprint, because no mechanical check enforced
+a monotonic budget across diffs.
+
+**How to apply:** When dispatching an epic whose purpose is removing an
+existing anti-pattern (not just fixing one instance of it), the acceptance
+criteria MUST include a mechanical ratchet lens (see
+`coordinator-hotpath-merge-gate` § "Invariant-ratchet lenses") wired into
+`.thrum/hotpath-gate.json` as `always_run` before the epic is considered
+closeable — not as a follow-up. A judgment-only acceptance ("reviewer
+confirms the count went down") is insufficient; the count must be enforced
+by a standing mechanical budget the gate itself checks on every subsequent
+merge.
+
 ## Execution invariants — carry these in every implementation dispatch
 
 **Why:** A plan is a snapshot; trunk moves and reality drifts from it. Sprints

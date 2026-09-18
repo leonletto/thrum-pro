@@ -95,7 +95,6 @@ clear error — do not proceed with partial inputs.
    `coordinator-running-brainstorm-cycles` skill § "Footer → commit → stamp".)
 
    Three distinct outcomes, never conflated:
-
    - **UNVERIFIABLE — no stamp:** note as informational ("plan predates the
      Authored-against stamp convention, cannot check for drift") and continue —
      do not fail or block; this is an additive check for plans that carry the
@@ -147,7 +146,6 @@ clear error — do not proceed with partial inputs.
    first, then merge-status) against the stamp's `<sha>`/`<merge_target>` — the
    exact commands live there as the single source of truth; this section states
    outcomes and severity only:
-
    - **FABRICATED** — SHA-resolves fails: flag immediately and stop; the
      merge-status check is undefined for a SHA that doesn't exist.
    - **STALE** — SHA-resolves passes AND merge-status shows the SHA has already

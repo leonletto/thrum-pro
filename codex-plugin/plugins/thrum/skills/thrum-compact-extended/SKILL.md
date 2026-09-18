@@ -182,8 +182,51 @@ if [ "$SNAPSHOT_OK" = 1 ] && [ "$SESSION_OK" = 1 ]; then
   # This dispatch is ASYNC, not instant: it typically fires within a few
   # seconds of your pane going idle, not in the same instant this call
   # returns. That is expected — you are not emitting anything further this
-  # turn regardless, so the delay costs nothing.
-  thrum tmux send "$SESSION" "/compact"
+  # turn regardless, so the delay costs nothing. A NONZERO exit here means
+  # the daemon never even queued the command (unreachable daemon, rejected
+  # call, etc.) — the async delivery described above will never happen at
+  # all, so this is caught synchronously, not inferred later from silence.
+  thrum tmux send "$AGENT" "/compact"
+  SEND_RC=$?
+  if [ "$SEND_RC" -ne 0 ]; then
+    echo "ERROR: thrum tmux send exited ${SEND_RC} — the daemon-routed self-send failed; it will NOT queue or deliver /compact."
+    # Fail-loud fallback, NOT silent idle: attempt the compact command
+    # directly via a raw tmux send-keys call, but only after asserting an
+    # EXPLICIT socket. Never a bare/default-socket tmux operation here —
+    # TMUX_TMPDIR does not reliably isolate a fleet box's tmux server from
+    # the DEFAULT one, and a bare op under that condition has previously
+    # taken down a shared fleet server. $TMUX is the one source that is not
+    # a guess: tmux itself sets it, in THIS exact pane's own shell
+    # environment, to "<socket_path>,<server_pid>,<window_index>" — so
+    # splitting it gives the socket this pane is ACTUALLY connected
+    # through, not an assumed default.
+    RAW_TMUX_SOCK="${TMUX%%,*}"
+    if [ -z "$RAW_TMUX_SOCK" ] || [ ! -S "$RAW_TMUX_SOCK" ]; then
+      echo "HOLDING: cannot resolve/verify this pane's own tmux socket (\$TMUX unset, or the socket path is stale/missing) — refusing a bare-default-socket tmux fallback (fleet-safety)."
+      echo "Report the ERROR line above to your coordinator (or the operator if you are top-level) and stop."
+      exit 1
+    fi
+    if ! tmux -S "$RAW_TMUX_SOCK" has-session -t "$SESSION" 2>/dev/null; then
+      echo "HOLDING: session '$SESSION' does not resolve on socket $RAW_TMUX_SOCK — refusing the raw fallback."
+      echo "Report the ERROR line above to your coordinator (or the operator if you are top-level) and stop."
+      exit 1
+    fi
+    echo "Retrying via raw tmux send-keys on explicit socket $RAW_TMUX_SOCK..."
+    # ONE call: text + the Enter keystroke (C-m) together, same
+    # single-call discipline as the daemon-routed path above — a two-call
+    # split (send text, THEN a separate Enter call) is the exact shape
+    # that produced a truncated "/compac" -> invalid command -> silent
+    # no-op in the prior incident this file already documents. Do not
+    # split this into two `tmux send-keys` invocations.
+    tmux -S "$RAW_TMUX_SOCK" send-keys -t "${SESSION}:0.0" "/compact" C-m
+    FALLBACK_RC=$?
+    if [ "$FALLBACK_RC" -ne 0 ]; then
+      echo "HOLDING: raw tmux send-keys fallback ALSO failed (exit ${FALLBACK_RC})."
+      echo "Report the ERROR line(s) above to your coordinator (or the operator if you are top-level) and stop."
+      exit 1
+    fi
+    echo "Raw fallback send-keys succeeded on socket $RAW_TMUX_SOCK."
+  fi
 else
   echo "HOLDING: not firing /compact. Report the VERIFY FAILED line(s) above to"
   echo "your coordinator (or the operator if you are top-level) and stop."
@@ -194,9 +237,14 @@ fi
 If EITHER check fails, the block HOLDS and does not fire `/compact` — holding is
 safe; compacting against an unverified snapshot loses the context this command
 exists to preserve (for an extended snapshot, wire contracts and design
-rationale). After a successful send, the turn ends; emit no further tool calls
-or prose this turn. The send is queued, not synchronous — it fires once your
-pane goes idle, which only happens if you stop acting now.
+rationale). If BOTH checks pass but `thrum tmux send` itself exits nonzero, the
+block does NOT go idle un-compacted silently — it prints the failure and falls
+back to a raw, explicit-socket `tmux send-keys` retry (single call, text +
+Enter together) before holding for real. After a successful send (daemon-routed
+or raw fallback), the turn ends; emit no further tool calls or prose this turn.
+The daemon-routed send is queued, not synchronous — it fires once your pane goes
+idle, which only happens if you stop acting now; the raw fallback, when it runs,
+is synchronous.
 
 ### How resume works
 
@@ -220,9 +268,8 @@ none of that is needed here. Resume LEAN, in this order:
    crons rather than re-dispatching.
 
 Runtime-specific compaction-recovery hooks (if this runtime has any) are
-documented in that runtime's own plugin tree, not here — see
-`dev-docs/reference/compaction-lifecycle-attach-points.md` for the current
-per-runtime hook inventory.
+documented in that runtime's own plugin tree (its hooks manifest and
+the scripts it points to), not here.
 
 **Read the snapshot you just saved at `${REPO}/.thrum/restart/${AGENT}.md` and
 follow its instructions post-compact.**

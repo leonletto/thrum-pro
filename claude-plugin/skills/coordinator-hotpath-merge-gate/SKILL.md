@@ -169,6 +169,21 @@ config entry (see `lens_scope_semantics` in the config), which still runs on
 every diff regardless of trigger directories. If the config has no
 `trigger_directories`, fail with guidance to run `project-hotpath-gate`.
 
+## Invariant-ratchet lenses
+
+A lens may declare `mandatory_test_command` (see `census_classification_coverage`
+and `write_owner_bypass_ratchet` in `.thrum/hotpath-gate.json`) instead of
+(or alongside) a pattern-match `question`/`required_evidence` pair. When
+present, PASS/FAIL is the command's own exit code — never a judgment call
+from reading the diff. This is the shape for any invariant that already has
+a mechanical detector: wire the detector as an `always_run` lens with a
+monotonic budget (a count that may only decrease, or an explicit
+waiver-tagged exception), so a diff cannot silently re-widen the invariant
+in the same change that appears to narrow it. `write_owner_bypass_ratchet`
+is the reference instance (thrum-no6ub): it fails a merge that bumps a
+ceiling/aggregate in the ledger file without a `RATCHET-WAIVER:` tag, even
+when the ledger-equality test alone would pass.
+
 ## Delta re-gate continuity — walk the whole branch, read the whole function
 
 **Why:** A commit introducing a lock can be an ancestor of a delta-re-gate's

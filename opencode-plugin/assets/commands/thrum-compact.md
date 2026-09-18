@@ -205,9 +205,8 @@ of that is needed here. Resume LEAN, in this order:
    crons rather than re-dispatching.
 
 Runtime-specific compaction-recovery hooks (if this runtime has any) are
-documented in that runtime's own plugin tree, not here — see
-`dev-docs/reference/compaction-lifecycle-attach-points.md` for the current
-per-runtime hook inventory.
+documented in that runtime's own plugin tree (its hooks manifest and
+the scripts it points to), not here.
 
 **Read the snapshot you just saved at `${REPO}/.thrum/restart/${AGENT}.md` and
 follow its instructions post-compact.**

@@ -899,7 +899,7 @@ Worktree ready at `{{WORKTREE_PATH}}` on branch `{{BRANCH_NAME}}`. Agent
 <!-- If worktree needs to be created by the implementation agent: -->
 
 ./scripts/setup-worktree-thrum.sh {{WORKTREE_PATH}} {{BRANCH_NAME}} \
---identity {{AGENT_NAME}} --role implementer
+ --identity {{AGENT_NAME}} --role implementer
 
 ---
 

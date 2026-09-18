@@ -267,9 +267,17 @@ the operator:
 
 ## After Restart: Session Archive
 
-After restart, your snapshot doesn't disappear — it moves to
+After restart, IF you saved a snapshot within the graceful window, it moves to
 `.thrum/agents/<your-agent-id>/sessions/` and stays there as a persistent log
-entry. Browse the archive with:
+entry. If the graceful save window elapsed before you saved (e.g. you were
+mid-task and missed the interrupt), the daemon writes NO snapshot and records
+a `.timeout-marker` sibling file instead — `thrum tmux restart` reports this
+via `snapshot_outcome: timeout` (CLI shows a 🔴 warning) rather than silently
+looking like success. Do not infer success from an empty `.thrum/restart/`
+directory alone — an empty source directory is consistent with either a
+genuine successful archive OR a bug that resolved to the wrong destination,
+silently aliased another agent's archive, or wrote truncated content. Browse
+the archive with:
 
 ```bash
 thrum agent sessions list                    # default: this agent
@@ -277,6 +285,20 @@ thrum agent sessions list --verbose          # full §1 bodies inline
 thrum agent sessions list --json             # NDJSON for scripts
 thrum agent sessions list --all              # every agent, grouped
 ```
+
+**Verify the RESOLVED DESTINATION's identity, not just its existence.**
+Every archive already self-verifies: `sessionarchive.Archive` computes a
+SHA-256 checksum of the snapshot content it read *before* the move, then
+re-reads the file it just wrote at the destination and confirms the
+checksums match (`sessionarchive.VerifyArchivedIdentity` /
+`ChecksumContent` — see `internal/daemon/sessionarchive/verify.go`) before
+reporting success. A destination that exists but doesn't hash-match its
+own pre-move content is treated as a hard failure of the archive call, not
+a warning. This is what actually proves "the file at
+`.thrum/agents/<id>/sessions/<ts>-restart.md` IS the artifact that was
+captured," as opposed to merely "a file with a plausible name is sitting
+there" — the latter is what `thrum agent sessions list`'s presence-only
+view alone would let you assume.
 
 Permissions are user-only (`0600` for each snapshot file, `0700` for the
 sessions folder). Operators on multi-user machines must copy explicitly to share

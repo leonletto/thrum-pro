@@ -325,7 +325,7 @@ check_ghost_tip() {
   raw=$(tmux -L default capture-pane -e -p -t "$session" -S -6 2>/dev/null)
   if [ -z "$raw" ]; then
     local sock
-    for sock in $(ls /private/tmp/tmux-501/ 2>/dev/null | grep -v '^te-leon-' | head -20); do
+    for sock in $(ls "${TMUX_TMPDIR:-/tmp}/tmux-$(id -u)/" 2>/dev/null | grep -v '^te-' | head -20); do
       raw=$(tmux -L "$sock" capture-pane -e -p -t "$session" -S -6 2>/dev/null)
       [ -n "$raw" ] && break
     done
@@ -725,7 +725,8 @@ run_capture_cycle() {
 # ---------------------------------------------------------------------------
 # emit_wake_line — overnight wake-gating (brainstorm-steward; TZ fix:
 # the monitor process runs in UTC, so a bare `date +%H` gives the UTC
-# hour and the overnight gate never matches — Leon means LOCAL time).
+# hour and the overnight gate never matches; the gate is meant to compare
+# against LOCAL time by design).
 # Daytime (local 08:00-23:59) every run emits the matchable wake line.
 # Overnight (local 00:00-07:59) it still captures every run, but only
 # EMITS the wake line once ~2h has passed (tracked via $stamp), printing a

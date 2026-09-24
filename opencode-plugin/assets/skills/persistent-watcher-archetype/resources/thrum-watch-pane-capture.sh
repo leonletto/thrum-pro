@@ -194,7 +194,7 @@ log "roster: ${ROSTER[*]}"
 # against the current CLI, regardless of how the field/scope names read.
 is_placeholder() {
   case "$1" in
-    ""|PENDING-LEON|PENDING|TODO|TBD) return 0 ;;
+    ""|PENDING|TODO|TBD) return 0 ;;
     *) return 1 ;;
   esac
 }

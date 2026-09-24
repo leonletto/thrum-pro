@@ -117,23 +117,35 @@ rediscovering these the hard way:
    carrying dupes instead of the real content.
 6. Run full-package `-race`, not targeted `-run` — a targeted race run misses
    cross-test races.
-7. Build+test the MERGED-tree result as a SEPARATE condition — neither gate
+7. **`internal/daemon/rpc` must NEVER be run monolithically at gate time, in
+   either lane** — a bare package-level `go test [-race] ./internal/daemon/rpc`
+   starves and hits the configured `-timeout` wall in both the race and
+   non-race lane. The gate's OUTPUT must show the sharded runner actually
+   executed for RPC (`race-shard` / `package-shard --mode norace`, or
+   `scripts/test-run.sh race|norace ./internal/daemon/rpc`, or `make gate`
+   which shards both lanes automatically) — not just that some RPC test ran.
+   A bound-timeout with ZERO test failures is a FALSE RED, not a finding:
+   distinguish it from a genuine hang/deadlock via
+   `go run ./cmd/testgate classify-timeout --log <file> --shard-config <file>
+   --shard <name>` (fails closed — only BOUND-TIMEOUT exits 0; HANG and
+   UNCLASSIFIED both exit nonzero) before reporting it as a regression.
+8. Build+test the MERGED-tree result as a SEPARATE condition — neither gate
    currently runs a build of the actual post-merge tree; a clean pre-merge
    build/test does not prove the merged result compiles or passes.
-8. Use `rm -r`, NEVER `rm -rf`; use plain `git worktree remove` to drop a worktree, never
-   `--force` as the default (see item 12 below). A broad `ask` rule on `rm -rf *` outranks any narrow `/tmp` allow,
+9. Use `rm -r`, NEVER `rm -rf`; use plain `git worktree remove` to drop a worktree, never
+   `--force` as the default (see item 13 below). A broad `ask` rule on `rm -rf *` outranks any narrow `/tmp` allow,
    so `rm -rf` raises a human permission prompt EVERY time regardless of path —
    it stalls gate sub-agents mid-run waiting on a keystroke. `rm -r` runs free. Do NOT widen the ask rule
    to work around this; that entry is the only deletion protection on the box.
-9. Check the discriminator before picking a scratch path, don't assume from
-   the platform: `[ -L /tmp ]`. macOS (symlink) — create throwaway worktrees
-   under `/private/tmp`; a worktree under `/tmp` false-FAILs worktree-ancestor
-   tests via the symlink, producing a confident wrong gate result. Linux (real
-   dir) — `/tmp` is correct; `/private/tmp` may not exist there and must not
-   be created.
-10. Your report reaches the coordinator ONLY as your final returned text.
+10. Check the discriminator before picking a scratch path, don't assume from
+    the platform: `[ -L /tmp ]`. macOS (symlink) — create throwaway worktrees
+    under `/private/tmp`; a worktree under `/tmp` false-FAILs worktree-ancestor
+    tests via the symlink, producing a confident wrong gate result. Linux (real
+    dir) — `/tmp` is correct; `/private/tmp` may not exist there and must not
+    be created.
+11. Your report reaches the coordinator ONLY as your final returned text.
     Side-channel output is discarded. Put the whole verdict in the return value.
-11. **NEVER run `git stash`, `git checkout`, `git reset`, or any working-tree
+12. **NEVER run `git stash`, `git checkout`, `git reset`, or any working-tree
     mutation in the SHARED repo.** Do read-only inspection there (`git show
     <sha>:<path>`, `git log`, `git diff`) and do every build/test in a throwaway
     detached worktree. `git stash` is a SINGLE SHARED STACK across every
@@ -142,7 +154,7 @@ rediscovering these the hard way:
     hold uncommitted `State.md` they are actively re-authoring.
     If you believe you must mutate the shared tree, STOP and report instead —
     that is always a finding, never a step.
-12. **TEAR DOWN YOUR THROWAWAY WORKTREE WHEN THE GATE ENDS — after two checks,
+13. **TEAR DOWN YOUR THROWAWAY WORKTREE WHEN THE GATE ENDS — after two checks,
     in this order.** A required final step, not cleanup etiquette. Each
     abandoned worktree pins its HEAD commit against `gc` and adds a
     `.git/worktrees` admin entry, so the object store grows monotonically.
@@ -155,7 +167,7 @@ rediscovering these the hard way:
         it. Usually fine (a gate merge is reproducible by redoing it) but say so
         in your report rather than doing it silently.
     Then `git worktree remove <wt>` — **plain, no `--force`.** Its rc=128 refusal backstops
-    ONLY untracked/modified content (see rule 8 on `rm -r`) — it does NOT cover gitignored
+    ONLY untracked/modified content (see rule 9 on `rm -r`) — it does NOT cover gitignored
     content, which git removes silently with no refusal; a clean rc=0 is not proof nothing of
     value was in there (see coordinator-assessing-agent-completion's reap procedure). `--force`
     is a justified override only, never the default (see coordinator-merging-code §7a).
@@ -180,7 +192,7 @@ a mechanical detector: wire the detector as an `always_run` lens with a
 monotonic budget (a count that may only decrease, or an explicit
 waiver-tagged exception), so a diff cannot silently re-widen the invariant
 in the same change that appears to narrow it. `write_owner_bypass_ratchet`
-is the reference instance (thrum-no6ub): it fails a merge that bumps a
+is the reference instance: it fails a merge that bumps a
 ceiling/aggregate in the ledger file without a `RATCHET-WAIVER:` tag, even
 when the ledger-equality test alone would pass.
 

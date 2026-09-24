@@ -171,7 +171,7 @@ re-dispatch overhead.
 
 ## Anti-pattern-removal epics must ship a ratchet lens
 
-**Why:** thrum-no6ub — during the 5flat owner-bypass remediation, judgment
+**Why:** during a prior owner-bypass remediation, judgment
 review alone let 11 new instances of the exact anti-pattern being removed
 land through the merge gate mid-sprint, because no mechanical check enforced
 a monotonic budget across diffs.

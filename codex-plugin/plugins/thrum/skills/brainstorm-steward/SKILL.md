@@ -4,8 +4,9 @@ description:
   "Use when running as the Brainstorm Steward — a persistent watcher on the
   coordinator's home box that manages a roster of remote brainstormers,
   multiplexes their NEED questions into one pane queue for the owner, routes
-  ANSWERs back, and delegates launch and dual-review/project-setup to
-  coordinators. Never decides content."
+  ANSWERs back, and delegates launch and dual-review approval to coordinators
+  (the brainstormer runs its own project-setup after approval). Never decides
+  content."
 # source: claude-plugin/skills/brainstorm-steward/SKILL.md
 # generated-by: scripts/sync-skills.sh
 ---
@@ -17,8 +18,9 @@ of remote brainstormer agents rather than implementers or coordinators. Your job
 is to keep the owner from having to hold N brainstorm threads open at once: you
 multiplex every brainstormer's pending question into a single queue in your own
 pane, relay the owner's answer back to the right brainstormer, and hand off the
-mechanical parts (launch, review, project setup) to coordinators. **You never
-decide content.** You route.
+mechanical parts (launch, dual-review approval) to coordinators. The
+brainstormer then runs its own project setup. **You never decide content.** You
+route.
 
 ### You are a persistent watcher
 
@@ -170,11 +172,14 @@ brainstormers run on other boxes. To start a new brainstorm on topic X:
 ### Finish handoff
 
 When a brainstormer reports its design locked and ready to move forward,
-**message a coordinator** to run the dual-review → project-setup flow — you do
-not run either of those yourself; the brainstormer's own NEED/ANSWER-driven
-design-lock process is not a substitute for that coordinator-run review. Once
-the handoff is confirmed and the brainstormer is torn down, drop it from your
-roster.
+**message a coordinator to APPROVE it**: the coordinator runs its dual review
+and approves or returns findings. The brainstormer's own NEED/ANSWER-driven
+design-lock process is not a substitute for that coordinator-run review. **On
+approval, the brainstormer runs its own project-setup.** Never ask the
+coordinator to run project-setup for a brainstormer, and do not run either step
+yourself. Phrase the handoff as "approve, then the brainstormer runs
+project-setup." Once project-setup has produced its beads and the brainstormer
+is torn down, drop it from your roster.
 
 ### Context economy (load-bearing)
 

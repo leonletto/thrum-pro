@@ -42,15 +42,20 @@ every agent in your `roster`:
    (your own pane capture) — see "Declared-intent reminders" below for the
    full mechanics.
 
-## The modal bright line (non-negotiable)
+## The modal judgment rubric (non-negotiable)
 
-- Approve ONLY clearly-safe, recognized, non-`rm`/non-`--force` modals.
-- `rm`, `--force`, or an unrecognized command → refuse or escalate to your
-  `parent`. That filter is mechanical.
-- Within the safe set, judge the COMMAND TEXT, not the modal's phrasing: read
-  the command and approve if it is clearly-safe and recognized whatever wording
-  the modal uses, else cancel or escalate. Never key on fixed prompt phrases;
-  never approve blind.
+- Approve a modal when you can explain what the command does, it fits what
+  the requesting agent is visibly doing in its pane, and a mistake would be
+  recoverable. Otherwise escalate to your `parent` with a one-line reason.
+- Judge the TARGET, not the keyword: `rm -rf /tmp/<dir the agent just
+  created>` is routine cleanup; `rm -rf /tmp/*` is not. One `rm` of a stale
+  lock file by a coordinator mid-deploy is fine. A force-push, or a delete
+  whose target or purpose you can't tell, is an escalate.
+- Escalating is always allowed. Refusing only because a keyword appeared is
+  not.
+- Judge the COMMAND TEXT, not the modal's phrasing: read the command and
+  approve or refuse on what it actually does, whatever wording the modal
+  uses. Never key on fixed prompt phrases; never approve blind.
 - Verify by re-capture after acting — never trust exit status alone.
 - Cross-peer send-keys is refused BY DESIGN ("rpcrouter: caller-peer lacks
   required capability") — a deliberate security boundary, not a bug or a gap
@@ -272,6 +277,30 @@ fork-default signal — see "SSH fallback" below.)
 At the start of every cycle, confirm the monitor is still running
 (`thrum monitor list`) — if it's missing or dead, re-`thrum monitor start`
 it rather than assuming someone else will notice.
+
+**Roster snapshot monitor:** copy both `resources/roster-watch.sh` and
+`resources/capture_archive.py` into `<worktree>/.thrum-watch/`, then
+`chmod +x <worktree>/.thrum-watch/roster-watch.sh` — a mode-preserving copy of
+this resource can land as `644` depending on the runtime plugin's own tree
+(don't rely on the source file's mode alone) — then register the monitor
+against that copied `roster-watch.sh`. Keep the helper beside the script; the
+roster archive path must not depend on a plugin or research worktree path at
+run time. Captures and their archive land under `.thrum/agents/<you>/watch-captures/`
+(redirect-resolved), not beside the deployed script itself.
+
+Register roster-watch.sh's own monitor the same way, matching its actual
+output lines (`"roster capture ready:"` for a normal tick, `"ROSTER
+INCIDENT:"` for a capture-failure incident):
+
+```bash
+thrum monitor start --name roster-watch-<you> \
+  --match "^(roster capture ready:|ROSTER INCIDENT:)" \
+  --to @<you> \
+  --env AGENT_NAME=<you> \
+  --notify-on-success \
+  --schedule '*/10 * * * *' \
+  -- <worktree>/.thrum-watch/roster-watch.sh
+```
 
 ### SSH fallback (resilience net, not the primary path)
 

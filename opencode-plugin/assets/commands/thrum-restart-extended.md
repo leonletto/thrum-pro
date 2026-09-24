@@ -34,12 +34,14 @@ artifact alone.
 
 ```bash
 # $REPO must be YOUR worktree — the directory `thrum prime` reads the restart
-# snapshot back from. Resolve it from the daemon's authoritative identity, NOT
-# `git rev-parse` (which keys off the current shell CWD and would write to the
-# wrong .thrum/restart/ if a bash step left your worktree). Fall back to git
-# only if whoami can't answer.
-REPO=$(thrum whoami --field worktree 2>/dev/null)
-[ -n "$REPO" ] || REPO=$(git rev-parse --show-toplevel) || { echo "ERROR: cannot resolve your worktree"; exit 1; }
+# snapshot back from. Resolve it ONLY via the daemon's authoritative,
+# peercred-resolved identity (`thrum agent worktree --authoritative`) — NEVER
+# via `thrum whoami --field worktree` or `git rev-parse --show-toplevel`
+# (both cwd-resolved). A cwd-derived pattern could silently
+# resolve to a DIFFERENT agent's worktree, or the main repo. There is NO git
+# fallback — if the daemon can't answer, refuse and stop rather than guess.
+REPO=$(thrum agent worktree --authoritative 2>/dev/null) || { echo "ERROR: cannot authoritatively resolve your worktree via the daemon. Refusing to fall back to cwd/git-toplevel — that would risk silently saving this snapshot to the wrong repo. Check daemon connectivity and retry."; exit 1; }
+[ -n "$REPO" ] || { echo "ERROR: thrum agent worktree --authoritative returned empty"; exit 1; }
 AGENT=$(thrum whoami --field agent_id) || { echo "ERROR: agent not registered"; exit 1; }
 [ -n "$AGENT" ] || { echo "ERROR: empty agent_id"; exit 1; }
 mkdir -p "${REPO}/.thrum/restart"

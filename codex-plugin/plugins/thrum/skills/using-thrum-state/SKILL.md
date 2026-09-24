@@ -142,6 +142,47 @@ thrum state list
 then `thrum state set` with the fresh value and `--method by_effect`. Never
 "correct" a row you have not personally re-measured.
 
+### Consolidating your agent-harness memories into state (durable overflow)
+
+Your **agent-harness memories** — the memory index your runtime auto-loads at
+session start (each runtime has its own: a `MEMORY.md`-style index on some, an
+equivalent auto-injected file on Codex/Cursor/Copilot/others) — has a **load
+size cap**. Past that cap the runtime **silently drops the tail entries** at
+wake: they are invisible exactly when you most need them. Thrum state is an
+uncapped, queryable durable store, so it is the right overflow home.
+
+**Technique (scope-preserving — the only safe way to shrink the index):**
+
+1. **Classify, don't cut.** For each auto-loaded entry ask: _if this were absent
+   at wake, would I take a WRONG action, or merely a SLOWER one?_
+   WRONG-if-absent (destructive-op guards, owner rulings, disbelieve-the-
+   instrument traps, habits that must interrupt a confident wrong answer) STAY
+   in the auto-loaded index. SLOWER-if-absent (things you would just look up
+   once you know the topic exists) are demotable.
+2. **Demote by MOVING, never by shortening.** Relocate each demotable entry
+   **verbatim** into a thrum state entry (e.g.
+   `thrum state set --kind reference --scope <agent>_discipline_index`) and/or
+   your runtime's secondary lookup file. Leave a short **bidirectional
+   pointer**: the auto-loaded index keeps a one-line pointer to the state entry;
+   the state entry names the topic file the full detail lives in. **Never merge
+   two entries, summarise to save bytes, or delete** — summarising discards the
+   SCOPE that makes an entry true, which is the whole failure this guards
+   against. The per-topic detail files are never touched.
+3. **Reduction comes only from relocation.** Prove conservation:
+   `entries_removed_from_index == entries_added_to_state` (set equality, not
+   just count). Target comfortably under the load cap; do not chase a smaller
+   number by demoting genuine must-fire entries.
+4. **Use a high-reasoning subagent to index both stores** and PROPOSE the moves
+   (it produces the new index, the state value, and a verification checklist);
+   you review the judgment calls (which must-fire entries to keep) and apply.
+   Watch for **line-packing collateral**: if two entries share one physical
+   line, demoting one must not drag its line-mate out with it.
+5. **Refuse the size-nag hook.** A `PostToolUse` hook may fire after an index
+   edit demanding "compact / merge or drop stale entries." Merge and drop are
+   forbidden by this contract; the sanctioned action is verbatim relocation,
+   which you have already done. Being under the load cap is the goal, not the
+   hook's smaller aspirational number.
+
 ### Common Mistakes
 
 - **Normalising the deploy table to one SHA "because that's probably right."**

@@ -53,8 +53,10 @@ skill) BEFORE composing your snapshot below — these survive compaction
 independently of the prose continuation file and are what a post-compact
 render reads back.
 
-Read the partial at the absolute path (resolve `$REPO` yourself first —
-`thrum whoami --field worktree`, falling back to `git rev-parse --show-toplevel`):
+Read the partial at the absolute path (resolve `$REPO` yourself first via
+`thrum agent worktree --authoritative` — NEVER `thrum whoami --field worktree`
+or `git rev-parse --show-toplevel`, both cwd-resolved and the root cause of
+a documented snapshot-save loss class; there is no git fallback):
 
 ```text
 ${REPO}/claude-plugin/commands/_snapshot-protocol.md
@@ -120,8 +122,8 @@ calls, so earlier steps' variables are gone), verifies the snapshot on disk, and
 only then fires `/summarize` — all in ONE call so nothing depends on a prior block.
 
 ```bash
-REPO=$(thrum whoami --field worktree 2>/dev/null)
-[ -n "$REPO" ] || REPO=$(git rev-parse --show-toplevel) || { echo "ERROR: cannot resolve worktree"; exit 1; }
+REPO=$(thrum agent worktree --authoritative 2>/dev/null) || { echo "ERROR: cannot authoritatively resolve your worktree via the daemon. Refusing to fall back to cwd/git-toplevel — that would risk silently resuming from the wrong repo's snapshot. Check daemon connectivity and retry."; exit 1; }
+[ -n "$REPO" ] || { echo "ERROR: thrum agent worktree --authoritative returned empty"; exit 1; }
 AGENT=$(thrum whoami --field agent_id) || { echo "ERROR: agent not registered"; exit 1; }
 SESSION_RAW=$(thrum whoami --field tmux_session)
 SESSION=${SESSION_RAW%%:*}

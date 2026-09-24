@@ -43,12 +43,14 @@ should bring you back in-place, use `$thrum-restart` instead.
 ```bash
 # Resolve identity + your worktree (needed before reading the partial).
 # $REPO must be YOUR worktree — the directory `thrum prime` reads the restart
-# snapshot back from. Resolve it from the daemon's authoritative identity, NOT
-# `git rev-parse` (which keys off the current shell CWD and would write to the
-# wrong .thrum/restart/ if a bash step left your worktree). Fall back to git
-# only if whoami can't answer.
-REPO=$(thrum whoami --field worktree 2>/dev/null)
-[ -n "$REPO" ] || REPO=$(git rev-parse --show-toplevel) || { echo "ERROR: cannot resolve your worktree"; exit 1; }
+# snapshot back from. Resolve it ONLY via the daemon's authoritative,
+# peercred-resolved identity (`thrum agent worktree --authoritative`) — NEVER
+# via `thrum whoami --field worktree` or `git rev-parse --show-toplevel`
+# (both cwd-resolved). A cwd-derived pattern could silently
+# resolve to a DIFFERENT agent's worktree, or the main repo. There is NO git
+# fallback — if the daemon can't answer, refuse and stop rather than guess.
+REPO=$(thrum agent worktree --authoritative 2>/dev/null) || { echo "ERROR: cannot authoritatively resolve your worktree via the daemon. Refusing to fall back to cwd/git-toplevel — that would risk silently saving this snapshot to the wrong repo. Check daemon connectivity and retry."; exit 1; }
+[ -n "$REPO" ] || { echo "ERROR: thrum agent worktree --authoritative returned empty"; exit 1; }
 AGENT=$(thrum whoami --field agent_id) || { echo "ERROR: agent not registered"; exit 1; }
 [ -n "$AGENT" ] || { echo "ERROR: empty agent_id"; exit 1; }
 mkdir -p "${REPO}/.thrum/restart"
@@ -92,12 +94,12 @@ auto-injects this file — same mechanism as restart wake.
 #### 4. Back up OTHER important artifacts to your durable agents folder (survives worktree teardown)
 
 **Your restart snapshot itself no longer needs this step.** Step 6
-(`thrum agent sleep`) now relocates `<worktree>/.thrum/restart/<agent-id>.md`
-to the canonical `<main-repo>/.thrum/agents/<agent-id>/sessions/<ts>-restart.md`
-synchronously, BEFORE it kills your pane — that is the fix for the bug this
-step used to exist to work around (the snapshot previously was archived only
-at your NEXT WAKE, so a worktree reap between sleep and wake destroyed it
-permanently with no warning).
+(`thrum agent sleep`) now relocates `<worktree>/.thrum/restart/<agent-id>.md` to
+the canonical `<main-repo>/.thrum/agents/<agent-id>/sessions/<ts>-restart.md`
+synchronously, BEFORE it kills your pane — that is the fix for the bug this step
+used to exist to work around (the snapshot previously was archived only at your
+NEXT WAKE, so a worktree reap between sleep and wake destroyed it permanently
+with no warning).
 
 🔴 **READ THIS CAREFULLY.** A worktree's `.thrum/` is a REAL LOCAL DIRECTORY.
 The `redirect` inside it is just a plain text FILE containing a path — a pointer
@@ -128,9 +130,9 @@ thrum agent set-status idle
 ```
 
 `idle` is the operational/presence-status signal, separate from the durable
-`agents.phase` field. Step 6 (`thrum agent sleep`) is what transitions phase
-to `sleeping` — a real, distinct phase, not folded into `idle`. This step
-only covers the lighter-weight status field.
+`agents.phase` field. Step 6 (`thrum agent sleep`) is what transitions phase to
+`sleeping` — a real, distinct phase, not folded into `idle`. This step only
+covers the lighter-weight status field.
 
 If `thrum agent set-status` returns an error (e.g. rate-limited), continue to
 Step 6 — the snapshot on disk is the load-bearing artifact, not the status
@@ -144,31 +146,30 @@ thrum agent sleep --agent "$AGENT"
 
 This calls the daemon's `agent.sleep` RPC (CLI alias `park`), which runs the
 full park ceremony in the correct order: it relocates your snapshot from the
-worktree-local `.thrum/restart/` into the canonical
-`agents/<id>/sessions/` directory, *then* kills your own tmux session, *then*
-writes the `agent.phase.transition {to: "sleeping"}` event. This is the fix
-for the bug a raw `thrum session end` + `thrum tmux kill` sequence had: it
-killed the pane before the snapshot was ever relocated (permanent data-loss
-risk if the worktree was reaped first) and left the roster row reading
-`active` after the pane was already gone — a "ghost-active" agent.
+worktree-local `.thrum/restart/` into the canonical `agents/<id>/sessions/`
+directory, _then_ kills your own tmux session, _then_ writes the
+`agent.phase.transition {to: "sleeping"}` event. This is the fix for the bug a
+raw `thrum session end` + `thrum tmux kill` sequence had: it killed the pane
+before the snapshot was ever relocated (permanent data-loss risk if the worktree
+was reaped first) and left the roster row reading `active` after the pane was
+already gone — a "ghost-active" agent.
 
-**Critical: the daemon kills YOUR OWN pane mid-call, as part of this same
-RPC's teardown stage.** A successful self-park is therefore observed, from
-inside this pane, as the CLI call's transport dying — connection reset, EOF,
-or broken pipe — NOT a clean JSON response; the pane is gone before a
-response can reach it. **Do not retry** `thrum agent sleep` on transport
-loss after dispatch, and **do not treat transport loss as a failure.** It is
-the expected signal that self-park succeeded. A real failure (a gate,
-relocation, or teardown error) is signaled by the RPC returning an explicit
-error message BEFORE the pane dies — that is the only failure signal
-observable from inside this pane. If independent confirmation is needed, it
-must come from a DIFFERENT caller (this pane will be gone) checking
-`thrum agent list` / `thrum team list` afterward.
+**Critical: the daemon kills YOUR OWN pane mid-call, as part of this same RPC's
+teardown stage.** A successful self-park is therefore observed, from inside this
+pane, as the CLI call's transport dying — connection reset, EOF, or broken pipe
+— NOT a clean JSON response; the pane is gone before a response can reach it.
+**Do not retry** `thrum agent sleep` on transport loss after dispatch, and **do
+not treat transport loss as a failure.** It is the expected signal that
+self-park succeeded. A real failure (a gate, relocation, or teardown error) is
+signaled by the RPC returning an explicit error message BEFORE the pane dies —
+that is the only failure signal observable from inside this pane. If independent
+confirmation is needed, it must come from a DIFFERENT caller (this pane will be
+gone) checking `thrum agent list` / `thrum team list` afterward.
 
 **Do not fall back to a raw `tmux kill-session`.** A raw kill bypasses
-`agent.sleep`'s relocate-before-kill ordering and daemon bookkeeping
-entirely — reintroducing the exact data-loss and ghost-active bug this
-ceremony exists to close.
+`agent.sleep`'s relocate-before-kill ordering and daemon bookkeeping entirely —
+reintroducing the exact data-loss and ghost-active bug this ceremony exists to
+close.
 
 ### How wake works
 
@@ -221,5 +222,5 @@ resumable via Claude Code's native session-continuation mechanism.
 
 The underlying mechanic — write snapshot + set status idle + `thrum agent sleep`
 (relocate + teardown + phase transition) — can be invoked from an operator's
-shutdown script directly via the bash commands above (without going through
-the skill).
+shutdown script directly via the bash commands above (without going through the
+skill).

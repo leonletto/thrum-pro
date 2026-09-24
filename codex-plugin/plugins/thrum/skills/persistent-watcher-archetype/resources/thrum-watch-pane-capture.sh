@@ -72,7 +72,7 @@ AGENT_NAME="$(basename -- "${SCRIPT_DIR}")"
 # -- never hardcode REPO_ROOT (the prior box-specific adaptation this
 # script generalizes did, and that was exactly the thing to fix).
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../../.." >/dev/null 2>&1 && pwd)"
-# thrum-y5nto: resolve watch_params.json through .thrum/redirect. The
+# Resolve watch_params.json through .thrum/redirect. The
 # agents/ tree is the SHARED, redirect-resolved (main-repo) tree, not
 # per-worktree (see internal/paths/paths.go AgentDir) -- reading it
 # straight off SCRIPT_DIR (this copy's own worktree-local location) reads

@@ -9,8 +9,11 @@
 3. **Receive** — `thrum inbox` or `thrum wait` (blocking)
 4. **Verify sent state** — `thrum sent` or `thrum message get <msg-id>`
 5. **Read** — Auto-marked read when displayed via `thrum inbox`; use
-   `thrum inbox --unread` to peek without marking. Explicit:
-   `thrum message read --all`
+   `thrum inbox --unread` to peek without marking. Explicit: `thrum message
+   read <id> [<id>...]`, or `thrum message read --all` (DRY RUN — lists
+   candidates, marks nothing) then `--apply` (marks the shown/seen ones) or
+   `--force` (marks ALL unread, seen or not; needs a fresh `--all` dry run
+   first).
 6. **Search — do not page through the inbox to find old messages.** The
    default page is 10, newest-first, so stale unread sorts LAST exactly when
    it has waited longest. Use `thrum message search "<term>"` (full-text,

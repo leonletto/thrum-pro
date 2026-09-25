@@ -98,6 +98,14 @@ dispatch time — hand this list verbatim:
    dupes instead of the real content.
 6. Run full-package `-race`, not targeted `-run` — a targeted race run misses
    cross-test races that only a full-package run surfaces.
+   **Exception: `internal/daemon/rpc` must NEVER be run monolithically** — a
+   bare `go test [-race] ./internal/daemon/rpc` cannot finish inside any
+   gate-length timeout. Run it through the sharded runner (`race-shard`,
+   `scripts/test-run.sh race ./internal/daemon/rpc`, or `make gate`) and confirm
+   the gate's output shows it executed. A bound-timeout with ZERO test failures
+   is a false red: classify it with `go run ./cmd/testgate classify-timeout
+   --log <file> --shard-config <file> --shard <name>` (only BOUND-TIMEOUT exits
+   0) before reporting a regression. See item 7 of `coordinator-hotpath-merge-gate`.
 7. Build+test the MERGED-tree result as a SEPARATE condition — neither gate
    currently runs a build of the actual post-merge tree; a clean pre-merge
    build/test does not prove the merged result compiles or passes. 7b. **GATE ON

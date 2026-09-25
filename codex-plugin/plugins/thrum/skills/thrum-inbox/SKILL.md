@@ -18,7 +18,7 @@ thrum inbox                  # All recent messages (auto-marks as read)
 thrum inbox --unread         # Unread only (does not mark as read)
 thrum inbox --json           # Machine-readable
 thrum sent --unread          # Check sent items with unread recipients
-thrum message read --all     # Mark all messages as read
+thrum message read --all --force  # Mark ALL unread as read (run `read --all` alone first — dry run)
 ```
 
 **Search — do not page through it.** The default page is 10, newest-first, so

@@ -609,10 +609,14 @@ review it before dispatch.
 misread cited code or stretch citations. Spot-verify any BLOCKING that names a
 specific file/line/symbol before forwarding.
 
-❌ **`thrum message read --all` mid-brainstorm.** Classic timing bomb: read
-message A → message B arrives during the read → `--all` silently marks B read →
-B is never seen. Use `thrum message read <id> [<id>...]` with specific IDs
-instead, especially when juggling multiple researchers.
+❌ **`thrum message read --all --force` mid-brainstorm without checking the
+report.** `--all` alone is a dry run (marks nothing); `--force` only drains
+what THAT dry-run listing named, and reports any later arrival as excluded
+rather than silently sweeping it in — so the old "B arrives
+mid-read and gets silently marked" timing bomb no longer applies. Still
+prefer `thrum message read <id> [<id>...]` with specific IDs when juggling
+multiple researchers — it's simpler to reason about than tracking a listing's
+10-minute validity window.
 
 ❌ **Sub-agents into the researcher's worktree.**
 For code research in the brainstorm worktree, ask the researcher; for broader

@@ -74,7 +74,7 @@ fi
 INBOX_JSON=$(cd "$CWD" && THRUM_AGENT_ID="$AGENT_ID" thrum inbox --unread --json 2>/dev/null) || exit 0
 MSG_COUNT=$(echo "$INBOX_JSON" | jq -r '.unread // 0')
 if [ "$MSG_COUNT" -gt 0 ]; then
-  printf '{"decision":"block","reason":"ACTION REQUIRED: You have %s unread message(s). Run `thrum inbox --unread` now to read and respond to them. Then run `thrum message read --all` to mark them read so this hook does not fire again on old messages."}\n' "$MSG_COUNT"
+  printf '{"decision":"block","reason":"ACTION REQUIRED: You have %s unread message(s). Run `thrum inbox --unread` now to read and respond to them. Then mark them read: `thrum message read <id> [<id>...]` for the ids shown, or `thrum message read --all` (dry run) followed by `thrum message read --all --force` to clear everything — so this hook does not fire again on old messages."}\n' "$MSG_COUNT"
   exit 0
 fi
 

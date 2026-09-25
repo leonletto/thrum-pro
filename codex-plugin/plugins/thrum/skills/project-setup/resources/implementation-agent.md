@@ -133,7 +133,7 @@ section.
 cd {{WORKTREE_PATH}}
 thrum quickstart --name {{AGENT_NAME}} --role implementer --module {{BRANCH_NAME}} --intent "Implementing {{EPIC_ID}}"
 thrum inbox --unread
-# Tip: thrum inbox --unread peeks without marking read; thrum message read --all to mark all read
+# Tip: thrum inbox --unread peeks without marking read; thrum message read --all --force to mark all unread (run `--all` alone first — dry run)
 # Tip: default page is 10 newest-first — stale unread sorts LAST; use `thrum message search "<term>"` to find it
 thrum send --to @{{SUPERVISOR_NAME}} --stdin <<'EOF'
 Starting work on {{EPIC_ID}}
@@ -818,7 +818,7 @@ the minimal sequence:
 cd {{WORKTREE_PATH}}
 thrum quickstart --name {{AGENT_NAME}} --role implementer --module {{BRANCH_NAME}} --intent "Resuming {{EPIC_ID}}"
 thrum inbox --unread
-# Tip: thrum inbox --unread peeks without marking read; thrum message read --all to mark all read
+# Tip: thrum inbox --unread peeks without marking read; thrum message read --all --force to mark all unread (run `--all` alone first — dry run)
 # Tip: default page is 10 newest-first — stale unread sorts LAST; use `thrum message search "<term>"` to find it
 
 # 2. Orient from beads and git

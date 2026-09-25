@@ -198,7 +198,9 @@ thrum message edit <msg-id> --body-file ./new-body.md  # Full replacement (autho
 thrum message edit <msg-id> --body-file ./new.md  # Full replacement from file
 thrum message delete <msg-id> --force          # Delete (--force required)
 thrum message read <msg-id> [<msg-id>...]      # Mark as read
-thrum message read --all                       # Mark all as read
+thrum message read --all                       # DRY RUN: list what --apply/--force would mark, marks nothing
+thrum message read --all --apply               # Mark the shown (already-seen) candidates
+thrum message read --all --force               # Mark ALL unread, seen or not (needs a fresh `--all` dry run first)
 thrum message search "<term>"                  # Full-text search across all messages (see § inbox above)
 thrum message reindex                          # Rebuild the FTS index if search looks wrong
 ```
@@ -214,7 +216,9 @@ Subcommand flags:
 --force   Confirm deletion (required)
 
 # message read
---all     Mark all unread messages as read
+--all     List seen+unread candidates (dry run); combine with --apply or --force to mark
+--apply   With --all: mark the shown (already-seen) candidates
+--force   With --all: mark ALL unread, seen or not (needs a fresh --all dry run first)
 ```
 
 ---

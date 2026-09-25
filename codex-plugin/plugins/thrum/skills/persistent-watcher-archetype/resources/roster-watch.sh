@@ -77,9 +77,10 @@
 # SCRIPT_DIR here is `<worktree>/.thrum-watch`, so WORKTREE_ROOT is
 # `dirname(SCRIPT_DIR)` — one level up, not three. Register with:
 #   thrum monitor start --name roster-watch-<you> \
-#     --match "^roster capture ready:" --to @<you> --notify-on-success \
+#     --match "^(roster capture ready:|ROSTER INCIDENT:)" --to @<you> --notify-on-success \
 #     --schedule '*/10 * * * *' -- <worktree>/.thrum-watch/roster-watch.sh
 # (loop mode does not need --schedule; it stays resident under Monitor.)
+# Keep --notify-on-success; the daemon honors the terminal JEV quiet marker per run.
 #
 # AGENT IDENTITY: neither source script derived its own agent name — both
 # hardcoded it (watcher_primary, brainstorm_steward) throughout. This
@@ -282,6 +283,115 @@ archive_agent_file() {
   [ -n "$final_rc" ] && cmd+=(--final-rc "$final_rc")
   "${cmd[@]}" >/dev/null 2>>"${archive_dir}/archive-errors.log" || \
     { echo "capture archive warning: agent archive failed for $agent in $capture_id" >&2; record_archive_degraded "$outdir" "$capture_id" "archive_agent_failed" "$agent" "agent archive failed for $agent in $capture_id"; }
+}
+
+write_raw_from_capture_json() {
+  local json_file="$1" raw_file="$2"
+  python3 -c '
+import json, pathlib, sys
+doc=json.load(open(sys.argv[1], encoding="utf-8"))
+if not doc.get("ok"):
+    raise SystemExit(1)
+lines=doc.get("lines")
+if not isinstance(lines, list) or any(not isinstance(line, str) for line in lines):
+    raise SystemExit(1)
+ghost_lines=doc.get("ghost_lines") or []
+if not isinstance(ghost_lines, list) or any(not isinstance(i, int) for i in ghost_lines):
+    raise SystemExit(1)
+out=[]
+out.extend(lines)
+if ghost_lines or doc.get("has_ghost") or doc.get("composer_text"):
+    out.append("--- GHOST METADATA (structured; non-submitted suggestion text, not pane input) ---")
+    if ghost_lines:
+        out.append("ghost_lines: " + ",".join(str(i) for i in ghost_lines))
+    if doc.get("composer_text"):
+        out.append("ghost_text: " + str(doc.get("composer_text")))
+text="\n".join(out)
+if text:
+    text += "\n"
+path=pathlib.Path(sys.argv[2])
+path.write_text(text, encoding="utf-8")
+' "$json_file" "$raw_file"
+}
+
+write_filter_manifest_row() {
+  local manifest="$1" agent="$2" raw_file="$3" source_file="$4" capture_id="$5" ts="$6" cap_rc="$7" route="$8" provider_input_file="${9-}" provider_input_source="${10-}" capture_json_file="${11-}"
+  python3 -c '
+import json, sys
+row={
+  "agent": sys.argv[1],
+  "raw_file": sys.argv[2],
+  "source_file": sys.argv[3],
+  "capture_id": sys.argv[4],
+  "capture_timestamp_utc": sys.argv[5],
+  "capture_rc": int(sys.argv[6]),
+  "capture_route": sys.argv[7],
+}
+if sys.argv[8]:
+  row["provider_input_file"] = sys.argv[8]
+if sys.argv[9]:
+  row["provider_input_source"] = sys.argv[9]
+if sys.argv[10]:
+  row["capture_json_file"] = sys.argv[10]
+print(json.dumps(row, sort_keys=True, separators=(",", ":")))
+' "$agent" "$raw_file" "$source_file" "$capture_id" "$ts" "$cap_rc" "$route" "$provider_input_file" "$provider_input_source" "$capture_json_file" >>"$manifest"
+}
+
+run_jev_filter() {
+  local outdir="$1" manifest="$2" capture_id="$3"
+  local filter_py="${SCRIPT_DIR}/jev_watcher_filter.py"
+  local decisions_dir="${outdir}/archive/jev-decisions/${capture_id}"
+  JEV_FILTER_MODE=fallback
+  JEV_FILTER_ATTENTION=0
+  if [ ! -f "$filter_py" ]; then
+    echo "jev filter warning: missing helper; using watcher fallback" >&2
+    return 0
+  fi
+  mkdir -p "$decisions_dir" 2>/dev/null || true
+  chmod 700 "${outdir}/archive" "${outdir}/archive/jev-decisions" "$decisions_dir" 2>/dev/null || true
+  local env_file="${ROSTER_JEV_ENV_FILE:-${REPO_ROOT}/.env}"
+  local cmd=(python3 "$filter_py" --manifest "$manifest" --out-dir "$decisions_dir" --env-file "$env_file"
+    --timeout "${ROSTER_JEV_TIMEOUT:-8}" --retries "${ROSTER_JEV_RETRIES:-1}" --concurrency "${ROSTER_JEV_CONCURRENCY:-4}")
+  [ -n "${ROSTER_JEV_EGRESS_AUDIT_DIR:-}" ] && cmd+=(--egress-audit-dir "$ROSTER_JEV_EGRESS_AUDIT_DIR")
+  if ! "${cmd[@]}" >"${decisions_dir}/filter-output.json" 2>>"${decisions_dir}/filter-errors.log"; then
+    echo "jev filter warning: execution failed; using watcher fallback" >&2
+    return 0
+  fi
+  local parsed
+  if ! parsed=$(python3 - "${decisions_dir}/summary.json" "${ROSTER[@]}" <<'PY'
+import json, sys
+try:
+    summary = json.load(open(sys.argv[1], encoding="utf-8"))
+    expected = sys.argv[2:]
+    rows = summary["results"]
+    if not isinstance(rows, list) or len(rows) != len(expected):
+        raise ValueError("incomplete results")
+    if sorted(row["agent"] for row in rows) != sorted(expected):
+        raise ValueError("roster mismatch")
+    attention = fallback = 0
+    for row in rows:
+        status, route = row.get("filter_status"), row.get("route")
+        if status == "ok" and route == "archive_only" and row.get("reason") == "confident_ordinary":
+            continue
+        if status == "ok" and route == "notify_watcher" and row.get("reason") in ("active_permission_prompt", "blocking_user_question_tui"):
+            attention += 1
+        else:
+            fallback += 1
+    print(f"{attention}|{fallback}")
+except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError):
+    raise SystemExit(1)
+PY
+  ); then
+    echo "jev filter warning: malformed or incomplete summary; using watcher fallback" >&2
+    return 0
+  fi
+  local fallback_count
+  IFS='|' read -r JEV_FILTER_ATTENTION fallback_count <<<"$parsed"
+  if [ "$fallback_count" -gt 0 ]; then
+    echo "jev filter warning: uncertain classification; using watcher fallback" >&2
+    return 0
+  fi
+  JEV_FILTER_MODE=ok
 }
 
 # ---------------------------------------------------------------------------
@@ -525,6 +635,7 @@ sys.exit(0 if any(m.get('agent_id')==agent for m in ms) else 1)
     fi
   done
   if [ -n "$bad" ]; then
+    ROSTER_SELF_CHECK_FAILED=1
     echo "ROSTER-CHECK FAIL: no such agent(s):$bad — remove or fix before trusting this run's coverage" | tee "$outdir/roster-check.log"
   else
     echo "ROSTER-CHECK OK: ${#roster[@]} entries resolve" > "$outdir/roster-check.log"
@@ -626,29 +737,53 @@ run_capture_cycle() {
   local raw_root="${outdir}/archive/raw-ticks/${capture_id}"
   mkdir -p "$raw_root" 2>/dev/null || true
   chmod 700 "${outdir}/archive" "${outdir}/archive/raw-ticks" "$raw_root" 2>/dev/null || true
+  if [ "${USE_JEV:-0}" = "1" ]; then
+    JEV_FILTER_MANIFEST="${raw_root}/jev-filter-manifest.jsonl"
+    : >"$JEV_FILTER_MANIFEST"
+  fi
   : >"$file"
   for a in "${ROSTER[@]}"; do
-      local safe raw_file primary_file ssh_file primary_rc=0 ssh_rc="" cap_rc=0 runtime geometry_json capture_route daemon_override
+      local safe raw_file primary_file primary_json_file provider_input_file ssh_file primary_rc=0 primary_json_rc="" ssh_rc="" cap_rc=0 runtime geometry_json capture_route provider_input_source capture_json_file daemon_override primary_capture_file capture_format
       safe="$(safe_capture_name "$a")"
       raw_file="${raw_root}/$(printf '%04d' "$roster_idx")-${safe}.txt"
       primary_file="${raw_root}/$(printf '%04d' "$roster_idx")-${safe}.primary.txt"
+      primary_json_file="${raw_root}/$(printf '%04d' "$roster_idx")-${safe}.primary.json"
+      provider_input_file="${raw_root}/$(printf '%04d' "$roster_idx")-${safe}.provider-input.txt"
       ssh_file="${raw_root}/$(printf '%04d' "$roster_idx")-${safe}.ssh.txt"
       runtime="${ROSTER_RUNTIME[$roster_idx]}"
       daemon_override="${ROSTER_DAEMON_OVERRIDE[$roster_idx]}"
       geometry_json=""
       capture_route="primary"
+      provider_input_source=""
+      capture_json_file=""
       session=$(resolve_session "$a")
       # capture_daemon_overrides (watch_params.json, optional, default empty
       # -> inert): routes this agent's capture through a specific daemon
       # instead of the normal proxy-by-name resolution, for the rare
       # cross-daemon deployment where that's required. See load_roster.
-      if [ -n "$daemon_override" ]; then
-        thrum tmux capture "$a" --daemon-id "$daemon_override" --format=annotated --lines "$requested_lines" >"$primary_file" 2>&1
+      if [ "${USE_JEV:-0}" = "1" ]; then
+        primary_capture_file="$primary_json_file"
+        capture_format=json
       else
-        thrum tmux capture "$a" --format=annotated --lines "$requested_lines" >"$primary_file" 2>&1
+        primary_capture_file="$primary_file"
+        capture_format=annotated
+      fi
+      if [ -n "$daemon_override" ]; then
+        thrum tmux capture "$a" --daemon-id "$daemon_override" --format="$capture_format" --lines "$requested_lines" >"$primary_capture_file" 2>&1
+      else
+        thrum tmux capture "$a" --format="$capture_format" --lines "$requested_lines" >"$primary_capture_file" 2>&1
       fi
       primary_rc=$?
-      if [ "$primary_rc" -eq 0 ] && [ -s "$primary_file" ]; then
+      if [ "${USE_JEV:-0}" = "1" ] && [ "$primary_rc" -eq 0 ] && [ -s "$primary_json_file" ] && write_raw_from_capture_json "$primary_json_file" "$raw_file" 2>/dev/null; then
+        cap_rc=0
+        primary_json_rc=0
+        capture_json_file="$primary_json_file"
+        provider_input_source="thrum_tmux_capture_json_structured_state"
+        if agent_is_local "$a"; then
+          geometry_json=$(measure_geometry_json "$session" 2>/dev/null || true)
+        fi
+        CAPTURED+=("$a")
+      elif [ "${USE_JEV:-0}" != "1" ] && [ "$primary_rc" -eq 0 ] && [ -s "$primary_file" ]; then
         cp "$primary_file" "$raw_file"
         cap_rc=0
         if agent_is_local "$a"; then
@@ -660,12 +795,17 @@ run_capture_cycle() {
         ssh_rc=$?
         if [ "$ssh_rc" -eq 0 ] && [ -s "$ssh_file" ]; then
           cp "$ssh_file" "$raw_file"
+          if [ "${USE_JEV:-0}" = "1" ]; then
+            cp "$ssh_file" "$provider_input_file"
+            chmod 600 "$provider_input_file" 2>/dev/null || true
+            provider_input_source="ssh_capture_pane_text"
+          fi
           cap_rc=0
           capture_route="ssh_fallback"
           geometry_json=""
           CAPTURED+=("$a")
         else
-          cat "$primary_file" >"$raw_file"
+          cat "$primary_capture_file" >"$raw_file"
           printf '\n--- SSH fallback failed for %s (exit %s) ---\n' "$a" "$ssh_rc" >>"$raw_file"
           cat "$ssh_file" >>"$raw_file"
           cap_rc=$ssh_rc
@@ -675,15 +815,17 @@ run_capture_cycle() {
         # A successful SSH capture is a real pane capture, not a degraded
         # liveness proof. Only classify when both capture routes failed.
         if [ "$cap_rc" -ne 0 ]; then
-          if grep -qiE "local agent not found|lacks required capability|empty.*binding|proxy.*capability|capability.*denied|peer.*unreachable|circuit open|dial skipped" "$primary_file"; then
-            probe_agent "$a" "$(head -1 "$primary_file" | tr -d '\n' | cut -c1-120)" >>"$raw_file"
+          if grep -qiE "local agent not found|lacks required capability|empty.*binding|proxy.*capability|capability.*denied|peer.*unreachable|circuit open|dial skipped" "$primary_capture_file"; then
+            probe_agent "$a" "$(head -1 "$primary_capture_file" | tr -d '\n' | cut -c1-120)" >>"$raw_file"
           else
             echo "--- CAPTURE FAILED for $a (nonzero exit — NOT an empty pane) ---" >>"$raw_file"
             FAILED+=("$a")
           fi
         fi
       fi
-      check_ghost_tip "$session" >>"$raw_file"
+      if [ "${USE_JEV:-0}" != "1" ] || [ "$capture_route" != "primary" ]; then
+        check_ghost_tip "$session" >>"$raw_file"
+      fi
       {
         echo "=== $a ==="
         cat "$raw_file"
@@ -698,6 +840,9 @@ run_capture_cycle() {
       ARCHIVE_PRIMARY_RCS+=("$primary_rc")
       ARCHIVE_SSH_RCS+=("$ssh_rc")
       ARCHIVE_FINAL_RCS+=("$cap_rc")
+      if [ "${USE_JEV:-0}" = "1" ]; then
+        write_filter_manifest_row "$JEV_FILTER_MANIFEST" "$a" "$raw_file" "$file" "$capture_id" "$ts" "$cap_rc" "$capture_route" "${provider_input_source:+$provider_input_file}" "$provider_input_source" "$capture_json_file"
+      fi
       roster_idx=$((roster_idx + 1))
   done
   archive_source_file "$outdir" "$file" "$capture_id" "$ts"
@@ -720,6 +865,9 @@ run_capture_cycle() {
       "${ARCHIVE_FINAL_RCS[$archive_idx]}"
     archive_idx=$((archive_idx + 1))
   done
+  if [ "${USE_JEV:-0}" = "1" ]; then
+    run_jev_filter "$outdir" "$JEV_FILTER_MANIFEST" "$capture_id"
+  fi
 }
 
 # ---------------------------------------------------------------------------
@@ -840,6 +988,8 @@ main() {
   local fail_state="${outdir}/.last-failed-roster"
 
   load_roster "${watch_params}"
+  USE_JEV=$(python3 -c 'import json,sys; print(int(json.load(open(sys.argv[1])).get("use_jev") is True))' "$watch_params" 2>/dev/null || echo 0)
+  REPO_ROOT="$(git -C "$worktree_root" rev-parse --show-toplevel 2>/dev/null || printf '%s' "$worktree_root")"
   local ts file capture_stamp capture_id
   ts=$(utc_now_iso)
   capture_stamp=$(utc_now_file_stamp)
@@ -851,10 +1001,12 @@ main() {
 
   # Startup self-check runs once, against the dynamically-loaded roster,
   # regardless of execution mode.
+  ROSTER_SELF_CHECK_FAILED=0
   roster_self_check "${outdir}" "${ROSTER[@]}"
 
   run_one_cycle() {
     FAILED=(); DEGRADED=(); CAPTURED=()
+    ROSTER_INCIDENT_CLEARED=0
     ARCHIVE_DEGRADED=0; ARCHIVE_DEGRADED_MESSAGES=()
     ts=$(utc_now_iso)
     capture_stamp=$(utc_now_file_stamp)
@@ -880,11 +1032,29 @@ main() {
       local previous_failures
       previous_failures=$(cat "$fail_state" 2>/dev/null || true)
       rm -f "$fail_state"
+      ROSTER_INCIDENT_CLEARED=1
       echo "roster incident cleared for $previous_failures; inspect $file"
     fi
 
     if [ "${ARCHIVE_DEGRADED:-0}" -ne 0 ]; then
       echo "roster capture ready: ${file} (${ts}) — ARCHIVE-DEGRADED: ${ARCHIVE_DEGRADED_MESSAGES[*]}; inspect archive/health and archive-errors.log"
+    elif [ "${USE_JEV:-0}" = "1" ]; then
+      if [ "${ROSTER_SELF_CHECK_FAILED:-0}" -ne 0 ]; then
+        echo "roster capture ready: $file ($ts) - ROSTER-CHECK FAIL; inspect $outdir/roster-check.log"
+      elif [ "${ROSTER_INCIDENT_CLEARED:-0}" -ne 0 ]; then
+        echo "roster capture ready: $file ($ts) - roster incident cleared; inspect $file"
+      elif [ "${JEV_FILTER_MODE:-fallback}" != "ok" ]; then
+        emit_wake_line "${file}" "${ts}" "${stamp}"
+      elif [ "${JEV_FILTER_ATTENTION:-0}" -gt 0 ]; then
+        echo "roster capture ready: $file ($ts) — active permission prompt or blocking user choice (${JEV_FILTER_ATTENTION} agent(s)); decisions archived"
+      elif [ "${#FAILED[@]}" -gt 0 ] || [ "${#DEGRADED[@]}" -gt 0 ]; then
+        emit_wake_line "${file}" "${ts}" "${stamp}"
+      else
+        echo "roster capture archived, jev filter found no watcher-needed panes: $file ($ts)"
+        if [ "${ROSTER_WATCH_MODE:-}" != "loop" ]; then
+          echo "THRUM_ROSTER_JEV_ARCHIVE_ONLY_V1"
+        fi
+      fi
     else
       emit_wake_line "${file}" "${ts}" "${stamp}"
     fi

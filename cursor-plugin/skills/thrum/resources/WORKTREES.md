@@ -86,7 +86,7 @@ thrum sent     # Verifies what this worktree sent and who read it
 thrum reply <msg-id> --stdin <<'EOF'
 Integration tests passing, ready to merge
 EOF
-thrum message read --all  # Mark all messages as read
+thrum message read --all --force  # Mark ALL unread as read (run `read --all` alone first — dry run)
 ```
 
 ## File Coordination

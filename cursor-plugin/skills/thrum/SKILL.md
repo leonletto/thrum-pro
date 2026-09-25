@@ -25,7 +25,7 @@ thrum inbox --unread                     Unread only (does not mark as read)
 thrum message search "<term>"            Full-text search — use instead of paging; stale unread sorts last
 thrum sent                               List messages you sent
 thrum sent --unread                      Sent messages with unread recipients
-thrum message read --all                 Mark all messages as read
+thrum message read --all --force         Mark ALL unread as read (run `read --all` alone first — dry run)
 thrum wait                               Block until message arrives (30s timeout)
 thrum wait --timeout 120s                Custom timeout (duration)
 ```

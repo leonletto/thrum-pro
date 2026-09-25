@@ -269,8 +269,9 @@ At the start of every cycle, confirm the monitor is still running
 (`thrum monitor list`) — if it's missing or dead, re-`thrum monitor start` it
 rather than assuming someone else will notice.
 
-**Roster snapshot monitor:** copy both `resources/roster-watch.sh` and
-`resources/capture_archive.py` into `<worktree>/.thrum-watch/`, then
+**Roster snapshot monitor:** copy `resources/roster-watch.sh`,
+`resources/capture_archive.py`, and `resources/jev_watcher_filter.py` into
+`<worktree>/.thrum-watch/`, then
 `chmod +x <worktree>/.thrum-watch/roster-watch.sh` — a mode-preserving copy of
 this resource can land as `644` depending on the runtime plugin's own tree
 (don't rely on the source file's mode alone) — then register the monitor against
@@ -292,6 +293,17 @@ thrum monitor start --name roster-watch-<you> \
   --schedule '*/10 * * * *' \
   -- <worktree>/.thrum-watch/roster-watch.sh
 ```
+
+Set `use_jev: true` in the watcher's redirect-resolved `watch_params.json` to
+filter notifications. The helper reads API keys from the watcher worktree's
+repo-root `.env`; environment variables take precedence. `OPENROUTER_API_KEY` is
+an optional provider fallback. Confident active permission prompts and blocking
+user-choice dialogs wake the watcher. Failed or uncertain decisions use the
+normal watcher path. Missing or false `use_jev` retains normal behavior.
+
+Keep --notify-on-success when changing use_jev. A compatible daemon suppresses
+the success confirmation only after a completed, confidently ordinary JEV tick;
+changing the boolean needs no monitor re-registration.
 
 #### SSH fallback (resilience net, not the primary path)
 

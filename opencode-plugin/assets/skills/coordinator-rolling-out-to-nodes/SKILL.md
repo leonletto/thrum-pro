@@ -37,6 +37,8 @@ Read the project's deployment adapter inside `.thrum/config.json` (`fleet.deploy
 
 Resolve each node's `daemon_id` / `ssh_alias` / `coordinator` via the adapter's `identity_resolution` method (daemon_id join, not name). If topology is empty, STOP — do not invent nodes.
 
+**Why every node carries an `ssh_alias`:** so the rolling coordinator can reach the node directly when the messaging or pane-mirror path fails. The main case is an agent stuck on a permission prompt or dialog. Read the pane with `ssh <alias> tmux capture-pane -p -t <session>`, then answer a prompt you recognise as safe with `tmux send-keys`. Never approve blindly, and never pick a "don't ask again" option. Re-capture afterwards to confirm the pane moved on. A node flagged `blocked-on-human` gets unblocked this way in the same turn; don't wait on it or reorder the roll around it. The alias is for pane interaction and artifact distribution only. The node still builds, installs and restarts itself, through its own coordinator.
+
 > Example — Thrum project: topology canary and waves are defined in `topology.canary` / `topology.waves` (seven boxes, one excluded), connected daemons per `topology.connected_daemons`. Build host and build command are adapter values, not skill literals.
 
 ## 2. Pin the artifact (build once at SHA/version/checksum)

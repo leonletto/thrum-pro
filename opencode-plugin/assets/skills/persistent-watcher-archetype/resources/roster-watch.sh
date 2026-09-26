@@ -337,6 +337,39 @@ print(json.dumps(row, sort_keys=True, separators=(",", ":")))
 ' "$agent" "$raw_file" "$source_file" "$capture_id" "$ts" "$cap_rc" "$route" "$provider_input_file" "$provider_input_source" "$capture_json_file" >>"$manifest"
 }
 
+# jev_key_present — true (rc 0) iff a JEV provider key is actually available:
+# checks THRUM_TYPESAFE_KEY/OPENROUTER_API_KEY in the process environment
+# first, then falls back to parsing the resolved env file ($1) as DATA
+# (never sourced/eval'd) using the same key-matching + quote-stripping
+# convention as jev_watcher_filter.py's read_env_keys().
+jev_key_present() {
+  local env_file="$1"
+  if [ -n "${THRUM_TYPESAFE_KEY:-}" ] || [ -n "${OPENROUTER_API_KEY:-}" ]; then
+    return 0
+  fi
+  [ -n "$env_file" ] && [ -f "$env_file" ] || return 1
+  python3 -c '
+import sys
+env_file = sys.argv[1]
+names = ("THRUM_TYPESAFE_KEY", "OPENROUTER_API_KEY")
+try:
+    with open(env_file, encoding="utf-8", errors="replace") as fh:
+        text = fh.read()
+except OSError:
+    sys.exit(1)
+for line in text.splitlines():
+    if "=" not in line:
+        continue
+    name, value = line.split("=", 1)
+    if name not in names:
+        continue
+    value = value.strip().strip("\"").strip("'"'"'")
+    if value:
+        sys.exit(0)
+sys.exit(1)
+' "$env_file"
+}
+
 run_jev_filter() {
   local outdir="$1" manifest="$2" capture_id="$3"
   local filter_py="${SCRIPT_DIR}/jev_watcher_filter.py"
@@ -988,8 +1021,16 @@ main() {
   local fail_state="${outdir}/.last-failed-roster"
 
   load_roster "${watch_params}"
-  USE_JEV=$(python3 -c 'import json,sys; print(int(json.load(open(sys.argv[1])).get("use_jev") is True))' "$watch_params" 2>/dev/null || echo 0)
   REPO_ROOT="$(git -C "$worktree_root" rev-parse --show-toplevel 2>/dev/null || printf '%s' "$worktree_root")"
+  USE_JEV_REQUESTED=$(python3 -c 'import json,sys; print(int(json.load(open(sys.argv[1])).get("use_jev") is True))' "$watch_params" 2>/dev/null || echo 0)
+  USE_JEV=0
+  if [ "$USE_JEV_REQUESTED" = "1" ]; then
+    if jev_key_present "${ROSTER_JEV_ENV_FILE:-${REPO_ROOT}/.env}"; then
+      USE_JEV=1
+    else
+      echo "JEV requested but no key found — skipped" >&2
+    fi
+  fi
   local ts file capture_stamp capture_id
   ts=$(utc_now_iso)
   capture_stamp=$(utc_now_file_stamp)

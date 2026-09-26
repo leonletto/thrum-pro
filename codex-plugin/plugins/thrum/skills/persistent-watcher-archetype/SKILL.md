@@ -295,11 +295,17 @@ thrum monitor start --name roster-watch-<you> \
 ```
 
 Set `use_jev: true` in the watcher's redirect-resolved `watch_params.json` to
-filter notifications. The helper reads API keys from the watcher worktree's
-repo-root `.env`; environment variables take precedence. `OPENROUTER_API_KEY` is
-an optional provider fallback. Confident active permission prompts and blocking
-user-choice dialogs wake the watcher. Failed or uncertain decisions use the
-normal watcher path. Missing or false `use_jev` retains normal behavior.
+filter notifications. JEV is opt-in ONLY when a key is actually present:
+`use_jev: true` alone does not engage it. The helper reads API keys from the
+watcher worktree's repo-root `.env` (or `ROSTER_JEV_ENV_FILE` if set);
+environment variables take precedence. `OPENROUTER_API_KEY` is an optional
+provider fallback. If `use_jev: true` but neither `THRUM_TYPESAFE_KEY` nor
+`OPENROUTER_API_KEY` is found (env or that `.env` file), the watcher logs
+`JEV requested but no key found — skipped` and runs the plain non-JEV path for
+that tick — no manifest filter, no decision directory, and
+`jev_watcher_filter.py` never runs. Confident active permission prompts and
+blocking user-choice dialogs wake the watcher. Failed or uncertain decisions use
+the normal watcher path. Missing or false `use_jev` retains normal behavior.
 
 Keep --notify-on-success when changing use_jev. A compatible daemon suppresses
 the success confirmation only after a completed, confidently ordinary JEV tick;

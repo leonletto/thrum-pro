@@ -185,7 +185,7 @@ beads — relay is lossy and drifts as the plan is updated.
 
 ```bash
 cd {{WORKTREE_PATH}}
-git pull                 # pull the committed plan into this worktree
+git pull --no-rebase     # pull the committed plan into this worktree (merge; a bare pull aborts on divergence)
 head -1 {{PLAN_FILE}}    # confirm the plan file actually opens here
 ```
 
@@ -221,7 +221,7 @@ git status
 git --no-pager log --oneline -10
 
 # Pull latest changes (if remote tracking is set up) — merge, never rebase
-git pull
+git pull --no-rebase
 ```
 
 ### Step 3: Explore Existing Code

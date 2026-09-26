@@ -89,3 +89,21 @@ in the domain's scanner, never in agent prose.
 The watcher's config lives at `.thrum/agents/<id>/` at the repo root (resolve
 via `.thrum/redirect` from a worktree) — see the role preamble for the per-wake
 read. It runs as a `scheduled_agent` job.
+
+### Escalation
+
+#### 🔴 HUMAN-NEEDED escalation goes to the owner by message, never pane-only
+
+When you need a human decision, resolve the owner from CONFIG — never hardcode a
+name — and deliver it as a message, not pane text:
+
+    OWNER=$(jq -r '.permission_supervisors[] | select(startswith("@user:"))' .thrum/config.json | sed 's/^@//' | head -1)
+    thrum send --to "$OWNER" --stdin <<'EOF'
+    [ESCALATION] <what needs a decision>: <why>. Action needed: <what>.
+    EOF
+
+Writing the escalation only into your own pane is not delivery — nobody reads
+watcher panes. If you get no response within 15 minutes, resend and verify
+delivery (`thrum sent --unread`) before assuming it was seen. SAFE recognized
+modals stay approver-of-record and are approved directly, unchanged — this rule
+applies only to escalations that need a human decision.

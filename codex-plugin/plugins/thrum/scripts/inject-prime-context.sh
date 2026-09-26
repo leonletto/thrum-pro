@@ -162,27 +162,41 @@ if printf '%s' "$PRIME_OUTPUT" | grep -q '^# Previous Session Context'; then
 fi
 
 # 4. Briefing envelope + full/light prime output.
-BRIEFING=""
-append_to BRIEFING '# Thrum Session Briefing (auto-loaded)'$'\n'
-append_to BRIEFING $'\n'
-if [ "$LIGHT_MODE" -eq 1 ]; then
-  append_to BRIEFING 'The **light** `thrum prime --light` output is included below (auto-injected after compaction — the light render omits the full Resume Plan body, replacing it with a pointer to re-run full `thrum prime` if you need it). You do NOT need to run `$thrum-prime`, `thrum prime`, or `$thrum-prime-agent` again this session — the briefing is already in your context. Read it in full.'$'\n'
-else
-  append_to BRIEFING 'The complete `thrum prime` output is included below. You do NOT need to run `$thrum-prime` or `thrum prime` again this session — the briefing is already in your context. Read it in full; the session context section at the end is the most important.'$'\n'
-fi
-append_to BRIEFING $'\n'
-append_to BRIEFING 'Only spawn additional commands if the inbox section shows unread messages that need processing.'$'\n'
-append_to BRIEFING $'\n---\n\n'
-append_to BRIEFING "$PRIME_OUTPUT"$'\n'
+# build_directive sets DIRECTIVE for the current TRUNCATED mode.
+build_directive() {
+  DIRECTIVE=""
+  if [ "$TRUNCATED" -eq 1 ]; then
+    append_to DIRECTIVE '> ⚠️ **Context partially auto-loaded by SessionStart hook (truncated to fit this runtime'"'"'s hook output cap).**'$'\n'
+    append_to DIRECTIVE '>'$'\n'
+    append_to DIRECTIVE '> **Run `thrum prime` now to load the rest of your briefing** — the hook output below was cut.'$'\n'
+    append_to DIRECTIVE $'\n'
+  else
+    append_to DIRECTIVE '> ✅ **Context auto-loaded by SessionStart hook.**'$'\n'
+    append_to DIRECTIVE '>'$'\n'
+    append_to DIRECTIVE '> **Do NOT run `$thrum-prime` or `thrum prime` — the full briefing is already in your context below.**'$'\n'
+    append_to DIRECTIVE '> Only invoke them manually if this hook fell through to a degraded "auto-injection failed" notice.'$'\n'
+    append_to DIRECTIVE $'\n'
+  fi
+}
+
+build_briefing_head() {
+  BRIEFING=""
+  append_to BRIEFING '# Thrum Session Briefing (auto-loaded)'$'\n'
+  append_to BRIEFING $'\n'
+  if [ "$LIGHT_MODE" -eq 1 ]; then
+    append_to BRIEFING 'The **light** `thrum prime --light` output is included below (auto-injected after compaction — the light render omits the full Resume Plan body, replacing it with a pointer to re-run full `thrum prime` if you need it). You do NOT need to run `$thrum-prime`, `thrum prime`, or `$thrum-prime-agent` again this session — the briefing is already in your context. Read it in full.'$'\n'
+  elif [ "$TRUNCATED" -eq 1 ]; then
+    append_to BRIEFING 'A **truncated** `thrum prime` output is included below — this runtime caps SessionStart hook output, so the tail was cut. Run `thrum prime` yourself for the full briefing (it is NOT already in your context in full).'$'\n'
+  else
+    append_to BRIEFING 'The complete `thrum prime` output is included below. You do NOT need to run `$thrum-prime` or `thrum prime` again this session — the briefing is already in your context. Read it in full; the session context section at the end is the most important.'$'\n'
+  fi
+  append_to BRIEFING $'\n'
+  append_to BRIEFING 'Only spawn additional commands if the inbox section shows unread messages that need processing.'$'\n'
+  append_to BRIEFING $'\n---\n\n'
+}
 
 # Single directive: agents read this BEFORE the briefing body and act
 # on it.
-DIRECTIVE=""
-append_to DIRECTIVE '> ✅ **Context auto-loaded by SessionStart hook.**'$'\n'
-append_to DIRECTIVE '>'$'\n'
-append_to DIRECTIVE '> **Do NOT run `$thrum-prime` or `thrum prime` — the full briefing is already in your context below.**'$'\n'
-append_to DIRECTIVE '> Only invoke them manually if this hook fell through to a degraded "auto-injection failed" notice.'$'\n'
-append_to DIRECTIVE $'\n'
 
 # First-turn ack. Tells the agent to emit one visible
 # plain-text line before any tool calls so tmux pane scrollback shows
@@ -202,6 +216,59 @@ append_to ACK_INSTRUCTION "> \`${_ACK_LINE}\`"$'\n'
 append_to ACK_INSTRUCTION '>'$'\n'
 append_to ACK_INSTRUCTION '> This produces visible scrollback so humans can distinguish a healthy launch from a stuck or failed one without probing.'$'\n'
 append_to ACK_INSTRUCTION $'\n'
+
+# Runtime hook-output cap. Some runtimes reject the WHOLE hook output when
+# stdout exceeds a byte cap (muse: "output_too_large"), which loses the
+# banner and identity too. The cap is declared in the runtime preset
+# (hook_stdout_cap_bytes) and read here via `thrum runtime hook-cap`; 0 or an
+# unresolvable runtime means unlimited. Never hard-code the number here.
+HOOK_CAP=$(thrum runtime hook-cap 2>/dev/null || true)
+case "$HOOK_CAP" in
+  ''|*[!0-9]*) HOOK_CAP=0 ;;
+esac
+
+byte_len() { printf '%s' "$1" | wc -c | tr -d '[:space:]'; }
+
+TRUNCATED=0
+build_directive
+build_briefing_head
+FULL_LEN=$(( $(byte_len "$BANNER") + $(byte_len "$DIRECTIVE") + $(byte_len "$ACK_INSTRUCTION") + $(byte_len "$RESTART_PREAMBLE") + $(byte_len "$BRIEFING") + $(byte_len "$PRIME_OUTPUT") + 1 ))
+if [ "$HOOK_CAP" -gt 0 ] && [ "$FULL_LEN" -gt "$HOOK_CAP" ]; then
+  TRUNCATED=1
+  build_directive
+  build_briefing_head
+  TRUNC_NOTICE=$'\n\n[thrum: hook output truncated to fit this runtime'"'"'s '"${HOOK_CAP}"'-byte cap. Run `thrum prime` for the full briefing.]\n'
+  FIXED_LEN=$(( $(byte_len "$BANNER") + $(byte_len "$DIRECTIVE") + $(byte_len "$ACK_INSTRUCTION") + $(byte_len "$RESTART_PREAMBLE") + $(byte_len "$BRIEFING") + $(byte_len "$TRUNC_NOTICE") ))
+  BUDGET=$(( HOOK_CAP - FIXED_LEN - 16 ))
+  if [ "$BUDGET" -gt 0 ]; then
+    # Cut on a line boundary so a multi-byte character is never split: take
+    # BUDGET bytes, drop the trailing (possibly partial) line, then drop any
+    # stray invalid bytes if iconv is available.
+    CUT=$(printf '%s' "$PRIME_OUTPUT" | head -c "$BUDGET")
+    if [ "$(byte_len "$CUT")" -lt "$(byte_len "$PRIME_OUTPUT")" ]; then
+      CUT_LINES=$(printf '%s\n' "$CUT" | sed '$d')
+      [ -n "$CUT_LINES" ] && CUT="$CUT_LINES"
+    fi
+    if command -v iconv >/dev/null 2>&1; then
+      # iconv -c legitimately exits nonzero whenever it drops an incomplete
+      # trailing multi-byte sequence -- that is its intended success path
+      # here, not a failure. Capture its stdout unconditionally (never gated
+      # on `|| fallback`, which would re-run the fallback's own stdout and
+      # get it concatenated onto iconv's already-emitted output inside this
+      # command substitution, doubling/corrupting the result). Only fall
+      # back to the untouched CUT if iconv produced no output at all.
+      ICONV_CUT=$(printf '%s' "$CUT" | iconv -c -f UTF-8 -t UTF-8 2>/dev/null)
+      [ -n "$ICONV_CUT" ] && CUT="$ICONV_CUT"
+    fi
+    PRIME_OUTPUT="$CUT"
+  else
+    PRIME_OUTPUT=""
+  fi
+  append_to BRIEFING "$PRIME_OUTPUT"
+  append_to BRIEFING "$TRUNC_NOTICE"
+else
+  append_to BRIEFING "$PRIME_OUTPUT"$'\n'
+fi
 
 # Emit in canonical order: banner → directive → ack → restart preamble →
 # briefing. Banner + directive + ack always land inside the preview.

@@ -381,16 +381,13 @@ bd dep add <later-epic-id> <earlier-epic-id>
 ### Create Tasks
 
 When creating > 6 tasks, delegate to parallel sub-agents — one per epic. Each
-sub-agent (sonnet-low is sufficient — the work is mechanical) gets the epic ID, the
+sub-agent (a cheap tier is sufficient — the work is mechanical; model per `choosing-subagent-models`) gets the epic ID, the
 list of `bd create --title=... --type=task --priority=N --description=...`
 commands to run, the within-epic `bd dep add <later_id> <earlier_id>` ordering
 commands, and instructions to return the created task IDs and titles. Invoke
 `efficient-multi-agent-research` § Core Pattern for launch-and-wait mechanics.
 
-> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet`
-> (low effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
-> operator-ask or a skill step that names it. See the
-> `choosing-subagent-models` skill for the full policy.
+> **Model tiers:** pass an explicit `model:` on every dispatch; choose model and effort per the `choosing-subagent-models` skill (read `runtime.role_models` at the moment of use). Never let a sub-agent inherit your own model.
 
 After sub-agents return IDs, set cross-epic dependencies directly (requires IDs
 from multiple sub-agents):
@@ -478,20 +475,24 @@ template's "Logging Refactoring Opportunities" section.
 
 If not found, create one:
 
-`--description` is multi-line prose — never double-quoted inline. On
-`scripts/bd-shared`, `--stdin`/`--body-file` are refused (remote-path
-resolution + silent-empty-body hazards), so write it to a scratch file and
-pass `-d "$(cat <file>)"`; see the role preamble's 🔴 PROSE INTO A COMMAND
-rule.
+`--description` is multi-line prose — never double-quoted inline. Use
+`--body-file` to pass the content from a file instead; see the role preamble's
+🔴 PROSE INTO A COMMAND rule. `scripts/bd-shared` delivers `--body-file` (and
+`--stdin`) content: it reads the file on your box and pipes those bytes to bd,
+and an empty or blank body is refused loudly; only `-f`/`--file` and `--graph`
+(bulk-plan files) are refused there. Scratch files go in `/private/tmp` on macOS,
+where `/tmp` is a symlink (check `[ -L /tmp ]`), and in `/tmp` elsewhere.
 
 ```bash
-cat > /tmp/refactor-epic-desc.md <<'EOF'
+# Scratch dir: /private/tmp on macOS (where /tmp is a symlink), /tmp elsewhere.
+SCRATCH=$([ -L /tmp ] && echo /private/tmp || echo /tmp)
+cat > "$SCRATCH/refactor-epic-desc.md" <<'EOF'
 Persistent backlog for refactoring, DRY improvements, and code
 organization opportunities discovered during feature work. Tasks are added by
 implementation agents as they encounter opportunities. Reviewed and prioritized
 by the coordinator periodically.
 EOF
-bd create --title="Refactoring & DRY Opportunities" --type=epic --priority=3 -d "$(cat /tmp/refactor-epic-desc.md)"
+bd create --title="Refactoring & DRY Opportunities" --type=epic --priority=3 --body-file "$SCRATCH/refactor-epic-desc.md"
 ```
 
 This epic is **project-wide and long-lived** — it persists across feature epics.
@@ -814,6 +815,7 @@ worktree-related values come from the Phase 3 assignments:
 | `{{EPIC_TITLE}}`       | Epic title (used in commit messages)                                                                                                                                                                                        |
 | `{{WORKTREE_PATH}}`    | **From Phase 3 worktree assignment**                                                                                                                                                                                        |
 | `{{BRANCH_NAME}}`      | **From Phase 3 worktree assignment**                                                                                                                                                                                        |
+| `{{BASE_BRANCH}}`      | Resolved from the project merge target: `CONFIG=.thrum/config.json; [ -f .thrum/redirect ] && CONFIG="$(cat .thrum/redirect)/config.json"; jq -r '.orchestration.merge_target' "$CONFIG"` (a worktree's `.thrum/` holds only a `redirect` file). Never assume `main` |
 | `{{PROJECT_ROOT}}`     | Absolute path to the project root                                                                                                                                                                                           |
 | `{{DESIGN_DOC}}`       | **Absolute path** to the design spec                                                                                                                                                                                        |
 | `{{REFERENCE_CODE}}`   | Relevant reference code paths (relative OK if committed)                                                                                                                                                                    |

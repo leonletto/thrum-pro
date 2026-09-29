@@ -114,18 +114,19 @@ outlive its author and later be enforced as if it were the human's mandate.
 through a standing orchestrator.**
 
 The reason, in one line: orchestrators own the implementer lifecycle and the
-`--model sonnet` pin; standing one up yourself risks the implementer inheriting
-opus. Your lane is dispatch-decision + gate + merge. Full dispatch mechanics
-live in **`coordinator-dispatching-work`**.
+`--model` pin (from `runtime.role_models`, per `choosing-subagent-models`);
+standing one up yourself risks the implementer inheriting your own model. Your
+lane is dispatch-decision + gate + merge. Full dispatch mechanics live in
+**`coordinator-dispatching-work`**.
 
 **Recovery:** if an implementer was ever stood up directly, **tear it down
 before handing to the orchestrator.** Do not let the orchestrator adopt a
 coordinator-spawned implementer — it may carry the wrong model.
 
-| Rationalization                                                      | Reality                                                                                                    |
-| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| "I'll just stand up the implementer myself, it's faster."            | **WRONG** — route through a standing orchestrator.                                                         |
-| "The orchestrator can just adopt the implementer I already spawned." | **WRONG** — it may carry opus. Tear it down first; let the orchestrator spawn its own with the sonnet pin. |
+| Rationalization                                                      | Reality                                                                                                                |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| "I'll just stand up the implementer myself, it's faster."            | **WRONG** — route through a standing orchestrator.                                                                     |
+| "The orchestrator can just adopt the implementer I already spawned." | **WRONG** — it may carry a costly model. Tear it down first; let the orchestrator spawn its own with the pinned model. |
 
 ### Coordinator-run Q&A vs escalate
 

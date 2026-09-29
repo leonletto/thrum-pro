@@ -21,7 +21,7 @@ findings, and its troubleshooting state across rounds.
 
 Do this:
 
-1. `Agent(name: "vmdriver_<slug>", model: "sonnet", prompt: <round-1 GO>)`.
+1. `Agent(name: "vmdriver_<slug>", model: <per choosing-subagent-models>, prompt: <round-1 GO>)`.
 2. Wait for its report.
 3. `SendMessage(to: "vmdriver_<slug>", message: <round-2 GO>)`.
 

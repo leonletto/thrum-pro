@@ -40,7 +40,7 @@ at every stage:
    the impl prompt** → 8. Hand off to coord for implementer dispatch.
 
 **Three explicit review gates** at stages 3, 6, and 7 — same dual-axis pattern
-each time (`verify-against-source` + a prose-quality reviewer, sonnet sub-agents
+each time (`verify-against-source` + a prose-quality reviewer, sub-agents (model per `choosing-subagent-models`)
 in parallel — see "Review-loop mechanics" below). Skipping any review gate is a
 documented anti-pattern. The brainstorm review catches design issues; the plan
 review is the SOLE quality gate on the plan doc — the researcher authors the
@@ -50,16 +50,13 @@ implementer executes against them.
 
 ## Subagent model selection
 
-> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet`
-> (low effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
-> operator-ask or a skill step that names it. See the
-> `choosing-subagent-models` skill for the full policy.
+> **Model tiers:** pass an explicit `model:` on every dispatch; choose model and effort per the `choosing-subagent-models` skill (read `runtime.role_models` at the moment of use). Never let a sub-agent inherit your own model.
 
 ### Prefer `efficient-multi-agent-research` for multi-part research
 
 When a research or investigation task has independent parts, reach for the
 `efficient-multi-agent-research` skill FIRST — it partitions the work across
-many cheap parallel subagents (sonnet-low gatherers, sonnet-medium synthesizers) instead of
+many cheap parallel subagents (cheap gatherers, judgment-tier synthesizers) instead of
 one expensive serial subagent. It is the preferred research path: cheaper,
 faster, and it keeps each subagent's context tight.
 
@@ -73,9 +70,9 @@ names only its stage-specific source.
 | Axis            | Reviewer                                                                                                       | Notes                                                                                                                                                                                                                                                                                                                                             |
 | --------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Conformance** | `verify-against-source` (thrum-owned skill)                                                                    | Does the artifact honor its INPUT(s)? Replaces `verify-against-plan` at prose gates — `verify-against-plan` BAILS without a code diff + a File-Structure table, so it cannot run on a brainstorm/plan/prompt. `verify-against-source` accepts a prose artifact + source doc with neither.                                                         |
-| **Quality**     | general-purpose sonnet + prose-quality rubric (PRIMARY) ∥ `superpowers:requesting-code-review` (SUPPLEMENTARY) | The general-purpose prose-quality pass (internal consistency, gaps, contradiction, ambiguity, scope creep) is AUTHORITATIVE. `requesting-code-review` runs on a DIFF, so point it at the artifact's own commit range (`HEAD~1..HEAD`) — gated on the skill being resolvable; skip gracefully if absent. ⚠️ **That is the diff of the `.md` file, NOT a diff against the production code the artifact describes** — this row does NOT cover the code axis. Prose-vs-code is Conformance's job (see `verify-against-source` § "Second comparison unit"). |
+| **Quality**     | general-purpose sub-agent (model per `choosing-subagent-models`) + prose-quality rubric (PRIMARY) ∥ `superpowers:requesting-code-review` (SUPPLEMENTARY) | The general-purpose prose-quality pass (internal consistency, gaps, contradiction, ambiguity, scope creep) is AUTHORITATIVE. `requesting-code-review` runs on a DIFF, so point it at the artifact's own commit range (`HEAD~1..HEAD`) — gated on the skill being resolvable; skip gracefully if absent. ⚠️ **That is the diff of the `.md` file, NOT a diff against the production code the artifact describes** — this row does NOT cover the code axis. Prose-vs-code is Conformance's job (see `verify-against-source` § "Second comparison unit"). |
 
-Both are `general-purpose`, `model: "sonnet"`, `run_in_background: true`. Wait
+Both are `general-purpose`, `model: <per choosing-subagent-models>`, `run_in_background: true`. Wait
 for BOTH before consolidating. Verify each BLOCKING against source before
 forwarding.
 
@@ -397,7 +394,7 @@ When the researcher reports the brainstorm is ready for review, run the
   SUPPLEMENTARY (internal consistency, technical soundness, anti-patterns,
   gaps).
 
-Both `general-purpose`, `model: "sonnet"`, `run_in_background: true`. **Have the
+Both `general-purpose`, `model: <per choosing-subagent-models>`, `run_in_background: true`. **Have the
 researcher append the gate footer and commit (in their own worktree) BEFORE you
 spawn the dual-review sub-agents** — the brainstorm lives in the researcher's
 branch, and the supplementary `requesting-code-review` pass needs a real
@@ -422,7 +419,7 @@ confidence about what's already correct and prevents over-editing.
 
 When the researcher reports their fixes are done:
 
-- Run a **targeted verification sub-agent** (one sub-agent, sonnet) that reads
+- Run a **targeted verification sub-agent** (one sub-agent, model per `choosing-subagent-models`) that reads
   the updated doc and confirms each prescribed fix landed correctly. Do NOT
   re-derive the original findings — that's done.
 - For tiny cosmetic fixes (one-line format updates, missing citations), ask
@@ -440,10 +437,10 @@ to merge" with stand-down instructions.
 ## Phase 5 — Overarching coherence pass (when sibling brainstorms close)
 
 If the topic is part of a larger program with multiple parallel brainstorms,
-once **all sibling brainstorms reach ready-to-merge**, fire an opus-tier
-coherence + implementability pass over the corpus before specs are written.
+once **all sibling brainstorms reach ready-to-merge**, fire a deep-review
+(model per `choosing-subagent-models`) coherence + implementability pass over the corpus before specs are written.
 
-Two parallel passes (background, opus model — escalate from sonnet because this
+Two parallel passes (background, a deeper tier per `choosing-subagent-models` — escalate because this
 is genuinely cross-cutting reasoning over a large corpus):
 
 | Pass                             | Focus                                                                                                                                                                                        |
@@ -625,7 +622,7 @@ the worktree path.
 
 ❌ **Skipping the coherence pass.** When ≥ 3 sibling brainstorms close in the
 same program, integration-layer issues that no single review can see are
-virtually guaranteed. Fire the opus pass; it's worth the cost.
+virtually guaranteed. Fire the deep-review pass; it's worth the cost.
 
 ❌ **Renaming brainstorm researchers between topics.** Identity is bound to the
 worktree. If a topic is done, kill the tmux session and tear down the worktree;

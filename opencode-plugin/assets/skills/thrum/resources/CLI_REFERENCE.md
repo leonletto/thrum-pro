@@ -60,20 +60,23 @@ Full reference: [docs/cli-hints.md](https://thrum.team/docs/cli-hints.html)
 
 ```bash
 thrum send --to @name --body-file ./body.md          # Direct message (canonical form)
-thrum send --broadcast --body-file ./body.md         # Explicit team-wide fanout (preferred)
-thrum send --to @everyone --body-file ./body.md      # Broadcast (legacy keyword form)
+thrum send --to @name1 --to @name2 --body-file ./body.md   # Multiple explicit recipients (repeatable --to)
 thrum send --to @name --scope type:value --scope type:value2 --body-file ./body.md
 thrum send --to @name --ref type:value --body-file ./body.md
-thrum send --to @name --mention @role --body-file ./body.md
+thrum send --to @name --mention @other_agent --body-file ./body.md
 thrum send --to @name --format plain --body-file ./body.md
 thrum send --to @name --structured '{"key":"value"}' --body-file ./body.md
 thrum send --to @name --body-file ./body.md          # Shell-safe body (file)
 generator | thrum send --to @name -                  # '-' is a --stdin alias
 ```
 
-A recipient flag is REQUIRED — `thrum send 'msg'` with no `--to` or
-`--broadcast` is a hard error. `--to` and `--broadcast` are
-mutually exclusive.
+A recipient flag is REQUIRED — `thrum send 'msg'` with no `--to` is a hard
+error.
+
+(P0 ruling): `--broadcast` and `@everyone` were removed by
+design across the whole product; do not restore them. There is no one-to-many
+fan-out — name every recipient explicitly with repeatable `--to`, or address a
+scoped agent-type group.
 
 Shell-safe bodies: backticks, `$(...)`, `$VAR`, and quotes in a
 double-quoted message are interpreted by the shell BEFORE thrum runs, silently
@@ -85,9 +88,8 @@ trailing newline is stripped from stdin/file bodies.
 Flags:
 
 ```text
---to string           Recipient — @agent_name or @everyone for broadcast (mutex with --broadcast)
---broadcast           Fan out to the entire team (mutex with --to)
---mention strings     Mention a role (repeatable, format: @role)
+--to strings          Recipient — @agent_name, explicit only (repeatable; no @everyone/@role fan-out)
+--mention strings     Mention an explicit agent (repeatable, format: @agent_name)
 --ref strings         Add reference (repeatable, format: type:value)
 --scope strings       Add scope (repeatable, format: type:value)
 --format string       Message format: markdown, plain, json (default "markdown")

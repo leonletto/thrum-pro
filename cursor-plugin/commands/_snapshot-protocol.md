@@ -28,7 +28,9 @@ terminal action.
 # could silently resolve to a DIFFERENT agent's worktree, or the main repo,
 # saving this snapshot where nothing ever reads it back. There is NO git
 # fallback — if the daemon can't answer, refuse and stop rather than guess.
-REPO=$(thrum agent worktree --authoritative 2>/dev/null) || { echo "ERROR: cannot authoritatively resolve your worktree via the daemon. Refusing to fall back to cwd/git-toplevel — that would risk silently saving this snapshot to the wrong repo. Check daemon connectivity and retry."; exit 1; }
+REPO=$(
+  thrum agent worktree --authoritative 2>/dev/null
+) || { echo "ERROR: cannot authoritatively resolve your worktree via the daemon. Refusing to fall back to cwd/git-toplevel — that would risk silently saving this snapshot to the wrong repo. Check daemon connectivity and retry."; exit 1; }
 [ -n "$REPO" ] || { echo "ERROR: thrum agent worktree --authoritative returned empty"; exit 1; }
 AGENT=$(thrum whoami --field agent_id) || { echo "ERROR: agent not registered"; exit 1; }
 [ -n "$AGENT" ] || { echo "ERROR: empty agent_id"; exit 1; }
@@ -263,6 +265,12 @@ ${REPO}/.thrum/restart/${AGENT}.md
 `thrum prime` will auto-inject this file at next session start (whether wake
 comes from `thrum tmux restart` or `thrum tmux create`). No bash heredoc or
 `cat <<EOF` redirection is needed — write the file directly.
+
+Variants that have a verify step (`/thrum:compact`, `/thrum:compact-extended`,
+`/thrum:restart`, `/thrum:restart-extended`) mint a `SNAPSHOT_PATH` and
+`SNAPSHOT_NONCE` in their own Step 3 PREP block: write to exactly that path, end
+the file with `<!-- snapshot-nonce: <nonce> -->`, and record both for the verify
+block. The sleep variants have no verify block and need no nonce.
 
 After writing, return control to your variant skill (`/thrum:restart-extended`,
 `/thrum:sleep`, or `/thrum:sleep-extended`) for the terminal action.

@@ -88,17 +88,16 @@ Otherwise, orchestrate via the agent table below.
 
 ### Agent selection
 
-| Dispatch                       | Agent type                     | Model                                      | Background? |
-| ------------------------------ | ------------------------------ | ------------------------------------------ | ----------- |
-| Research / explore a code area | `Explore` or `general-purpose` | `sonnet`                                   | yes         |
-| Implement a task               | `general-purpose`              | `sonnet` (low effort if purely mechanical) | no          |
-| Verify a task against the plan | `general-purpose`              | `sonnet`                                   | no          |
-| Run tests / lint               | `general-purpose`              | `sonnet` (low effort)                      | yes         |
+| Dispatch                       | Agent type                     | Model                                                            | Background? |
+| ------------------------------ | ------------------------------ | ---------------------------------------------------------------- | ----------- |
+| Research / explore a code area | `Explore` or `general-purpose` | per `choosing-subagent-models`                                   | yes         |
+| Implement a task               | `general-purpose`              | per `choosing-subagent-models` (low effort if purely mechanical) | no          |
+| Verify a task against the plan | `general-purpose`              | per `choosing-subagent-models`                                   | no          |
+| Run tests / lint               | `general-purpose`              | per `choosing-subagent-models` (low effort)                      | yes         |
 
-Always pass `model:` explicitly — never let a sub-agent inherit your (Opus)
-model. Label every dispatch's `description` with `research:` / `implement:` /
-`verify:` (the evaluation harness classifies delegation shape from these
-labels).
+Always pass `model:` explicitly — never let a sub-agent inherit your own model.
+Label every dispatch's `description` with `research:` / `implement:` / `verify:`
+(the evaluation harness classifies delegation shape from these labels).
 
 ### The inline-vs-dispatch boundary
 
@@ -117,10 +116,10 @@ labels).
 
 ### Verifier dispatch (per task)
 
-After an implementation dispatch returns, spawn a `sonnet` verifier against the
-plan the implementing sub-agent was given — confirm the diff meets the
-acceptance criteria. This is the in-loop check; the full code review still
-happens at Phase 3: Self-Review Gate.
+After an implementation dispatch returns, spawn a verifier sub-agent (model per
+`choosing-subagent-models`) against the plan the implementing sub-agent was
+given — confirm the diff meets the acceptance criteria. This is the in-loop
+check; the full code review still happens at Phase 3: Self-Review Gate.
 
 ---
 
@@ -437,34 +436,41 @@ bd list --type=epic | grep -i refactor
 
 If no refactoring epic exists, create one:
 
-`--description` is multi-line prose — never double-quoted inline. On
-`scripts/bd-shared`, `--stdin`/`--body-file` are refused (remote-path
-resolution + silent-empty-body hazards), so write it to a scratch file and pass
-`-d "$(cat <file>)"`; see your role preamble's 🔴 PROSE INTO A COMMAND rule.
+`--description` is multi-line prose — never double-quoted inline. Write it to a
+scratch file and pass `--body-file <file>`; see your role preamble's 🔴 PROSE
+INTO A COMMAND rule. `scripts/bd-shared` delivers `--body-file` (and `--stdin`)
+content: it reads the file on YOUR box and pipes those bytes to bd, and an empty
+or blank body is refused loudly. Only `-f`/`--file` and `--graph` (bulk-plan
+files) are refused there. Scratch files go in `/private/tmp` on macOS, where
+`/tmp` is a symlink (check `[ -L /tmp ]`), and in `/tmp` elsewhere.
 
 ```bash
-cat > /tmp/refactor-epic-desc.md <<'EOF'
+# Scratch dir: /private/tmp on macOS (where /tmp is a symlink), /tmp elsewhere.
+SCRATCH=$([ -L /tmp ] && echo /private/tmp || echo /tmp)
+cat > "$SCRATCH/refactor-epic-desc.md" <<'EOF'
 Persistent backlog for refactoring, DRY improvements, and code organization
 opportunities discovered during feature work. Tasks are added by
 implementation agents as they encounter opportunities. Reviewed and
 prioritized by the coordinator periodically.
 EOF
-bd create --title="Refactoring & DRY Opportunities" --type=epic --priority=3 -d "$(cat /tmp/refactor-epic-desc.md)"
+bd create --title="Refactoring & DRY Opportunities" --type=epic --priority=3 --body-file "$SCRATCH/refactor-epic-desc.md"
 ```
 
 #### 2. Log the Opportunity
 
-Same `--description` handling as §1 above (scratch file + `-d "$(cat <file>)"`).
+Same `--description` handling as §1 above (scratch file + `--body-file`).
 
 ```bash
-cat > /tmp/refactor-task-desc.md <<'EOF'
+# Scratch dir: /private/tmp on macOS (where /tmp is a symlink), /tmp elsewhere.
+SCRATCH=$([ -L /tmp ] && echo /private/tmp || echo /tmp)
+cat > "$SCRATCH/refactor-task-desc.md" <<'EOF'
 **Discovered during:** {{EPIC_ID}}
 **Files:** <file paths>
 **Opportunity:** <what could be improved — duplicated code, hardcoded values, missed abstraction>
 **Suggested approach:** <how to fix it>
 **Effort estimate:** small/medium/large
 EOF
-bd create --title="Refactor: <short description>" --type=task --parent=<refactoring-epic-id> --priority=3 -d "$(cat /tmp/refactor-task-desc.md)"
+bd create --title="Refactor: <short description>" --type=task --parent=<refactoring-epic-id> --priority=3 --body-file "$SCRATCH/refactor-task-desc.md"
 ```
 
 #### 3. Continue With Your Assigned Work
@@ -498,11 +504,13 @@ If a task is blocked:
 
 ```bash
 # Ask the blocking agent for help
-# NOTE: --mention @implementer (with no --to) delivers ONLY to agent(s) matching
-# that role/name — it does not go to the supervisor and does not broadcast. A
-# message with ZERO addressing (no --to, no mentions) routes to the local
-# coordinator instead. Broadcast to everyone requires an explicit
-# --to everyone / --mention @everyone.
+# NOTE: --mention @implementer (with no --to) only delivers if "implementer"
+# is itself a registered agent ID — mentions resolve exact agent IDs only, no
+# role fan-out (P0 ruling: removed by design, do not
+# restore). A message with ZERO addressing (no --to, no mentions) routes to
+# the local coordinator instead. There is no broadcast-to-everyone mechanism —
+# --broadcast and @everyone were removed by design; name every recipient
+# explicitly (--to is repeatable for multiple recipients).
 thrum send --mention @implementer --stdin <<'EOF'
 BLOCKED: {{TASK_ID}} — waiting for {{BLOCKER_ID}}. Can you prioritize?
 EOF
@@ -607,18 +615,24 @@ Fix any failures before proceeding. Do not submit broken code for review.
 
 ### Step 2: Spec Compliance Review (Stage 1)
 
-Verify the implementation covers everything specified in the plan, design doc,
-and each task's acceptance criteria. No code-style judgments at this stage —
-only "does the code do what was asked?"
+Verify the implementation covers everything specified in the plan and, when the
+epic has a design doc, in the design doc. Also cross-check each task's
+acceptance criteria against the code: run `bd show <task_id>` for every task in
+the epic and confirm each acceptance criterion is met. No code-style judgments
+at this stage — only "does the code do what was asked?"
 
 Invoke `verify-against-plan` with these inputs:
 
 ```text
-/verify-against-plan plan={{PLAN_FILE}} branch={{BRANCH_NAME}}
+/verify-against-plan plan={{PLAN_FILE}} design={{DESIGN_DOC}} branch={{BRANCH_NAME}}
 ```
 
+Drop the `design=` input only when this epic has no design doc (`{{DESIGN_DOC}}`
+was left unset). With it, requirements that only the design states are checked
+too, not just the plan's tasks.
+
 The skill produces structured `BLOCKING` / `IMPORTANT` / `MINOR` findings with
-plan-reference + file:line evidence.
+plan-reference (or design-reference) + file:line evidence.
 
 **When findings come back:**
 
@@ -647,7 +661,7 @@ results before proceeding). The reviewer is a separate agent — you cannot
 influence its findings.
 
 ```text
-Agent(subagent_type="feature-dev:code-reviewer", model="sonnet",
+Agent(subagent_type="feature-dev:code-reviewer", model="<per choosing-subagent-models>",
   prompt="Review code quality of the implementation on branch {{BRANCH_NAME}}
   in {{WORKTREE_PATH}}. Focus only on quality of the code that was written —
   spec compliance is covered separately by verify-against-plan.

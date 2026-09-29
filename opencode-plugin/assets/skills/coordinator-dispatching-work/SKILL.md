@@ -65,10 +65,7 @@ optimization.
 
 ## Subagent model selection
 
-> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet`
-> (low effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
-> operator-ask or a skill step that names it. See the
-> `choosing-subagent-models` skill for the full policy.
+> **Model tiers:** pass an explicit `model:` on every dispatch; choose model and effort per the `choosing-subagent-models` skill (read `runtime.role_models` at the moment of use). Never let a sub-agent inherit your own model.
 
 ## Check the target's queue before you dispatch (R3)
 
@@ -162,7 +159,7 @@ re-dispatch overhead.
 3. Acceptance criteria as bullets
 4. The worktree path the work happens in
 5. An explicit reminder to pass `model:` on any sub-agents the implementer
-   spawns (sonnet-low for mechanical, sonnet-medium for judgment)
+   spawns (model and effort per `choosing-subagent-models`)
 6. Spec/plan paths to read before starting
 7. **Adjacent candidate beads** from the adjacency pass above, labeled as
    CANDIDATES with their validity explicitly unverified — plus the instruction to
@@ -225,17 +222,16 @@ with a different name — do not rename in place.
 
 ## Propagate model-selection discipline downward
 
-**Why:** Sub-agents inherit the parent model by default. A coordinator on Opus
-that spawns an unspecified sub-agent gets Opus-cost work for tasks that need
-sonnet-low. The same trap repeats inside an implementer's worktree: if the
+**Why:** Sub-agents inherit the parent model by default. A coordinator whose own tier is
+costly that spawns an unspecified sub-agent gets costly work for tasks that need
+a cheap tier. The same trap repeats inside an implementer's worktree: if the
 implementer doesn't propagate the discipline, their own sub-agents silently
 inherit too. Cost compounds across a session.
 
 **How to apply:** Every dispatch prompt should include the model-selection rule
 explicitly: "When you spawn your own sub-agents, pass explicit `model:` —
-`sonnet` (low effort) for mechanical work (lint, tests, find/replace), `sonnet`
-(medium effort) for judgment work (review, complex implementation), `opus`
-only when justified. Default to sonnet over opus." Audit the dispatch prompt before sending.
+choose model and effort per the `choosing-subagent-models` skill (read
+`runtime.role_models` at the moment of use); never inherit your own model." Audit the dispatch prompt before sending.
 
 ## The impl-prompt review stamp satisfies pre-dispatch review
 

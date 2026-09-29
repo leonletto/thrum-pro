@@ -29,16 +29,15 @@ specific symbol, or a specific question. Get a focused report back. For research
 across N > 6 items, invoke `efficient-multi-agent-research` instead of bespoke
 dispatch — it handles partition + parallelization + consolidation.
 
-> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet` (low
-> effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
-> operator-ask or a skill step that names it. See the `choosing-subagent-models`
-> skill for the full policy.
+> **Model tiers:** pass an explicit `model:` on every dispatch; choose model and
+> effort per the `choosing-subagent-models` skill (read `runtime.role_models` at
+> the moment of use). Never let a sub-agent inherit your own model.
 
 #### Prefer `efficient-multi-agent-research` for multi-part research
 
 When a research or investigation task has independent parts, reach for the
 `efficient-multi-agent-research` skill FIRST — it partitions the work across
-many cheap parallel subagents (sonnet-low gatherers, sonnet-medium synthesizers)
+many cheap parallel subagents (cheap gatherers, judgment-tier synthesizers)
 instead of one expensive serial subagent. It is the preferred research path:
 cheaper, faster, and it keeps each subagent's context tight.
 

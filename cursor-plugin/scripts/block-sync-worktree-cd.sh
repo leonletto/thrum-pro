@@ -47,21 +47,21 @@ EOF
 }
 
 # 1. Block cd/pushd/chdir into the a-sync worktree (command-position only)
-if echo "$command" | grep -qE "${CMDPOS}(cd|pushd|chdir)\s+['\"]?[^\s]*${SYNC_PATTERN}"; then
+if echo "$command" | grep -qE "${CMDPOS}(cd|pushd|chdir)\s+['\"]?[^[:space:]]*${SYNC_PATTERN}"; then
   deny "Changing directory into .git/thrum-sync/a-sync/ is forbidden."
 fi
 
 # 2. Block git -C <a-sync-path> with branch-changing commands
-if echo "$command" | grep -qE "${CMDPOS}git\s+(-C\s+['\"]?[^\s]*${SYNC_PATTERN}['\"]?\s+)(checkout|switch|reset|merge|rebase|pull)\b"; then
+if echo "$command" | grep -qE "${CMDPOS}git\s+(-C\s+['\"]?[^[:space:]]*${SYNC_PATTERN}['\"]?\s+)(checkout|switch|reset|merge|rebase|pull)\b"; then
   deny "Branch-changing git operations on the a-sync worktree are forbidden."
 fi
 
 # 3. Block git --work-tree=<a-sync-path> with branch-changing commands
-if echo "$command" | grep -qE "${CMDPOS}git\s+(--work-tree[= ]['\"]?[^\s]*${SYNC_PATTERN}['\"]?\s+).*(checkout|switch|reset|merge|rebase|pull)\b"; then
+if echo "$command" | grep -qE "${CMDPOS}git\s+(--work-tree[= ]['\"]?[^[:space:]]*${SYNC_PATTERN}['\"]?\s+).*(checkout|switch|reset|merge|rebase|pull)\b"; then
   deny "Branch-changing git operations on the a-sync worktree are forbidden."
 fi
 
 # 4. Block git --git-dir=<a-sync-path> with branch-changing commands
-if echo "$command" | grep -qE "${CMDPOS}git\s+(--git-dir[= ]['\"]?[^\s]*${SYNC_PATTERN}['\"]?\s+).*(checkout|switch|reset|merge|rebase|pull)\b"; then
+if echo "$command" | grep -qE "${CMDPOS}git\s+(--git-dir[= ]['\"]?[^[:space:]]*${SYNC_PATTERN}['\"]?\s+).*(checkout|switch|reset|merge|rebase|pull)\b"; then
   deny "Branch-changing git operations on the a-sync worktree are forbidden."
 fi

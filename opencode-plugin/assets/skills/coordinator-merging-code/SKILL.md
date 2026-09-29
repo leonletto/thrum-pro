@@ -159,7 +159,9 @@ worktree; its sub-agents get READ-ONLY git. `checkout`/`reset`/`restore`/`stash`
 `clean`/`rebase` forbidden in **every** directory for both. Give an escape hatch
 for instrument-and-undo (a `cp` copy, or edit-then-revert) or the careful agent
 breaches the fence doing good work. **Use `rm -r`, NEVER `rm -rf`.**
-**Pasting a fence is not enforcing it.**
+**Pasting a fence is not enforcing it.** This same fenced commit capability is
+what the sanctioned `GATE-AUTHORED` mechanical-bookkeeping-fix commit uses — it
+is not a new permission grant.
 
 ## 4. THE EXECUTED VERIFY — SCOPED TO THE CHANGE
 
@@ -177,7 +179,13 @@ executed half is **scoped to the change**:
 - The `merge-base --is-ancestor` fast-forward check (§6).
 - Any `*_tripwire_test.go` the change touches must stay green or the diff must
   state why its premise changed; a tripwire edited to accommodate the change is a
-  finding, not a fix.
+  finding, not a fix — **except** a mechanical follow-up (updating a stale
+  expectation to merely track an already-landed, already-reviewed change: a
+  renumbered line, a regenerated census key, and the like), which the gate may
+  fix itself as a `GATE-AUTHORED` commit and re-run. A tripwire edit that changes
+  what the tripwire actually *enforces* — any design or behavior judgment call —
+  stays a finding, never a self-administered fix. Keep this distinction sharp;
+  it is the highest-risk edit in this whole sequence.
 - 🔴 **The CLASS-firing governance gates, on the merged tree — they are BLIND to
   changed-package scoping, exactly like the `//go:embed` asset in §5.**
   `TestFixtureDriftGuard_NoUnlistedSchemaMirrors` (`internal/schema`) and
@@ -274,12 +282,16 @@ agreeing (`rev-parse origin/<branch>` and `ls-remote`). **Assert the branch TIP*
 1. **The verdict artifact.** The runner saves verdicts to
    `dev-docs/gate-reports/<ISO-week>/<date>/<gate-slug>/` and **commits them
    BEFORE removing any worktree.** Save → commit → then destroy. A verdict that
-   exists only in a message cannot be audited later.
+   exists only in a message cannot be audited later. The artifact must be able to
+   carry a `CLEAN-WITH-GATE-FIXES` outcome, and when one applies it cites the
+   `GATE-AUTHORED` commit SHA.
 2. **The efficacy row**, in `dev-docs/hotpath-gate-efficacy.md` — required for
    **every** trigger-dir merge, including `SKIPPED_WITH_EVIDENCE` rows and
    orchestrator-run merges. The log measures gate **coverage**, not just outcomes.
    Record `FALSE_POSITIVE=0` explicitly on a clean run so the zero is a
-   measurement rather than an absence.
+   measurement rather than an absence. Same rule applies here: an
+   `outcome=CLEAN-WITH-GATE-FIXES` row cites the `GATE-AUTHORED` commit SHA when
+   one exists.
 3. **Commit accumulated agent state** under `.thrum/agents/` along with the merge.
    Uncommitted agent state exists in exactly one working tree, and it IS the
    agent's memory across restarts. **Never `git add -f`.**

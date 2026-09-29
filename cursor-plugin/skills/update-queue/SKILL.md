@@ -110,7 +110,7 @@ Give each sub-agent:
   `merge-base`, `status` ONLY — never `checkout`/`reset`/`restore`/`stash`/
   `clean`/`rebase`/`commit`/`push`, in any directory; never enter another
   worktree.
-- pinned `model:` (sonnet; intended tier is low for mechanical lookups — the
+- pinned `model:` (per `choosing-subagent-models`; a cheap tier for mechanical lookups — the
   Agent tool takes no `effort`, so carry the tier via the agent definition or
   the tmux launch flags).
 

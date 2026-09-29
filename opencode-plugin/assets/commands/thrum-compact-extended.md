@@ -73,7 +73,7 @@ survives even if post-compact orientation fails, so it is read-first and
 self-contained:
 
 > 🔴 ON RESUME — you were COMPACTED, not restarted. Daemon binding is intact
-> (subagents/loops/crons survived). Resume LEAN: Read this file FIRST. Expect a
+> (subagents/loops/crons survived). Resume LEAN: this file is delivered inline in the injected briefing (read it FIRST). Expect a
 > `thrum prime --light` briefing already auto-injected by the SessionStart
 > hook; only run `thrum:prime-agent` if it did NOT appear. Do NOT manually run
 > full `thrum prime`. Then continue from §16.
@@ -83,8 +83,34 @@ compacted (not cold) start.
 
 ### 3. Write the continuation
 
-Per Step 3 of the partial, use the Write tool to save your composed continuation
-to `${REPO}/.thrum/restart/${AGENT}.md`.
+First run this PREP block (it mints the path and a per-run nonce), then use the
+Write tool per Step 3 of the partial:
+
+```bash
+# The Bash tool does NOT persist shell state across calls, so this block
+# re-resolves identity itself. Fail closed: no cwd/git fallback.
+REPO=$(
+  thrum agent worktree --authoritative 2>/dev/null
+) || { echo "ERROR: cannot authoritatively resolve your worktree via the daemon. Refusing to fall back to cwd/git-toplevel — that would risk silently saving this snapshot to the wrong repo. Check daemon connectivity and retry."; exit 1; }
+[ -n "$REPO" ] || { echo "ERROR: thrum agent worktree --authoritative returned empty"; exit 1; }
+AGENT=$(thrum whoami --field agent_id) || { echo "ERROR: agent not registered"; exit 1; }
+[ -n "$AGENT" ] || { echo "ERROR: empty agent_id"; exit 1; }
+mkdir -p "${REPO}/.thrum/restart"
+SNAPSHOT="${REPO}/.thrum/restart/${AGENT}.md"
+NONCE="zn6fx-$(date +%s)-$$-${RANDOM}${RANDOM}"
+echo "SNAPSHOT_PATH=${SNAPSHOT}"
+echo "SNAPSHOT_NONCE=${NONCE}"
+```
+
+Write to EXACTLY the printed `SNAPSHOT_PATH` (not a path you re-derive), and make
+sure the file contains the marker below (as its final line), with the printed `SNAPSHOT_NONCE` — verify searches the whole file for it:
+
+```text
+<!-- snapshot-nonce: <SNAPSHOT_NONCE> -->
+```
+
+**Record both values** — the verify step pastes them into its verify block, which
+fails closed unless the file at that exact path carries that nonce.
 
 This file lives on disk and is UNAFFECTED by compaction — compaction rewrites
 your conversation context, never your worktree. So the snapshot is readable after
@@ -117,34 +143,55 @@ syncing this file to each runtime's plugin tree.
 
 Firing `/compact` before the Step 3 Write lands compacts a pre-write context and
 resumes from a stale/blank file — the exact failure this command prevents. This
-block re-resolves identity (the Bash tool does NOT persist shell state across
+block (paste the two values printed by the Step 3 PREP block into its first two
+lines) re-resolves identity (the Bash tool does NOT persist shell state across
 calls, so earlier steps' variables are gone), verifies the snapshot on disk, and
 only then fires `/compact` — all in ONE call so nothing depends on a prior block.
 
 ```bash
-REPO=$(thrum agent worktree --authoritative 2>/dev/null) || { echo "ERROR: cannot authoritatively resolve your worktree via the daemon. Refusing to fall back to cwd/git-toplevel — that would risk silently resuming from the wrong repo's snapshot. Check daemon connectivity and retry."; exit 1; }
+SNAPSHOT="<PASTE SNAPSHOT_PATH FROM STEP 3>"
+NONCE="<PASTE SNAPSHOT_NONCE FROM STEP 3>"
+# Fresh authoritative re-resolution; must agree with the path you actually wrote.
+REPO=$(
+  thrum agent worktree --authoritative 2>/dev/null
+) || { echo "ERROR: cannot authoritatively resolve your worktree via the daemon. Refusing to fall back to cwd/git-toplevel — that would risk silently resuming from the wrong repo's snapshot. Check daemon connectivity and retry."; exit 1; }
 [ -n "$REPO" ] || { echo "ERROR: thrum agent worktree --authoritative returned empty"; exit 1; }
 AGENT=$(thrum whoami --field agent_id) || { echo "ERROR: agent not registered"; exit 1; }
+[ -n "$AGENT" ] || { echo "ERROR: empty agent_id"; exit 1; }
 SESSION_RAW=$(thrum whoami --field tmux_session)
 SESSION=${SESSION_RAW%%:*}
-SNAPSHOT="${REPO}/.thrum/restart/${AGENT}.md"
+EXPECTED="${REPO}/.thrum/restart/${AGENT}.md"
+BIND_OK=1
+if [ -z "$SNAPSHOT" ] || [ -z "$NONCE" ] || [[ "$SNAPSHOT$NONCE" == *"<PASTE"* ]]; then
+  echo "VERIFY FAILED: SNAPSHOT/NONCE not filled in — paste SNAPSHOT_PATH and SNAPSHOT_NONCE from Step 3. SNAPSHOT_OK=0"; BIND_OK=0
+elif [ "$SNAPSHOT" != "$EXPECTED" ]; then
+  echo "VERIFY FAILED: identity/worktree DRIFT between write time and verify time. Written path: $SNAPSHOT — re-resolved path: $EXPECTED. SNAPSHOT_OK=0"; BIND_OK=0
+fi
 
 # mtime: choose the stat dialect explicitly. GNU `stat -f` means --file-system
 # (wrong, multiline) — the `stat -f %m . || stat -c %Y` one-liner is fragile on
 # Linux, so branch on which dialect this box speaks.
 if stat -f %m . >/dev/null 2>&1; then
-  MTIME=$(stat -f %m "$SNAPSHOT" 2>/dev/null)
+  MTIME=$(
+    stat -f %m "$SNAPSHOT" 2>/dev/null
+  )
 else
-  MTIME=$(stat -c %Y "$SNAPSHOT" 2>/dev/null)
+  MTIME=$(
+    stat -c %Y "$SNAPSHOT" 2>/dev/null
+  )
 fi
 NOW=$(date +%s)
 AGE=$(( NOW - ${MTIME:-0} ))
 
 SNAPSHOT_OK=1
-if [ ! -s "$SNAPSHOT" ] || [ ! -r "$SNAPSHOT" ]; then
+if [ "$BIND_OK" = 0 ]; then
+  SNAPSHOT_OK=0   # binding failure already reported above
+elif [ ! -s "$SNAPSHOT" ] || [ ! -r "$SNAPSHOT" ]; then
   echo "VERIFY FAILED: snapshot missing/empty/unreadable at $SNAPSHOT"; SNAPSHOT_OK=0
 elif [ "$AGE" -gt 300 ]; then
   echo "VERIFY FAILED: snapshot is ${AGE}s old — stale (prior write), not this session's"; SNAPSHOT_OK=0
+elif ! grep -qF -- "$NONCE" "$SNAPSHOT"; then
+  echo "VERIFY FAILED: nonce not found in $SNAPSHOT — file at that path is not this session's write"; SNAPSHOT_OK=0
 else
   echo "VERIFY OK: snapshot non-empty, readable, written ${AGE}s ago"
 fi
@@ -179,6 +226,16 @@ if [ "$SNAPSHOT_OK" = 1 ] && [ "$SESSION_OK" = 1 ]; then
   # all, so this is caught synchronously, not inferred later from silence.
   thrum tmux send "$AGENT" "/compact"
   SEND_RC=$?
+  # Exit 3 = HELD, exit 4 = VERDICT UNKNOWN (thrum tmux send --help). In both
+  # the "/compact" text is ALREADY TYPED into this pane and Enter was withheld
+  # or unconfirmed. NEVER fall through to the raw retry below: it would append a
+  # second "/compact" to the typed one ("/compact/compact") and press Enter into
+  # whatever dialog the daemon just judged to be open. Surface it and stop.
+  if [ "$SEND_RC" -eq 3 ] || [ "$SEND_RC" -eq 4 ]; then
+    echo "HOLDING: thrum tmux send exited ${SEND_RC} (3=Enter WITHHELD, 4=verdict unknown) — /compact is typed but not confirmed submitted. NOT retrying."
+    echo "Report this to your coordinator (or the operator if you are top-level) and stop; a human or coordinator must inspect the pane and submit or clear it."
+    exit 1
+  fi
   if [ "$SEND_RC" -ne 0 ]; then
     echo "ERROR: thrum tmux send exited ${SEND_RC} — the daemon-routed self-send failed; it will NOT queue or deliver /compact."
     # Fail-loud fallback, NOT silent idle: attempt the compact command
@@ -218,6 +275,23 @@ if [ "$SNAPSHOT_OK" = 1 ] && [ "$SESSION_OK" = 1 ]; then
     fi
     echo "Raw fallback send-keys succeeded on socket $RAW_TMUX_SOCK."
   fi
+  # thrum-xyz: queue the RESUME PROMPT right behind /compact, on the same
+  # daemon queue (only when the daemon-routed /compact send succeeded; the raw
+  # fallback path leaves any hook-side nudge as the kickoff). Hook output is
+  # context only — it does not start a turn — so without this an idle pane with
+  # an empty inbox can sit at 0% context, empty composer, until a human types.
+  # The daemon dispatches it once the pane is idle again AFTER the compaction
+  # (FIFO behind /compact), so it is not a timer and it fires exactly once.
+  if [ "$SEND_RC" -eq 0 ]; then
+    RESUME_PROMPT="Compaction complete - please continue: your Resume Plan is in the auto-injected briefing (# Previous Session Context). If it is missing, read ${SNAPSHOT} or the newest *-restart.md in .thrum/agents/${AGENT}/sessions/ of the main repo, then execute its numbered resume plan."
+    thrum tmux send "$AGENT" "$RESUME_PROMPT"
+    RESUME_RC=$?
+    if [ "$RESUME_RC" -eq 0 ]; then
+      :
+    else
+      echo "WARNING: thrum tmux send exited ${RESUME_RC} — the post-compact resume prompt was NOT queued (exit 3/4 = already typed, do NOT retype). If the pane sits idle after compaction, send it a resume prompt by hand."
+    fi
+  fi
 else
   echo "HOLDING: not firing /compact. Report the VERIFY FAILED line(s) above to"
   echo "your coordinator (or the operator if you are top-level) and stop."
@@ -225,11 +299,19 @@ else
 fi
 ```
 
+**Fail-closed binding rule:** the block only passes for the exact path and nonce
+the Step 3 PREP block printed. It refuses (VERIFY FAILED, no `/compact`) if the
+values are empty or still placeholders, if a fresh re-resolution of your identity
+yields a different path (drift), or if the file at that path lacks the nonce — a
+fresh file merely sitting at the re-derived path is NOT proof you wrote it.
+
 If EITHER check fails, the block HOLDS and does not fire `/compact` — holding is
 safe; compacting against an unverified snapshot loses the context this command
 exists to preserve (for an extended snapshot, wire contracts and design
-rationale). If BOTH checks pass but `thrum tmux send` itself exits nonzero, the
-block does NOT go idle un-compacted silently — it prints the failure and falls
+rationale). If `thrum tmux send` exits 3 (Enter WITHHELD) or 4 (verdict
+unknown), `/compact` is already typed in the pane: the block holds and does NOT
+retype it. If BOTH checks pass but `thrum tmux send` itself exits nonzero (any
+other code), the block does NOT go idle un-compacted silently — it prints the failure and falls
 back to a raw, explicit-socket `tmux send-keys` retry (single call, text +
 Enter together) before holding for real. After a successful send (daemon-routed
 or raw fallback), the turn ends; emit no further tool calls or prose this turn.
@@ -244,17 +326,21 @@ intact (that is why your sub-agents, loops, and crons kept running). Full
 `thrum prime` rebuilds identity + binding + full briefing for a NEW session; none
 of that is needed here. Resume LEAN, in this order:
 
-1. **Read your snapshot FIRST.** `Read ${REPO}/.thrum/restart/${AGENT}.md`
-   unconditionally, before anything else, so orientation survives even if the
-   next step errors. Its first line is the `ON RESUME` header; execute §16 from
-   it. For an extended snapshot this recovers the §7 wire contracts, §8
-   capability matrix, and §9 design inventory the compaction summary is likely to
-   drop.
-2. **Expect the light briefing to already be there.** On a healthy daemon with
-   a fresh snapshot, the `SessionStart` hook auto-injects a `thrum prime --light`
-   briefing zero-turn — you do not run anything for this. Only if it did not
-   appear (daemon unreachable, stale/absent snapshot) run `thrum:prime-agent`
-   manually as the fallback. Never manually run full `thrum prime`.
+1. **Your Resume Plan arrives inline — do not go looking for the file.** The
+   `SessionStart` hook auto-injects a `thrum prime --light` briefing zero-turn,
+   and its `# Previous Session Context` section carries your full snapshot,
+   including the `ON RESUME` header; execute §16 from it. That prime ARCHIVES the
+   snapshot (moves `${REPO}/.thrum/restart/${AGENT}.md` into the main repo's
+   `.thrum/agents/${AGENT}/sessions/`), so the original path is normally GONE
+   by the time you look — that is by design, not loss. Only if no briefing
+   appeared (daemon unreachable), read the newest `*-restart.md` in that
+   `sessions/` directory (or `${REPO}/.thrum/restart/${AGENT}.md` if it still
+   exists) and run `thrum:prime-agent` manually as the fallback. Never manually
+   run full `thrum prime` when the briefing is present.
+2. **A resume prompt starts your first turn.** Step 4 queued a "Compaction
+   complete - please continue" prompt on the daemon right behind `/compact`; it
+   is delivered once the pane is idle after compaction, so a turn starts even
+   with an empty inbox.
 3. **Continue** from §16. Reconnect to your still-live sub-agents, loops, and
    crons rather than re-dispatching.
 
@@ -262,5 +348,5 @@ Runtime-specific compaction-recovery hooks (if this runtime has any) are
 documented in that runtime's own plugin tree (its hooks manifest and
 the scripts it points to), not here.
 
-**Read the snapshot you just saved at `${REPO}/.thrum/restart/${AGENT}.md` and
-follow its instructions post-compact.**
+**Follow the Resume Plan in your injected `# Previous Session Context` (snapshot
+saved at `${REPO}/.thrum/restart/${AGENT}.md`, archived by the prime) post-compact.**

@@ -60,14 +60,14 @@ Pre-assembled context is the difference between a real debate and a shallow one.
 
 ### The three rounds
 
-> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet` (low
-> effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
-> operator-ask or a skill step that names it. See the `choosing-subagent-models`
-> skill for the full policy.
+> **Model tiers:** pass an explicit `model:` on every dispatch; choose model and
+> effort per the `choosing-subagent-models` skill (read `runtime.role_models` at
+> the moment of use). Never let a sub-agent inherit your own model.
 
 Dispatch one sub-agent per option, in parallel (single message, multiple Agent
-tool calls). `model: "sonnet"` for all dispatches — quality matches Opus on
-structured critique at a fraction of the cost.
+tool calls). `model: <per choosing-subagent-models>` for all dispatches — a
+cheaper tier matches a costly one on structured critique at a fraction of the
+cost.
 
 #### Round 1 — opening positions
 
@@ -227,11 +227,12 @@ working plan/context in an actionable shape:
 
 ### Model and cost
 
-Sonnet for all dispatches. See `~/.claude/CLAUDE.md § Sub-Agent Model Selection`
-— the project-wide rule that every `Agent` dispatch must pass `model` explicitly
-(never inherit parent Opus by default). Roughly ~100k tokens for 2 options,
-~150k for 3 options. This is an investment that buys a reviewer-ready decision
-an implementer can execute in a fresh session without re-hashing the design.
+Model per `choosing-subagent-models` for all dispatches. See
+`~/.claude/CLAUDE.md § Sub-Agent Model Selection` — the project-wide rule that
+every `Agent` dispatch must pass `model` explicitly (never inherit your own
+model by default). Roughly ~100k tokens for 2 options, ~150k for 3 options. This
+is an investment that buys a reviewer-ready decision an implementer can execute
+in a fresh session without re-hashing the design.
 
 ### See also
 

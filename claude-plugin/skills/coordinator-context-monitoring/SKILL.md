@@ -285,10 +285,7 @@ brick.
 
 ## Subagent model selection
 
-> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet`
-> (low effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
-> operator-ask or a skill step that names it. See the
-> `choosing-subagent-models` skill for the full policy.
+> **Model tiers:** pass an explicit `model:` on every dispatch; choose model and effort per the `choosing-subagent-models` skill (read `runtime.role_models` at the moment of use). Never let a sub-agent inherit your own model.
 
 ## Step 1 — Run the sweep
 
@@ -474,6 +471,8 @@ by typing the restart command directly into their input field:
 ```bash
 thrum tmux send <tmux_session_name> '/thrum:restart'
 ```
+
+If it exits 3 (Enter WITHHELD, text already typed) or 4 (verdict unknown), do NOT retype it: `thrum tmux capture` the pane and submit with `thrum tmux send <tmux_session_name> --keys Enter` only if no dialog is showing.
 
 (Find the tmux session name in sweep output — it's typically the worktree
 basename, e.g. `myepic-impl`, NOT the agent_id.)

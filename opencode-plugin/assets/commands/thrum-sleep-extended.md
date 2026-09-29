@@ -36,7 +36,9 @@ to sleep until the operator wakes it later. Same termination semantics as
 # (both cwd-resolved). A cwd-derived pattern could silently
 # resolve to a DIFFERENT agent's worktree, or the main repo. There is NO git
 # fallback — if the daemon can't answer, refuse and stop rather than guess.
-REPO=$(thrum agent worktree --authoritative 2>/dev/null) || { echo "ERROR: cannot authoritatively resolve your worktree via the daemon. Refusing to fall back to cwd/git-toplevel — that would risk silently saving this snapshot to the wrong repo. Check daemon connectivity and retry."; exit 1; }
+REPO=$(
+  thrum agent worktree --authoritative 2>/dev/null
+) || { echo "ERROR: cannot authoritatively resolve your worktree via the daemon. Refusing to fall back to cwd/git-toplevel — that would risk silently saving this snapshot to the wrong repo. Check daemon connectivity and retry."; exit 1; }
 [ -n "$REPO" ] || { echo "ERROR: thrum agent worktree --authoritative returned empty"; exit 1; }
 AGENT=$(thrum whoami --field agent_id) || { echo "ERROR: agent not registered"; exit 1; }
 [ -n "$AGENT" ] || { echo "ERROR: empty agent_id"; exit 1; }
@@ -104,7 +106,9 @@ Copy those to the MAIN REPO PATH, resolved explicitly:
 
 ```bash
 # Resolve the main repo's .thrum from the redirect FILE (do not assume a path).
-MAIN_THRUM=$(cat "${REPO}/.thrum/redirect" 2>/dev/null) || MAIN_THRUM="${REPO}/.thrum"
+MAIN_THRUM=$(
+  cat "${REPO}/.thrum/redirect" 2>/dev/null
+) || MAIN_THRUM="${REPO}/.thrum"
 mkdir -p "${MAIN_THRUM}/agents/${AGENT}"
 cp <artifact> "${MAIN_THRUM}/agents/${AGENT}/<name>"
 ls -la "${MAIN_THRUM}/agents/${AGENT}/<name>"   # VERIFY IT LANDED

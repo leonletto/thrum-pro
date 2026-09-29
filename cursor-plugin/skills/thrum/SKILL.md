@@ -17,8 +17,7 @@ hook; also fires on post-compact resume). PreCompact is not registered — use
 
 ```bash
 thrum send --to @name --body-file msg.md           # Direct message (body from file)
-thrum send --broadcast --body-file msg.md          # Team-wide fanout
-thrum send --to @everyone --body-file msg.md       # Broadcast (legacy keyword; --broadcast preferred)
+thrum send --to @name1 --to @name2 --body-file msg.md   # Multiple explicit recipients (repeatable --to)
 thrum reply <msg-id> --body-file reply.md          # Reply (same audience; NO --to — recipient comes from the message)
 thrum inbox                              List messages (auto-marks displayed as read)
 thrum inbox --unread                     Unread only (does not mark as read)
@@ -29,6 +28,11 @@ thrum message read --all --force         Mark ALL unread as read (run `read --al
 thrum wait                               Block until message arrives (30s timeout)
 thrum wait --timeout 120s                Custom timeout (duration)
 ```
+
+One-to-many fan-out (`--broadcast`, `@everyone`, role-based mentions/groups)
+was removed by design (P0 ruling); do not restore it. Name
+every recipient explicitly with repeatable `--to @name`, or address a scoped
+agent-type group.
 
 ### Agents
 

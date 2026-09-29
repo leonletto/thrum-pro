@@ -912,11 +912,32 @@ run_capture_cycle() {
 # Overnight (local 00:00-07:59) it still captures every run, but only
 # EMITS the wake line once ~2h has passed (tracked via $stamp), printing a
 # non-matching line otherwise. Reverts automatically at 08:00.
+#
+# Test seam: ROSTER_WATCH_FAKE_HOUR, when set, is validated as an integer
+# 0-23 (one or two digits, optional leading zero) and used in place of the
+# real America/Los_Angeles wall-clock hour, so tests can force the
+# daytime/overnight branch deterministically. An invalid value (non-numeric,
+# or numeric but outside 0-23) prints one diagnostic to stderr naming the
+# bad value and the accepted range, then skips wake-line emission for this
+# tick entirely -- it never falls back to the real clock, so a bad test
+# value fails loudly instead of silently passing as if unset. When unset
+# (the default, and every real production invocation), behavior is
+# unchanged: the hour is still read from the real America/Los_Angeles
+# wall clock.
 # ---------------------------------------------------------------------------
 emit_wake_line() {
   local file="$1" ts="$2" stamp="$3"
   local hour now last emit=1
-  hour=$(TZ=America/Los_Angeles date +%H); hour=$((10#$hour)) # 10# avoids octal parse of 08/09
+  if [ -n "${ROSTER_WATCH_FAKE_HOUR:-}" ]; then
+    if [[ "${ROSTER_WATCH_FAKE_HOUR}" =~ ^([0-9]|[01][0-9]|2[0-3])$ ]]; then
+      hour=$((10#${ROSTER_WATCH_FAKE_HOUR}))
+    else
+      echo "roster-watch: ROSTER_WATCH_FAKE_HOUR='${ROSTER_WATCH_FAKE_HOUR}' is invalid (expected an integer 0-23) -- skipping wake-line emission this tick" >&2
+      return 1
+    fi
+  else
+    hour=$(TZ=America/Los_Angeles date +%H); hour=$((10#$hour)) # 10# avoids octal parse of 08/09
+  fi
   now=$(date +%s)
   if [ "$hour" -ge 0 ] && [ "$hour" -lt 8 ]; then
     last=$(cat "$stamp" 2>/dev/null || echo 0)

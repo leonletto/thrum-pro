@@ -1,13 +1,14 @@
 ---
 name: verify-against-plan
-description: "Use after implementation is complete to verify the code covers every requirement from the plan / design spec - runs alongside code-review as the second pass in the Code Review Protocol. Outputs structured findings - missing scope, unmet acceptance criteria, silent deviations from the spec, newly-introduced surprises."
+description: "Use after implementation is complete to verify the code covers every requirement from the plan / design spec - runs alongside code-review as the second pass in the Code Review Protocol. Takes an optional design= input so requirements that only the design doc states are checked too. Outputs structured findings - missing scope, unmet acceptance criteria, silent deviations from the spec, newly-introduced surprises."
 ---
 
 # Verify Against Plan
 
 ## Inputs
 
-Two inputs are required. Missing either is a pre-flight bail.
+Two inputs are required and one is optional. Missing a required input is a
+pre-flight bail.
 
 ### 1. Plan or spec path (required)
 
@@ -29,6 +30,17 @@ file-structure and acceptance-criteria anchors the skill compares against.
 - **Worktree path** — infer the branch and diff from the worktree's current
   state. E.g. `<workspace>/thrum/plugin-skills-slate`.
 
+### 3. Design doc path (optional): `design=<path>`
+
+A markdown design doc or spec the implementation must also honour. The plan
+stays the authoritative anchor; the design is a second source of requirements.
+Omit it and the skill behaves exactly as before (plan only). When supplied, the
+skill also runs the **Design-doc pass** below.
+
+Pass it when the plan implements all or part of a design: `design=<absolute path
+to the design spec>`. A path that is missing, empty or unreadable is a
+pre-flight bail (check 1b), never a silent skip.
+
 ### Context-inferred defaults
 
 When the caller supplies no explicit scope, infer:
@@ -43,6 +55,12 @@ When the caller supplies no explicit scope, infer:
 
 ```text
 /verify-against-plan plan=dev-docs/plans/YYYY-MM-DD-topic-plan.md branch=feat/plugin-skills-slate
+```
+
+**With a design doc (requirements only the design states are checked too):**
+
+```text
+/verify-against-plan plan=<plan file> design=<design file> branch=feat/plugin-skills-slate
 ```
 
 **Context-inferred (from current worktree):**
@@ -61,6 +79,11 @@ clear error — do not proceed with partial inputs.
 1. **Plan/spec file exists and is readable.** Verify the path resolves and the
    file is non-empty markdown. Error message on failure names the path and the
    issue (missing / empty / unreadable).
+
+   1b. **Design doc exists and is readable (only when `design=` is supplied).**
+   Same shape as check 1: the path resolves and the file is non-empty markdown,
+   and the error names the path and the issue. Unlike the plan, a design doc is
+   not required to have a File Structure table or an Acceptance section.
 
 2. **Implementation scope resolves to a non-empty diff.** For branch or
    commit-range inputs, `git diff` must produce at least one changed file. An
@@ -160,9 +183,97 @@ clear error — do not proceed with partial inputs.
    that the callee package was actually searched and the cost formula uses
    realistic production scale, not a test-fixture number.
 
-Only when checks 1–3 pass should the comparison pass begin. Checks 4, 5, and 6
+Only when checks 1–3 (and 1b, when `design=` is supplied) pass should the
+comparison pass begin. Checks 4, 5, and 6
 run alongside and contribute findings; a missing stamp never blocks, and check 6
 only fires when the diff actually touches a hot root.
+
+## Design-doc pass (only when `design=` is supplied)
+
+Runs after the plan comparison and reports on the same scale. It exists because
+a design doc can carry a requirement that no plan task mentions, and a plan-only
+review can never see that gap.
+
+**1. Extract requirements, mechanically.** Enumerate in DOCUMENT ORDER and number
+them R1..Rn, recording `<design file>:<line>` and the verbatim quote for each.
+Nothing is extracted by judgment; exactly these rules apply:
+
+- **Section items.** Under any heading whose title contains (case-insensitive)
+  `requirement`, `acceptance`, `success criteria`, `invariant`, `constraint`,
+  `non-goal` or `out of scope`, EVERY bullet, numbered item or table row is one
+  requirement. The section runs until the next heading of the same or a higher
+  level. A nested sub-bullet is its own requirement only if it carries its own
+  MUST/SHALL; otherwise it belongs to its parent item.
+- **Standalone MUST sentences.** Outside those sections, every sentence that
+  contains `MUST`, `MUST NOT`, `SHALL` or `SHALL NOT` in capitals is one
+  requirement.
+- **Non-goals.** Items under `non-goal` / `out of scope` headings are NEGATIVE
+  requirements: the diff must not implement them.
+- **Skipped, exactly:** everything else — background, motivation, alternatives
+  considered, open questions, examples, and lowercase "must"/"shall"/"should"
+  prose.
+
+If the design has no extracted requirement, say so in one informational line
+("design supplied but no extractable requirements") and continue plan-only;
+never report that as design coverage. Let N be the number extracted.
+
+**2. Scope them, mechanically.** A requirement Rk is CHECKED if and only if
+EITHER of these holds; otherwise it is OUTSIDE:
+
+- **(a) Name match.** Build the set of names from (i) every path segment and
+  backticked token in the plan's File Structure table and (ii) every path
+  segment of the diff's changed paths and every identifier on its added or
+  removed lines. Drop generic names (`internal`, `src`, `cmd`, `pkg`, `lib`,
+  `docs`, `test`, `tests`, `main`, `index`, `util`, `utils`, `common`) and names
+  shorter than 4 characters. Rk is CHECKED when its text contains any remaining
+  name as a whole word, case-insensitively (`export` matches `export/handler.go`;
+  it does not match `exports`).
+- **(b) Cited heading.** Rk sits under a design heading whose exact title also
+  appears verbatim in the plan.
+
+Requirements that are OUTSIDE are never flagged; they are counted so silence
+cannot pass for coverage, and C + O must equal N:
+
+```text
+**Design scope:** <N> extracted: <C> checked, <O> outside this plan's scope, not checked
+```
+
+A checked Rk that the plan explicitly defers or excludes is not a finding; cite
+the plan's exclusion instead.
+
+**3. Compare.** Each checked Rk is MET, ABSENT or DEVIATED against the diff and
+the branch-HEAD code (a requirement already satisfied by unchanged code is MET;
+cite where). An Rk that a plan item also covers is reported once, under the plan
+finding.
+
+**4. Report.** Same four fields and the same BLOCKING / IMPORTANT / MINOR
+buckets; the first field is labelled `Design reference` instead of
+`Plan reference`, so consolidation is unchanged:
+
+```markdown
+### BLOCKING #2 — <short descriptor>
+
+- **Design reference:** <design file>:<line> — "<verbatim requirement>"
+- **Implementation state:** <code path>:<line> or "absent"
+- **Why it matters:** <the design requirement or invariant this ties back to>
+- **Suggested resolution:** <add the missing code, or flag the design/plan gap for the coordinator>
+```
+
+Severity: an unmet MUST, acceptance criterion or stated invariant is BLOCKING; a
+silent deviation (different name, shape or behavior) or a violated non-goal is
+IMPORTANT; a documentation or reference gap is MINOR.
+
+**Example.** Design line 9 reads "The export endpoint MUST reject request bodies
+over 1 MiB with HTTP 413." The plan lists only the audit-log task and its File
+Structure names `export/handler.go` and `audit/audit.go`; the diff adds only
+audit logging. Plan-only, nothing is flagged. With `design=`, that requirement is
+extracted (it sits under a Requirements heading), CHECKED by name match (`export`
+is a name from the File Structure and the diff), ABSENT from the code, and
+reported as a BLOCKING finding quoting design line 9 with implementation state
+`absent`. A second requirement in the same design, "The billing service MUST
+retry failed charges three times", contains no name from the plan or the diff, so
+it is OUTSIDE: counted in the `Design scope` line, never flagged, even though it
+is a MUST that the diff does not implement.
 
 ## Output format
 
@@ -173,6 +284,8 @@ dual-review batch without reformatting.
 ## Verify-Against-Plan Findings
 
 **Plan:** <path> **Implementation:** <branch> (<N> commits, <M> files changed)
+**Design:** <path> (only when design= was supplied)
+**Design scope:** <N> extracted: <C> checked, <O> outside this plan's scope, not checked (only when design= was supplied)
 **Summary:** <N> BLOCKING, <N> IMPORTANT, <N> MINOR
 
 ---
@@ -303,7 +416,8 @@ not insubordination.
 
 ## Scope discipline
 
-This skill has ONE job: does the code match what the plan said it would do?
+This skill has ONE job: does the code match what the plan (and the design doc,
+when `design=` is supplied) said it would do?
 
 It does NOT:
 
@@ -316,7 +430,8 @@ It does NOT:
   branch.
 - **Review the plan itself** — pre-implementation plan review is handled by
   `superpowers:writing-plans` (built-in reviewer). If the plan is wrong, that's
-  a separate workflow.
+  a separate workflow. The same holds for the design doc: it is a source to
+  check the code against, not something this skill critiques.
 
 If a finding would belong in any of the above categories, omit it from
 verify-against-plan output. Coordinator will pick up quality / security /

@@ -22,10 +22,9 @@ they're independent reads of the same diff.
 reviewers as parallel sub-agents in the same message. Pass each a clear scope
 ("review the diff at <BASE>...<HEAD> for <criteria>").
 
-> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet` (low
-> effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
-> operator-ask or a skill step that names it. See the `choosing-subagent-models`
-> skill for the full policy.
+> **Model tiers:** pass an explicit `model:` on every dispatch; choose model and
+> effort per the `choosing-subagent-models` skill (read `runtime.role_models` at
+> the moment of use). Never let a sub-agent inherit your own model.
 
 ### Wait for both reviewers before sending anything to the implementer
 
@@ -52,6 +51,20 @@ one.
    detail and suggested fix. Keep the numbering stable across review rounds —
    when re-reviewing fixes, refer to "finding #4" and the implementer can locate
    it instantly.
+
+**Route mechanical bookkeeping findings to the gate, not the implementer.** If a
+consolidated finding is itself mechanical bookkeeping of the kind the gate is
+authorized to self-fix (see `coordinator-merging-code`: census/shard regen,
+line- number or key refreshes, ledger totals/ceilings, per-entry waivers or
+citations recording a classification already established elsewhere — never a new
+safety judgment of your own — nosec baseline hashes, comment wording, stale test
+expectations that merely follow a landed change), do not route it to the
+implementer as a normal finding. Dual review runs BEFORE the Pass-3 gate, so at
+this point there is no gate run yet to fix it: tag the finding as
+gate-deferred-bookkeeping in the consolidated list and carry it forward — the
+gate self-fixes it (a `GATE-AUTHORED` commit plus a narrow re-run of only the
+affected checks) when it runs Pass-3 on this branch. Reserve immediate
+implementer round-trips for real defects and design judgment calls.
 
 ### Verify reviewer claims against actual code before forwarding
 

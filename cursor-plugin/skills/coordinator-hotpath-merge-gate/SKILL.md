@@ -547,10 +547,24 @@ otherwise leave them.
 
 ## If it fails
 
-Send it back as a normal review finding — same channel as dual-review output,
-folded into the same numbered list if dual review is still open, or as its own
-short reply if dual review already passed. Cite the offending function/file,
-which lens it failed, and the config value that triggered the finding.
+For a genuine hot-path/perf defect, a production-behaviour change, or a design
+judgment call: send it back as a normal review finding — same channel as
+dual-review output, folded into the same numbered list if dual review is still
+open, or as its own short reply if dual review already passed. Cite the
+offending function/file, which lens it failed, and the config value that
+triggered the finding.
+
+For mechanical bookkeeping only (census/shard regen via the tool, line-number
+or key refreshes, ledger totals/ceilings where the arithmetic is derivable, a
+per-entry waiver or citation comment recording a classification already
+established elsewhere (never a new safety judgment of your own), a nosec
+baseline hash for an already-reviewed pattern, comment wording, stale test
+expectations that merely follow a landed change): fix it yourself as a
+`GATE-AUTHORED` commit on your
+`gate/` branch, re-run ONLY the lens(es) the fix affects, and report
+`CLEAN-WITH-GATE-FIXES` listing each fix instead of bouncing it to the owner.
+When unsure which bucket a finding falls in, ask the coordinator with the exact
+diff — don't bounce reflexively.
 
 ## Efficacy tracking (v1 acceptance requirement)
 
@@ -590,6 +604,7 @@ rows.
 | `FALSE_POSITIVE`        | Gate flagged something correct — record which lens and why |
 | `SLIPPED`               | A wedge occurred AFTER merge that the gate did not catch   |
 | `SKIPPED_WITH_EVIDENCE` | Gate deliberately skipped (no trigger dirs), evidence cited |
+| `CLEAN-WITH-GATE-FIXES` | Gate found only mechanical bookkeeping gaps, fixed them itself as a GATE-AUTHORED commit, re-ran only the affected checks, merge proceeded |
 
 **Retrospective reclassification:** When triaging a new wedge or incident, grep
 `dev-docs/hotpath-gate-efficacy.md` for the merged branch/date. If the gate

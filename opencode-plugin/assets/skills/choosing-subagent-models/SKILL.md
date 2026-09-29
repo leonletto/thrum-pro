@@ -22,6 +22,20 @@ mechanical-task carve-out anymore — lint runs, grep-and-collect, file maps,
 config edits, and all other "simple" work now dispatch at sonnet-low, not Haiku.
 Never select Haiku on own judgment — use sonnet-low instead.
 
+### Read the tiers at the moment of use
+
+**Role templates and launch examples do not name models or effort levels; this
+skill and the live config do.** Read the tier when you are about to spawn or
+launch, never from memory or from a copied example:
+
+```bash
+jq -r '.runtime.role_models' .thrum/config.json
+```
+
+Launching with `--role` and no `--model` resolves the role default
+automatically. A `--model` / `--effort` flag in a launch command takes its value
+from `runtime.role_models` for the target role, per this skill.
+
 ### Agent tiers
 
 Effort tier governs whether an agent does the hard thing or the expedient thing.

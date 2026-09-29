@@ -6,7 +6,7 @@ description: "Use when starting execution of a scoped implementation task — ab
 # Implementer: Orchestrating Execution
 
 You implement by **orchestrating sub-agents**, not by doing research, edits, and
-verification yourself. Your Opus context is for judgment — synthesizing
+verification yourself. Your own context is for judgment — synthesizing
 research, targeting edits, judging verification against the plan. The legwork
 goes to cheaper sub-agents. This skill is the procedure; invoke it at the start
 of executing any scoped task.
@@ -27,10 +27,7 @@ The size bound (~15 lines / 2 files) is the project default; a project-local
 
 ## Subagent model selection
 
-> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet`
-> (low effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
-> operator-ask or a skill step that names it. See the
-> `choosing-subagent-models` skill for the full policy.
+> **Model tiers:** pass an explicit `model:` on every dispatch; choose model and effort per the `choosing-subagent-models` skill (read `runtime.role_models` at the moment of use). Never let a sub-agent inherit your own model.
 
 ## Step 1 — Dispatch research
 
@@ -44,13 +41,13 @@ you do not read the code into your own context. Label the dispatch
 From the report, decide exactly what changes where, then dispatch
 general-purpose sub-agent(s) to make the edits. Give each the bd task ID, the
 exact files, the acceptance criteria, and the relevant slice of the report.
-Model: `sonnet`; use `sonnet` (low effort) for purely mechanical edits
+Model: per `choosing-subagent-models`; use the cheapest tier for purely mechanical edits
 (find/replace, rename). Label `description="implement: <what>"`. Parallelize independent
 edit-targets; serialize edits to shared files.
 
 ## Step 3 — Dispatch verification
 
-Spawn a `sonnet` verifier against **the plan the implementation sub-agent was
+Spawn a verifier sub-agent (model per `choosing-subagent-models`) against **the plan the implementation sub-agent was
 given** — does the diff satisfy the acceptance criteria and honor the plan?
 Label `description="verify: <what>"`. (For the full code-quality +
 spec-compliance review at DONE, `implementer-tdd-and-quality` and the
@@ -89,12 +86,12 @@ hard size bound.
 
 | Dispatch           | Model                                              |
 | ------------------ | -------------------------------------------------- |
-| research / explore | `sonnet` (or the `Explore` agent type)             |
-| implementation     | `sonnet`; `sonnet` (low effort) for purely mechanical edits |
-| verification       | `sonnet`                                           |
+| research / explore | per `choosing-subagent-models` (or the `Explore` agent type) |
+| implementation     | per `choosing-subagent-models`; cheapest tier for purely mechanical edits |
+| verification       | per `choosing-subagent-models`                     |
 
-Use the bare `sonnet` alias (resolves to the current Sonnet); do not hard-pin a
-version id. Never let a sub-agent inherit the parent (Opus) model.
+Use the bare alias from `runtime.role_models`; do not hard-pin a version id.
+Never let a sub-agent inherit the parent model.
 
 ## Sub-agent label convention (required)
 
@@ -105,8 +102,8 @@ delegation shape from these labels.
 ## Anti-patterns
 
 ❌ **Inline Worker** — does the research and edits itself instead of
-dispatching. Your Opus context is for orchestration judgment, not hand-typing
-edits a Sonnet sub-agent should make.
+dispatching. Your own context is for orchestration judgment, not hand-typing
+edits a sub-agent should make.
 
 ❌ **Over-orchestrator** — dispatches a sub-agent for a known one-line change,
 paying more in prompt-composition than the edit costs. The Step-0 scoping gate

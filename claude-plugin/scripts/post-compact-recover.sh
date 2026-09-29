@@ -10,7 +10,9 @@ THRUM_CONFIG="$THRUM_HOME/.thrum/config.json"
 # zero-turn light briefing (`thrum prime --light`) in the normal case, so
 # this is a manual fallback for when that auto-injection didn't fire or failed
 # (e.g. daemon unreachable) — not the primary post-compact action.
-echo "You were just compacted. The SessionStart hook should auto-inject a light briefing shortly — if you don't see one (e.g. daemon unreachable), read \`.thrum/restart/<your-agent>.md\` and run \`thrum:prime-agent\` manually as a fallback." >&2
+# thrum-xyz: the restart file is MOVED into sessions/ by the prime that the
+# SessionStart hook runs, so never point at .thrum/restart/ alone.
+echo "You were just compacted. The SessionStart hook should auto-inject a briefing shortly (your Resume Plan is in its '# Previous Session Context' section) — if you don't see one (e.g. daemon unreachable), read your snapshot (\`.thrum/restart/<your-agent>.md\`, or once archived the newest \`*-restart.md\` in the main repo's \`.thrum/agents/<your-agent>/sessions/\`) and run \`thrum:prime-agent\` manually as a fallback." >&2
 
 # Self-message: tell the agent (via `thrum send`) that it was just compacted
 # and name its restart snapshot. Owner requirement: "the post-compact hook
@@ -58,7 +60,7 @@ else
     # path is spliced in afterward via plain parameter-expansion string
     # replacement, never by re-opening the heredoc to shell expansion.
     COMPACT_MSG=$(cat <<'MSGEOF'
-You've been compacted. Please read your snapshot at __SNAPSHOT_PATH__.
+You've been compacted. Your Resume Plan is in the auto-injected briefing (# Previous Session Context). If it is missing, read your snapshot at __SNAPSHOT_PATH__ or, once archived, the newest *-restart.md in .thrum/agents/<your-agent>/sessions/ of the main repo.
 MSGEOF
 )
     COMPACT_MSG="${COMPACT_MSG//__SNAPSHOT_PATH__/$COMPACT_SNAPSHOT}"
@@ -93,6 +95,101 @@ if command -v jq >/dev/null 2>&1; then
   fi
 fi
 
+# Pane nudge: the daemon nudges a pane only when an ordinary message arrives
+# for it; a compaction event produces no message, so without this the pane
+# can sit idle after compacting even though the SessionStart auto-briefing
+# above already restored its context. Placed here — BEFORE the single-agent,
+# empty-AGENT_ID, and tmux-managed-skip early exits below — so every one of
+# those paths still reaches the nudge first; none of them is a reason to
+# skip nudging the pane itself. Resolved independently of THRUM_AGENT_ID /
+# THRUM_NAME (a hook may run without either set) via a plain `thrum whoami`
+# call, which resolves identity from THRUM_HOME/cwd on its own since this
+# hook runs inside the agent's own worktree.
+#
+# Best-effort and fully guarded: if `thrum` is missing or the tmux session
+# can't be resolved, the whole block is skipped silently. De-duplication
+# uses an atomic `mkdir` lock rather than a time-window check (simpler, no
+# arithmetic, portable): a near-simultaneous second hook firing for the same
+# session finds the lock dir already there and skips; the backgrounded
+# subshell removes the lock once its nudge attempt finishes, so a later,
+# genuinely separate compaction can still nudge again.
+NUDGE_VAR_DIR="$THRUM_HOME/.thrum/var"
+# thrum-xyz: a skipped or failed nudge must NEVER be silent — a compaction
+# that never gets a first turn looks identical to a healthy idle pane.
+nudge_log() {
+  mkdir -p "$NUDGE_VAR_DIR" 2>/dev/null || true
+  printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$1" >> "$NUDGE_VAR_DIR/postcompact-nudge.log" 2>/dev/null || true
+  echo "post-compact-recover: $1" >&2
+}
+
+NUDGE_TMUX_SESSION=$(thrum whoami --field tmux_session 2>/dev/null) || NUDGE_TMUX_SESSION=""
+if [ -z "$NUDGE_TMUX_SESSION" ] && [ -n "${TMUX_PANE:-}" ] && command -v tmux >/dev/null 2>&1; then
+  # whoami could not name the session (daemon slow/down); the hook runs inside
+  # the agent's own pane, so tmux itself knows it.
+  NUDGE_TMUX_SESSION=$(tmux display-message -p -t "$TMUX_PANE" '#S' 2>/dev/null) || NUDGE_TMUX_SESSION=""
+fi
+NUDGE_TMUX_SESSION="${NUDGE_TMUX_SESSION%%:*}"
+
+# Exactly-once kickoff: /thrum:compact already queued the resume prompt on the
+# daemon (queued-send, dispatched when the pane goes idle) and left a marker.
+# Consume it and skip this nudge so the agent is not kicked twice. A bare
+# /compact (no marker) or a stale marker still gets the nudge below.
+NUDGE_MARKER="$NUDGE_VAR_DIR/${NUDGE_TMUX_SESSION}-compact-resume-queued"
+NUDGE_ALREADY_QUEUED=0
+if [ -n "$NUDGE_TMUX_SESSION" ] && [ -f "$NUDGE_MARKER" ] \
+    && [ -n "$(find "$NUDGE_MARKER" -maxdepth 0 -mmin -15 2>/dev/null)" ]; then
+  NUDGE_ALREADY_QUEUED=1
+  rm -f "${NUDGE_MARKER:?}" 2>/dev/null || true
+fi
+
+if [ -z "$NUDGE_TMUX_SESSION" ]; then
+  nudge_log "no tmux session resolved (whoami empty and no TMUX_PANE) — post-compact resume nudge SKIPPED; the pane may sit idle until a message or human input arrives"
+elif [ "$NUDGE_ALREADY_QUEUED" -eq 1 ]; then
+  nudge_log "resume prompt already queued by /thrum:compact for session ${NUDGE_TMUX_SESSION} — nudge not repeated"
+elif command -v thrum >/dev/null 2>&1; then
+  NUDGE_LOCK_DIR="$NUDGE_VAR_DIR/${NUDGE_TMUX_SESSION}-postcompact-nudge.lock"
+  mkdir -p "$NUDGE_VAR_DIR" 2>/dev/null || true
+  if [ -d "$NUDGE_LOCK_DIR" ]; then
+    # A lock older than ~1 minute means the backgrounded job that created it
+    # died before it could clean up (OOM-kill, tmux kill-server, reboot) --
+    # without this reap, every future nudge for this session name would
+    # silently no-op forever since mkdir keeps failing.
+    if [ -n "$(find "$NUDGE_LOCK_DIR" -maxdepth 0 -mmin +1 2>/dev/null)" ]; then
+      rm -r "${NUDGE_LOCK_DIR:?}" 2>/dev/null || true
+    fi
+  fi
+  if mkdir "$NUDGE_LOCK_DIR" 2>/dev/null; then
+    # `thrum tmux send` IS the daemon's queued send: it waits for the pane to
+    # go idle, so no fixed sleep is needed for readiness (default delay 0;
+    # THRUM_POSTCOMPACT_NUDGE_DELAY stays only as a test/override knob).
+    # Bounded retry on a plain failure (rc 1: daemon busy/unreachable); rc 3/4
+    # mean the text is already typed in the pane, so retyping would corrupt it.
+    ( sleep "${THRUM_POSTCOMPACT_NUDGE_DELAY:-0}"
+      _attempt=1
+      while [ "$_attempt" -le 3 ]; do
+        # `|| _rc=$?` keeps a failing send from tripping this file's `set -e`.
+        _rc=0
+        thrum tmux send "$NUDGE_TMUX_SESSION" "Compaction complete - please continue with your resume plan" >/dev/null 2>&1 || _rc=$?
+        if [ "$_rc" -eq 0 ]; then break; fi
+        if [ "$_rc" -eq 3 ] || [ "$_rc" -eq 4 ]; then
+          nudge_log "tmux send rc=${_rc} for ${NUDGE_TMUX_SESSION}: text typed but Enter withheld/unknown — NOT retrying; inspect the pane"
+          break
+        fi
+        if [ "$_attempt" -eq 3 ]; then
+          nudge_log "tmux send failed rc=${_rc} after 3 attempts for ${NUDGE_TMUX_SESSION} — post-compact resume nudge NOT delivered"
+          break
+        fi
+        _attempt=$((_attempt + 1))
+        sleep 2
+      done
+      rm -r "${NUDGE_LOCK_DIR:?}" 2>/dev/null || true
+    ) >/dev/null 2>&1 &
+    disown 2>/dev/null || true
+  fi
+else
+  nudge_log "thrum not on PATH — post-compact resume nudge SKIPPED"
+fi
+
 # Check single-agent mode — if so, done
 if [ -f "$THRUM_CONFIG" ] && command -v jq >/dev/null 2>&1; then
   SAM=$(jq -r '.daemon.single_agent_mode // false' "$THRUM_CONFIG" 2>/dev/null)
@@ -107,9 +204,13 @@ if [ -z "$AGENT_ID" ]; then
   exit 0
 fi
 
-# Skip listener check for tmux-managed agents (daemon nudges directly)
+# Skip listener check for tmux-managed agents. The daemon only nudges a pane
+# when an ordinary message arrives for it; it has no signal that a
+# compaction happened, which is exactly why the pane nudge block above
+# exists — this skip is solely about the listener-liveness check below, not
+# about whether the agent gets nudged.
 TMUX_SESSION=$(THRUM_AGENT_ID="$AGENT_ID" \
-  thrum whoami --field tmux_session 2>/dev/null)
+  thrum whoami --field tmux_session 2>/dev/null) || TMUX_SESSION=""
 if [ -n "$TMUX_SESSION" ]; then
   exit 0
 fi

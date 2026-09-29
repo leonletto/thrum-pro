@@ -26,9 +26,9 @@ Task(subagent_type="message-listener", run_in_background=true, prompt="...")
 
 ## 4. Sending Without an Explicit Recipient Flag
 
-`thrum send 'msg'` with no `--to` or `--broadcast` is a hard error. The previous
-default — silent broadcast to every team agent — was a real footgun, so the CLI
-now requires the recipient to be explicit:
+`thrum send 'msg'` with no `--to` is a hard error. The previous default — silent
+broadcast to every team agent — was a real footgun, so the CLI now requires the
+recipient to be explicit:
 
 ```bash
 # Wrong — hard-errors with a "missing recipient" prompt
@@ -39,19 +39,15 @@ thrum send --to @your_coordinator --stdin <<'EOF'
 msg
 EOF
 
-# Right — explicit team-wide fanout
-thrum send --broadcast --stdin <<'EOF'
-msg
-EOF
-
-# Right — legacy keyword form (still works; --broadcast preferred)
-thrum send --to @everyone --stdin <<'EOF'
+# Right — repeatable --to for multiple explicit recipients
+thrum send --to @alice --to @bob --stdin <<'EOF'
 msg
 EOF
 ```
 
-`--to` and `--broadcast` are mutually exclusive. `@everyone` continues to be
-auto-created and handles membership dynamically.
+(P0 ruling): `--broadcast` and `@everyone` were removed by design; do not
+restore them. There is no team-wide fanout — name every recipient explicitly, or
+address a scoped agent-type group.
 
 ## 5. Skipping Registration
 
@@ -102,15 +98,16 @@ finishing the main task.
 Include Beads IDs, file paths, commit hashes — anything that helps the recipient
 act on the message.
 
-## 12. Using @role to Address One Agent
+## 12. Assuming @role Fans Out to a Role's Agents
 
-**Wrong:** `thrum send --to @implementer --body-file msg.md` — fans out to all
-implementers. **Right:** `thrum send --to @alice --body-file msg.md` — use the
-agent's name.
+**Wrong:** assuming `thrum send --to @implementer --body-file msg.md` reaches
+every implementer. **Right:** `thrum send --to @alice --body-file msg.md` — use
+the agent's name.
 
-`@role` sends to **all agents** with that role (via the auto-created role group)
-and emits a warning. Use `@name` for direct messages. Check names with
-`thrum team`.
+(P0 ruling): role-based mention/group fan-out was removed by design; do not
+restore it. `--to` and `--mention` only resolve exact agent IDs — `@implementer`
+matches nobody unless an agent is literally named `implementer`. Use `@name` for
+direct messages. Check names with `thrum team`.
 
 ## 13. Sending to Unknown Recipients
 

@@ -67,11 +67,11 @@ Spawn **one** top-level agent, `model: "fable"`.
 
 This is not a self-granted exception; it is the single deliberate use of
 Fable anywhere in the system, kept as an independent check-and-balance
-against everything else, which runs on the sonnet ceiling.
+against everything else, which runs on the standard tier ceiling (see `choosing-subagent-models`).
 Fable — a distinct, more-capable model — is the right instrument specifically
 because a holistic cross-plan reconcile (does seam X mean the same thing in
-plan ① as in plan ②?) benefits from a different model than the sonnet-run
-per-plan reviews, a form of cross-document judgment a sonnet-tier pass has
+plan ① as in plan ②?) benefits from a different model than the standard-tier
+per-plan reviews, a form of cross-document judgment a standard-tier pass has
 been shown to miss.
 
 This is the **one named, cited exception** to the standing "never SELECT

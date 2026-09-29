@@ -120,7 +120,10 @@ if [ "$HOOK_SOURCE" = "compact" ] && [ -n "$AGENT_WORKTREE" ]; then
       if [ -z "$LIGHT_OUTPUT" ]; then
         # Light prime failed (daemon down, slow, etc.) — degrade to the
         # nudge, never to silence.
-        echo "You were just compacted. Read \`${AGENT_WORKTREE}/.thrum/restart/${AGENT_ID}.md\` first, then run \`thrum:prime-agent\` — auto-injection failed (daemon may be unreachable; check \`thrum daemon status\`)."
+        # thrum-xyz: the session.archive step may already have MOVED the
+        # restart file into sessions/ before the render failed, so never point
+        # only at the original path — name both places.
+        echo "You were just compacted. Your snapshot is at \`${AGENT_WORKTREE}/.thrum/restart/${AGENT_ID}.md\` — or, if that file is gone (already archived), the newest \`*-restart.md\` in \`.thrum/agents/${AGENT_ID}/sessions/\` of the main repo's .thrum (a worktree's \`.thrum/redirect\` file names it). Read it first, then run \`thrum:prime-agent\` — auto-injection failed (daemon may be unreachable; check \`thrum daemon status\`)."
         exit 0
       fi
       PRIME_OUTPUT="$LIGHT_OUTPUT"
@@ -182,7 +185,11 @@ BRIEFING=""
 append_to BRIEFING '# Thrum Session Briefing (auto-loaded)'$'\n'
 append_to BRIEFING $'\n'
 if [ "$LIGHT_MODE" -eq 1 ]; then
-  append_to BRIEFING 'The **light** `thrum prime --light` output is included below (auto-injected after compaction — the light render omits the full Resume Plan body, replacing it with a pointer to re-run full `thrum prime` if you need it). You do NOT need to run `/thrum:prime`, `thrum prime`, or `thrum:prime-agent` again this session — the briefing is already in your context. Read it in full.'$'\n'
+  # thrum-xyz: labelled by what was REQUESTED, not what rendered — a
+  # light-ineligible role (e.g. coordinator, gate) gets a FULL render here, so
+  # the wording must be true of both. The Resume Plan body is in the
+  # "# Previous Session Context" section in either case.
+  append_to BRIEFING 'The `thrum prime --light` output (auto-injected after compaction; roles that are not light-eligible receive the full render instead) is included below. Your Resume Plan is in its **`# Previous Session Context`** section — the snapshot file was archived by this prime, so this section is the copy to act on. You do NOT need to run `/thrum:prime`, `thrum prime`, or `thrum:prime-agent` again this session — the briefing is already in your context. Read it in full.'$'\n'
 else
   append_to BRIEFING 'The complete `thrum prime` output is included below. You do NOT need to run `/thrum:prime` or `thrum prime` again this session — the briefing is already in your context. Read it in full; the session context section at the end is the most important.'$'\n'
 fi

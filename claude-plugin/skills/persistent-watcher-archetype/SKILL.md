@@ -57,21 +57,100 @@ every agent in your `roster`:
   approve or refuse on what it actually does, whatever wording the modal
   uses. Never key on fixed prompt phrases; never approve blind.
 - Verify by re-capture after acting — never trust exit status alone.
-- Cross-peer send-keys is refused BY DESIGN ("rpcrouter: caller-peer lacks
-  required capability") — a deliberate security boundary, not a bug or a gap
-  to work around. A peer can CAPTURE another peer's panes read-only, but
-  cannot send-keys into them.
-- For a LOCAL (same-box) roster member, you remain approver-of-record and act
-  directly on the pane: use `thrum tmux send <agent> " "` (appends Enter, so a
-  space+Enter confirms the default-focused option) or, for a specific
-  selection, `thrum tmux send <agent> --keys <K1,K2,...>`. This grants only
-  the leftmost/default option; the bright line above still applies. This send
-  is QUEUED behind the conservative monitor-silence wait, not instant — don't
-  re-send while waiting it out.
-- To unblock a REMOTE roster member's modal, you cannot send-keys into its
-  pane yourself — route the request to the owning box's LOCAL coordinator
-  (e.g. `<box>` → `coord_<box>` — generalize the pattern to whichever box
-  actually owns the member), which CAN send-keys locally on its own box.
+
+### Approving or dismissing a modal: keys only, never text
+
+> 🔴 **NEVER answer a modal with a text payload — not even a single
+> character, and never a bare positional argument to `thrum tmux send`.**
+> Plain text TYPES INTO the agent's input box; it does not act as a
+> keypress. If the modal isn't actually showing, or focus differs from what
+> you expect, that text lands in the agent's next command line and can
+> corrupt or execute something you never intended. The only correct
+> primitive is `--keys`, on every call, with no exceptions.
+
+The procedure, every time, no shortcuts:
+
+1. **Capture the pane fresh.** Never act on a stale capture from an earlier
+   cycle.
+2. **Recognize the modal and which option is currently focused** (`❯` or
+   equivalent marks the default). Judge it against the rubric above.
+3. **Choose keys, never text:**
+   - Default/focused option → `thrum tmux send <agent> --keys Enter`.
+   - A specific numbered option → the digit, e.g. `thrum tmux send <agent>
+     --keys 1`. Named keys (`Enter`, `Escape`, `Up`, `Down`, `Left`, `Right`,
+     `Tab`, digits) deliver in order, comma-separated or repeated
+     (`--keys Down,Enter` or `--keys Down --keys Enter`) — confirm the exact
+     syntax with `thrum tmux send --help` if in doubt, never guess it.
+   - To dismiss without selecting → `thrum tmux send <agent> --keys Escape`.
+   - This send is QUEUED behind the conservative monitor-silence wait, not
+     instant — don't re-send while waiting it out. A send that exits 3 (Enter
+     WITHHELD) or 4 (verdict unknown) must NOT be retried blind — capture the
+     pane first.
+4. **Re-capture and verify the modal is actually gone.** If it's still there,
+   don't give up and don't loop blindly retrying the same keys — work up an
+   escalating transport ladder, re-capturing to verify after EACH attempt:
+   a. `thrum tmux send <agent> --keys ...` — the daemon RPC you already tried
+      in step 3. It is peer-routed (works for a local member always, and for
+      a remote one when the `can_send_keys` capability is granted between
+      your box and theirs) — retry once in case the first send was dropped,
+      not blindly beyond that.
+   b. **Raw local tmux**, for a member on YOUR OWN box whose pane the daemon
+      RPC isn't reaching correctly: `tmux send-keys -t <session> <key>`, then
+      `tmux capture-pane -t <session> -p` to verify directly, bypassing the
+      daemon layer.
+   c. **SSH to the member's own box**, for a remote member or whenever (a)
+      fails with a proxy-failure signature (`rpcrouter: caller-peer lacks
+      required capability`, `peer unreachable`, `circuit open, dial skipped`)
+      — use the shipped pair of scripts, don't hand-roll the SSH call:
+      `resources/thrum-watch-pane-capture.sh`'s `build_topology_table` /
+      `resolve_roster_targets` resolves the target's SSH destination from
+      `thrum state get agent_pool:<agent>` (`.entry.value.box`) joined
+      against `thrum state show topology:<scope>` (`.entry.value.hostname`
+      / `.entry.value.ssh.target` / `.entry.value.ssh.user` /
+      `.entry.value.repo_path`), then hands those already-resolved values to
+      `resources/thrum-capture-fallback.sh <capture|key> <agent> <ssh_target>
+      <ssh_user> <repo_path> [keys...]`, which is the piece that actually
+      runs `ssh "<ssh_user>@<ssh_target>" "cd '<repo_path>' && thrum tmux
+      send '<agent>' --keys <keys>"` — `thrum-capture-fallback.sh` does no
+      resolution of its own, so calling it directly requires you (or the
+      caller) to already have those three values. A topology gap fails
+      closed (no SSH fallback attempted) rather than guessing a wrong
+      destination. There is no per-agent SSH field in the roster/agent Go
+      schema — the destination comes from this `thrum state` topology data.
+      (There IS a real `.thrum/ssh/config` on fleet boxes — the underlying
+      host-alias file, included via `~/.ssh/config`, that makes a bare `ssh
+      <box>` resolve at all — but it is not what these scripts read; they
+      read the resolved `ssh.target`/`ssh.user` values out of `thrum state`
+      instead.)
+   Only escalate to your `parent` after exhausting this ladder, or
+   immediately on an UNRECOGNIZED modal — and when you do, include the fresh
+   capture.
+- Cross-peer send-keys being capability-gated is a deliberate security
+  boundary (§ladder step a above), not a bug to route around by other means
+  without checking the failure signature first. A peer can always CAPTURE
+  another peer's panes read-only regardless of capability.
+
+**Worked example** — the standard two-variant Claude Code tool-confirmation
+modal (`internal/daemon/permission/patterns.go`, pattern `tool_confirmation`,
+dialect `claude-tui`), captured verbatim:
+
+```
+⏺ Bash(curl https://example.com)
+  ⎿  Do you want to proceed?
+     1. Yes
+     2. Yes, and don't ask again for Bash(curl)
+     3. No, and tell Claude what to do differently (Esc)
+```
+
+- **Approve once** → `--keys 1`.
+- **Deny, with feedback** → `--keys 3` (or `--keys Escape` on the two-option
+  Read-prompt variant, which has no "No, and tell Claude" line).
+- **NEVER `--keys 2`** — "Yes, and don't ask again" grants a standing
+  allow-rule beyond this one command; the modal judgment rubric above is a
+  per-command judgment, not a license to mint blanket permissions. This is
+  pinned by `ApproveKey: "1", // Yes (once) — NEVER "2"` in
+  `internal/daemon/permission/patterns.go` and tested by
+  `TestApproveKeyNeverForeverAllow`.
 
 ## Your own restart (auto-restart-at-ctx-threshold)
 

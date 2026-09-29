@@ -10,7 +10,7 @@ sanctions for reaching it.
 
 You want a multi-hour load or soak run and a verdict, not a log.
 
-1. Spawn `vmdriver_<slug>` with `model: "sonnet"`. The GO names the run, the
+1. Spawn `vmdriver_<slug>` with `model: <per choosing-subagent-models>`. The GO names the run, the
    revision under test, and the exact metrics to report.
 2. The driver opens a persistent session with `<your-ssh-wrapper> <remote-host>`,
    starts the run detached, and writes the exit code to its own file.

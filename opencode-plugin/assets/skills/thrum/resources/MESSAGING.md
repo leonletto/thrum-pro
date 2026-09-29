@@ -25,15 +25,19 @@
 
 ## Addressing
 
-| Target              | Routing                                                       | When to use                          |
-| ------------------- | ------------------------------------------------------------- | ------------------------------------ |
-| `--to @lead_agent`  | **Direct** — routes to the named agent                        | Default for all task messages        |
-| `--to @coordinator` | **Role fanout** — ALL agents with that role (warning emitted) | Only when you want every coordinator |
-| `--to @everyone`    | **Broadcast** — all registered agents                         | Critical alerts                      |
+| Target                        | Routing                                          | When to use                     |
+| ------------------------------ | ------------------------------------------------- | -------------------------------- |
+| `--to @lead_agent`             | **Direct** — routes to the named agent            | Default for all task messages   |
+| `--to @agent_a --to @agent_b`  | **Explicit multi-recipient** — repeatable `--to`  | Several specific named agents   |
 
-**Critical:** `@coordinator` is a role, not an agent name. Sending
-`--to @coordinator` fans out to every agent registered with that role. Use
-`thrum team` to find agent names, then send `--to @<name>` for direct messages.
+**(P0 ruling):** one-to-many fan-out — `--broadcast`,
+`@everyone`, and role-based mentions/groups (e.g. `--to @coordinator` fanning
+out to every agent with that role) — was removed by design across the whole
+product. Do not restore it. `--to` and `--mention` only resolve exact agent
+IDs now; a bare role name that is not also an agent ID matches nobody. Use
+`thrum team` to find agent names, then send `--to @<name>` for direct
+messages, or address a scoped agent-type group for a fixed, explicit set of
+recipients.
 
 - **Reply:** `thrum reply <msg-id>` — same audience as original; takes **no
   `--to`** (recipient derived from the message)

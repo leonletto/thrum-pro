@@ -84,10 +84,9 @@ batch — the visual tree exposes inversion immediately. For bulk epic creation
 (many tasks at once), spawn parallel sub-agents to issue the `bd create` calls;
 bd is fully concurrent-safe.
 
-> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet` (low
-> effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
-> operator-ask or a skill step that names it. See the `choosing-subagent-models`
-> skill for the full policy.
+> **Model tiers:** pass an explicit `model:` on every dispatch; choose model and
+> effort per the `choosing-subagent-models` skill (read `runtime.role_models` at
+> the moment of use). Never let a sub-agent inherit your own model.
 
 ### Use `bd close --suggest-next` to surface unblocked work
 

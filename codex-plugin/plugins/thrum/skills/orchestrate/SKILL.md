@@ -89,7 +89,7 @@ route by the result:
 > What matters here is that you pass one at all: the `roleDefault()` backstop in
 > the daemon covers `thrum tmux launch` of thrum agents, **not** Agent-tool
 > sub-agents, which inherit the PARENT model when unspecified. An orchestrator
-> on Opus that omits `model:` gets Opus-priced triage.
+> whose own tier is costly that omits `model:` gets costly-priced triage.
 
 | Result                          | Action                                                                                                                                                                                                                  |
 | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -190,13 +190,13 @@ thrum worktree create <name>
 # Pin --model on BOTH create AND launch — create's persist to runtime_config.json
 # is asynchronous and can lose the race to launch's resolution if launch omits
 # the flag (see CLAUDE.md "Launching an Agent"). There is no create-only shortcut.
-# Always launch implementers at --model sonnet. sonnet-medium is the floor;
-# no lower tier exists.
+# Always launch implementers pinned to the tier from runtime.role_models, per
+# choosing-subagent-models; that tier is the floor, no lower tier exists.
 thrum tmux create <name> --cwd <worktree-path> \
   --name <agent_name> --role implementer --module <module> \
   --mode ephemeral --identity ephemeral \
-  --model sonnet
-thrum tmux launch <name> --runtime <runtime> --model sonnet
+  --model <from runtime.role_models, per choosing-subagent-models>
+thrum tmux launch <name> --runtime <runtime> --model <from runtime.role_models, per choosing-subagent-models>
 ```
 
 > **Implementer lifecycle:** All implementers are ephemeral+stateless (no agent
@@ -224,25 +224,27 @@ it fails again, escalate to the human.
 #### Step 3b: Verify the model pin took
 
 If `--model` is dropped anywhere in the create/launch sequence, the implementer
-launches UNPINNED and the runtime defaults to Opus — the exact expensive failure
-this tier exists to prevent. Confirm the pin landed before assigning work, using
-`thrum tmux capture --format=annotated` (see CLAUDE.md "Launching an Agent —
-Verify the Model by Pane, Never by `runtime-config get`" for the full
-instrument: why `runtime-config get` cannot falsify a dropped pin, the NBSP
-fallback trap, and the by-position read):
+launches UNPINNED and the runtime defaults to its own (costly) model — the exact
+expensive failure this tier exists to prevent. Confirm the pin landed before
+assigning work, using `thrum tmux capture --format=annotated` (see CLAUDE.md
+"Launching an Agent — Verify the Model by Pane, Never by `runtime-config get`"
+for the full instrument: why `runtime-config get` cannot falsify a dropped pin,
+the NBSP fallback trap, and the by-position read):
 
 ```bash
 thrum tmux capture <agent-name> --format=annotated --lines 12
 ```
 
-That prints the runtime's own footer line, e.g. `Model: Sonnet 5`. **Read the
-intended tier from `.thrum/config.json` → `runtime.role_models`, not from
-memory.** If the footer shows a different tier (see the BLOCKED note under Step
-2 — there is no valid `haiku` pin), the pin failed silently — re-pin with
-`thrum tmux create ... --model sonnet` (or
-`thrum agent runtime-config set <agent_name> --model sonnet`) and relaunch
-BEFORE assigning work. **Do not dispatch an unpinned implementer** — the
-daemon's role-default backstop
+That prints the runtime's own footer line, e.g. `Model: <resolved model>`.
+**Read the intended tier from `.thrum/config.json` → `runtime.role_models`, not
+from memory.** If the footer shows a different tier (see the BLOCKED note under
+Step 2 — the model ban list lives in `choosing-subagent-models`), the pin failed
+silently — re-pin with
+`thrum tmux create ... --model <from runtime.role_models, per choosing-subagent-models>`
+(or
+`thrum agent runtime-config set <agent_name> --model <from runtime.role_models, per choosing-subagent-models>`)
+and relaunch BEFORE assigning work. **Do not dispatch an unpinned implementer**
+— the daemon's role-default backstop
 (`jq -r '.runtime.role_models' .thrum/config.json`) is a net for a forgotten
 pin, not a substitute for this check.
 
@@ -341,9 +343,9 @@ Handle each message type:
 2. Dispatch BOTH reviewers IN PARALLEL (one Agent call per reviewer in the same
    response). Block until BOTH return:
    - Code-quality: `superpowers:code-reviewer` (or `feature-dev:code-reviewer`
-     if the project provides one) — `model: "sonnet"`
+     if the project provides one) — `model: <per choosing-subagent-models>`
    - Spec-compliance: `general-purpose` reviewer cross-referencing the plan/
-     spec — `model: "sonnet"`
+     spec — `model: <per choosing-subagent-models>`
 3. **Verify** every cited `file:line` claim against the actual source before
    forwarding. Reviewers can misread files; forwarding unverified findings
    wastes the implementer's time.
@@ -401,10 +403,9 @@ Handle each message type:
 **Sub-agent model discipline (applies to ALL Agent tool calls in this phase and
 Phase 5):**
 
-> **Model tiers:** pass an explicit `model:` on every dispatch — `sonnet` (low
-> effort) mechanical, `sonnet` (medium effort) judgment, Opus only on
-> operator-ask or a skill step that names it. See the `choosing-subagent-models`
-> skill for the full policy.
+> **Model tiers:** pass an explicit `model:` on every dispatch; choose model and
+> effort per the `choosing-subagent-models` skill (read `runtime.role_models` at
+> the moment of use). Never let a sub-agent inherit your own model.
 
 **Blocker:**
 
@@ -521,7 +522,7 @@ plan/intent context to determine the correct resolution. Then spawn a targeted
 edit sub-agent:
 
 ```text
-Agent(subagent_type="general-purpose", model="sonnet",
+Agent(subagent_type="general-purpose", model="<per choosing-subagent-models>",
   prompt="Resolve this specific merge conflict.
   File: <file-path>
   Conflicted section: <paste the <<<< ==== >>>> block>
@@ -743,9 +744,9 @@ Run review rounds; converge to zero BLOCKING:
 **Round N:**
 
 1. Dispatch BOTH reviewers IN PARALLEL — code-quality
-   (`feature-dev:code-reviewer`, `model: "sonnet"`) + spec-compliance
-   (`general-purpose`, `model: "sonnet"`). **In each reviewer dispatch prompt,
-   mandate structured severity:**
+   (`feature-dev:code-reviewer`, `model: <per choosing-subagent-models>`) +
+   spec-compliance (`general-purpose`, `model: <per choosing-subagent-models>`).
+   **In each reviewer dispatch prompt, mandate structured severity:**
    > "Label every finding BLOCKING / IMPORTANT / MINOR. At least one label per
    > finding, prefix each finding line."
 2. Verify every cited file:line before forwarding (pushback discipline).
@@ -800,8 +801,8 @@ them, forward to coordinator at merge-approval.
 
 **Hard cap — 2 rounds max:** If BLOCKING findings remain after round 2:
 
-- Step A: REMOVED. sonnet-medium is the implementer floor, so there is no lower
-  tier to escalate from. A round-2 BLOCKING failure goes straight to Step B.
+- Step A: REMOVED. The implementer tier is the floor, so there is no lower tier
+  to escalate from. A round-2 BLOCKING failure goes straight to Step B.
 - Step B (escalate up): if the implementer fails to converge, escalate to
   coordinator with full review history. Non-convergence = under-specified plan;
   the coordinator resolves or escalates to the operator.

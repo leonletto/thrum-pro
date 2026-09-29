@@ -204,12 +204,10 @@ hypothesis confirmed.**
 
 ### § Known-noisy log lines — recognise, don't chase
 
-| Line                                                                          | Meaning                                                             |
-| ----------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| `sync.apply: M1 relay loop detected … dropped`                                | Working as designed — loop suppression.                             |
-| `storagegw: gossip: peer … not connected`                                     | Peer offline. Routine.                                              |
-| `storagegw: gossip: peer call failed … caller-peer lacks required capability` | **NOT routine** — a live capability gap. Worth a bead if sustained. |
-| `dead_agent_sweeper: marked dead agent offline`                               | Routine sweeper work.                                               |
+| Line                                            | Meaning                                 |
+| ----------------------------------------------- | --------------------------------------- |
+| `sync.apply: M1 relay loop detected … dropped`  | Working as designed — loop suppression. |
+| `dead_agent_sweeper: marked dead agent offline` | Routine sweeper work.                   |
 
 ---
 

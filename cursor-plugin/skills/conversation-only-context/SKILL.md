@@ -62,7 +62,7 @@ Workflow `agent()` opts, agent-definition frontmatter, `thrum tmux launch
 ```python
 Agent(subagent_type="general-purpose",
       name="<prefix>_<slug>",
-      model="sonnet",
+      model="<per choosing-subagent-models>",
       description="<3-5 words>",
       prompt="""<task>
 
@@ -92,14 +92,14 @@ to fire-and-forget monitors, not to a named agent you re-message.
 
 | Subagent role | Name prefix | Model / effort (effort only where exposed) | Result file |
 |---|---|---|---|
-| Investigation, grep, doc summary, mechanical | `<topic>` (e.g. `vmdocs`) | `sonnet` / low | `<scratch>/<name>.md` |
-| Root-cause | `<bead>_rc` | `sonnet` / low | `<scratch>/<bead>-rc.md` |
-| Verifier, reviewer, design-verify | `<bead>_verify` | `sonnet` / medium | `<scratch>/<bead>-verify.md` |
-| Implementer | `impl_<slug>` | `sonnet` / medium | `<scratch>/<slug>-impl.md` |
-| VM driver | `vmdriver_<slug>` | `sonnet` / medium | `<scratch>/<slug>-vm.md` |
-| Prose or deep review | any | `opus` — **only when the operator asks** | as above |
+| Investigation, grep, doc summary, mechanical | `<topic>` (e.g. `vmdocs`) | per `choosing-subagent-models` | `<scratch>/<name>.md` |
+| Root-cause | `<bead>_rc` | per `choosing-subagent-models` | `<scratch>/<bead>-rc.md` |
+| Verifier, reviewer, design-verify | `<bead>_verify` | per `choosing-subagent-models` | `<scratch>/<bead>-verify.md` |
+| Implementer | `impl_<slug>` | per `choosing-subagent-models` | `<scratch>/<slug>-impl.md` |
+| VM driver | `vmdriver_<slug>` | per `choosing-subagent-models` | `<scratch>/<slug>-vm.md` |
+| Prose or deep review | any | per `choosing-subagent-models` — **only when the operator asks** | as above |
 
-Haiku is banned. Opus is never yours to grant onward.
+The model ban list lives in `choosing-subagent-models`. A costly tier is never yours to grant onward.
 
 ### CONSTRAINTS block — paste verbatim into every dispatch
 
@@ -111,8 +111,8 @@ Haiku is banned. Opus is never yours to grant onward.
   tool's own guidance suggests it. It trips a permission modal, and A FROZEN
   PANE EMITS NOTHING, so nobody can tell you are blocked. If you must background
   work, wait for the completion notification.
-- Every sub-agent YOU spawn gets an explicit `model:` — sonnet (low mechanical,
-  medium judgment). HAIKU IS BANNED. Opus is never yours.
+- Every sub-agent YOU spawn gets an explicit `model:` chosen per `choosing-subagent-models`
+  (read `runtime.role_models`). The model ban list lives there. A costly tier is never yours.
 - READ-ONLY git outside your own worktree. NEVER `checkout`/`reset`/`restore`/
   `stash`/`clean` in ANY directory — `stash` is one shared stack across all
   worktrees and the shared tree holds live agents' uncommitted state.
@@ -186,7 +186,7 @@ Restart on a number read from the pane footer, never on a felt sense.
 - The parent reading code or docs "to just check quickly" — message the subagent that already read them and ask for the one field.
 - One subagent handed ten tasks — partition it and dispatch the parts in parallel.
 - A spawn with no `name:` — it cannot be re-messaged. Name every spawn.
-- A spawn with no `model:` — it silently inherits Opus. Pin `model:` on every spawn, and `effort` wherever the mechanism takes it.
+- A spawn with no `model:` — it silently inherits your own model. Pin `model:` on every spawn, and `effort` wherever the mechanism takes it.
 - Holding a design-gating answer behind the rest of the pass while an implementer builds on the old premise — that one goes immediately; the rest ships as one consolidated message.
 - Acting on the resume plan alone and skipping the middle of the prime — the falsified premise sits in the part you skipped.
 - Trusting an older "not started" message over a newer "already running" one — verify, do not recall; that cuts both directions.

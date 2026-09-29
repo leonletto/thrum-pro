@@ -89,4 +89,49 @@ else
   echo "post-compact-recover: thrum not on PATH — skipping self-message." >&2
 fi
 
+# Pane nudge: the daemon nudges a pane only when an ordinary message arrives
+# for it; a compaction event produces no message, so without this the pane
+# can sit idle after compacting even though the self-message above may have
+# been sent. This script has no single-agent-mode / AGENT_ID / tmux-managed
+# early exits of its own (see the NOT-CURRENTLY-WIRED note at the top), so
+# there is nothing else here to place it before — it simply runs after the
+# self-message step, unconditionally, mirroring the equivalent point in
+# claude-plugin/scripts/post-compact-recover.sh (before that script's
+# single-agent/AGENT_ID/tmux-managed-skip exits). Resolved independently of
+# THRUM_AGENT_ID / THRUM_NAME (a hook may run without either set) via a
+# plain `thrum whoami` call, which resolves identity from THRUM_HOME/cwd on
+# its own since this hook runs inside the agent's own worktree.
+#
+# Best-effort and fully guarded: if `thrum` is missing or the tmux session
+# can't be resolved, the whole block is skipped silently. De-duplication
+# uses an atomic `mkdir` lock rather than a time-window check (simpler, no
+# arithmetic, portable): a near-simultaneous second hook firing for the same
+# session finds the lock dir already there and skips; the backgrounded
+# subshell removes the lock once its nudge attempt finishes, so a later,
+# genuinely separate compaction can still nudge again.
+NUDGE_TMUX_SESSION=$(thrum whoami --field tmux_session 2>/dev/null) || NUDGE_TMUX_SESSION=""
+NUDGE_TMUX_SESSION="${NUDGE_TMUX_SESSION%%:*}"
+
+if [ -n "$NUDGE_TMUX_SESSION" ] && command -v thrum >/dev/null 2>&1; then
+  NUDGE_VAR_DIR="$THRUM_DIR/.thrum/var"
+  mkdir -p "$NUDGE_VAR_DIR" 2>/dev/null || true
+  NUDGE_LOCK_DIR="$NUDGE_VAR_DIR/${NUDGE_TMUX_SESSION}-postcompact-nudge.lock"
+  if [ -d "$NUDGE_LOCK_DIR" ]; then
+    # A lock older than ~1 minute means the backgrounded job that created it
+    # died before it could clean up (OOM-kill, tmux kill-server, reboot) --
+    # without this reap, every future nudge for this session name would
+    # silently no-op forever since mkdir keeps failing.
+    if [ -n "$(find "$NUDGE_LOCK_DIR" -maxdepth 0 -mmin +1 2>/dev/null)" ]; then
+      rm -r "${NUDGE_LOCK_DIR:?}" 2>/dev/null || true
+    fi
+  fi
+  if mkdir "$NUDGE_LOCK_DIR" 2>/dev/null; then
+    ( sleep "${THRUM_POSTCOMPACT_NUDGE_DELAY:-10}"
+      thrum tmux send "$NUDGE_TMUX_SESSION" "Compaction complete - please continue with your resume plan" >/dev/null 2>&1 || true
+      rm -r "${NUDGE_LOCK_DIR:?}" 2>/dev/null || true
+    ) >/dev/null 2>&1 &
+    disown 2>/dev/null || true
+  fi
+fi
+
 exit 0

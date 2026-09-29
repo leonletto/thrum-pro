@@ -31,7 +31,9 @@ orchestrate the handoff.
 # resolve to a DIFFERENT agent's worktree, or the main repo, saving this
 # snapshot where nothing ever reads it back. There is NO git fallback — if
 # the daemon can't answer, refuse and stop rather than guess.
-REPO=$(thrum agent worktree --authoritative 2>/dev/null) || { echo "ERROR: cannot authoritatively resolve your worktree via the daemon. Refusing to fall back to cwd/git-toplevel — that would risk silently saving this snapshot to the wrong repo. Check daemon connectivity and retry."; exit 1; }
+REPO=$(
+  thrum agent worktree --authoritative 2>/dev/null
+) || { echo "ERROR: cannot authoritatively resolve your worktree via the daemon. Refusing to fall back to cwd/git-toplevel — that would risk silently saving this snapshot to the wrong repo. Check daemon connectivity and retry."; exit 1; }
 [ -n "$REPO" ] || { echo "ERROR: thrum agent worktree --authoritative returned empty"; exit 1; }
 AGENT=$(thrum whoami --field agent_id) || { echo "ERROR: agent not registered"; exit 1; }
 [ -n "$AGENT" ] || { echo "ERROR: empty agent_id"; exit 1; }
@@ -142,11 +144,36 @@ always be present so future-you can scan for what's covered and what isn't.
 
 #### 3. Write the continuation directly to your restart file
 
-Use your Write tool to save the composed continuation to:
+First run this PREP block (it mints the path and a per-run nonce):
+
+```bash
+# The Bash tool does NOT persist shell state across calls, so this block
+# re-resolves identity itself. Fail closed: no cwd/git fallback.
+REPO=$(
+  thrum agent worktree --authoritative 2>/dev/null
+) || { echo "ERROR: cannot authoritatively resolve your worktree via the daemon. Refusing to fall back to cwd/git-toplevel — that would risk silently saving this snapshot to the wrong repo. Check daemon connectivity and retry."; exit 1; }
+[ -n "$REPO" ] || { echo "ERROR: thrum agent worktree --authoritative returned empty"; exit 1; }
+AGENT=$(thrum whoami --field agent_id) || { echo "ERROR: agent not registered"; exit 1; }
+[ -n "$AGENT" ] || { echo "ERROR: empty agent_id"; exit 1; }
+mkdir -p "${REPO}/.thrum/restart"
+SNAPSHOT="${REPO}/.thrum/restart/${AGENT}.md"
+NONCE="zn6fx-$(date +%s)-$$-${RANDOM}${RANDOM}"
+echo "SNAPSHOT_PATH=${SNAPSHOT}"
+echo "SNAPSHOT_NONCE=${NONCE}"
+```
+
+Write to EXACTLY the printed `SNAPSHOT_PATH` (not a path you re-derive), and
+make sure the file contains the marker below (as its final line), with the
+printed `SNAPSHOT_NONCE` — verify searches the whole file for it:
 
 ```text
-${REPO}/.thrum/restart/${AGENT}.md
+<!-- snapshot-nonce: <SNAPSHOT_NONCE> -->
 ```
+
+**Record both values** — the verify step pastes them into its verify block,
+which fails closed unless the file at that exact path carries that nonce.
+
+Then use your Write tool to save the composed continuation to that exact path.
 
 `thrum prime` will auto-inject this file at next session start. No bash heredoc
 or `cat <<EOF` redirection is needed — write the file directly.
@@ -173,13 +200,44 @@ to preserve — strictly worse than idling. Verify the EFFECT, not the action: a
 vague "I wrote it" is not verification; check the FILE.
 
 ```bash
-SNAPSHOT="${REPO}/.thrum/restart/${AGENT}.md"
+SNAPSHOT="<PASTE SNAPSHOT_PATH FROM STEP 3>"
+NONCE="<PASTE SNAPSHOT_NONCE FROM STEP 3>"
+# Fresh authoritative re-resolution (shell state does NOT persist across Bash
+# calls); it must agree with the path you actually wrote in Step 3.
+REPO=$(
+  thrum agent worktree --authoritative 2>/dev/null
+) || { echo "ERROR: cannot authoritatively resolve your worktree via the daemon. Refusing to fall back to cwd/git-toplevel — that would risk silently verifying the wrong repo's snapshot. Check daemon connectivity and retry."; exit 1; }
+[ -n "$REPO" ] || { echo "ERROR: thrum agent worktree --authoritative returned empty"; exit 1; }
+AGENT=$(thrum whoami --field agent_id) || { echo "ERROR: agent not registered"; exit 1; }
+[ -n "$AGENT" ] || { echo "ERROR: empty agent_id"; exit 1; }
+SESSION_RAW=$(thrum whoami --field tmux_session)
+SESSION=${SESSION_RAW%%:*}
+EXPECTED="${REPO}/.thrum/restart/${AGENT}.md"
+BIND_OK=1
+if [ -z "$SNAPSHOT" ] || [ -z "$NONCE" ] || [[ "$SNAPSHOT$NONCE" == *"<PASTE"* ]]; then
+  echo "VERIFY FAILED: SNAPSHOT/NONCE not filled in — paste SNAPSHOT_PATH and SNAPSHOT_NONCE from Step 3. SNAPSHOT_OK=0"; BIND_OK=0
+elif [ "$SNAPSHOT" != "$EXPECTED" ]; then
+  echo "VERIFY FAILED: identity/worktree DRIFT between write time and verify time. Written path: $SNAPSHOT — re-resolved path: $EXPECTED. SNAPSHOT_OK=0"; BIND_OK=0
+fi
 NOW=$(date +%s)
-MTIME=$(stat -f %m "$SNAPSHOT" 2>/dev/null || stat -c %Y "$SNAPSHOT" 2>/dev/null)
+# mtime: choose the stat dialect explicitly. GNU `stat -f` means --file-system
+# (succeeds with multiline garbage), so the `stat -f %m || stat -c %Y` one-liner
+# breaks on Linux — branch on which dialect this box speaks.
+if stat -f %m . >/dev/null 2>&1; then
+  MTIME=$(
+    stat -f %m "$SNAPSHOT" 2>/dev/null
+  )
+else
+  MTIME=$(
+    stat -c %Y "$SNAPSHOT" 2>/dev/null
+  )
+fi
 AGE=$(( NOW - ${MTIME:-0} ))
 SNAPSHOT_OK=1
 
-if [ ! -f "$SNAPSHOT" ]; then
+if [ "$BIND_OK" = 0 ]; then
+  SNAPSHOT_OK=0   # binding failure already reported above
+elif [ ! -f "$SNAPSHOT" ]; then
   echo "VERIFY FAILED: no snapshot at $SNAPSHOT"; SNAPSHOT_OK=0
 elif [ ! -s "$SNAPSHOT" ]; then
   echo "VERIFY FAILED: snapshot at $SNAPSHOT is empty"; SNAPSHOT_OK=0
@@ -187,6 +245,8 @@ elif [ ! -r "$SNAPSHOT" ]; then
   echo "VERIFY FAILED: snapshot at $SNAPSHOT is not readable"; SNAPSHOT_OK=0
 elif [ "$AGE" -gt 300 ]; then
   echo "VERIFY FAILED: snapshot at $SNAPSHOT is ${AGE}s old — stale (from a prior restart), not this session's write"; SNAPSHOT_OK=0
+elif ! grep -qF -- "$NONCE" "$SNAPSHOT"; then
+  echo "VERIFY FAILED: nonce not found in $SNAPSHOT — file at that path is not this session's write"; SNAPSHOT_OK=0
 else
   echo "VERIFY OK: snapshot exists, non-empty, readable, written ${AGE}s ago"
 fi
@@ -202,7 +262,15 @@ else
   echo "VERIFY FAILED: tmux session '$SESSION' (stripped from '$SESSION_RAW') does not resolve to a live tmux session"
   SESSION_OK=0
 fi
+echo "SNAPSHOT_OK=${SNAPSHOT_OK} SESSION_OK=${SESSION_OK}"
 ```
+
+**Fail-closed binding rule:** the block passes only for the exact path and nonce
+the Step 3 PREP block printed (paste them into its first two lines). Empty or
+placeholder values, identity/worktree drift between write and verify time, or a
+file at that path without the nonce all mean VERIFY FAILED — a fresh file merely
+sitting at the re-derived path is NOT proof you wrote it. Use the
+`SNAPSHOT_OK`/`SESSION_OK` values it prints in Step 6.
 
 **"Properly" means, explicitly:** snapshot exists at your OWN worktree's
 `.thrum/restart/<your-agent-id>.md`, non-empty, readable, AND recently written

@@ -422,13 +422,26 @@ Two cautions, so this rule does not cause its own incident:
 
 ## If it fails
 
-Send it back as a normal review finding — same channel as dual-review output,
-folded into the same numbered list if dual review is still open, or as its own
-short reply if dual review already passed. Cite the offending function/file and
-which anti-pattern (`ph<N>`), meta-check, or Lens 10 sub-probe it failed. Do
-NOT block on Lens 10d findings that are
-genuinely disclaimed substrate issues (see Lens 10 scope discipline above); DO
-block on any Lens 10b or 10d finding on NEW work.
+For a genuine anti-pattern, Lens 10 finding, production-behaviour issue, or
+design judgment call: send it back as a normal review finding — same channel as
+dual-review output, folded into the same numbered list if dual review is still
+open, or as its own short reply if dual review already passed. Cite the
+offending function/file and which anti-pattern (`ph<N>`), meta-check, or Lens
+10 sub-probe it failed. Do NOT block on Lens 10d findings that are genuinely
+disclaimed substrate issues (see Lens 10 scope discipline above); DO block on
+any Lens 10b or 10d finding on NEW work.
+
+For mechanical bookkeeping only (census/shard regen via the tool, line-number
+or key refreshes, ledger totals/ceilings where the arithmetic is derivable, a
+per-entry waiver or citation comment recording a classification already
+established elsewhere (never a new safety judgment of your own), a nosec
+baseline hash for an already-reviewed pattern, comment wording, stale test
+expectations that merely follow a landed change): fix it yourself as a
+`GATE-AUTHORED` commit on your
+`gate/` branch, re-run ONLY the check(s) the fix affects, and report
+`CLEAN-WITH-GATE-FIXES` listing each fix instead of bouncing it to the owner.
+When unsure which bucket a finding falls in, ask the coordinator with the exact
+diff — don't bounce reflexively.
 
 ## See also
 

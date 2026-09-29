@@ -1,7 +1,7 @@
 # Sweep agent — shared instructions
 
 > Dispatcher: write this file once, then give each agent ONLY its item list and its report path. Keeps dispatches short and identical.
-> **Model:** sonnet · **Effort:** medium. The verdict call needs judgement; the searching does not.
+> **Model and effort:** per `choosing-subagent-models`. The verdict call needs judgement; the searching does not.
 
 ---
 

@@ -1,8 +1,8 @@
 ---
 name: message-listener
 description: >
-  Background listener for incoming Thrum messages. Runs on sonnet-low for
-  cost efficiency. Uses `thrum wait` with PID file coordination to prevent
+  Background listener for incoming Thrum messages. Runs on a cheap tier
+  (see choosing-subagent-models) for cost efficiency. Uses `thrum wait` with PID file coordination to prevent
   duplicates. Returns immediately when new messages arrive.
 model: sonnet
 background: true

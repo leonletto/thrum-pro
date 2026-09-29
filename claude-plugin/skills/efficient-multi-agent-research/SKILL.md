@@ -95,13 +95,13 @@ See the `choosing-subagent-models` skill for the full policy. Applied to this
 skill's fan-out:
 
 - **Level 1 — researchers / gatherers:** scope each one DOWN to a narrow slice
-  so you can run MANY in parallel. Use `model: "sonnet"` (low effort) —
+  so you can run MANY in parallel. Use `model: <per choosing-subagent-models>` (cheapest tier) —
   bounded gather-and-report. Smaller scope = cheaper, concurrent (faster),
   tighter per-agent context.
-- **Level 2 / Level 3 — summarizers / synthesizers:** use `model: "sonnet"` —
+- **Level 2 / Level 3 — summarizers / synthesizers:** use `model: <per choosing-subagent-models>` —
   aggregating and reconciling Level-1 outputs is judgment work.
 
-Prefer many narrow sonnet-low gatherers over one broad subagent. This is the cheap,
+Prefer many narrow cheap gatherers over one broad subagent. This is the cheap,
 fast default — equivalent parallelism at a fraction of the token cost.
 
 ## Common Mistakes

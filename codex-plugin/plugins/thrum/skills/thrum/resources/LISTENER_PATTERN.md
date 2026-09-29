@@ -4,6 +4,12 @@
 > at zero token cost with no background listener needed. See
 > [TMUX_SESSIONS.md](TMUX_SESSIONS.md). Use the listener pattern below when tmux
 > is not available or not practical for your setup.
+>
+> **Deprecated for newly initialized agents:** the hook injection and scheduled
+> backstop that `thrum init` installs deliver message nudges without a listener.
+> The pattern below still works and is supported, but it holds tokens in the
+> agent's context for the entire session. Cross-runtime agents (codex, cursor,
+> etc.) without hook support still use it.
 
 The message-listener is a background sub-agent that blocks on `thrum wait` and
 returns when messages arrive. A PID file (`.thrum/var/<agent_id>-listener.pid`)
@@ -14,7 +20,7 @@ prevents duplicate listeners — spawning when one is already running is safe.
 ```text
 Task(
   subagent_type="message-listener",
-  model="sonnet",  # low effort
+  model="<per choosing-subagent-models>",  # cheapest tier
   prompt="Listen for Thrum messages.\nSTEP_1: /path/to/repo/scripts/thrum-startup.sh --listener-heartbeat\nSTEP_2: thrum wait --timeout 8m --after -15s --agent-name <agent_id>"
 )
 ```
@@ -49,7 +55,7 @@ Automatically respawn the listener if it dies or is lost after compaction.
 ```text
 CronCreate(
   cron="*/30 * * * *",
-  prompt="Check the listener PID file at .thrum/var/<agent_id>-listener.pid.\nIf the file does not exist, or if kill -0 <pid> fails (process not running),\nspawn a new listener:\n\nAgent(subagent_type=\"message-listener\", model=\"sonnet\", prompt=\"Listen for Thrum messages.\\nSTEP_1: /path/to/repo/scripts/thrum-startup.sh --listener-heartbeat\\nSTEP_2: thrum wait --timeout 8m --after -15s --agent-name <agent_id>\")"
+  prompt="Check the listener PID file at .thrum/var/<agent_id>-listener.pid.\nIf the file does not exist, or if kill -0 <pid> fails (process not running),\nspawn a new listener:\n\nAgent(subagent_type=\"message-listener\", model=\"<per choosing-subagent-models>\", prompt=\"Listen for Thrum messages.\\nSTEP_1: /path/to/repo/scripts/thrum-startup.sh --listener-heartbeat\\nSTEP_2: thrum wait --timeout 8m --after -15s --agent-name <agent_id>\")"
 )
 ```
 
@@ -60,5 +66,5 @@ Spawn the initial listener on session start, then create the cron watchdog.
 - **Spawn freely** — PID file prevents duplicates
 - **Return immediately** when messages arrive (don't wait for more)
 - **Read-only** — the listener never sends messages
-- **Cost-efficient** — runs on sonnet-low, blocks instead of polling
+- **Cost-efficient** — runs on a cheap tier, blocks instead of polling
 - Listener uses CLI only (`Bash` tool), not MCP tools

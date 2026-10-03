@@ -193,6 +193,9 @@ that runs your agents.
    muse plugins install thrum@leonletto
    ```
 
+   If a `muse plugins` command reports `plugins are not available in this build`,
+   set `MUSE_EXPERIMENTAL_PLUGINS=1` in the environment that runs Muse, then retry.
+
 2. Approve Thrum's current runtime capabilities. This plugin-level form covers every
    hook, including hooks introduced by a future plugin update:
 

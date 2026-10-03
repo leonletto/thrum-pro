@@ -99,6 +99,10 @@ muse plugins marketplace add leonletto leonletto/thrum-pro
 muse plugins install thrum@leonletto
 ```
 
+If a `muse plugins` command reports `plugins are not available in this build`,
+your Muse build ships plugins behind an experimental flag. Set
+`MUSE_EXPERIMENTAL_PLUGINS=1` in the environment that runs Muse, then retry.
+
 Approve Thrum's current runtime capabilities, then verify the installation:
 
 ```bash

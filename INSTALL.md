@@ -187,7 +187,7 @@ Then add it to your project's `opencode.json` (or global
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["file:/path/to/this/bundle/opencode-plugin"]
+  "plugin": ["file:///path/to/this/bundle/opencode-plugin"]
 }
 ```
 

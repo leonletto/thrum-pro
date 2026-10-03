@@ -172,7 +172,7 @@ Then reference it as a local `file:` plugin in your project's `opencode.json`
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["file:/path/to/thrum-pro/opencode-plugin"]
+  "plugin": ["file:///path/to/thrum-pro/opencode-plugin"]
 }
 ```
 

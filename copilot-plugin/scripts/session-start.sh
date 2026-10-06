@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# CURRENTLY UNWIRED — see copilot-plugin/README.md. Nothing invokes this
+# script while hooks.json is intentionally empty; the measured contract below
+# is retained for the day it is wired, not as a live path.
 # sessionStart hook: inject `thrum prime` output into the agent's context,
 # for GitHub Copilot CLI's plugin-declared hooks.
 #

@@ -159,8 +159,7 @@ asserted after the fact).
 
 ## Project-specific rules (already loaded)
 
-Read the shared partial at the absolute path:
-`claude-plugin/commands/_project-rules-protocol.md`
+Load the /thrum:project-rules-protocol skill and follow it.
 
 If you accumulate a new rule mid-session about branch-splitting, capture it
 via the `coordinator-maintaining-memory` skill — it references the

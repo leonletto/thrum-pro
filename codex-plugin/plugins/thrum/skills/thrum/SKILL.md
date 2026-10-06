@@ -11,7 +11,7 @@ description:
 
 Run `thrum prime` for full session context (auto-injected by the SessionStart
 hook; also fires on post-compact resume). PreCompact is not registered — use
-`$thrum-compact` to save a snapshot before deliberately compacting.
+`$thrum:thrum-compact` to save a snapshot before deliberately compacting.
 
 ### Quick Command Reference
 
@@ -66,8 +66,8 @@ thrum session set-intent "..."           Update work description
 thrum context show                       Show saved work context
 thrum context save --file <path>         Save context from file
 thrum overview                           Combined status + team + inbox
-$thrum-update-project                    Guided project state update (narrative + state)
-$thrum-load-context                      Restore work context after compaction
+$thrum:thrum-update-project                    Guided project state update (narrative + state)
+$thrum:thrum-load-context                      Restore work context after compaction
 ```
 
 #### Tmux Sessions (Recommended)
@@ -147,9 +147,10 @@ processing. See [LISTENER_PATTERN.md](resources/LISTENER_PATTERN.md).
 - `thrum prime` gathers identity, team, inbox, git context, sync health
 - SessionStart hook auto-runs `thrum prime` on session start (including
   post-compact resume)
-- PreCompact is NOT registered — run `$thrum-compact` to save a restart snapshot
-  deliberately before compacting
-- **After compaction:** run `$thrum-load-context` to restore your work context
+- PreCompact is NOT registered — run `$thrum:thrum-compact` to save a restart
+  snapshot deliberately before compacting
+- **After compaction:** run `$thrum:thrum-load-context` to restore your work
+  context
 - Agent identity persists in `.thrum/identities/`
 
 ### Resources

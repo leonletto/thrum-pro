@@ -111,14 +111,13 @@ append_to BANNER $'\n---\n\n'
 # "# Previous Session Context" section emitted by `thrum prime` — keeping
 # the full prose in both places duplicates lines into every restart briefing.
 RESTART_PREAMBLE=""
-if printf '%s' "$PRIME_OUTPUT" | grep -q '^# Previous Session Context'; then
+if grep -q '^# Previous Session Context' <<<"$PRIME_OUTPUT"; then
   append_to RESTART_PREAMBLE '# 🛑 ACTION REQUIRED — you left yourself a Resume Plan'$'\n'
   append_to RESTART_PREAMBLE $'\n'
-  append_to RESTART_PREAMBLE 'Before anything else, go to the **`# Previous Session Context`** section below, read its **`## Resume Plan`** in full, and execute the numbered steps in order — the full instructions are in that section.'$'\n'
+  append_to RESTART_PREAMBLE 'Before anything else, go to the **`# Previous Session Context`** section below, read its **`## Resume Plan`** (or its final next-actions section) in full, and execute the numbered steps in order. If the briefing was truncated or persisted to a file, first read the whole file with your file-reading tool, every page in order, do not jump to the Resume Plan, and name one fact from it before acting.'
+  append_to RESTART_PREAMBLE $'\n'
   append_to RESTART_PREAMBLE $'\n'
   append_to RESTART_PREAMBLE '> ⚠️ **If this briefing was persisted to a `tool-results/*.txt` file instead of delivered inline, read it with the `Read` tool (use `offset`/`limit` to page through it) — NOT with `sed`, `grep`, `head`, `tail`, or `cat` via Bash.**'$'\n'
-  append_to RESTART_PREAMBLE '>'$'\n'
-  append_to RESTART_PREAMBLE '> Those paths live under `~/.claude/projects/**`, which the runtime treats as SENSITIVE. A Bash read of them raises a human permission prompt — misdescribed as a request to *edit* a sensitive file, even for a read-only `sed -n ...p` — and **the restart stalls there until a human answers.** Permission `allow` rules do NOT clear it: `Bash`, `Read`, `Edit` and path-scoped `Read(//Users/.../projects/**)` rules can all be present and the prompt still fires, because the gate is the sensitive-path check, not the permission-rule system. The `Read` tool is not subject to it. **Use `Read`.**'$'\n'
   append_to RESTART_PREAMBLE $'\n---\n\n'
 fi
 
@@ -126,9 +125,9 @@ fi
 BRIEFING=""
 append_to BRIEFING '# Thrum Session Briefing (auto-loaded)'$'\n'
 append_to BRIEFING $'\n'
-append_to BRIEFING 'The complete `thrum prime` output is included below. You do NOT need to run `/thrum:prime` or `thrum prime` again this session — the briefing is already in your context. Read it in full; the session context section at the end is the most important.'$'\n'
+append_to BRIEFING 'The complete `thrum prime` output is included below. Read it in full.'$'\n'
 append_to BRIEFING $'\n'
-append_to BRIEFING 'Only spawn additional commands if the inbox section shows unread messages that need processing.'$'\n'
+append_to BRIEFING 'Beyond the session-start queue and state reconcile and the inbox check, spawn additional commands only if the inbox section shows unread messages that need processing.'$'\n'
 append_to BRIEFING $'\n---\n\n'
 append_to BRIEFING "$PRIME_OUTPUT"$'\n'
 
@@ -159,8 +158,6 @@ append_to ACK_INSTRUCTION '>'$'\n'
 append_to ACK_INSTRUCTION '> Before reading the briefing or running any tools, print this single plain-text line — substitute `<intent>` with a brief sentence drawn from your inbox or restart snapshot:'$'\n'
 append_to ACK_INSTRUCTION '>'$'\n'
 append_to ACK_INSTRUCTION "> \`${_ACK_LINE}\`"$'\n'
-append_to ACK_INSTRUCTION '>'$'\n'
-append_to ACK_INSTRUCTION '> This produces visible scrollback so humans can distinguish a healthy launch from a stuck or failed one without probing.'$'\n'
 append_to ACK_INSTRUCTION $'\n'
 
 # Emit in canonical order: banner → directive → ack → restart preamble →

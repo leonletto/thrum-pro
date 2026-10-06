@@ -50,7 +50,7 @@ describes the artifact in front of you. Parse the binding keys from the
 **highest-cycle** (last-appended) `stage=plan` line — stamps are only ever
 appended, never reordered, so `tail -1` is the binding verdict; never `sort`
 (a `cycle=10` line must beat `cycle=9`, which a lexical sort inverts) — then
-re-derive the current values per `_stamp-protocol.md` § "Review-object
+re-derive the current values per `stamp-protocol.md` § "Review-object
 binding" and compare:
 
 ```bash
@@ -95,7 +95,7 @@ Notes on the check:
   marker. Surface any `THRUM-DEFER` lines still present in the doc as part
   of the override audit.
 - **The Deviations block has no override.** Its absence always fails the
-  gate — see `claude-plugin/commands/_deviations-protocol.md` ("empty must
+  gate — see the /thrum:deviations-protocol skill ("empty must
   be WRITTEN, not omitted").
 - **`verify=` has no silent-omission path.** A stamp missing `verify=`
   entirely FAILS this third check exactly like a missing stamp fails the
@@ -117,7 +117,7 @@ Notes on the check:
   silent-omission path** — a stamp missing `plan_obj`/`src_lock` entirely
   fails exactly like a missing `verify=` field (fourth check above). The
   remedy is the same shape as the `verify=` remedy: re-run the plan review so
-  the stamp is emitted with live binding keys (`_stamp-protocol.md` § "Review-
+  the stamp is emitted with live binding keys (`stamp-protocol.md` § "Review-
   object binding"), or a coordinator adds an explicit `verdict=OVERRIDE`
   (with `reason=`) to the `stage=plan` line — the SAME auditable escape used
   for the first check, not a new mechanism. There is no `PREDATES` value for
@@ -476,8 +476,7 @@ template's "Logging Refactoring Opportunities" section.
 If not found, create one:
 
 `--description` is multi-line prose — never double-quoted inline. Use
-`--body-file` to pass the content from a file instead; see the role preamble's
-🔴 PROSE INTO A COMMAND rule. `scripts/bd-shared` delivers `--body-file` (and
+`--body-file` to pass the content from a file instead; see the heredoc-or-file rule in your role preamble. `scripts/bd-shared` delivers `--body-file` (and
 `--stdin`) content: it reads the file on your box and pipes those bytes to bd,
 and an empty or blank body is refused loudly; only `-f`/`--file` and `--graph`
 (bulk-plan files) are refused there. Scratch files go in `/private/tmp` on macOS,
@@ -870,11 +869,11 @@ architecture notes specific to this feature:
 
 > ⚠️ Verify base before acting: `git diff <sha>..origin/<merge_target> -- <files cited>` -- non-empty ⇒ cited code moved. (Resolve `<merge_target>` through its remote-tracking ref, never a bare local branch name — a local branch of the same name can be stale or absent.)
 
-<!-- Derive stamp per `claude-plugin/commands/_stamp-protocol.md`. -->
+<!-- Derive stamp per the /thrum:stamp-protocol skill. -->
 
 ## Deviations from Source
 
-<!-- Derive per `claude-plugin/commands/_deviations-protocol.md` — diff
+<!-- Derive per the /thrum:deviations-protocol skill — diff
      against the plan/spec, never recall from memory. Required even when
      empty. -->
 
@@ -959,7 +958,7 @@ prompt file:
    ```
 
 2. **After the post-setup prompt review terminates `Ready:Yes`**, compute
-   `prompt_obj`/`plan_lock` per `_stamp-protocol.md` § "Review-object binding"
+   `prompt_obj`/`plan_lock` per `stamp-protocol.md` § "Review-object binding"
    (strip-then-hash the prompt against itself for `prompt_obj`; plain-hash the
    LOCKED plan for `plan_lock`), then append the verdict stamp:
 

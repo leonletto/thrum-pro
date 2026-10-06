@@ -104,7 +104,7 @@ updating.
 
 1. **Header line** — Update `Last Updated` date and `Phase` status summary. Also
    derive and insert the Authored-against stamp, placing it immediately after
-   the `Last Updated` line (see `claude-plugin/commands/_stamp-protocol.md`
+   the `Last Updated` line (see the /thrum:stamp-protocol skill
    for the exact two-line format).
 
 2. **Current State Summary — LIVE STATE ONLY, SUPERSEDED EACH SESSION.**

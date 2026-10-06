@@ -189,8 +189,10 @@ thrum worktree create <name>
 thrum tmux create <name> --cwd <worktree-path> \
   --name <agent_name> --role implementer --module <module> \
   --mode ephemeral --identity ephemeral \
-  --model <from runtime.role_models, per choosing-subagent-models>
-thrum tmux launch <name> --runtime <runtime> --model <from runtime.role_models, per choosing-subagent-models>
+  --model <from runtime.role_models, per choosing-subagent-models> \
+  --effort <from runtime.role_models, per choosing-subagent-models>
+thrum tmux launch <name> --runtime <runtime> --model <from runtime.role_models, per choosing-subagent-models> \
+  --effort <from runtime.role_models, per choosing-subagent-models>
 ```
 
 > **Implementer lifecycle:** All implementers are ephemeral+stateless (no agent
@@ -233,7 +235,7 @@ That prints the runtime's own footer line, e.g. `Model: <resolved model>`. **Rea
 intended tier from `.thrum/config.json` → `runtime.role_models`, not from memory.**
 If the footer shows a different tier (see the BLOCKED note under Step 2 — the model ban
 list lives in `choosing-subagent-models`), the pin failed silently — re-pin with
-`thrum tmux create ... --model <from runtime.role_models, per choosing-subagent-models>` (or
+`thrum tmux create ... --model <from runtime.role_models, per choosing-subagent-models> --effort <from runtime.role_models, per choosing-subagent-models>` (or
 `thrum agent runtime-config set <agent_name> --model <from runtime.role_models, per choosing-subagent-models>`) and relaunch BEFORE
 assigning work. **Do not dispatch an unpinned implementer** — the daemon's
 role-default backstop (`jq -r '.runtime.role_models' .thrum/config.json`) is a
@@ -504,7 +506,7 @@ done
 
 **C. If conflicts arise:**
 Reading the conflicted files directly is permitted (merge-conflict carve-out
-in Scope Boundaries). Analyze the conflict using your plan/intent context to
+in the Scope section of your preamble). Analyze the conflict using your plan/intent context to
 determine the correct resolution. Then spawn a targeted edit sub-agent:
 
 ```text
@@ -805,3 +807,30 @@ EOF
 ```
 
 Do not proceed without approval when autonomy is `per_epic`.
+
+### Tier-swap: replace an underperforming implementer in the same worktree
+
+Use when the first review shows multiple BLOCKING findings, systematic misunderstanding of the task, or an agent clearly going long. The swap reuses the SAME worktree: retire the underperforming agent and relaunch a fresh one under a NEW name in place. Never `thrum agent delete` (operator-only, gated to the coordinator; orchestrators are refused). The swapped-out agent is retired with `set-phase retired`; its registry row, messages and transcript are retained.
+
+Step 1: kill the old agent's tmux session first, so its pid is dead. A live-pid identity file is preserved and not quarantined; a dead pid lets the new create quarantine it.
+  thrum tmux kill <same_worktree_name>
+Step 2: retire the old agent. It keeps the registry row (Retired tab). `set-phase` is not operator-gated. Retiring does not free the identity; Step 4's create does.
+  thrum agent set-phase retired --agent <underperforming_agent_name>
+Step 3: verify the worktree is intact (WIP code preserved).
+  ls <worktree-path>
+Step 4: launch a fresh ephemeral identity under a NEW name in the SAME worktree, pinned on both create and launch from `runtime.role_models` (per `choosing-subagent-models`). `--intent` carries the orient-from-WIP one-liner.
+  thrum tmux create <same_worktree_name> --cwd <worktree-path> --name <new_agent_name> --role implementer --module <module> --mode ephemeral --identity ephemeral --model <per runtime.role_models> --effort <per runtime.role_models> --intent "tier-swap: orient in the worktree (WIP + first-review findings) and continue"
+  thrum tmux launch <same_worktree_name> --runtime claude --model <per runtime.role_models> --effort <per runtime.role_models>
+Step 5: deliver the WIP pointer and first-review findings (a cold handoff: the code plus the findings).
+  thrum send --to @<new_agent_name> --stdin <<'EOF'
+  Tier-swap pickup: <WIP summary + first-review findings>
+  EOF
+
+The pickup prompt (Step 5) must include:
+  You are picking up in-progress work from a prior agent that was replaced.
+  Context:
+  - Worktree: <path> — contains partial implementation, review it with git diff
+  - Task: <epic-id> / <task description>
+  - First-review findings from the prior pass:
+    <paste the consolidated finding list here>
+  - Your goal: address all BLOCKING findings + complete the remaining task scope.

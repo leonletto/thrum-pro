@@ -1,7 +1,7 @@
 {
   "name": "thrum",
   "description": "Git-backed messaging for AI agent coordination across sessions, worktrees, and machines.",
-  "version": "0.11.0-dev.1.113",
+  "version": "0.11.0-dev.1.122",
   "author": {
     "name": "Leon Letto",
     "url": "https://github.com/leonletto"
@@ -22,12 +22,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/block-sync-worktree-cd.sh",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/block-sync-worktree-cd.sh",
             "timeout": 5
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/block-tls-key-exfil.sh",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/block-tls-key-exfil.sh",
             "timeout": 5
           }
         ]
@@ -37,7 +37,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/memory-rule-jit/hook.sh",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/memory-rule-jit/hook.sh",
             "timeout": 10
           }
         ]
@@ -49,7 +49,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/inject-prime-context.sh",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/inject-prime-context.sh",
             "timeout": 15
           }
         ]
@@ -60,7 +60,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/stop-check-messages.sh",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/stop-check-messages.sh",
             "timeout": 15
           }
         ]
@@ -72,7 +72,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/post-compact-recover.sh",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/post-compact-recover.sh",
             "timeout": 10
           }
         ]

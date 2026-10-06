@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
 # PostCompact hook: emit orientation prompt + re-arm listener (multi-agent only)
+#
+# CURRENTLY UNWIRED: no hooks.json event references this script (postCompact is
+# not a Cursor hook event), and the compact.md marker-writer is gone — retained
+# pending an explicit keep-or-remove disposition, not as an active path.
 set -euo pipefail
+
+# jq is optional for this hook (every use below is guarded), but without it the
+# identity self-message and listener PID validation are skipped, so
+# say so once instead of skipping silently.
+if ! command -v jq >/dev/null 2>&1; then
+  echo "thrum post-compact-recover.sh: jq was not found on PATH; self-message and listener PID validation are SKIPPED. Install jq (apt install jq / brew install jq)." >&2
+fi
 
 THRUM_HOME="${THRUM_HOME:-.}"
 THRUM_CONFIG="$THRUM_HOME/.thrum/config.json"
@@ -47,15 +58,39 @@ else
   # Mirror inject-prime-context.sh's snapshot-path convention:
   # <worktree>/.thrum/restart/<agent_id>.md — the hook's worktree root here
   # is $THRUM_HOME (this hook has no whoami-derived AGENT_WORKTREE).
-  COMPACT_SNAPSHOT="$THRUM_HOME/.thrum/restart/${IDENTITY_AGENT_ID}.md"
+  # thrum-xyz: the SessionStart prime MOVES that file into the MAIN repo's
+  # .thrum/agents/<id>/sessions/<ts>-restart.md, so by the time this hook runs
+  # the restart/ copy is normally gone. Resolve what exists AT NUDGE TIME and
+  # name that exact path. A still-present restart/ file is the freshest (an
+  # archived copy is always older), so it wins; otherwise the newest archived
+  # copy. Best-effort: every command is guarded so set -e can never abort.
+  COMPACT_SNAPSHOT=""
+  _restart_file="$THRUM_HOME/.thrum/restart/${IDENTITY_AGENT_ID}.md"
+  if [ -s "$_restart_file" ]; then
+    COMPACT_SNAPSHOT="$_restart_file"
+  else
+    # A worktree's .thrum/redirect names the main repo's .thrum directory.
+    _main_thrum="$THRUM_HOME/.thrum"
+    if [ -f "$THRUM_HOME/.thrum/redirect" ]; then
+      _redir=$(head -n 1 "$THRUM_HOME/.thrum/redirect" 2>/dev/null | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' || true)
+      # A relative redirect resolves against the worktree root, not the hook's cwd.
+      case "$_redir" in ""|/*) ;; *) _redir="$THRUM_HOME/$_redir" ;; esac
+      if [ -n "$_redir" ] && [ -d "$_redir" ]; then _main_thrum="$_redir"; fi
+    fi
+    _sessions_dir="$_main_thrum/agents/${IDENTITY_AGENT_ID}/sessions"
+    if [ -d "$_sessions_dir" ]; then
+      _newest=$(ls -1t "$_sessions_dir"/*-restart.md 2>/dev/null | head -n 1 || true)
+      if [ -n "$_newest" ] && [ -s "$_newest" ]; then COMPACT_SNAPSHOT="$_newest"; fi
+    fi
+  fi
 
-  if [ -s "$COMPACT_SNAPSHOT" ]; then
+  if [ -n "$COMPACT_SNAPSHOT" ]; then
     # Quoted heredoc ('MSGEOF') — no command substitution ever runs on this
     # body, per this project's CLAUDE.md heredoc rule. The dynamic snapshot
     # path is spliced in afterward via plain parameter-expansion string
     # replacement, never by re-opening the heredoc to shell expansion.
     COMPACT_MSG=$(cat <<'MSGEOF'
-You've been compacted. Your Resume Plan is in the auto-injected briefing (# Previous Session Context). If it is missing, read your snapshot at __SNAPSHOT_PATH__ or, once archived, the newest *-restart.md in .thrum/agents/<your-agent>/sessions/ of the main repo.
+You've been compacted. Your Resume Plan is in the auto-injected briefing (# Previous Session Context). If it is missing, read your snapshot at __SNAPSHOT_PATH__ (use the Read tool).
 MSGEOF
 )
     COMPACT_MSG="${COMPACT_MSG//__SNAPSHOT_PATH__/$COMPACT_SNAPSHOT}"
@@ -202,6 +237,9 @@ if [ ! -f "$PID_FILE" ]; then
   exit 0
 fi
 
+# Without jq the PID cannot be read; keep the hook non-failing and leave the
+# PID file alone (the jq note above already explained why).
+command -v jq >/dev/null 2>&1 || exit 0
 LISTENER_PID=$(jq -r '.pid // empty' "$PID_FILE" 2>/dev/null)
 if [ -z "$LISTENER_PID" ] || ! kill -0 "$LISTENER_PID" 2>/dev/null; then
   echo "Listener process dead. Spawn a new listener." >&2

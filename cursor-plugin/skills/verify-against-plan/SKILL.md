@@ -104,7 +104,7 @@ clear error — do not proceed with partial inputs.
    Regex: `^\*\*Authored-against:\*\* \`([0-9a-f]+)\` target: \`([^\`]+)\``
    (sha → capture group 1, merge_target → capture group 2)
 
-   (Canonical stamp definition: `claude-plugin/commands/_stamp-protocol.md`. The
+   (Canonical stamp definition: the /thrum:stamp-protocol skill. The
    stamp follows the same literal `grep -F` / fixed-field-order / case-sensitive /
    ASCII-only convention as the `THRUM-REVIEW` marker — see
    `coordinator-running-brainstorm-cycles` skill § "Footer → commit → stamp".)
@@ -158,7 +158,7 @@ clear error — do not proceed with partial inputs.
    present" outcome above, since this check only needs the stamp's
    `<sha>`/`<merge_target>`, not the plan's cited-files list. Run the
    ordered, short-circuiting two-check sequence defined canonically in
-   `_stamp-protocol.md` § "Read-time provenance re-derivation" (SHA-resolves
+   `stamp-protocol.md` § "Read-time provenance re-derivation" (SHA-resolves
    first, then merge-status) against the stamp's `<sha>`/`<merge_target>` —
    the exact commands live there as the single source of truth; this section
    states outcomes and severity only:

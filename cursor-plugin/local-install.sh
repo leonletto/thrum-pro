@@ -44,9 +44,47 @@ if [ -d "$SCRIPT_DIR/agents" ] && [ "$(ls -A "$SCRIPT_DIR/agents" 2>/dev/null)" 
   cp "$SCRIPT_DIR/agents/"*.md "$CURSOR_DIR/agents/"
 fi
 
-# Write hooks.json with resolved absolute paths
-sed "s|__PLUGIN_ROOT__|${SCRIPT_DIR}|g" \
-  "$SCRIPT_DIR/hooks/hooks.json" > "$CURSOR_DIR/hooks.json"
+# Write hooks.json with resolved absolute paths. Parsed as JSON first (never
+# sed and never raw-text replacement: install paths routinely contain spaces,
+# R&D ampersands, quotes, backslashes, and $HOME/$(...) sequences, which raw
+# replacement either corrupts or shell-expands). The install root is
+# substituted inside each command string, the executable head is
+# shell-LITERAL-quoted with shlex.quote so spaced paths survive word
+# splitting AND $HOME/$(...)/backticks/quotes/backslashes survive shell
+# expansion when the decoded command is executed (a double-quoted head would
+# still expand them), and the manifest is re-serialized with json.dumps so
+# the output is valid JSON whose decoded commands contain the literal root
+# byte-for-byte. The tail after the first space (shipped args such as
+# `2>/dev/null || true`) is preserved verbatim. Source uses the
+# ${CURSOR_PLUGIN_ROOT} token (legacy __PLUGIN_ROOT__ also resolved so older
+# copies keep installing); the runtime never sees an unexpanded token.
+# Whether Cursor's own parser honors single-quote literal quoting under
+# adversarial paths is vendor behavior, UNKNOWN natively — proven here only
+# for POSIX shell argv identity (see dev-docs successor-batch reviews).
+command -v python3 >/dev/null 2>&1 || { echo "ERROR: python3 required to resolve hooks.json install paths" >&2; exit 1; }
+python3 - "$SCRIPT_DIR/hooks/hooks.json" "$CURSOR_DIR/hooks.json" "$SCRIPT_DIR" <<'PY'
+import json, shlex, sys
+src, dst, root = sys.argv[1], sys.argv[2], sys.argv[3]
+with open(src, encoding="utf-8") as f:
+    doc = json.load(f)
+if not isinstance(doc, dict) or not isinstance(doc.get("hooks"), dict):
+    print("ERROR: source hooks.json has no object 'hooks'", file=sys.stderr)
+    sys.exit(1)
+for key, entries in doc["hooks"].items():
+    if not isinstance(entries, list):
+        print("ERROR: hook event %r is not a list" % key, file=sys.stderr)
+        sys.exit(1)
+    for entry in entries:
+        cmd = entry.get("command") if isinstance(entry, dict) else None
+        if not isinstance(cmd, str) or "${CURSOR_PLUGIN_ROOT}" not in cmd and "__PLUGIN_ROOT__" not in cmd:
+            continue
+        head, sep, rest = cmd.partition(" ")
+        resolved = head.replace("${CURSOR_PLUGIN_ROOT}", root).replace("__PLUGIN_ROOT__", root)
+        entry["command"] = "%s%s%s" % (shlex.quote(resolved), sep, rest)
+with open(dst, "w", encoding="utf-8") as f:
+    json.dump(doc, f, indent=2)
+    f.write("\n")
+PY
 
 # Write mcp.json for thrum MCP server
 cat > "$CURSOR_DIR/mcp.json" <<'MCPEOF'

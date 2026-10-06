@@ -1,0 +1,4 @@
+interface:
+  display_name: "Generator Idempotency Protocol"
+  short_description: "Use when generating config or docs from templates - idempotency invariant for generator skills."
+  default_prompt: "Use when generating config or docs from templates - idempotency invariant for generator skills."

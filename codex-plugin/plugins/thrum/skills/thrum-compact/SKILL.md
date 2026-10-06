@@ -19,11 +19,11 @@ needs broader coordination judgment.
 
 Compose a standard 11-section prose continuation, write it directly to your
 restart file, verify it landed, then send `/compact` to your own tmux pane.
-Unlike `$thrum-restart` and `$thrum-sleep`, compact does NOT end your session
-and does NOT kill your tmux pane — the agent stays ALIVE. Any sub-agents,
-background loops, and cron schedules you own keep running across the compaction
-(confirmed empirically). After compaction you Read your snapshot by hand and
-re-prime lean.
+Unlike `$thrum:thrum-restart` and `$thrum:thrum-sleep`, compact does NOT end
+your session and does NOT kill your tmux pane — the agent stays ALIVE. Any
+sub-agents, background loops, and cron schedules you own keep running across the
+compaction (confirmed empirically). After compaction you Read your snapshot by
+hand and re-prime lean.
 
 ### When to Use
 
@@ -33,9 +33,9 @@ re-prime lean.
   and scheduler state) would be more expensive than a compaction.
 
 For context-exhaustion or stuck-state cases where a FRESH session is the right
-answer — or where the coordinator should move you — use `$thrum-restart`. For
-operator-shutdown parking that kills the session, use `$thrum-sleep`. Compact is
-the only one of the three that keeps the runtime process alive.
+answer — or where the coordinator should move you — use `$thrum:thrum-restart`.
+For operator-shutdown parking that kills the session, use `$thrum:thrum-sleep`.
+Compact is the only one of the three that keeps the runtime process alive.
 
 ### Steps
 
@@ -62,19 +62,16 @@ skill) and your committed work (`thrum queue` — see the `using-the-queue` skil
 BEFORE composing your snapshot below — these survive compaction independently of
 the prose continuation file and are what a post-compact render reads back.
 
-Read the partial at the absolute path (resolve `$REPO` yourself first via
-`thrum agent worktree --authoritative` — NEVER `thrum whoami --field worktree`
-or `git rev-parse --show-toplevel`, both cwd-resolved and the root cause of a
-documented snapshot-save loss class; there is no git fallback):
-
-```text
-${REPO}/claude-plugin/commands/_snapshot-protocol.md
-```
+Invoke the $thrum:snapshot-protocol skill and follow it, starting with its Step
+1 (resolve your worktree ONLY via `thrum agent worktree --authoritative` — NEVER
+`thrum whoami --field worktree` or `git rev-parse --show-toplevel`, both
+cwd-resolved and the root cause of a documented snapshot-save loss class; there
+is no git fallback).
 
 Apply its Step 2 (compose your continuation) per the structure guidance.
 
 **Use the STANDARD 11-section structure.** For comprehensive
-designer/architect-grade snapshots, use `$thrum-compact-extended` instead.
+designer/architect-grade snapshots, use `$thrum:thrum-compact-extended` instead.
 
 **Note on §1 framing:** For a compact snapshot, §1 frames as "where work stands
 at compaction" — you are continuing in place, not completing and not parking.
@@ -88,7 +85,16 @@ self-contained:
 > in the injected briefing (read it FIRST). Expect a `thrum prime --light`
 > briefing already auto-injected by the SessionStart hook; only run
 > `thrum:prime-agent` if it did NOT appear. Do NOT manually run full
-> `thrum prime`. Then continue from §9.
+> `thrum prime`. Then continue from §9. If you must re-read this file (no
+> briefing appeared): read the NEWEST
+> `.thrum/agents/<your-id>/sessions/*-restart.md` in the MAIN repo (the prime
+> ARCHIVES the snapshot there); fall back to `.thrum/restart/<your-id>.md` only
+> if it still exists. Find the newest with:
+> `R=$(git rev-parse --show-toplevel); ls -1t "$(cat "$R/.thrum/redirect" 2>/dev/null || echo "$R/.thrum")"/agents/<your-id>/sessions/*-restart.md | head -1`
+> (`$R/.thrum/redirect` in a worktree names the main repo's `.thrum`; using `$R`
+> keeps this independent of your current directory). Open it with the Read tool
+> (not Bash sed/cat). The `sessions/` file lives under the repo's `.thrum`, so
+> that is allowed.
 
 Then §1…§11 as normal, with §9 (Numbered resume plan) actionable from a
 compacted (not cold) start.
@@ -128,7 +134,8 @@ which fails closed unless the file at that exact path carries that nonce.
 This file lives on disk and is UNAFFECTED by compaction — compaction rewrites
 your conversation context, never your worktree. So the snapshot you write now is
 readable after `/compact` fires. There is no durable-backup step (the worktree
-is not torn down, so `$thrum-sleep`'s teardown-loss risk does not apply here).
+is not torn down, so `$thrum:thrum-sleep`'s teardown-loss risk does not apply
+here).
 
 #### 4. Verify your snapshot, then fire /compact (ONE block)
 
@@ -144,12 +151,6 @@ is not torn down, so `$thrum-sleep`'s teardown-loss risk does not apply here).
 > form did, and it is what produced a truncated `/compac` → invalid command →
 > silent no-op (measured). A single `thrum tmux send "$SESSION" "<command>"`
 > call has no such split to make.
-
-On a non-Claude runtime this block sends that runtime's own compact-equivalent
-command in place of `/compact` — see
-`${REPO}/claude-plugin/commands/_compact-runtime-commands.md` for the cited
-per-runtime table; `scripts/sync-skills.sh` applies the substitution when
-syncing this file to each runtime's plugin tree.
 
 Firing `/compact` before the Step 3 Write lands compacts a pre-write context and
 resumes from a stale/blank file — the exact failure this command prevents. This
@@ -245,7 +246,7 @@ if [ "$SNAPSHOT_OK" = 1 ] && [ "$SESSION_OK" = 1 ]; then
     echo "ERROR: thrum tmux send exited ${SEND_RC} — /compact was not queued. Report and stop."
     exit 1
   fi
-  # thrum-xyz: queue the RESUME PROMPT right behind /compact, on the same
+  # resume-prompt: queue the RESUME PROMPT right behind /compact, on the same
   # daemon queue. Hook output is context only — it does not start a turn — so
   # without this an idle pane with an empty inbox can sit at 0% context, empty
   # composer, until a human types. The daemon dispatches it once the pane is
@@ -293,9 +294,12 @@ none of that is needed here. Resume LEAN, in this order:
    snapshot (moves `${REPO}/.thrum/restart/${AGENT}.md` into the main repo's
    `.thrum/agents/${AGENT}/sessions/`), so the original path is normally GONE by
    the time you look — that is by design, not loss. Only if no briefing appeared
-   (daemon unreachable), read the newest `*-restart.md` in that `sessions/`
-   directory (or `${REPO}/.thrum/restart/${AGENT}.md` if it still exists) and
-   run `thrum:prime-agent` manually as the fallback. Never manually run full
+   (daemon unreachable), read the NEWEST `*-restart.md` in that `sessions/`
+   directory, e.g.
+   `ls -1t "$(cat "${REPO}/.thrum/redirect" 2>/dev/null || echo "${REPO}/.thrum")"/agents/${AGENT}/sessions/*-restart.md | head -1`
+   (fall back to `${REPO}/.thrum/restart/${AGENT}.md` only if it still exists;
+   use the Read tool, not Bash sed/cat, on `~/.claude` paths) and run
+   `thrum:prime-agent` manually as the fallback. Never manually run full
    `thrum prime` when the briefing is present.
 2. **A resume prompt starts your first turn.** Step 4 queued a "Compaction
    complete - please continue" prompt on the daemon right behind `/compact`; it

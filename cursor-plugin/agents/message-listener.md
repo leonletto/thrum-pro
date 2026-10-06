@@ -8,7 +8,7 @@ model: sonnet
 background: true
 maxTurns: 65
 effort: low
-allowed-tools:
+tools:
   - Bash
 ---
 

@@ -86,13 +86,13 @@ that would otherwise come back as findings.
    package searched -> primitive adopted, or none exists + bounded cost formula
    (frequency x production cardinality, at production scale). Include it in
    your DONE report.
+   - Before writing a raw read-in-loop, `db.Query`-in-loop, `COUNT(DISTINCT ...)`, or a second transaction or pool acquisition per logical unit under a hot root, search the callee package for an existing targeted, cached, covering or batch primitive.
 
 Fix what you find before sending the ping.
 
 ## Project-specific rules (already loaded)
 
-Read the shared partial at the absolute path:
-`claude-plugin/commands/_project-rules-protocol.md`
+Load the /thrum:project-rules-protocol skill and follow it.
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `implementer-maintaining-memory` skill — it references the

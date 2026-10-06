@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Rules Protocol"
+  short_description: "Use when loading project-specific rules - shared rule skill for role skills."
+  default_prompt: "Use when loading project-specific rules - shared rule skill for role skills."

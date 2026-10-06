@@ -62,11 +62,7 @@ no session end. Exit code 1. The skill is the wrong tool for non-tmux agents.
 
 ### 2. Read the shared snapshot-composition partial
 
-Read the partial at the absolute path:
-
-```text
-${REPO}/claude-plugin/commands/_snapshot-protocol.md
-```
+Invoke the /thrum:snapshot-protocol skill and follow it.
 
 Apply its Step 2 (compose your continuation) per the structure guidance.
 

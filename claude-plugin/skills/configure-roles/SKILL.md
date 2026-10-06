@@ -155,7 +155,7 @@ For each role:
    - If beads detected: include `bd` commands in Task Tracking section
    - If MCP servers detected: add to Efficiency section
    - If specific skills detected: reference them
-   - If worktree restrictions: adjust Scope Boundaries
+   - If worktree restrictions: adjust the Scope section
 
 3. Write to `.thrum/role_templates/{role}.md`. Keep per-agent template tokens
    (`{{.AgentName}}`, `{{.Module}}`, `{{.WorktreePath}}`,
@@ -226,4 +226,4 @@ rendered files from saved answers without asking any questions.
 | Thrum MCP server     | Add MCP tool references, CLI fallback for sub-agents     |
 | Claude plugin skills | List installed skills with usage guidance                |
 | Context7 MCP         | Add library docs guidance to Efficiency section          |
-| Multiple worktrees   | Add worktree scope rules to Scope Boundaries             |
+| Multiple worktrees   | Add worktree scope rules to the Scope section            |

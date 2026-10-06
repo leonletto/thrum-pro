@@ -123,8 +123,7 @@ prefix, blinding the evaluation harness.
 
 ### Project-specific rules (already loaded)
 
-Read the shared partial at the absolute path:
-`claude-plugin/commands/_project-rules-protocol.md`
+Load the $thrum:project-rules-protocol skill and follow it.
 
 Capture new rules mid-session via the `implementer-maintaining-memory` skill —
 it references the `memory-write-discipline` common for the canonical

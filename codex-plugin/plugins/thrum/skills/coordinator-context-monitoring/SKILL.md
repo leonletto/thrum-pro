@@ -46,9 +46,10 @@ is:
 
 > **The coordinator ALWAYS uses the EXTENDED snapshot grade for itself — never
 > the standard/compact form. Which command carries that grade is
-> runtime-directed: `$thrum-compact-extended` on any runtime with a verified
-> compact-equivalent skill (D6, the default), `$thrum-restart-extended` ONLY as
-> the fallback on a runtime without one (today: muse, copilot).**
+> runtime-directed: `$thrum:thrum-compact-extended` on any runtime with a
+> verified compact-equivalent skill (D6, the default),
+> `$thrum:thrum-restart-extended` ONLY as the fallback on a runtime without one
+> (today: muse, copilot).**
 
 This is a REVERSAL of the prior absolute rule ("ALWAYS restart-extended, NEVER
 compact") — that rule is retired, not merely relaxed. Do not restore it.
@@ -70,18 +71,18 @@ Practical trigger points for coordinator self-restart/compact:
 - The coordinator hits a clean checkpoint and elects a fresh session.
 - Rate-limit / stuck-state recovery on the coordinator itself.
 
-In every one of these: run `$thrum-compact-extended` if the coordinator's
-runtime has a compact equivalent (the default); `$thrum-restart-extended` only
-if it does not. (The role-rule `coord-always-restart-extended` —
-`Coordinator ALWAYS uses $thrum-restart-extended` — is RETIRED as of D5; see
-`thrum memory` for its retirement record. This skill is the always-loaded home
-so the CURRENT rule survives even when memory isn't consulted.)
+In every one of these: run `$thrum:thrum-compact-extended` if the coordinator's
+runtime has a compact equivalent (the default); `$thrum:thrum-restart-extended`
+only if it does not. (The role-rule `coord-always-restart-extended` —
+`Coordinator ALWAYS uses $thrum:thrum-restart-extended` — is RETIRED as of D5;
+see `thrum memory` for its retirement record. This skill is the always-loaded
+home so the CURRENT rule survives even when memory isn't consulted.)
 
-Note the distinction from Steps 3–5 below: those steps drive `$thrum-restart`
-(Step 4) and `$thrum-restart-extended` (Step 5) into
-**implementer/brainstormer** panes per their ctx tier — that tiering is correct
-for worker agents. The carve-out here is ONLY about the coordinator's own
-restart/compact, which is unconditionally the extended grade, compact-first.
+Note the distinction from Steps 3–5 below: those steps drive
+`$thrum:thrum-restart` (Step 4) and `$thrum:thrum-restart-extended` (Step 5)
+into **implementer/brainstormer** panes per their ctx tier — that tiering is
+correct for worker agents. The carve-out here is ONLY about the coordinator's
+own restart/compact, which is unconditionally the extended grade, compact-first.
 
 ### How the scheduled sweep works (v0.10.6+ — thrum monitor)
 
@@ -170,7 +171,7 @@ is a single monitor for all lenses in v1, not one per lens.
 | Lens                        | Default | Disposition                                                                                                                                                                                                                                                                 |
 | --------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `context_tiers`             | ON      | The ctx%/stuck-working ladder (L1). Sole autonomous actuator when `restart_actuation=true`; otherwise RECOMMEND via `recommend-restart-extended` reason in ALERT.                                                                                                           |
-| `idle_mid_task`             | ON      | L2 — 30-min idle-with-open-task detection (bead cross-ref). RECOMMEND `$thrum-sleep-extended`; a no-task variant REPORTs `idle-no-task` at lower priority.                                                                                                                  |
+| `idle_mid_task`             | ON      | L2 — 30-min idle-with-open-task detection (bead cross-ref). RECOMMEND `$thrum:thrum-sleep-extended`; a no-task variant REPORTs `idle-no-task` at lower priority.                                                                                                            |
 | `snapshot_awaiting_restart` | ON      | L3 — pane text + fresh-snapshot two-signal heuristic. RECOMMEND `thrum tmux restart <agent>` (never autonomous).                                                                                                                                                            |
 | `blocked_on_human_modal`    | ON      | L4 — detects spend-limit/permission/consent modal prompts. DETECTION ONLY, never auto-answers; routes into the L5 ledger.                                                                                                                                                   |
 | `pending_human_ledger`      | ON      | L5 — flat JSONL ledger of items awaiting a human. EXEMPT from D5 backoff — surfaces every tick. `hb_ledger_resolve` (the resolution path) is defined but has zero call sites — nothing marks an entry resolved, so the ledger is append-only-forever, not "until resolved." |
@@ -365,7 +366,7 @@ context is. If it is not, leave it alone regardless of how high.
 | < 50%    | Y             | Tmux-send "are you stuck? `/continue` if waiting" nudge; if not recovered in next sweep, surface to operator                                                                                                                                   |
 | 50-70%   | N             | **NOT a warning** — OPTIONAL restart-if-IDLE only: directed inbox restart request when the agent is idle. A BUSY agent (or a coordinator, or a warm-hold/on-call/parked consultant) at 50-70% gets no action — see role/state carve-out below. |
 | 50-70%   | Y             | Tmux-send nudge; defer the tier-1 directed restart request until the next sweep confirms the pane is active again AND ctx is still in this band                                                                                                |
-| 70-85%   | N             | Tmux-send `$thrum-restart` (bypasses inbox; more forceful) — for coordinators/warm-hold consultants ACTIVELY WORKING, this band doesn't apply until the role/state carve-out's higher floor (75%, see below)                                   |
+| 70-85%   | N             | Tmux-send `$thrum:thrum-restart` (bypasses inbox; more forceful) — for coordinators/warm-hold consultants ACTIVELY WORKING, this band doesn't apply until the role/state carve-out's higher floor (75%, see below)                             |
 | 70-85%   | Y             | Surface to operator immediately (degraded + stuck → human-eyes-needed)                                                                                                                                                                         |
 | > 85%    | any           | Snapshot-gated restart (opt-in): surface `recommend-restart-extended` by default; autonomous restart only when `restart_actuation=true` in config (see Step 5)                                                                                 |
 | `(n/a)`  | any           | Pane capture failed OR runtime has no Ctx footer — check tmux session manually                                                                                                                                                                 |
@@ -458,7 +459,7 @@ write a good snapshot" window.
 
 ```bash
 thrum send --to @<agent_name> --stdin <<'EOF'
-Your context is at ~X%. Please run $thrum-restart now — write your snapshot and I will re-dispatch after.
+Your context is at ~X%. Please run $thrum:thrum-restart now — write your snapshot and I will re-dispatch after.
 EOF
 ```
 
@@ -480,7 +481,7 @@ The inbox path may not be reaching them at this context level. Bypass the inbox
 by typing the restart command directly into their input field:
 
 ```bash
-thrum tmux send <tmux_session_name> '$thrum-restart'
+thrum tmux send <tmux_session_name> '$thrum:thrum-restart'
 ```
 
 If it exits 3 (Enter WITHHELD, text already typed) or 4 (verdict unknown), do
@@ -490,8 +491,8 @@ NOT retype it: `thrum tmux capture` the pane and submit with
 (Find the tmux session name in sweep output — it's typically the worktree
 basename, e.g. `myepic-impl`, NOT the agent_id.)
 
-This causes the runtime to immediately execute `$thrum-restart` as if the user
-typed it. The agent writes their snapshot + restarts.
+This causes the runtime to immediately execute `$thrum:thrum-restart` as if the
+user typed it. The agent writes their snapshot + restarts.
 
 If the tmux-send doesn't trigger a restart within ~5 minutes (agent may be too
 degraded to process input), escalate to Step 5 (snapshot-gated restart).
@@ -507,16 +508,16 @@ and even it is **opt-in, off by default**. The behavior is controlled by
 
 The sweep does NOT restart anything. It emits a `recommend-restart-extended`
 reason in the ALERT line, surfacing the situation to the coordinator role. When
-this reason appears, decide whether to run `$thrum-restart-extended` on the
-agent — a deliberate, human-in-the-loop action. No automatic restart fires.
+this reason appears, decide whether to run `$thrum:thrum-restart-extended` on
+the agent — a deliberate, human-in-the-loop action. No automatic restart fires.
 
 #### When `restart_actuation` is `true` (explicitly enabled by the operator)
 
 The sweep runs a 4-step snapshot-gated procedure automatically:
 
 1. **Capture pre-send timestamp** — record the current wall-clock time.
-2. **Send `$thrum-restart-extended` via raw tmux send-keys** — types the restart
-   command directly into the agent's pane (bypasses inbox).
+2. **Send `$thrum:thrum-restart-extended` via raw tmux send-keys** — types the
+   restart command directly into the agent's pane (bypasses inbox).
 3. **Sleep a settle window** — default 180 s, tunable via `HB_SNAPSHOT_SETTLE`
    env var.
 4. **Check for a FRESH snapshot file** — looks for a `*-restart.md` file in

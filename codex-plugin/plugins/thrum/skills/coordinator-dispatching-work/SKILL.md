@@ -14,7 +14,7 @@ description:
 
 ### Use `thrum tmux launch` — not raw send-keys
 
-**Why:** Manual `tmux send-keys 'claude'` followed by `$thrum-prime` skips
+**Why:** Manual `tmux send-keys 'claude'` followed by `$thrum:thrum-prime` skips
 identity registration and produces silent CWD drift. The
 `thrum tmux launch <name>` flow registers the agent against the worktree path
 correctly and gives the daemon a real PID to track.
@@ -316,21 +316,20 @@ Plan assigned: <plan-file-path>
 Summary: <one-line>
 Merge target: <branch>
 Epic count: N
-Invoke $thrum-orchestrate to begin.
+Invoke $thrum:orchestrate to begin.
 EOF
 ```
 
 #### Step 3: Your role during execution
 
 - You receive the orchestrator's merge report when all epics complete.
-- Run your merge-approval gate (see Merge Approval Gate in your preamble).
+- Run your merge-approval gate (see the merge approval rules in your preamble).
 - Monitor the orchestrator's status updates; escalate to the operator only for
   genuine judgment calls (architectural pivot, scope change, budget concern).
 
 ### Project-specific rules (already loaded)
 
-Read the shared partial at the absolute path:
-`claude-plugin/commands/_project-rules-protocol.md`
+Load the $thrum:project-rules-protocol skill and follow it.
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `coordinator-maintaining-memory` skill — it references the

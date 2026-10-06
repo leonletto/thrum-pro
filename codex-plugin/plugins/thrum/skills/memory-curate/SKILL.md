@@ -112,7 +112,7 @@ thrum memory create --kind comment \
 ```
 
 `--short`/`--full` carry real prose — compose via heredoc or file, never
-double-quoted inline; see your role preamble's 🔴 PROSE INTO A COMMAND rule.
+double-quoted inline; see the heredoc-or-file rule in your role preamble.
 
 `--parent` shorthand creates the `child_of` edge in the same operation. Author =
 `agent_id`, timestamp = `created_at`. Threading walks via the daemon's

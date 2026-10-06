@@ -169,7 +169,7 @@ judgment cycle gets more expensive per call, so restarting is cheaper, not a
 safety trigger) read off your OWN status bar each cycle (never self-estimate):
 
 1. **Message your `parent` first: "restarting now."**
-2. Invoke your own `$thrum-restart`.
+2. Invoke your own `$thrum:thrum-restart`.
 3. On resume, re-read `watch_params.json` — that's your entire resume state
    (target/roster/parent/model), because your duty is stateless per cycle.
 4. **Confirm you're back** to your parent; they stand down coverage.

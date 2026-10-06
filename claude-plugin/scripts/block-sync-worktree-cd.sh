@@ -22,7 +22,8 @@ set -euo pipefail
 input=$(cat)
 
 tool_name=$(echo "$input" | jq -r '.tool_name // empty')
-[ "$tool_name" = "Bash" ] || exit 0
+# Case-insensitive: Muse reports its shell tool as lowercase `bash`.
+case "$tool_name" in [Bb]ash) ;; *) exit 0 ;; esac
 
 command=$(echo "$input" | jq -r '.tool_input.command // empty')
 [ -n "$command" ] || exit 0

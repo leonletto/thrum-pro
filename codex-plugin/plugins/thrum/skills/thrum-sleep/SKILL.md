@@ -20,9 +20,9 @@ broader coordination judgment.
 Compose a standard 11-section prose continuation, write it directly to your
 restart file, then end session cleanly and kill own tmux session. The agent goes
 to sleep until the operator wakes it later via
-`thrum tmux create <session-name>`. Unlike `$thrum-restart`, sleep does NOT
-signal the coordinator and does NOT wait for an external mover — it terminates
-its own tmux session.
+`thrum tmux create <session-name>`. Unlike `$thrum:thrum-restart`, sleep does
+NOT signal the coordinator and does NOT wait for an external mover — it
+terminates its own tmux session.
 
 ### When to Use
 
@@ -34,7 +34,7 @@ its own tmux session.
   operator's attention later, not the coordinator's now.
 
 For routine context-exhaustion / rate-limit restarts where the coordinator
-should bring you back in-place, use `$thrum-restart` instead.
+should bring you back in-place, use `$thrum:thrum-restart` instead.
 
 ### Steps
 
@@ -71,16 +71,12 @@ no session end. Exit code 1. The skill is the wrong tool for non-tmux agents.
 
 #### 2. Read the shared snapshot-composition partial
 
-Read the partial at the absolute path:
-
-```text
-${REPO}/claude-plugin/commands/_snapshot-protocol.md
-```
+Invoke the $thrum:snapshot-protocol skill and follow it.
 
 Apply its Step 2 (compose your continuation) per the structure guidance.
 
 **Use the STANDARD 11-section structure.** For comprehensive
-designer/architect-grade snapshots, use `$thrum-sleep-extended` instead.
+designer/architect-grade snapshots, use `$thrum:thrum-sleep-extended` instead.
 
 **Note on §1 framing:** For sleep snapshots, the Big Picture section frames as
 "where work stands at park time" rather than "what shipped" — the agent is

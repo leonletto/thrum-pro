@@ -79,6 +79,13 @@ if [ -n "$EXISTING" ]; then
   # end marker is left untouched (parity with Go's stripProjectStateBlock). sed range
   # deletion is NOT used here because it truncates to EOF on a dangling start marker,
   # which would silently drop saved context if a snapshot mentions the marker in prose.
+  # Without perl the old snapshot/project_state blocks cannot be stripped. The
+  # previous effective behaviour was an abort (exit 127) before saving anything,
+  # so keep "save nothing" but exit 0 and say why.
+  if ! command -v perl >/dev/null 2>&1; then
+    echo "thrum pre-compact-save-context.sh: perl is required to merge the saved context but was not found on PATH; pre-compact state NOT saved. Install perl (apt install perl / brew install perl)." >&2
+    exit 0
+  fi
   TRIMMED=$(echo "$EXISTING" \
     | perl -0777 -pe 's/<!-- project_state:.*?<!-- end project_state -->\n?//gs' \
     | sed '/^## Pre-Compact State Snapshot$/,$d')

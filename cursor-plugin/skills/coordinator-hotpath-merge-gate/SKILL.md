@@ -129,6 +129,8 @@ rediscovering these the hard way:
    `go run ./cmd/testgate classify-timeout --log <file> --shard-config <file>
    --shard <name>` (fails closed — only BOUND-TIMEOUT exits 0; HANG and
    UNCLASSIFIED both exit nonzero) before reporting it as a regression.
+   If a gate's own command line invokes the bare package path for RPC, that is a gate defect, not a passing lane.
+   A HANG or UNCLASSIFIED verdict from `classify-timeout` requires human review.
 8. Build+test the MERGED-tree result as a SEPARATE condition — neither gate
    currently runs a build of the actual post-merge tree; a clean pre-merge
    build/test does not prove the merged result compiles or passes.
@@ -159,7 +161,7 @@ rediscovering these the hard way:
     abandoned worktree pins its HEAD commit against `gc` and adds a
     `.git/worktrees` admin entry, so the object store grows monotonically.
     Before removing:
-    (a) `git -C <wt> status --porcelain` — if NON-EMPTY, **STOP and report it
+    (a) `git -C <wt> status --porcelain --untracked-files=all --ignored -- .thrum` — if NON-EMPTY, **STOP and report it
         instead of removing.** Uncommitted work in a throwaway worktree exists
         NOWHERE else; this is the category that actually loses work.
     (b) `git branch -a --contains $(git -C <wt> rev-parse HEAD)` — if EMPTY,

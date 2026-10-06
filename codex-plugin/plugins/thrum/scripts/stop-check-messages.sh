@@ -17,6 +17,12 @@ INPUT=$(cat)
 
 # Phase 0 (per spec §3.3.1 step 1): Parse cwd from stdin
 # (codex always provides it in Stop hook input).
+# Without jq the hook cannot read cwd or the inbox; the previous effective
+# behaviour was a silent allow, so keep exit 0 and just say why.
+if ! command -v jq >/dev/null 2>&1; then
+  echo "thrum stop-check-messages.sh: jq is required to check unread messages but was not found on PATH; unread-message check NOT active. Install jq (apt install jq / brew install jq)." >&2
+  exit 0
+fi
 CWD=$(echo "$INPUT" | jq -r '.cwd // "."')
 
 # Check if we're already in a stop-hook continuation cycle

@@ -25,7 +25,7 @@ thrum memory create --kind <K> --scope <S> \
 ```
 
 `--short`/`--full` carry real prose — compose via heredoc or file, never
-double-quoted inline; see the role preamble's 🔴 PROSE INTO A COMMAND rule.
+double-quoted inline; see the heredoc-or-file rule in your role preamble.
 
 Three flags are **REQUIRED** (schema NOT NULL): `--kind`, `--title`,
 `--oneline`. The daemon rejects any `memory.create` call missing these.

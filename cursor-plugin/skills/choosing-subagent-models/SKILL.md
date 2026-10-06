@@ -1,6 +1,6 @@
 ---
 name: choosing-subagent-models
-description: "Use when about to launch, spawn, or dispatch a subagent, sub-agent, or parallel agent - including the Agent/Task tool, an Explore agent, fanning out research, or any time you choose a model for a subagent. ALSO fires on every REVIEW dispatch - dispatching a reviewer, a code review, a code-quality review, a spec-compliance review, a dual review, a verify-against-plan or verify-against-source pass, or a merge-gate sub-agent. Reviewer dispatch is the HIGHEST-STAKES judgment-tier spawn and is the one most often done from memory. Enforces the role-based model tiering (opus-low orchestrators, sonnet-medium implementers and reviewers, sonnet-low sub-agents) and cheap parallel fan-out."
+description: "Use when about to launch, spawn, or dispatch a subagent, sub-agent, or parallel agent - including the Agent/Task tool, an Explore agent, fanning out research, or any time you choose a model for a subagent. ALSO fires on every REVIEW dispatch - dispatching a reviewer, a code review, a code-quality review, a spec-compliance review, a dual review, a verify-against-plan or verify-against-source pass, or a merge-gate sub-agent. Reviewer dispatch is the HIGHEST-STAKES judgment-tier spawn and is the one most often done from memory. Enforces role-based model TIERING (mechanical, judgment, orchestration) resolved to a concrete model+effort for whichever runtime you are actually running under, and cheap parallel fan-out."
 ---
 
 # Choosing Subagent Models
@@ -11,16 +11,39 @@ description: "Use when about to launch, spawn, or dispatch a subagent, sub-agent
 (e.g. `/tmp/<task>.md`); its reply to you is only a summary. Put this
 in the prompt.**
 
-## Pin every spawn. The floor depends on the agent's ROLE.
+## Pick a TIER by role/task, then resolve it for YOUR runtime. Pin every spawn.
 
-Every subagent you spawn MUST pass an explicit `model:` (plus effort where the
-runtime supports it). Omitting it runs the subagent on YOUR model (Opus) — the
-single biggest avoidable cost leak in agent work.
+Model selection here is two steps, always in this order:
 
-**Haiku is banned entirely.** There is no
-mechanical-task carve-out anymore — lint runs, grep-and-collect, file maps,
-config edits, and all other "simple" work now dispatch at sonnet-low, not Haiku.
-Never select Haiku on own judgment — use sonnet-low instead.
+1. **Pick the semantic tier** by the spawned agent's role/task — one of three,
+   named identically everywhere in the fleet (Go constants, role templates,
+   this doc): **`mechanical`** (rote/find-replace/grep-and-collect/lint/file-maps —
+   the cheapest tier), **`judgment`** (the default tier for implementers,
+   reviewers, verifiers, researchers — real analysis, not busywork), and
+   **`orchestration`** (orchestrator/coordinator tier — never spawned for a
+   sub-agent, only ever the operator's own agent or a skill that explicitly
+   names it for one step).
+2. **Resolve that tier to a concrete `model:` + `effort:` for the runtime you
+   are actually running under** — via that runtime's own preset
+   (`RuntimePreset.TierModels`) or operator config (`runtime.role_models`);
+   see "Where the tier-model mapping lives" below. Never assume Claude's
+   model names (`sonnet`, `opus`, `haiku`) apply —
+   a Codex or OpenCode agent reading this same file has no such models, and
+   passing one either errors or silently falls back to the runtime's own
+   default (see "Never let an unresolved pin fall through" below).
+
+Every subagent you spawn MUST pass an explicit, resolved `model:` (plus effort
+where the runtime supports it). Omitting it runs the subagent on YOUR model —
+the single biggest avoidable cost leak in agent work.
+
+**The mechanical tier never resolves to a below-floor model, for any runtime.**
+On Claude specifically that means **Haiku is banned entirely** — there is no
+mechanical-task carve-out that reaches for it; lint runs, grep-and-collect,
+file maps, config edits, and all other "simple" work dispatch at the
+mechanical tier's Claude resolution (sonnet-low), not Haiku. Never select
+Haiku on own judgment on Claude — use the mechanical tier's resolved value
+instead. Other runtimes floor at their own mechanical-tier value
+(`RuntimePreset.TierModels`), not at a Claude name.
 
 ### Read the tiers at the moment of use
 
@@ -39,36 +62,44 @@ from `runtime.role_models` for the target role, per this skill.
 ### Agent tiers
 
 Effort tier governs whether an agent does the hard thing or the expedient thing.
-These are the tiers now:
+These are the three tiers, with their Claude-runtime resolution shown as a
+worked example — **if you are running under a different runtime, resolve the
+same tier from your own runtime's preset (`RuntimePreset.TierModels`) or
+`runtime.role_models`, not from the Claude column:**
 
-| Role | Model / Effort |
-| ---------------------------- | ------------------- |
-| **Orchestrator** | **`opus` / low** |
-| **Implementer** | **`sonnet` / medium** |
-| **Verifier / reviewer** | **`sonnet` / medium** |
-| **Sub-agent** (investigation, grep, mechanical) | **`sonnet` / low** |
+| Role | Tier | Resolved for Claude (example) |
+| ---------------------------- | ------------- | ------------------- |
+| **Orchestrator / coordinator** | `orchestration` | **`opus` / low** |
+| **Implementer** | `judgment` | **`sonnet` / medium** |
+| **Verifier / reviewer** | `judgment` | **`sonnet` / medium** |
+| **Sub-agent** (investigation, grep, mechanical) | `mechanical` | **`sonnet` / low** |
 
-- **`model: "sonnet"` @ low effort — sub-agents ONLY.** Investigation,
-  grep-and-collect, file maps, lint runs, mechanical tasks. This is the floor for
-  a *sub-agent*, NOT for an implementer or a reviewer.
-- **`model: "sonnet"` @ MEDIUM effort — implementers, verifiers, reviewers.**
-  Not low. A reviewer on low effort is a rubber stamp with extra steps, and
-  rubber-stamped reviews are how a merge gate that ran zero tests survived six
-  sessions.
-- **`model: "opus"` @ low — orchestrators.** Not selectable for sub-agents —
-  set by the operator on the agent's runtime-config.
-- **`model: "opus"` — NOT your call.** Allowed only when (a) the operator
-  explicitly asked for a deep review or prose review in this task, or (b) a
-  skill you are running prescribes Opus for the specific step you are currently
-  executing — NOT for every spawn under that skill. "This research is hard /
-  important" is NOT a justification — hard investigation is exactly what Sonnet
-  is for.
+- **`mechanical` tier (sub-agents ONLY)** — investigation, grep-and-collect,
+  file maps, lint runs, mechanical tasks. Resolves to `sonnet` @ low effort on
+  Claude. This is the floor for a *sub-agent*, NOT for an implementer or a
+  reviewer, and NOT the tier a non-Claude runtime should read as its default.
+- **`judgment` tier (implementers, verifiers, reviewers)** — resolves to
+  `sonnet` @ MEDIUM effort on Claude. Not low. A reviewer on low effort is a
+  rubber stamp with extra steps, and rubber-stamped reviews are how a merge
+  gate that ran zero tests survived six sessions.
+- **`orchestration` tier (orchestrators/coordinators)** — resolves to `opus` @
+  low on Claude. Not selectable for sub-agents — set by the operator on the
+  agent's runtime-config.
+- **`orchestration` tier is NOT your call to spawn.** Allowed only when (a) the
+  operator explicitly asked for a deep review or prose review in this task, or
+  (b) a skill you are running prescribes the orchestration tier for the
+  specific step you are currently executing — NOT for every spawn under that
+  skill. "This research is hard / important" is NOT a justification — hard
+  investigation is exactly what the `judgment` tier is for.
 
 ## Worked examples — LITERAL ARGUMENTS, AND EFFORT IS TOOL-DEPENDENT
 
-**Pin `model` on every spawn. Pass `effort` wherever the mechanism exposes it.**
-Syntax per mechanism — re-check the schema in front of you rather than restating
-from memory, because it can change:
+**Pin `model` on every spawn, using the value your runtime's own preset
+(`RuntimePreset.TierModels`) or `runtime.role_models` resolves the tier to.**
+**Pass
+`effort` wherever the mechanism exposes it** — some mechanisms don't. Syntax per
+mechanism — re-check the schema in front of you rather than restating from
+memory, because it can change:
 
 | Mechanism | `model` | `effort` |
 |---|---|---|
@@ -76,8 +107,14 @@ from memory, because it can change:
 | **Workflow `agent()`** (opts: label, phase, schema, model, effort, isolation, agentType) | ✅ settable | ✅ settable |
 | **Agent DEFINITION** (`.claude/agents/*.md` / plugin `agents/*.md` frontmatter) | ✅ | ✅ — sets the default for that agent type |
 | **`thrum tmux create` / `launch`** | ✅ `--model` | ✅ `--effort` — pass on BOTH |
+| **Other runtimes' own spawn mechanism** | ✅ settable | runtime-dependent — check its own schema |
 
-**Agent tool — `model` only. It takes no `effort` argument.**
+**Below is ONE fully concrete example — what a `judgment`-tier spawn looks
+like once resolved for Claude's own Agent tool (which takes no `effort`
+argument).** It is Claude-specific syntax with a Claude-specific model string;
+if you are running under a different runtime, use that runtime's own spawn
+mechanism and its own resolved model+effort from `RuntimePreset.TierModels` /
+`runtime.role_models` instead of copying this literal string.
 
 ```python
 Agent(subagent_type="general-purpose", model="sonnet",
@@ -85,12 +122,14 @@ Agent(subagent_type="general-purpose", model="sonnet",
       prompt="...")
 ```
 
-**The tier philosophy still governs even where the Agent tool cannot express it:**
-sonnet-low for investigation and mechanical work, sonnet-medium for reviewers,
-verifiers and implementers. Where effort is not settable, carry the intent through
-the agent definition, the Workflow opts, or the tmux launch flags.
+**The tier philosophy still governs even where a mechanism cannot express
+`effort`:** the `model` value alone still must be the tier's resolved value for
+YOUR runtime — never a bare Claude name assumed universal. Where effort is not
+settable, carry the intent through the agent definition, the Workflow opts, or
+the tmux launch flags instead.
 
-An agent definition can also carry a default:
+An agent definition can also carry a default (Claude example — resolve to
+your own runtime's `mechanical`-tier value if you are not Claude):
 
 ```yaml
 # claude-plugin/agents/message-listener.md
@@ -99,52 +138,87 @@ model: sonnet
 effort: low
 ```
 
-**Workflow `agent()` — effort IS a literal argument. Pass it.**
+**Workflow `agent()` — effort IS a literal argument. Pass it, resolved for
+your runtime's tier:**
 
 ```javascript
-agent(prompt, { model: "sonnet", effort: "medium" })          // reviewer / implementer
-agent(prompt, { model: "sonnet", effort: "low" })             // mechanical sub-agent
+agent(prompt, { model, effort })   // `model`/`effort` = your runtime's resolution
+                                    // of the `judgment` tier (reviewer/implementer)
+                                    // or the `mechanical` tier (sub-agent) —
+                                    // resolve via RuntimePreset.TierModels /
+                                    // runtime.role_models for the literal values
 ```
 
-**THE DIRECTIVE, imperative and not a comment: REVIEWERS RUN SONNET AT MEDIUM
-EFFORT.** Pass `effort: "medium"` literally under Workflow, in the agent
-definition, or on `thrum tmux create`/`launch`. Never dispatch a reviewer "from
-memory".
+**THE DIRECTIVE, imperative and not a comment: REVIEWERS RUN THE `judgment`
+TIER, WHICH IS MEDIUM EFFORT ON EVERY RUNTIME THAT HAS AN EFFORT KNOB.** Pass
+the resolved effort literally under Workflow, in the agent definition, or on
+`thrum tmux create`/`launch` (the Agent tool takes no `effort`, so `model`
+alone must still be the `judgment`-tier value there). Never dispatch a
+reviewer "from memory", and never dispatch one at the mechanical tier.
 
 **AND VERIFY, DO NOT ASSERT:** any claim about what a tool does or does not expose
 must be checked against the schema in front of you.
 
-Never select Opus or Haiku on own judgment — use Sonnet, at the floor of
-sonnet-low.
+Never select the `orchestration` tier or a below-floor model on your own
+judgment — use the `judgment` tier's resolved value for your runtime, at the
+floor of that tier's lowest effort.
 
-## Fleet model-tiering by runtime/role
+## Where the tier-model mapping lives
 
-Different runtimes and roles pin different tiers. Claude tiers are canonical —
-see the Agent tiers table above (orchestrator/implementer/reviewer/sub-agent),
-plus brainstormer → opus-medium and brainstormer's own subagents → sonnet-low
-(except reviewers → sonnet-medium). Other runtimes:
+**Do not copy a tier's model string from this doc — read it at the moment of
+use.** The three semantic tiers (`mechanical` / `judgment` / `orchestration`)
+are the same across every runtime; only the concrete model+effort differs per
+runtime, and that mapping lives in exactly two places:
 
-| Runtime      | Role                         | Model / effort                                      |
-| ------------ | ---------------------------- | --------------------------------------------------- |
-| OpenCode     | default                      | GLM-5.2 (fine as-is)                                |
-| Codex        | orchestrator / reviewer      | gpt-5.5-medium                                      |
-| Codex        | implementer                  | gpt-5.5-low                                         |
-| Cursor-agent | default                      | composer-2.5 (fine as-is)                           |
+- **The runtime's own preset** (the `TierModels` field of the runtime preset
+  schema) — the machine-checked, per-runtime tier→model
+  table. A runtime with no entry for a tier has no fleet-configured value for
+  it and resolves to nothing rather than inheriting another runtime's model.
+- **`runtime.role_models` in `.thrum/config.json`** — operator configuration
+  for this project, which always outranks the preset's tier table.
+
+**If you are running under Claude**, use the Agent tiers table above
+(orchestrator/implementer/reviewer/sub-agent → orchestration/judgment/
+judgment/mechanical), plus brainstormer → `orchestration` and brainstormer's
+own subagents → `mechanical` (except reviewers, which are always `judgment`).
+
+**If you are running under a different runtime, read your own tier's value
+from the two sources above** — never assume Claude's model names apply, and
+never hard-code a model string you saw once in a doc or a prior session.
+
+A runtime/role pair with no fleet-configured tier value has no override —
+resolve it to that runtime's own configured default, and pass it explicitly
+(never leave it unset — see "Never let an unresolved pin fall through"
+below).
 
 ## Pin every spawn explicitly — the floor depends on the ROLE, not the depth
 
-Every orchestrator MUST pass an explicit `model:` on EVERY subagent it spawns, and
-`effort` wherever the mechanism exposes it. An unspecified subagent SILENTLY
-INHERITS THE PARENT'S MODEL — so an Opus orchestrator that forgets the pin just
-spent Opus tokens on a grep.
+Every orchestrator MUST pass an explicit `model:` on EVERY subagent it spawns,
+resolved for its own runtime, and `effort` wherever the mechanism exposes it.
+An unspecified subagent SILENTLY INHERITS THE PARENT'S MODEL — so an
+orchestration-tier orchestrator that forgets the pin just spent its
+(expensive) tier's tokens on a grep.
 
 **The floor is set by what the agent DOES, not by how deep it sits** — see the
 Agent tiers table above. This applies recursively: an implementer spawning its
 own helpers pins them by THEIR role, not by copying its own tier down.
 
 The check before every spawn: what is this agent's ROLE? Reviewer or implementer?
-sonnet-medium. Pure investigation or mechanical work? sonnet-low. Never leave it
+`judgment` tier. Pure investigation or mechanical work? `mechanical` tier. Then
+resolve that tier to your runtime's concrete model+effort. Never leave it
 unspecified.
+
+### Never let an unresolved pin fall through
+
+**An unsupported or unrecognized model name must never block delegation, and
+must never cause silent inheritance of the parent's model.** If your
+runtime's preset has no `TierModels` entry for this tier, or a resolved name
+is rejected by the runtime you're spawning under, do NOT skip the pin and do
+NOT let the spawn go unpinned so it falls back to inheriting the caller's
+model — fall back explicitly to the runtime's own configured default for the
+matching tier and pass THAT, so every spawn is always pinned to some resolved
+model+effort. An unset `model:` is a bug at every layer of this stack, not
+just under Claude.
 
 ## Paste the constraint block into the child prompt — the pin is not enough
 
@@ -162,8 +236,11 @@ that stops at depth 1 is absent where the work happens.
   tool's own guidance suggests it. It trips a permission modal, and A FROZEN
   PANE EMITS NOTHING, so nobody can tell you are blocked. If you must background
   work, wait for the completion notification.
-- Every sub-agent YOU spawn gets an explicit `model:` — sonnet (low mechanical,
-  medium judgment). HAIKU IS BANNED. Opus is never yours.
+- Every sub-agent YOU spawn gets an explicit `model:`, resolved for your
+  runtime's tier — `mechanical` (rote/find-replace) or `judgment` (real
+  analysis). On Claude that's sonnet-low / sonnet-medium and HAIKU IS BANNED;
+  on another runtime, use that runtime's own resolved row. The
+  `orchestration` tier is never yours to spawn.
 - READ-ONLY git outside your own worktree. NEVER `checkout`/`reset`/`restore`/
   `stash`/`clean` in ANY directory — `stash` is one shared stack across all
   worktrees and the shared tree holds live agents' uncommitted state.
@@ -175,7 +252,8 @@ signal this condition produces.
 
 ### Cheap subagents → fan out, don't pile up
 
-Because sonnet-low subagents are cheap, prefer MANY small parallel subagents
+Because `mechanical`-tier subagents are cheap (sonnet-low on Claude; the
+mechanical-tier row for your runtime otherwise), prefer MANY small parallel subagents
 over one subagent handed a pile of tasks. When a research or investigation task
 has independent parts, partition it and dispatch the parts in parallel (use the
 `efficient-multi-agent-research` skill) — smaller scopes are cheaper, run
@@ -183,6 +261,12 @@ concurrently (faster), and keep each subagent's context tight. One subagent
 given ten tasks is the anti-pattern.
 
 ## ⚠️ The pin-verification command LIES — do not trust it
+
+**This section's examples are Claude-specific** (`thrum tmux capture`'s footer
+format, and the historical Sonnet/Opus incident it documents) because that is
+where this defect was measured — but the underlying rule generalizes: verify
+a pin by reading the runtime's own RESOLVED status output, never a stored
+"configured" value, whichever runtime you're on.
 
 `thrum agent runtime-config get <agent>` reports the **configured** value, not the
 **resolved** one.
@@ -264,3 +348,35 @@ launch **by construction**.
 An implementer pinned to sonnet, with an implementer role-default of sonnet, comes up
 correct whether or not the pin landed — so "pin sonnet, confirm sonnet" passes whether
 or not the fix works.
+
+## Paste blocks for child prompts
+
+Paste these verbatim into a child prompt when the work involves the named activity.
+
+--- SUB-AGENT HYGIENE ---
+- No kill -0, Monitor or until-loop polling.
+- No pgrep -f.
+- Kill only by a captured PID number.
+- Use rm -r, never rm -rf; a variable path uses "${d:?}".
+- No 2>/dev/null on destructive commands.
+- Bounded timeouts on everything.
+- Remove only the worktree you created in this task, by its recorded path, never with --force.
+- Never demonstrate an unguarded destructive idiom, even on a literal path.
+--- END SUB-AGENT HYGIENE ---
+
+--- TESTS ---
+- To prove a selector resolves, use `go test <pkg> -list '<selector>'` plus a `-list '^TestNoSuchThingAtAll$'` negative control that must list zero tests. Never `-run '<sel>' -list '.*'`.
+- `bd list -l` is --label; use `-n` for a limit.
+- A timeout with 0 FAIL is neither red nor green: classify it as a bound failure, read the panic's "running tests:" line, and re-run wider.
+--- END TESTS ---
+
+--- WORKTREE TEARDOWN & SALVAGE ---
+- Before any teardown, enumerate with both flags: `git -C <wt> status --porcelain --untracked-files=all --ignored -- .thrum`.
+- Salvage anything found to a durable path (not /tmp), one subdirectory per worktree, filenames path-flattened.
+- Never glob `.thrum/context/*.md`; salvage the exact agent-name file only, and assert no `project_state.md` landed in any salvage output.
+- Verify salvage by name set first, then `cmp` each file, with a negative control proving `cmp` detects a difference.
+- Kill the tmux session first (`thrum tmux kill <session>`), verify it is gone, then plain `git worktree remove`, never `--force`.
+- Afterwards verify by effect: gone from `git worktree list` and from disk, and every remaining live pane's cwd still resolves (`tmux list-panes -a -F '#{pane_current_path}'`, then `git rev-parse --show-toplevel` per pane).
+- Build the in-use protection set from live pane cwds, not from a name or registry list.
+- Report the removal count and the registry delta separately.
+--- END WORKTREE TEARDOWN & SALVAGE ---

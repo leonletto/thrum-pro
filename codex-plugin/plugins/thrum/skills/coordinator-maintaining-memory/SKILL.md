@@ -46,7 +46,7 @@ thrum memory create --kind agent_rule --scope role \
 ```
 
 `--short`/`--full` carry real prose — compose via heredoc or file, never
-double-quoted inline; see your role preamble's 🔴 PROSE INTO A COMMAND rule.
+double-quoted inline; see the heredoc-or-file rule in your role preamble.
 
 Body shape uniform across all role-rule writes — see `memory-write-discipline`.
 

@@ -20,17 +20,17 @@ commands or needs broader coordination judgment.
 Compose a comprehensive 16-section prose continuation, write it directly to your
 restart file, then end session cleanly and kill own tmux session. The agent goes
 to sleep until the operator wakes it later. Same termination semantics as
-`$thrum-sleep`; the only difference is snapshot grade.
+`$thrum:thrum-sleep`; the only difference is snapshot grade.
 
 ### When to use extended vs standard
 
-- **Use `$thrum-sleep` (standard)** for routine park-and-resume where future-you
-  can reconstruct from project state + a compact 11-section snapshot.
-- **Use `$thrum-sleep-extended` (this variant)** for designer/architect-grade
-  work: parking a complex brainstorm with multiple owner-decided forks, parking
-  a fanout implementation (≥3 call sites or ≥2 epics), or any sleep where the
-  next wake may be a fresh restart and must recover wire-contract precision
-  without re-reading the source files.
+- **Use `$thrum:thrum-sleep` (standard)** for routine park-and-resume where
+  future-you can reconstruct from project state + a compact 11-section snapshot.
+- **Use `$thrum:thrum-sleep-extended` (this variant)** for
+  designer/architect-grade work: parking a complex brainstorm with multiple
+  owner-decided forks, parking a fanout implementation (≥3 call sites or ≥2
+  epics), or any sleep where the next wake may be a fresh restart and must
+  recover wire-contract precision without re-reading the source files.
 
 ### Steps
 
@@ -67,11 +67,7 @@ no session end. Exit code 1.
 
 #### 2. Read the shared snapshot-composition partial
 
-Read the partial at the absolute path:
-
-```text
-${REPO}/claude-plugin/commands/_snapshot-protocol.md
-```
+Invoke the $thrum:snapshot-protocol skill and follow it.
 
 Apply its Step 2 (compose your continuation) per the structure guidance.
 

@@ -124,9 +124,9 @@ BLOCKING against source before forwarding.
    those gates grow their own mechanical enforcement.
 
 5. **Authored-against stamp (required, top of every artifact):** Before writing
-   a brainstorm.md or plan.md, derive and emit the stamp per
-   `claude-plugin/commands/_stamp-protocol.md` § "Stamp format" — the canonical
-   format, derivation commands, and never-type rule.
+   a brainstorm.md or plan.md, derive and emit the stamp per the
+   $thrum:stamp-protocol skill § "Stamp format" — the canonical format,
+   derivation commands, and never-type rule.
 
 #### Soft pre-flight greps (the SOFT enforcement tier)
 
@@ -276,7 +276,8 @@ thrum tmux launch <topic>-brainstorm
 ```
 
 The runtime auto-primes via the SessionStart hook. Do NOT manually inject
-`$thrum-prime` via send-keys (per `coordinator-dispatching-work` discipline).
+`$thrum:thrum-prime` via send-keys (per `coordinator-dispatching-work`
+discipline).
 
 ### Phase 2 — Send the briefing message
 
@@ -495,11 +496,10 @@ and quality issues a single author would miss.
 **The researcher (not coord) dispatches the dual-review** in their own worktree:
 
 1. Researcher writes plan v1 directly.
-2. Researcher authors the `## Deviations from Source` block per
-   `claude-plugin/commands/_deviations-protocol.md`, diffing plan v1 against the
-   brainstorm + design spec — BEFORE dual-review, so `verify-against-source`
-   validates it as part of conformance. Required even when empty ("No deviations
-   from source.").
+2. Researcher authors the `## Deviations from Source` block per the
+   $thrum:deviations-protocol skill, diffing plan v1 against the brainstorm +
+   design spec — BEFORE dual-review, so `verify-against-source` validates it as
+   part of conformance. Required even when empty ("No deviations from source.").
 3. Researcher runs the two-reviewer dual review (Review-loop mechanics):
    - **Conformance:** `verify-against-source` — artifact = the plan;
      **source(s)** = the brainstorm + the design spec. Verifies the plan honors
@@ -523,7 +523,7 @@ and quality issues a single author would miss.
    instead of being folded inline.
 6. Researcher repeats only if cycle-1 introduces new design surface (rare for
    bounded mechanical plans); otherwise v2 LOCKED. Before stamping, compute
-   `plan_obj`/`src_lock` per `_stamp-protocol.md` § "Review-object binding"
+   `plan_obj`/`src_lock` per `stamp-protocol.md` § "Review-object binding"
    (strip-then-hash the plan against itself for `plan_obj`; plain-hash the
    LOCKED source for `src_lock`), then stamp
    `<!-- THRUM-REVIEW: stage=plan verdict=Ready:Yes cycle=<N> date=<YYYY-MM-DD> verify=Ready:Yes plan_obj=<blob> src_lock=<blob> -->`.
@@ -654,8 +654,7 @@ don't rebind the agent name to a different topic in place.
 
 ### Project-specific rules (already loaded)
 
-Read the shared partial at the absolute path:
-`claude-plugin/commands/_project-rules-protocol.md`
+Load the $thrum:project-rules-protocol skill and follow it.
 
 If you accumulate a new rule mid-session about brainstorm orchestration, capture
 it via the `coordinator-maintaining-memory` skill — it references the

@@ -31,6 +31,14 @@ if [ ! -f "$THRUM_CONFIG" ]; then
   exit 0
 fi
 
+# This hook needs jq for the unread count and the listener PID parse. Without
+# it those two checks are skipped (say so once on stderr); a genuinely missing
+# listener PID file is still reported below, but an existing PID file is not
+# second-guessed (an empty PID would be misreported as "invalid PID file").
+if ! command -v jq >/dev/null 2>&1; then
+  echo "thrum stop-check-messages.sh: jq is required but was not found on PATH; unread-message check and listener PID validation are NOT active. Install jq (apt install jq / brew install jq)." >&2
+fi
+
 # Early exit: single-agent mode
 if command -v jq >/dev/null 2>&1; then
   SAM=$(jq -r '.daemon.single_agent_mode // false' "$THRUM_CONFIG" 2>/dev/null)
@@ -48,7 +56,8 @@ fi
 
 # Phase 2: Check unread messages scoped to this agent
 INBOX_JSON=$(cd "$PROJECT_DIR" && THRUM_AGENT_ID="$AGENT_ID" thrum inbox --unread --json 2>/dev/null) || exit 0
-MSG_COUNT=$(echo "$INBOX_JSON" | jq -r '.unread // 0')
+MSG_COUNT=$(echo "$INBOX_JSON" | jq -r '.unread // 0' 2>/dev/null || true)
+MSG_COUNT="${MSG_COUNT:-0}"
 if [ "$MSG_COUNT" -gt 0 ]; then
   echo "ACTION REQUIRED: You have $MSG_COUNT unread message(s). Run \`thrum inbox --unread\` now to read and respond to them. Then mark them read: \`thrum message read <id> [<id>...]\` for the ids shown, or \`thrum message read --all\` (dry run) followed by \`thrum message read --all --force\` to clear everything — so this hook doesn't fire again on old messages." >&2
   exit 2
@@ -73,7 +82,9 @@ if [ ! -f "$PID_FILE" ]; then
   exit 2
 fi
 
-LISTENER_PID=$(jq -r '.pid // empty' "$PID_FILE" 2>/dev/null)
+# PID file exists but cannot be parsed without jq: skip validation (note above).
+command -v jq >/dev/null 2>&1 || exit 0
+LISTENER_PID=$(jq -r '.pid // empty' "$PID_FILE" 2>/dev/null || true)
 if [ -z "$LISTENER_PID" ]; then
   echo "Your background message listener is not running (invalid PID file). Start it now." >&2
   exit 2

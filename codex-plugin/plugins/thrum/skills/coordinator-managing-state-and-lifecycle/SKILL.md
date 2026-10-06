@@ -17,10 +17,10 @@ what's next) and feeds the next session's priming. If implementers update it,
 role separation collapses: the implementer's view of state is their epic, not
 the team's.
 
-**How to apply:** Only the coordinator runs `$thrum-update-project` or edits
-`.thrum/context/project_state.md`. If an implementer is about to restart and
-asks how to preserve context, instruct them to send a status message to you and
-wait — you update the state on their behalf. Never run `thrum context save`
+**How to apply:** Only the coordinator runs `$thrum:thrum-update-project` or
+edits `.thrum/context/project_state.md`. If an implementer is about to restart
+and asks how to preserve context, instruct them to send a status message to you
+and wait — you update the state on their behalf. Never run `thrum context save`
 manually; it overwrites accumulated session state.
 
 ### Specs and plans always go in `dev-docs/specs/` and `dev-docs/plans/`
@@ -188,8 +188,7 @@ expectation you hold orchestrators to for the implementers **they** launched.
 
 ### Project-specific rules (already loaded)
 
-Read the shared partial at the absolute path:
-`claude-plugin/commands/_project-rules-protocol.md`
+Load the $thrum:project-rules-protocol skill and follow it.
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `coordinator-maintaining-memory` skill — it references the

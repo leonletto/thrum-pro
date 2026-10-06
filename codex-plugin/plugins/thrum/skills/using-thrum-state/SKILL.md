@@ -52,8 +52,8 @@ stale, is exactly this failure.
 ### Reconcile, don't just read
 
 - **Agent-local** (all roles): check at session start (`thrum state list`),
-  update as you go. Carried-over state is NOT auto-injected into prime — you
-  must ask.
+  update as you go. Prime injects only a capped digest of agent-local state;
+  `thrum state list` shows all.
 - **Fleet** (coordinators write; everyone reads): before citing a fleet fact in
   a decision, check `as_of`/`method`. Past the kind's threshold
   (`thrum state describe <kind>`)? Re-verify by effect before acting, or say

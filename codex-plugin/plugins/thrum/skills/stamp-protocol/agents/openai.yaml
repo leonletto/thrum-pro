@@ -1,0 +1,4 @@
+interface:
+  display_name: "Stamp Protocol"
+  short_description: "Use when stamping a plan, prompt, or snapshot - Authored-against format, derivation commands, never-type rule."
+  default_prompt: "Use when stamping a plan, prompt, or snapshot - Authored-against format, derivation commands, never-type rule."

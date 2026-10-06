@@ -437,8 +437,8 @@ bd list --type=epic | grep -i refactor
 If no refactoring epic exists, create one:
 
 `--description` is multi-line prose — never double-quoted inline. Write it to a
-scratch file and pass `--body-file <file>`; see your role preamble's 🔴 PROSE
-INTO A COMMAND rule. `scripts/bd-shared` delivers `--body-file` (and `--stdin`)
+scratch file and pass `--body-file <file>`; see the heredoc-or-file rule in your
+role preamble. `scripts/bd-shared` delivers `--body-file` (and `--stdin`)
 content: it reads the file on YOUR box and pipes those bytes to bd, and an empty
 or blank body is refused loudly. Only `-f`/`--file` and `--graph` (bulk-plan
 files) are refused there. Scratch files go in `/private/tmp` on macOS, where

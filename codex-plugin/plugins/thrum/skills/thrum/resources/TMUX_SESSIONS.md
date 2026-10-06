@@ -19,7 +19,7 @@ thrum tmux start                    # One-command: create + launch + prime + att
 
 This creates a tmux session named after the current directory, launches the
 configured runtime (from `config.Runtime.Primary`, default `claude`), runs
-`$thrum-prime` for registration, and attaches.
+`$thrum:thrum-prime` for registration, and attaches.
 
 ## Setting Up a New Agent Worktree
 
@@ -40,7 +40,7 @@ thrum tmux create <name> --cwd <path> \
 # 3. Launch the runtime (reads configured runtime from .thrum/config.json)
 thrum tmux launch <name>
 
-# 4. Agent runs $thrum-prime on startup — loads identity + full context
+# 4. Agent runs $thrum:thrum-prime on startup — loads identity + full context
 # 5. Communicate via: thrum send --to @<agent> --body-file msg.md  (or --stdin <<'EOF' heredoc)
 ```
 
@@ -99,7 +99,7 @@ No listener sub-agent, no polling, no CronCreate watchdog. Messages just arrive.
 When the context window is running low, restart with a conversation snapshot
 preserved:
 
-- **Self-initiated:** Run `$thrum-restart` — saves snapshot, notifies
+- **Self-initiated:** Run `$thrum:thrum-restart` — saves snapshot, notifies
   coordinator
 - **Coordinator-initiated:** `thrum tmux restart <name>` — **PLAIN, not
   `--force`.** `--force` **drops the `--model` pin**; a plain restart re-applies

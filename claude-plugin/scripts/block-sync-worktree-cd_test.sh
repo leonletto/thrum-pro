@@ -23,7 +23,7 @@ fails=0
 run_case() {
   local want="$1" desc="$2" cmd="$3"
   local json got
-  json=$(jq -nc --arg c "$cmd" '{tool_name:"Bash", tool_input:{command:$c}}')
+  json=$(jq -nc --arg c "$cmd" --arg t "${TOOL_NAME:-Bash}" '{tool_name:$t, tool_input:{command:$c}}')
   set +e
   echo "$json" | bash "$HOOK" >/dev/null 2>&1
   got=$?
@@ -70,6 +70,23 @@ run_case 2 "git --git-dir sandbox checkout"  "git --git-dir=$SB/$ASYNC checkout 
 run_case 0 "benign cd sandbox/src"           "cd $SB/src"
 run_case 0 "benign cd worktrees .git"        "cd $WT/.git"
 run_case 0 "git -C sandbox a-sync status"    "git -C $SB/$ASYNC status"
+
+# Drift check: the codex copy must stay byte-identical to this claude hook.
+# (The cursor variant is a deliberate difference and is excluded by name.)
+CODEX_COPY="$SCRIPT_DIR/../../codex-plugin/plugins/thrum/scripts/block-sync-worktree-cd.sh"
+if [[ ! -f "$CODEX_COPY" ]]; then
+  echo "FAIL [codex copy drift]: codex copy not found at $CODEX_COPY"
+  fails=$((fails + 1))
+elif ! cmp -s "$HOOK" "$CODEX_COPY"; then
+  echo "FAIL [codex copy drift]: $CODEX_COPY differs from $HOOK"
+  fails=$((fails + 1))
+else
+  echo "ok   [codex copy drift]"
+fi
+# Tool-name gate: Muse reports the shell tool as lowercase `bash`.
+TOOL_NAME=bash run_case 2 "lowercase bash tool: cd into a-sync" "cd $ASYNC"
+TOOL_NAME=bash run_case 0 "lowercase bash tool: benign cd"      "cd $SB/src"
+TOOL_NAME=Read run_case 0 "non-shell tool ignored"              "cd $ASYNC"
 
 if [[ "$fails" -ne 0 ]]; then
   echo "FAILED: $fails case(s)"

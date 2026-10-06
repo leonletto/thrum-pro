@@ -4,7 +4,7 @@ description:
   Save a comprehensive 16-section restart snapshot and prepare for session
   restart. Use for designer/architect-grade handoffs needing wire contracts,
   capability matrix, anticipated Q&A, and design rationale that the standard
-  $thrum-restart compact format cannot carry.
+  $thrum:thrum-restart compact format cannot carry.
 # source: claude-plugin/commands/restart-extended.md
 # generated-by: scripts/sync-skills.sh
 ---
@@ -28,14 +28,14 @@ artifact alone.
 
 ### When to use extended vs standard
 
-- **Use `$thrum-restart` (standard)** for routine context-exhaustion or
+- **Use `$thrum:thrum-restart` (standard)** for routine context-exhaustion or
   rate-limit restarts where the work is well-trafficked and future-you can
   reconstruct from project state + recent inbox + a compact 11-section snapshot.
-- **Use `$thrum-restart-extended` (this variant)** for designer/architect-grade
-  handoffs: locking a complex brainstorm with multiple owner-decided forks,
-  handing off a fanout implementation (≥3 call sites or ≥2 epics), or any
-  session where the next session may be a fresh restart and must recover
-  wire-contract precision without re-reading the source files.
+- **Use `$thrum:thrum-restart-extended` (this variant)** for
+  designer/architect-grade handoffs: locking a complex brainstorm with multiple
+  owner-decided forks, handing off a fanout implementation (≥3 call sites or ≥2
+  epics), or any session where the next session may be a fresh restart and must
+  recover wire-contract precision without re-reading the source files.
 
 ### Steps
 
@@ -63,11 +63,7 @@ mkdir -p "${REPO}/.thrum/restart"
 
 #### 2. Read the shared snapshot-composition partial
 
-Read the partial at the absolute path:
-
-```text
-${REPO}/claude-plugin/commands/_snapshot-protocol.md
-```
+Invoke the $thrum:snapshot-protocol skill and follow it.
 
 It carries the CRITICAL DISCIPLINE block and BOTH the standard 11-section
 structure and the EXTENDED 16-section structure with per-section guidance.
@@ -274,4 +270,4 @@ operator:
 
 After restart, your snapshot moves to `.thrum/agents/<your-agent-id>/sessions/`
 and stays there as a persistent log entry. Same mechanism as standard restart —
-see `$thrum-restart` for archive browsing commands.
+see `$thrum:thrum-restart` for archive browsing commands.

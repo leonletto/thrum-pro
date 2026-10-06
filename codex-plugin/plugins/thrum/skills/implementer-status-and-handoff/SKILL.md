@@ -112,22 +112,9 @@ make test PASS (race), make lint PASS.
 
 For first-pass DONE (not review-fix), cite the closing SHA and the test result.
 
-### Close beads tasks with `--suggest-next` when relevant
-
-**Why:** `bd close <id>` works fine, but `bd close <id> --suggest-next` prints
-newly-unblocked downstream issues immediately. If you're in the middle of an
-epic, the next task is often the most useful next move; the flag saves a
-`bd ready` round-trip.
-
-**How to apply:** When closing a task that has dependents, use
-`bd close <id> --suggest-next`. For the last task in an epic where you're
-stopping at a review gate, plain `bd close` is fine — you're not picking up the
-next task anyway.
-
 ### Project-specific rules (already loaded)
 
-Read the shared partial at the absolute path:
-`claude-plugin/commands/_project-rules-protocol.md`
+Load the $thrum:project-rules-protocol skill and follow it.
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `implementer-maintaining-memory` skill — it references the

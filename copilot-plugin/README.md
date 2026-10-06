@@ -1,13 +1,13 @@
 # Thrum for GitHub Copilot CLI
 
-Session-context injection for GitHub Copilot CLI via a `sessionStart` hook.
+Session-context delivery for GitHub Copilot CLI via the typed-prime path
+(exactly one prime, same briefing other runtimes get).
 
 ## What it does
 
-At the start of a Copilot CLI session, `scripts/session-start.sh` runs and
-injects Thrum's session-context briefing (identity, project state, inbox,
-restart snapshot) — the same briefing Claude Code gets via its own
-SessionStart hook.
+Copilot CLI is a typed-prime runtime: the prime arrives typed, not through a
+sessionStart hook. `hooks.json` is therefore intentionally empty, and this
+tree declares no hooks.
 
 ## How it's loaded
 
@@ -22,11 +22,14 @@ there is no separate update or uninstall flow to run.
 
 - `plugin.json` — the plugin manifest (`name`, `description`, `version`,
   `license`, `hooks`)
-- `hooks.json` — declares the `sessionStart` hook, pointing at
-  `scripts/session-start.sh`
-- `scripts/session-start.sh` — the hook script itself (must stay executable)
+- `hooks.json` — intentionally `{"hooks": {}}`: the tree declares an
+  intentionally empty hooks manifest (no hooks; see above)
+- `scripts/session-start.sh` — currently unused. It documents a measured
+  plugin-declared hook wire contract in its header, but nothing invokes it
+  while `hooks.json` is empty. Retained until removal is proved safe across
+  embed/staging (the staged-tree manifest covers this file).
 
 ## Security
 
-`scripts/session-start.sh` never echoes secrets, API keys, or tokens — it
-only emits the session-context briefing.
+Session-context output never echoes secrets, API keys, or tokens — it only
+emits the session-context briefing.

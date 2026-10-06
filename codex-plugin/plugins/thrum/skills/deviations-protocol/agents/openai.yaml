@@ -1,0 +1,4 @@
+interface:
+  display_name: "Deviations Protocol"
+  short_description: "Use when authoring a plan or implementation prompt - Deviations-from-Source block format, required even when empty."
+  default_prompt: "Use when authoring a plan or implementation prompt - Deviations-from-Source block format, required even when empty."

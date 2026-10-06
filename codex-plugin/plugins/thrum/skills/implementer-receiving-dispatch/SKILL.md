@@ -43,7 +43,7 @@ config loading, string sanitization, validation), run a targeted grep.
 something similar exists, use it. If it needs extension, extend it. Only create
 a new function when nothing exists.
 
-### Don't refactor for free — log opportunities, don't implement them
+### Don't refactor for free — report opportunities, don't implement them
 
 **Why:** A bug fix doesn't need surrounding cleanup. A one-shot operation
 doesn't need a helper. Inlining "improvements" into a scoped task expands the
@@ -51,24 +51,24 @@ diff, complicates review, and risks introducing bugs unrelated to the work.
 Three similar lines is better than a premature abstraction.
 
 **How to apply:** When you spot duplicated patterns, hardcoded values that
-should be shared, or missed abstractions during implementation, log them to the
-project's refactor backlog (a beads epic, e.g. `<refactor-epic-id>`):
+should be shared, or missed abstractions during implementation, report them to
+the coordinator; do not file a bd issue yourself.
 
-`--description` is multi-line prose — never double-quoted inline. On
-`scripts/bd-shared`, `--stdin`/`--body-file` are refused (remote-path
-resolution + silent-empty-body hazards), so write it to a scratch file and pass
-`-d "$(cat <file>)"`; see your role preamble's 🔴 PROSE INTO A COMMAND rule.
+The report body is multi-line prose — never double-quoted inline; see the
+heredoc-or-file rule in your role preamble.
 
 ```bash
-cat > /tmp/refactor-task-desc.md <<'EOF'
-**Discovered during:** <task-id>
-**Files:** <paths>
-**Opportunity:** <what could be improved>
-**Effort:** small/medium/large
+thrum send --to @<coordinator> --stdin <<'EOF'
+Refactoring opportunity (discovered during <task-id>)
+Files: <paths>
+Opportunity: <what could be improved>
+Effort: small/medium/large
 EOF
-bd create --title="Refactor: <short description>" --type=task \
-  --parent=<refactor-epic-id> --priority=3 -d "$(cat /tmp/refactor-task-desc.md)"
 ```
+
+If the coordinator asks you to file the bead, write the description to a scratch
+file and pass `--body-file <file>` to `scripts/bd-shared` (and
+`comments add <id> -f <file>` for comments).
 
 Then continue with the assigned work. Do not implement the refactoring.
 
@@ -100,8 +100,7 @@ related files.
 
 ### Project-specific rules (already loaded)
 
-Read the shared partial at the absolute path:
-`claude-plugin/commands/_project-rules-protocol.md`
+Load the $thrum:project-rules-protocol skill and follow it.
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `implementer-maintaining-memory` skill — it references the

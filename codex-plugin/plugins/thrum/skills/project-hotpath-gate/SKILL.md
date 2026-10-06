@@ -33,8 +33,7 @@ later ones.
 3. **Re-run-evolved** (config present, project has drifted) — compute a
    sectional diff, present for approval, write only on confirmation.
 
-Read the shared partial at the absolute path:
-`claude-plugin/commands/_generator-idempotency-protocol.md`
+Load the $thrum:generator-idempotency-protocol skill and follow it.
 
 > **Note: human-in-the-loop required.** This skill uses interactive prompts for
 > first-run incident-prose seeding and re-run-evolved diff approval. It cannot

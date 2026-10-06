@@ -40,7 +40,7 @@ thrum memory create --kind agent_rule --scope role \
 ```
 
 `--short`/`--full` carry real prose — compose via heredoc or file, never
-double-quoted inline; see your role preamble's 🔴 PROSE INTO A COMMAND rule.
+double-quoted inline; see the heredoc-or-file rule in your role preamble.
 
 Body shape is uniform across all role-rule writes — see
 `memory-write-discipline`. The `Why:` line is load-bearing: future-you needs the
@@ -48,9 +48,8 @@ reason to judge edge cases the rule doesn't literally cover.
 
 ## Implementer does NOT write
 
-- **Refactoring opportunities discovered mid-task** → file under the project's
-  refactoring epic, e.g. `<refactor-epic-id>`, NOT memory. Memory is for AGENT
-  BEHAVIOR rules; bd tracks code work.
+- **Refactoring opportunities discovered mid-task** → report them to the
+  coordinator, NOT memory and not bd. Memory is for AGENT BEHAVIOR rules.
 - **Research findings about the codebase** → ping the researcher; they own
   `kind: research_note` writes.
 - **Per-task notes / scratch state** → use the conversation context or task

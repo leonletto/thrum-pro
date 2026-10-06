@@ -78,12 +78,12 @@ identify what was actually load-bearing about this session, and that priority
 shapes everything else you write below it.
 
 **Stamp your snapshot with the base it was authored against.** Derive and emit
-the **Authored-against** stamp per `claude-plugin/commands/_stamp-protocol.md`
-and place it at the very top of your §1 section (that protocol computes the SHA
-and merge_target for you — never hand-type them). This is what lets
-`thrum prime` diff your snapshot at the next wake and flag which cited files
-have MOVED; an unstamped snapshot reads as "current", indistinguishable from one
-that never drifted.
+the **Authored-against** stamp per the $thrum:stamp-protocol skill and place it
+at the very top of your §1 section (that protocol computes the SHA and
+merge_target for you — never hand-type them). This is what lets `thrum prime`
+diff your snapshot at the next wake and flag which cited files have MOVED; an
+unstamped snapshot reads as "current", indistinguishable from one that never
+drifted.
 
 After the §1 block:
 

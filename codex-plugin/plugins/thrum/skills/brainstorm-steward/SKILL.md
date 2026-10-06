@@ -201,9 +201,9 @@ to survive a restart, because nothing else is authoritative.
 
 ### Persist state + queue before compacting
 
-Before running `$thrum-compact` or `$thrum-compact-extended`, first persist your
-load-bearing context to the durable store — it survives compaction; your
-conversation context does not. Update your personal state
+Before running `$thrum:thrum-compact` or `$thrum:thrum-compact-extended`, first
+persist your load-bearing context to the durable store — it survives compaction;
+your conversation context does not. Update your personal state
 (`thrum state set --kind personal_state ...` — see the `using-thrum-state`
 skill) and your committed work (`thrum queue` — see the `using-the-queue` skill)
 BEFORE composing your snapshot. This is distinct from the restart recovery above

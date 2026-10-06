@@ -140,7 +140,10 @@ relying on it rediscovering these the hard way:
    distinguish it from a genuine hang/deadlock via
    `go run ./cmd/testgate classify-timeout --log <file> --shard-config <file> --shard <name>`
    (fails closed — only BOUND-TIMEOUT exits 0; HANG and UNCLASSIFIED both exit
-   nonzero) before reporting it as a regression.
+   nonzero) before reporting it as a regression. If a gate's own command line
+   invokes the bare package path for RPC, that is a gate defect, not a passing
+   lane. A HANG or UNCLASSIFIED verdict from `classify-timeout` requires human
+   review.
 8. Build+test the MERGED-tree result as a SEPARATE condition — neither gate
    currently runs a build of the actual post-merge tree; a clean pre-merge
    build/test does not prove the merged result compiles or passes.
@@ -172,20 +175,21 @@ relying on it rediscovering these the hard way:
     in this order.** A required final step, not cleanup etiquette. Each
     abandoned worktree pins its HEAD commit against `gc` and adds a
     `.git/worktrees` admin entry, so the object store grows monotonically.
-    Before removing: (a) `git -C <wt> status --porcelain` — if NON-EMPTY, **STOP
-    and report it instead of removing.** Uncommitted work in a throwaway
-    worktree exists NOWHERE else; this is the category that actually loses work.
-    (b) `git branch -a --contains $(git -C <wt> rev-parse HEAD)` — if EMPTY,
-    HEAD is a gate-produced merge reachable from no ref and removal orphans it.
-    Usually fine (a gate merge is reproducible by redoing it) but say so in your
-    report rather than doing it silently. Then `git worktree remove <wt>` —
-    **plain, no `--force`.** Its rc=128 refusal backstops ONLY
-    untracked/modified content (see rule 9 on `rm -r`) — it does NOT cover
-    gitignored content, which git removes silently with no refusal; a clean rc=0
-    is not proof nothing of value was in there (see
-    coordinator-assessing-agent-completion's reap procedure). `--force` is a
-    justified override only, never the default (see coordinator-merging-code
-    §7a).
+    Before removing: (a)
+    `git -C <wt> status --porcelain --untracked-files=all --ignored -- .thrum` —
+    if NON-EMPTY, **STOP and report it instead of removing.** Uncommitted work
+    in a throwaway worktree exists NOWHERE else; this is the category that
+    actually loses work. (b)
+    `git branch -a --contains $(git -C <wt> rev-parse HEAD)` — if EMPTY, HEAD is
+    a gate-produced merge reachable from no ref and removal orphans it. Usually
+    fine (a gate merge is reproducible by redoing it) but say so in your report
+    rather than doing it silently. Then `git worktree remove <wt>` — **plain, no
+    `--force`.** Its rc=128 refusal backstops ONLY untracked/modified content
+    (see rule 9 on `rm -r`) — it does NOT cover gitignored content, which git
+    removes silently with no refusal; a clean rc=0 is not proof nothing of value
+    was in there (see coordinator-assessing-agent-completion's reap procedure).
+    `--force` is a justified override only, never the default (see
+    coordinator-merging-code §7a).
 
 ### Trigger-directory skip logic
 

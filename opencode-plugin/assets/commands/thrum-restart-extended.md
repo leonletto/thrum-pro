@@ -54,11 +54,7 @@ mkdir -p "${REPO}/.thrum/restart"
 
 ### 2. Read the shared snapshot-composition partial
 
-Read the partial at the absolute path:
-
-```text
-${REPO}/claude-plugin/commands/_snapshot-protocol.md
-```
+Invoke the /thrum:snapshot-protocol skill and follow it.
 
 It carries the CRITICAL DISCIPLINE block and BOTH the standard 11-section
 structure and the EXTENDED 16-section structure with per-section guidance.

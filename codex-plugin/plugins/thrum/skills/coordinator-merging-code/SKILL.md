@@ -181,14 +181,18 @@ The §3 lens gates (hotpath + philosophy) are the judgement half. The per-merge
 executed half is **scoped to the change**:
 
 - Build the merged tree (`go build ./...`).
-- Full-_package_ `-race` on the **changed packages only** — full-package, never
-  targeted `-run` (a targeted run misses cross-test races), but only what the
-  diff touches.
+- 🔴 **RULING 2026-09-29:** the full sharded race suite —
+  `scripts/test-run.sh race all` (~15-20 min) — on the **merged tree**, every
+  Pass-3 verdict. This replaces the prior "changed packages only (+ rpc shard
+  sweep)" race scoping below the ruling; a targeted `-run` is still never
+  acceptable (a targeted run misses cross-test races). Never on primary (the
+  shared fleet build box) — it is CPU-heavy; run it on the gate box.
 - The fast structural checks on the merged tree — `gate-ban-check`,
   `gate-omitempty-check`, `gate-lockspan-check`, `gate-marker-diff`,
-  `gate-stamp-protocol-check` (seconds each; they catch banned flags,
-  `omitempty` drift, lock-span, marker and stamp drift regardless of the
-  change).
+  `gate-stamp-protocol-check`, `gate-plugin-bundle-leaks` (seconds each; they
+  catch banned flags, `omitempty` drift, lock-span, marker and stamp drift
+  regardless of the change; `gate-plugin-bundle-leaks` self-skips when no plugin
+  path changed).
 - The `merge-base --is-ancestor` fast-forward check (§6).
 - Any `*_tripwire_test.go` the change touches must stay green or the diff must
   state why its premise changed; a tripwire edited to accommodate the change is
@@ -225,9 +229,10 @@ executed half is **scoped to the change**:
   merge:
   `go test ./internal/testgate/... -run TestNoMainStateDBWriteOwnerBypasses`.
 
-**Establish branch-attributable vs pre-existing from the changed-package `-race`
-result** — a regression adds failures the same packages did not have before. Do
-not classify a scoped change by replaying the whole known-red suite.
+**Establish branch-attributable vs pre-existing from the full-race `-race`
+result** — a regression adds failures the packages touched by the diff did not
+have before. Do not classify a scoped change by replaying the whole known-red
+suite.
 
 🔴 **Do NOT run the full all-lanes `make gate` for a merge.** The full suite —
 every package across lanes A/B/C/D, the integration lane,
@@ -236,6 +241,9 @@ every package across lanes A/B/C/D, the integration lane,
 box, and it is its own skill: **`coordinator-full-gate`**. A merge never
 triggers it, and its merge-base replay is not a per-merge step. Running it per
 merge is ~2h that on a common-mode- red trunk fails on the baseline every time.
+The RULING 2026-09-29 above widens only the **race lane** to full-sharded per
+merge — it does not pull the other lanes (integration, UI, mutation-check) into
+the per-merge path.
 
 🔴 **Never kill a test run to stop a collision.** Killing skips Go's cleanup,
 which leaks fixed-name tmux fixtures onto the shared socket and breaks that
@@ -383,8 +391,7 @@ hides staleness.
 
 ### Project-specific rules (already loaded)
 
-Read the shared partial at the absolute path:
-`claude-plugin/commands/_project-rules-protocol.md`
+Load the $thrum:project-rules-protocol skill and follow it.
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `coordinator-maintaining-memory` skill — it references the

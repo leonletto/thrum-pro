@@ -97,8 +97,24 @@ if command -v jq >/dev/null 2>&1; then
 fi
 
 LIGHT_MODE=0
+SNAPSHOT_SHOWN=""
+PRIME_DONE=0
 if [ "$HOOK_SOURCE" = "compact" ] && [ -n "$AGENT_WORKTREE" ]; then
   SNAPSHOT="${AGENT_WORKTREE}/.thrum/restart/${AGENT_ID}.md"
+  # An earlier prime may already have ARCHIVED (moved) the
+  # restart file; accept the newest archived copy in the main repo's
+  # sessions/ for the freshness check. Best-effort, fully guarded.
+  if [ ! -s "$SNAPSHOT" ]; then
+    _main_thrum="${AGENT_WORKTREE}/.thrum"
+    if [ -f "${AGENT_WORKTREE}/.thrum/redirect" ]; then
+      _redir=$(head -n 1 "${AGENT_WORKTREE}/.thrum/redirect" 2>/dev/null | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' || true)
+      # A relative redirect resolves against the worktree root, not the hook's cwd.
+      case "$_redir" in ""|/*) ;; *) _redir="${AGENT_WORKTREE}/$_redir" ;; esac
+      if [ -n "$_redir" ] && [ -d "$_redir" ]; then _main_thrum="$_redir"; fi
+    fi
+    _newest=$(ls -1t "${_main_thrum}/agents/${AGENT_ID}/sessions/"*-restart.md 2>/dev/null | head -n 1 || true)
+    if [ -n "$_newest" ]; then SNAPSHOT="$_newest"; fi
+  fi
   if [ -s "$SNAPSHOT" ] && [ -r "$SNAPSHOT" ]; then
     # mtime: choose the stat dialect explicitly (matches the dialect-detection
     # approach used in claude-plugin/commands/compact.md's snapshot-verify step).
@@ -120,19 +136,53 @@ if [ "$HOOK_SOURCE" = "compact" ] && [ -n "$AGENT_WORKTREE" ]; then
       if [ -z "$LIGHT_OUTPUT" ]; then
         # Light prime failed (daemon down, slow, etc.) — degrade to the
         # nudge, never to silence.
-        # thrum-xyz: the session.archive step may already have MOVED the
-        # restart file into sessions/ before the render failed, so never point
-        # only at the original path — name both places.
-        echo "You were just compacted. Your snapshot is at \`${AGENT_WORKTREE}/.thrum/restart/${AGENT_ID}.md\` — or, if that file is gone (already archived), the newest \`*-restart.md\` in \`.thrum/agents/${AGENT_ID}/sessions/\` of the main repo's .thrum (a worktree's \`.thrum/redirect\` file names it). Read it first, then run \`thrum:prime-agent\` — auto-injection failed (daemon may be unreachable; check \`thrum daemon status\`)."
+        # The failed render may already have archived (moved) the restart
+        # file into sessions/. Name the path that exists NOW: the file hooked
+        # at start if still there, else the newest archived copy in the main
+        # repo (redirect-aware, same lookup as the freshness check above).
+        NUDGE_SNAP="${SNAPSHOT}"
+        if [ ! -s "$NUDGE_SNAP" ]; then
+          _nd_thrum="${AGENT_WORKTREE}/.thrum"
+          if [ -f "${AGENT_WORKTREE}/.thrum/redirect" ]; then
+            _nd_redir=$(head -n 1 "${AGENT_WORKTREE}/.thrum/redirect" 2>/dev/null | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' || true)
+            case "$_nd_redir" in ""|/*) ;; *) _nd_redir="${AGENT_WORKTREE}/$_nd_redir" ;; esac
+            if [ -n "$_nd_redir" ] && [ -d "$_nd_redir" ]; then _nd_thrum="$_nd_redir"; fi
+          fi
+          _nd_newest=$(ls -1t "${_nd_thrum}/agents/${AGENT_ID}/sessions/"*-restart.md 2>/dev/null | head -n 1 || true)
+          if [ -n "$_nd_newest" ]; then NUDGE_SNAP="$_nd_newest"; fi
+        fi
+        echo "You were just compacted. Your snapshot is at \`${NUDGE_SNAP}\`. Read it first (Read tool), then run \`thrum:prime-agent\` — auto-injection failed (daemon may be unreachable; check \`thrum daemon status\`)."
         exit 0
       fi
+      # `thrum prime --light` degrades to a FULL render for a
+      # light-ineligible role (e.g. coordinator). LIGHT_MODE=1 only when the
+      # first line is the marker; that line is stripped. Without it the output
+      # is a full render and gets the full wording. ONE prime call either way.
       PRIME_OUTPUT="$LIGHT_OUTPUT"
-      LIGHT_MODE=1
+      PRIME_DONE=1
+      _first_line=$(printf '%s\n' "$LIGHT_OUTPUT" | head -n 1 | tr -d '\r')
+      if [ "$_first_line" = "<!-- thrum-prime: light -->" ]; then
+        LIGHT_MODE=1
+        # The render's session.archive step may have MOVED
+        # the restart file into sessions/. Name the path that exists NOW.
+        SNAPSHOT_SHOWN="${SNAPSHOT}"
+        if [ ! -s "$SNAPSHOT_SHOWN" ]; then
+          _sm_thrum="${AGENT_WORKTREE}/.thrum"
+          if [ -f "${AGENT_WORKTREE}/.thrum/redirect" ]; then
+            _sm_redir=$(head -n 1 "${AGENT_WORKTREE}/.thrum/redirect" 2>/dev/null | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' || true)
+            case "$_sm_redir" in ""|/*) ;; *) _sm_redir="${AGENT_WORKTREE}/$_sm_redir" ;; esac
+            if [ -n "$_sm_redir" ] && [ -d "$_sm_redir" ]; then _sm_thrum="$_sm_redir"; fi
+          fi
+          _sm_newest=$(ls -1t "${_sm_thrum}/agents/${AGENT_ID}/sessions/"*-restart.md 2>/dev/null | head -n 1 || true)
+          if [ -n "$_sm_newest" ]; then SNAPSHOT_SHOWN="$_sm_newest"; fi
+        fi
+        PRIME_OUTPUT=$(printf '%s\n' "$LIGHT_OUTPUT" | tail -n +2)
+      fi
     fi
   fi
 fi
 
-if [ "$LIGHT_MODE" -ne 1 ]; then
+if [ "$PRIME_DONE" -ne 1 ]; then
   PRIME_OUTPUT=$(thrum prime 2>/dev/null || true)
 
   if [ -z "$PRIME_OUTPUT" ]; then
@@ -169,14 +219,16 @@ append_to BANNER $'\n---\n\n'
 # "# Previous Session Context" section emitted by `thrum prime` — keeping
 # the full prose in both places duplicates lines into every restart briefing.
 RESTART_PREAMBLE=""
-if printf '%s' "$PRIME_OUTPUT" | grep -q '^# Previous Session Context'; then
+if grep -q '^# Previous Session Context' <<<"$PRIME_OUTPUT"; then  # here-string: a pipe + grep -q SIGPIPEs printf under pipefail on big output
   append_to RESTART_PREAMBLE '# 🛑 ACTION REQUIRED — you left yourself a Resume Plan'$'\n'
   append_to RESTART_PREAMBLE $'\n'
-  append_to RESTART_PREAMBLE 'Before anything else, go to the **`# Previous Session Context`** section below, read its **`## Resume Plan`** in full, and execute the numbered steps in order — the full instructions are in that section.'$'\n'
+  append_to RESTART_PREAMBLE 'Before anything else, go to the **`# Previous Session Context`** section below, read its **`## Resume Plan`** (or its final next-actions section) in full, and execute the numbered steps in order. If the briefing was truncated or persisted to a file, first read the whole file with your file-reading tool, every page in order, do not jump to the Resume Plan, and name one fact from it before acting.'
+  if [ "$LIGHT_MODE" -eq 1 ]; then
+    append_to RESTART_PREAMBLE " In light mode your snapshot is also at \`${SNAPSHOT_SHOWN:-.thrum/restart/${AGENT_ID}.md}\` (archived under \`.thrum/agents/${AGENT_ID}/sessions/\` once a prime has run); Read it first if the section is truncated or missing."
+  fi
+  append_to RESTART_PREAMBLE $'\n'
   append_to RESTART_PREAMBLE $'\n'
   append_to RESTART_PREAMBLE '> ⚠️ **If this briefing was persisted to a `tool-results/*.txt` file instead of delivered inline, read it with the `Read` tool (use `offset`/`limit` to page through it) — NOT with `sed`, `grep`, `head`, `tail`, or `cat` via Bash.**'$'\n'
-  append_to RESTART_PREAMBLE '>'$'\n'
-  append_to RESTART_PREAMBLE '> Those paths live under `~/.claude/projects/**`, which the runtime treats as SENSITIVE. A Bash read of them raises a human permission prompt — misdescribed as a request to *edit* a sensitive file, even for a read-only `sed -n ...p` — and **the restart stalls there until a human answers.** Permission `allow` rules do NOT clear it: `Bash`, `Read`, `Edit` and path-scoped `Read(//Users/.../projects/**)` rules can all be present and the prompt still fires, because the gate is the sensitive-path check, not the permission-rule system. The `Read` tool is not subject to it. **Use `Read`.**'$'\n'
   append_to RESTART_PREAMBLE $'\n---\n\n'
 fi
 
@@ -185,16 +237,14 @@ BRIEFING=""
 append_to BRIEFING '# Thrum Session Briefing (auto-loaded)'$'\n'
 append_to BRIEFING $'\n'
 if [ "$LIGHT_MODE" -eq 1 ]; then
-  # thrum-xyz: labelled by what was REQUESTED, not what rendered — a
-  # light-ineligible role (e.g. coordinator, gate) gets a FULL render here, so
-  # the wording must be true of both. The Resume Plan body is in the
-  # "# Previous Session Context" section in either case.
-  append_to BRIEFING 'The `thrum prime --light` output (auto-injected after compaction; roles that are not light-eligible receive the full render instead) is included below. Your Resume Plan is in its **`# Previous Session Context`** section — the snapshot file was archived by this prime, so this section is the copy to act on. You do NOT need to run `/thrum:prime`, `thrum prime`, or `thrum:prime-agent` again this session — the briefing is already in your context. Read it in full.'$'\n'
+  # LIGHT_MODE is 1 only when the light marker was present, so
+  # this label is true; an ineligible role's full render takes the else branch.
+  append_to BRIEFING "The **light** \`thrum prime --light\` output is included below (auto-injected after compaction; it trims the other briefing sections, and your Resume Plan is in its **\`# Previous Session Context\`** section, with your snapshot also at \`${SNAPSHOT_SHOWN:-.thrum/restart/${AGENT_ID}.md}\`). You do not need to run \`thrum:prime-agent\` again this session. Read it in full."$'\n'
 else
-  append_to BRIEFING 'The complete `thrum prime` output is included below. You do NOT need to run `/thrum:prime` or `thrum prime` again this session — the briefing is already in your context. Read it in full; the session context section at the end is the most important.'$'\n'
+  append_to BRIEFING 'The complete `thrum prime` output is included below. Read it in full.'$'\n'
 fi
 append_to BRIEFING $'\n'
-append_to BRIEFING 'Only spawn additional commands if the inbox section shows unread messages that need processing.'$'\n'
+append_to BRIEFING 'Beyond the session-start queue and state reconcile and the inbox check, spawn additional commands only if the inbox section shows unread messages that need processing.'$'\n'
 append_to BRIEFING $'\n---\n\n'
 append_to BRIEFING "$PRIME_OUTPUT"$'\n'
 
@@ -208,6 +258,9 @@ append_to DIRECTIVE '> ✅ **Context auto-loaded by SessionStart hook.**'$'\n'
 append_to DIRECTIVE '>'$'\n'
 append_to DIRECTIVE '> **Do NOT run `/thrum:prime` or `thrum prime` — the full briefing is already in your context below.**'$'\n'
 append_to DIRECTIVE '> Only invoke them manually if this hook fell through to a degraded "auto-injection failed" notice.'$'\n'
+if [ "$LIGHT_MODE" -eq 1 ]; then
+  append_to DIRECTIVE "> In light mode, read your snapshot at \`${SNAPSHOT_SHOWN:-.thrum/restart/${AGENT_ID}.md}\` for the Resume Plan if the section below is truncated or missing."$'\n'
+fi
 append_to DIRECTIVE $'\n'
 
 # First-turn ack. Tells the agent to emit one visible
@@ -225,8 +278,6 @@ append_to ACK_INSTRUCTION '>'$'\n'
 append_to ACK_INSTRUCTION '> Before reading the briefing or running any tools, print this single plain-text line — substitute `<intent>` with a brief sentence drawn from your inbox or restart snapshot:'$'\n'
 append_to ACK_INSTRUCTION '>'$'\n'
 append_to ACK_INSTRUCTION "> \`${_ACK_LINE}\`"$'\n'
-append_to ACK_INSTRUCTION '>'$'\n'
-append_to ACK_INSTRUCTION '> This produces visible scrollback so humans can distinguish a healthy launch from a stuck or failed one without probing.'$'\n'
 append_to ACK_INSTRUCTION $'\n'
 
 # Emit in canonical order: banner → directive → ack → restart preamble →

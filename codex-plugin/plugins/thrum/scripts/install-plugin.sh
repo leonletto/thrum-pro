@@ -43,6 +43,7 @@ die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 # 1. Prereqs
 command -v codex >/dev/null || die "codex CLI not found on PATH. Install codex first (https://github.com/openai/codex)."
 command -v jq    >/dev/null || die "jq not found on PATH. Install: brew install jq"
+command -v python3 >/dev/null || die "python3 not found on PATH (needed to enable features.plugin_hooks in the Codex config). Install: apt install python3 / brew install python3"
 [[ -f "${CONFIG}" ]] || die "codex config not found at ${CONFIG}. Run codex at least once to create it."
 
 # 2. Register or refresh the marketplace.

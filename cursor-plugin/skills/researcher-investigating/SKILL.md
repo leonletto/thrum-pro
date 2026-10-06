@@ -74,8 +74,8 @@ sessions and re-readable by other agents.
 
 **How to apply:** After reporting to the requester, write the finding as a
 `research_note` memory with cited file:line refs and a verification footer. Tag
-with a `research-<slug>` handle so other agents can find it later via
-`thrum memory search --tag research-<slug>`:
+it with `--tag <slug>` so other agents can find it later via
+`thrum memory search --tag <slug>`:
 
 ```bash
 cat > /tmp/research-note-body.md <<EOF
@@ -85,19 +85,18 @@ Verified: $(date +%Y-%m-%d) @ $(git rev-parse HEAD)
 EOF
 thrum memory create --kind research_note --scope role \
   --title "<finding prose, ~80 char soft limit>" \
-  --tag research-<slug> \
+  --tag <slug> \
   --oneline "<one-line summary>" \
   --full "@/tmp/research-note-body.md"
 ```
 
 `--full` here is multi-line prose — compose via heredoc or a captured
-variable, never double-quoted inline like this; see your role preamble's 🔴
-PROSE INTO A COMMAND rule.
+variable, never double-quoted inline like this; see the heredoc-or-file rule in your role preamble.
 
 Then add one line to `.thrum/context/research.md` under Tracked Topics (note: `thrum queue` now supersedes free-text Open Questions tracking):
 
 ```markdown
-- `research-<slug>` — <one-line description, ≤ 80 chars>
+- `<slug>` — <one-line description, ≤ 80 chars>
 ```
 
 The full index format and staleness-check protocol live in
@@ -121,8 +120,7 @@ gaps — you surface them, the implementer ships them.
 
 ## Project-specific rules (already loaded)
 
-Read the shared partial at the absolute path:
-`claude-plugin/commands/_project-rules-protocol.md`
+Load the /thrum:project-rules-protocol skill and follow it.
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `researcher-maintaining-memory` skill — it references the

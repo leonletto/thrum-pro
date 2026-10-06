@@ -76,8 +76,9 @@ trade-off explicitly:
 - Is the fix a few lines? Default to fix-now
 - Does verification require running the same tests as the main fix? Default to
   fix-now
-- Is the fix a meaningful refactor or design change? Defer is legitimate; file
-  the bd issue and link it in the commit message
+- Is the fix a meaningful refactor or design change? Defer is legitimate; report
+  it to the coordinator (not a bd issue) and cite the report in the commit
+  message
 
 Don't reach for "deferred" as a shortcut to ship faster.
 
@@ -122,8 +123,7 @@ list, file them as bd issues — don't slip them into the fix commit.
 
 ### Project-specific rules (already loaded)
 
-Read the shared partial at the absolute path:
-`claude-plugin/commands/_project-rules-protocol.md`
+Load the $thrum:project-rules-protocol skill and follow it.
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
 the `implementer-maintaining-memory` skill — it references the

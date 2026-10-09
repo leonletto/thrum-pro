@@ -132,6 +132,12 @@ the pin.
 
 ### 5. The staged order — canary, waves, prepare-and-hold, promotion gate
 
+> 🔴 **If any node fails during the rollout — canary or any wave — STOP THE
+> ROLLOUT.** Do not roll, restart, or recommend restarting any further node
+> (including the build host / primary) until the failure is root-caused and
+> fixed or the owner explicitly decides to continue. A node that went down and
+> was recovered by hand is a FAILURE, not a green.
+
 - **Canary first, alone.** One node (adapter `topology.canary`) rolls first. Its
   health must be observed green before any wave proceeds.
 - **Waves with coordinated dependency/order/rollback.** Subsequent waves follow

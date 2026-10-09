@@ -61,6 +61,10 @@ Build once per artifact on its `artifact.build_host` via `artifact.build_command
 
 ## 5. The staged order — canary, waves, prepare-and-hold, promotion gate
 
+> 🔴 **If any node fails during the rollout — canary or any wave — STOP THE ROLLOUT.** Do not roll, restart, or recommend
+> restarting any further node (including the build host / primary) until the failure is root-caused and fixed or the
+> owner explicitly decides to continue. A node that went down and was recovered by hand is a FAILURE, not a green.
+
 - **Canary first, alone.** One node (adapter `topology.canary`) rolls first. Its health must be observed green before any wave proceeds.
 - **Waves with coordinated dependency/order/rollback.** Subsequent waves follow `topology.waves`. When related daemons share ordering (e.g., connected-repo daemons that must restart together), respect the adapter-defined dependency and restart order; a failure in one dependent daemon triggers coordinated rollback per adapter `rollback` / `backup.restore_command`.
 - **Prepare-and-hold + release BY NAME.** If the mechanism supports it, prepare all nodes in a wave (acquire + verify artifact, take BEFORE snapshot, but do not restart) then release by explicit node name, not by broadcast.

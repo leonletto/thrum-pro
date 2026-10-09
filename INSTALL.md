@@ -36,6 +36,15 @@ claude plugin marketplace add ./claude-plugin
 claude plugin install thrum@thrum
 ```
 
+`marketplace update` only refreshes a Git-sourced marketplace. To update a
+local-path install, extract the new bundle and re-register its folder:
+
+```bash
+claude plugin marketplace remove thrum
+claude plugin marketplace add ./claude-plugin
+claude plugin install thrum@thrum
+```
+
 Verify with `claude plugin list`; `thrum@thrum` must be installed and enabled.
 
 ## Codex
@@ -49,6 +58,16 @@ Update with:
 
 ```bash
 codex plugin marketplace upgrade thrum-marketplace
+codex plugin add thrum@thrum-marketplace
+```
+
+`marketplace upgrade` only refreshes a Git-sourced marketplace. If you added
+the marketplace from a local folder (`codex plugin marketplace add ./codex-plugin`),
+extract the new bundle and re-register its folder instead:
+
+```bash
+codex plugin marketplace remove thrum-marketplace
+codex plugin marketplace add ./codex-plugin
 codex plugin add thrum@thrum-marketplace
 ```
 

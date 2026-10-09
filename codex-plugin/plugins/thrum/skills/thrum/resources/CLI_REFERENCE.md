@@ -21,8 +21,8 @@ These flags apply to every command:
 
 Many commands append contextual hints after their normal output. Two kinds:
 
-- **detection** — condition-triggered guards (e.g. identity mismatch, empty
-  agent list, peer version drift). Fire whenever the condition is present.
+- **detection** — condition-triggered guards (e.g. identity mismatch, empty team
+  roster, peer version drift). Fire whenever the condition is present.
 - **reinforcement** — periodic memory-aids, band-throttled by context
   percentage. Fire occasionally, not on every command.
 
@@ -280,44 +280,48 @@ Flags:
 --re-register      Re-register same agent
 ```
 
-### agent list
+### team roster
 
 ```bash
-thrum agent list                               # List all registered agents
-thrum agent list --role reviewer               # Filter by role
-thrum agent list --module auth                 # Filter by module
-thrum agent list --context                     # Show work context (branch, commits, intent)
-thrum agent list --json
+thrum team                                      # Local active roster
+thrum team --role reviewer                     # Filter by role
+thrum team --module auth                       # Filter by module
+thrum team --compact                            # One line per agent with intent and branch/commits
+thrum team --phase stale                       # Exact stale triage queue
+thrum team --include-inactive                  # Add stale and retired rows
+thrum team --offline                           # Add ordinary offline rows
+thrum team --all                               # Preserve the whole-fleet roster
+thrum team --json
 ```
 
-Flags:
+`--include-inactive` includes stale and retired rows, including offline
+stale/retired rows, while omitting ordinary offline active rows. `--offline`
+adds ordinary offline active rows. Use both for their union. `--phase` remains
+exact. Stale rows show last-seen and measured worktree, identity-file, and
+tmux-session presence; unavailable measurements render as `unknown`.
+`Reap candidate` is display-only and appears only when worktree and tmux-session
+presence are both explicitly absent.
 
-```text
---context         Show work context (branch, commits, intent)
---role string     Filter by role
---module string   Filter by module
-```
-
-### agent set-intent / session set-intent
+### session set-intent
 
 ```bash
-thrum agent set-intent "Fixing memory leak in connection pool"
+thrum session set-intent "Fixing memory leak in connection pool"
 thrum session set-intent "Refactoring login flow"
-thrum agent set-intent ""                      # Clear intent
+thrum session set-intent ""                      # Clear intent
 ```
 
-### agent set-task / session set-task
+### session set-task
 
 ```bash
-thrum agent set-task beads:thrum-xyz
+thrum session set-task beads:thrum-xyz
 thrum session set-task "JIRA-1234"
-thrum agent set-task ""                        # Clear task
+thrum session set-task ""                        # Clear task
 ```
 
-### agent heartbeat / session heartbeat
+### session heartbeat
 
 ```bash
-thrum agent heartbeat
+thrum session heartbeat
 thrum session heartbeat
 thrum session heartbeat --add-scope module:auth
 thrum session heartbeat --remove-ref pr:42
@@ -333,17 +337,17 @@ Flags:
 --remove-ref strings     Remove ref (repeatable, format: type:value)
 ```
 
-### agent start / session start
+### session start
 
 ```bash
-thrum agent start
+thrum session start
 thrum session start
 ```
 
-### agent end / session end
+### session end
 
 ```bash
-thrum agent end
+thrum session end
 thrum session end
 thrum session end --reason crash
 thrum session end --session-id <id>

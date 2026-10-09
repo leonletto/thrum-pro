@@ -5,6 +5,10 @@
 > [TMUX_SESSIONS.md](TMUX_SESSIONS.md). Use the listener pattern below when tmux
 > is not available or not practical for your setup.
 >
+> In tmux-managed sessions, messages arrive in the pane. Check
+> `thrum inbox --unread` at natural breakpoints and never spawn a background
+> listener.
+>
 > **Deprecated for newly initialized agents:** the hook injection and scheduled
 > backstop that `thrum init` installs deliver message nudges without a listener.
 > The pattern below still works and is supported, but it holds tokens in the

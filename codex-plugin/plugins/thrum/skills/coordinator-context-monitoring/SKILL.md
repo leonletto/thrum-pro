@@ -385,14 +385,15 @@ tiers below >85% (and apply the coordinator-equivalent 75% floor above while
 working). The >85% bracket still fires regardless. These are EXPLICIT DECLARED
 states, not a heuristic guess at coordination intent — a
 consultant/on-call/done-planning researcher must set one of these prefixes
-ITSELF via `thrum agent set-intent "warm-hold: <reason>"` (or
+ITSELF via `thrum session set-intent "warm-hold: <reason>"` (or
 `on-call:`/`parked:`).
 
-**A coordinator CANNOT set another agent's intent.** `thrum agent set-intent`
+**A coordinator CANNOT set another agent's intent.** `thrum session set-intent`
 takes TEXT only — it sets the intent for the CURRENT SESSION and accepts no
 agent argument and no `--to`. To get an intent onto another agent, message that
-agent and have it set its own; then verify by reading `thrum agent list --json`
-rather than by counting acks.
+agent and have it set its own; then verify in the focused fleet view with
+`thrum team @AGENT --offline --include-inactive --json` rather than by counting
+acks.
 
 **Background-child-aware busy detection:** an agent with an OPEN in-progress
 bead, a recent JSONL tool_use (`state == "working"`), or a pane showing it's
@@ -619,9 +620,10 @@ Whether triggered by the scheduled `context-monitoring` thrum monitor or by the
 coordinator manually invoking the skill, run these guards BEFORE firing a
 restart:
 
-1. **Verify the daemon is reachable**:
-   `thrum team --json | jq '.members | length'` — if 0 or error, daemon is down;
-   skip the sweep, surface to operator.
+1. **Verify the daemon is reachable**: Run `thrum daemon status`; on error, skip
+   the sweep and surface to operator. Inspect the local online roster with
+   `thrum team --json` (`.team.members`); use `--offline --include-inactive` for
+   offline, stale and retired rows.
 2. **Confirm the monitor is alive**: `thrum monitor list` should show
    `context-monitoring` in `running` status with a non-empty `SCHEDULE` column.
    If absent or dead, the scheduled ALERTs aren't firing and the skill must be
@@ -666,8 +668,9 @@ When a restart fires (Step 4 or 5 — tmux-send nudge or snapshot-gated restart)
 1. Surface a brief status note to the coordinator: "Restarted @\<agent_name\> at
    \<ctx\>% — snapshot at
    `.thrum/agents/<agent>/sessions/<timestamp>-restart.md`".
-2. Wait for the agent to come back online (`thrum team` shows them active again,
-   or their pane shows the runtime prompt).
+2. Wait for the agent to come back online
+   (`thrum team @AGENT --offline --include-inactive` shows them online again, or
+   their pane shows the runtime prompt).
 3. Re-send their current dispatch with the full scope + plan refs + AC targets —
    treat them as a fresh implementer who needs the full briefing again.
 4. Note any WIP files they may have left in their worktree from the prior

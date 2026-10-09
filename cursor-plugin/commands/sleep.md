@@ -156,7 +156,7 @@ relocation, or teardown error) is signaled by the RPC returning an explicit
 error message BEFORE the pane dies — that is the only failure signal
 observable from inside this pane. If independent confirmation is needed, it
 must come from a DIFFERENT caller (this pane will be gone) checking
-`thrum agent list` / `thrum team list` afterward.
+`thrum team` afterward.
 
 **Do not fall back to a raw `tmux kill-session`.** A raw kill bypasses
 `agent.sleep`'s relocate-before-kill ordering and daemon bookkeeping

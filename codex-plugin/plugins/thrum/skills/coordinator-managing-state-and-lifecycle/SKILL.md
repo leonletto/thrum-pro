@@ -141,8 +141,8 @@ thrum agent delete <agent>         # SEPARATE reap, after the worktree is gone
 ```
 
 `worktree teardown` does NOT delete the agent: it is preparation for deleting
-one. The row stays `retired` (hidden from default `agent list` / `team` /
-overview / UI; visible with `--include-inactive` / `--phase retired`) until
+one. The row stays `retired` (hidden from the default team roster / overview /
+UI; visible with `--include-inactive` / `--phase retired`) until
 `thrum agent delete` or the sweeper reaps it. `agent delete` refuses an agent
 whose linked worktree still exists or whose process (pid/tmux) is live, and
 refuses coordinators; correct order is teardown (with salvage) THEN delete.

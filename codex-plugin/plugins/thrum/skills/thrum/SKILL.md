@@ -124,7 +124,7 @@ thrum <cmd> --help                       Detailed command usage
 | ---------------------------------------- | -------------------------- | ----------------------------- |
 | Cross-worktree messaging                 | Same-session task tracking | Single-agent, no coordination |
 | Persistent messages (survive compaction) | Ephemeral task lists       | Temporary scratch notes       |
-| Background listener pattern              | Inline progress tracking   | Simple linear execution       |
+| Non-tmux listener fallback               | Inline progress tracking   | Simple linear execution       |
 | Multi-machine sync via git               | Local to conversation      | No persistence needed         |
 
 **Decision test:** "Do messages need to survive session restart or reach agents
@@ -139,13 +139,14 @@ for cross-session/cross-worktree coordination messages.
 
 When running in a tmux-managed session, messages are delivered directly to your
 pane via daemon nudge — zero token cost, no background sub-agent needed. See
-[TMUX_SESSIONS.md](resources/TMUX_SESSIONS.md).
+[TMUX_SESSIONS.md](resources/TMUX_SESSIONS.md). Check `thrum inbox --unread` at
+natural breakpoints; never spawn a background listener.
 
 #### Listener Pattern (Fallback)
 
-When tmux is not available, use the background message listener. It calls
-`thrum wait` (blocking) and returns when messages arrive. Re-arm after
-processing. See [LISTENER_PATTERN.md](resources/LISTENER_PATTERN.md).
+Use the background message listener only when tmux pane delivery is unavailable.
+It calls `thrum wait` (blocking) and returns when messages arrive. See
+[LISTENER_PATTERN.md](resources/LISTENER_PATTERN.md).
 
 #### Context Management
 

@@ -127,7 +127,7 @@ An agent definition can also carry a default (Claude example — resolve to
 your own runtime's `mechanical`-tier value if you are not Claude):
 
 ```yaml
-# claude-plugin/agents/message-listener.md
+# claude-plugin/agents/message-listener.md (non-tmux fallback only)
 name: message-listener
 model: sonnet
 effort: low

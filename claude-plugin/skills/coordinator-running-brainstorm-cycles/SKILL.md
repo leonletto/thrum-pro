@@ -198,7 +198,7 @@ For each `*-brainstorm` worktree that looks relevant, inspect:
 | Idle + domain-relevant researcher found | **REUSE** — send the Phase 2 briefing to the existing agent in its current worktree. Skip the rest of Phase 1. |
 | No idle relevant researcher             | Fall through → proceed with "Pick the base branch" below.                                                      |
 
-When reusing, have the agent itself run `thrum agent set-intent "<new one-line
+When reusing, have the agent itself run `thrum session set-intent "<new one-line
 topic>"` so `thrum team` output stays accurate (there is no command to set
 ANOTHER agent's intent — `set-intent` acts on the caller), then send the Phase 2
 briefing as normal. The existing

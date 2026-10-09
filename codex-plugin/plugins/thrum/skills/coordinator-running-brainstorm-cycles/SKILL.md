@@ -210,7 +210,7 @@ For each `*-brainstorm` worktree that looks relevant, inspect:
 | No idle relevant researcher             | Fall through → proceed with "Pick the base branch" below.                                                      |
 
 When reusing, have the agent itself run
-`thrum agent set-intent "<new one-line topic>"` so `thrum team` output stays
+`thrum session set-intent "<new one-line topic>"` so `thrum team` output stays
 accurate (there is no command to set ANOTHER agent's intent — `set-intent` acts
 on the caller), then send the Phase 2 briefing as normal. The existing worktree
 and branch carry over; the agent is already primed.

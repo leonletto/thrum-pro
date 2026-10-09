@@ -48,7 +48,8 @@ identity drift, broken nudges, and silent message loss.
 worktree shows a registered agent, communicate with it via
 `thrum send --to @<agent_name> --body-file msg.md` instead. Sub-agents are for
 research/explore, code review, and message listeners running in the main repo —
-never for implementation work in another agent's worktree.
+use message listeners only when tmux pane delivery is unavailable, and never for
+implementation work in another agent's worktree.
 
 ### Dispatch via `thrum send` after launch — not via tmux send-keys
 

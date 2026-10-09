@@ -323,7 +323,7 @@ covered in the runner's preamble; the agent/session half needs the same check.
 thrum tmux status | grep -E '^\s*g[0-9]+'    # gate sessions, agentless ones included
 ```
 
-🔴 **`thrum team` and `thrum agent list` CANNOT SEE an agentless session.** Five of
+🔴 **`thrum team` CANNOT SEE an agentless session.** Five of
 those nine had no registered agent, so a registry-based enumeration returns a
 confident answer that omits most of the population. **Enumerate sessions, not
 agents.**

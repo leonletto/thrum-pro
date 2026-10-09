@@ -2,7 +2,8 @@
 
 Tmux-managed sessions are the recommended way to run Thrum agents. The daemon
 detects the tmux pane and delivers message notifications directly — zero token
-cost, no background listener needed.
+cost, no background listener needed. Check `thrum inbox --unread` at natural
+breakpoints; never spawn a background listener.
 
 ## Why Tmux Sessions
 

@@ -148,9 +148,8 @@ names. Always send to agent names (e.g., `--to @coord_main`), not role names
 (e.g., `--to @coordinator`). Sending to a role fans out to ALL agents with that
 role.
 
-**Use the message listener** — Spawn a background listener to get async
-notifications. Re-arm it every time it returns (both MESSAGES_RECEIVED and
-NO_MESSAGES_TIMEOUT).
+Messages arrive in your pane. Check `thrum inbox --unread` at natural
+breakpoints. Never spawn a background listener.
 
 When your work is complete (Phase 4), send a completion message prefixed with
 the appropriate **status token** (see Status Vocabulary at the start of Phase
@@ -567,7 +566,7 @@ Heads up: I'm modifying internal/daemon/rpc.go which may overlap with your work
 EOF
 
 # Update your intent when switching tasks
-thrum agent set-intent "Working on {{TASK_ID}}: <description>"
+thrum session set-intent "Working on {{TASK_ID}}: <description>"
 ```
 
 ---

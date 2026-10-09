@@ -65,9 +65,8 @@ merge lands (reap-able) or deemed orphaned (reap).
 | How long has it been quiet? | transcript mtime — **weak, see below**                  |
 | What is it waiting for?     | its own last message, read as prose                     |
 
-**Do NOT use `thrum team`, `thrum agent list`, `phase`, or `last_seen_at` for
-any of this.** They are stale, and they fail toward reporting a live agent as
-absent.
+**Do NOT use `thrum team`, `phase`, or `last_seen_at` for any of this.** They
+are stale, and they fail toward reporting a live agent as absent.
 
 ### Locating an agent's transcript
 

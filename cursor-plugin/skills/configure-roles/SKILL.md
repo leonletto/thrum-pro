@@ -42,7 +42,7 @@ Run these commands and collect the output (suppress errors):
 thrum runtime list 2>/dev/null          # Installed runtimes
 git worktree list 2>/dev/null           # Worktrees and branches
 bd stats 2>/dev/null                    # Beads task tracker state
-thrum agent list --context 2>/dev/null  # Registered agents
+thrum team --all --include-inactive --compact 2>/dev/null # Fleet roster, including offline, stale and retired agents
 ls .claude/skills/ 2>/dev/null          # Installed Claude skills
 thrum config show 2>/dev/null           # Thrum configuration
 ```

@@ -11,18 +11,14 @@ between agents.
 ## 2. Polling Instead of Waiting
 
 **Wrong:** Looping `thrum inbox` every 10 seconds. **Right:** Use `thrum wait`
-which blocks efficiently until a message arrives. Or use the message-listener
-sub-agent pattern for background monitoring.
+which blocks efficiently until a message arrives. Use the listener fallback
+only when tmux pane delivery is unavailable.
 
-## 3. Forgetting to Re-arm the Listener
+## 3. Spawning Listeners in Tmux Sessions
 
-**Wrong:** Processing messages from listener, then continuing work without
-re-arming. **Right:** After processing listener results, always spawn a new
-message-listener:
-
-```text
-Task(subagent_type="message-listener", run_in_background=true, prompt="...")
-```
+In tmux-managed sessions, messages arrive in the pane. Check
+`thrum inbox --unread` at natural breakpoints and never spawn a background
+listener.
 
 ## 4. Sending Without an Explicit Recipient Flag
 

@@ -94,6 +94,8 @@ EOF
 thrum memory edit <id> --full "@/tmp/memory-verify-body.md"
 ```
 
+Re-verifying with `memory edit` needs a license.
+
 ## Staleness check via git diff
 
 For research notes that cite specific files, structural staleness review filters

@@ -66,7 +66,7 @@
 # not Codex the script must exit 0 SILENTLY — no stdout, no config rewrite —
 # because the restart control JSON below would cancel that host's first turn.
 # Positive Codex signal (captured live from codex 0.154 vs muse 1.4 hook
-# runs, 2026-09-25): Codex hands its SessionStart hook a JSON payload whose
+# runs): Codex hands its SessionStart hook a JSON payload whose
 # `transcript_path` is a rollout file under ${CODEX_HOME:-$HOME/.codex}
 # (…/sessions/…/rollout-*.jsonl); muse sends `"transcript_path":null`, and
 # neither host sets an env var only it defines (both export PLUGIN_ROOT and
@@ -214,14 +214,25 @@ if [[ -f "${CODEX_CONFIG}" ]]; then
   fi
 fi
 
+# BEGIN self_pointing
+# A redirect whose content is this tree's OWN .thrum is no redirect (c934m). Mirrors
+# Go paths.SelfPointingRedirect (the daemon path helper): the WHOLE file content
+# with surrounding whitespace trimmed (trim_ws), absolute, and canonically equal to
+# the local dir. cd -P/pwd -P canonicalize both sides, no realpath.
+trim_ws() { local t="$1"; t="${t#"${t%%[![:space:]]*}"}"; printf '%s' "${t%"${t##*[![:space:]]}"}"; }
+self_pointing() { case "$1" in /*) ;; *) return 1 ;; esac; [ -d "$1" ] && [ -d "$2" ] && [ "$(cd -P -- "$1" && pwd -P)" = "$(cd -P -- "$2" && pwd -P)" ]; }
+# END self_pointing
+
 if [[ -f "${redirect_file}" ]]; then
-  redirect_target="$(head -n1 "${redirect_file}" | tr -d '\r\n' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+  redirect_target="$(trim_ws "$(cat -- "${redirect_file}")")"
   if [[ -z "${redirect_target}" ]]; then
     redirect_malformed=1
   elif [[ "${redirect_target}" != /* ]]; then
     redirect_malformed=1
   elif [[ ! -d "${redirect_target}" ]]; then
     redirect_malformed=1
+  elif self_pointing "${redirect_target}" "${local_thrum_dir}"; then
+    :
   elif [[ -f "${redirect_target}/redirect" ]]; then
     redirect_malformed=1
   else

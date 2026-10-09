@@ -86,13 +86,18 @@ thrum tmux launch <session> [--runtime <r>]   Start runtime in session (REQUIRED
 ### Monitor Jobs
 
 ```bash
-thrum monitor add <name> --cmd "..." --on-match "msg"   Add a monitored process
-thrum monitor list                   List all monitor jobs
-thrum monitor show <name>            Show job details and recent matches
+thrum monitor start --name <n> --match <re> --to @agent [--schedule "<cron>"] [--notify-on-success] -- <cmd> [args...]
+thrum monitor list [--all]           List monitor jobs (running; --all adds stopped)
+thrum monitor show <name>            Show job details
+thrum monitor logs <name>            Recent matched lines
+thrum monitor update <name>          Change match, schedule, target or debounce in place
 thrum monitor stop <name>            Stop a monitor job
-thrum monitor logs <name>            Tail job output
+thrum monitor delete <name>          Remove a job and free its name
 thrum monitor restart <name>         Restart a stopped job
 ```
+
+Reminders, periodic script checks and delivery verification: see the
+`using-monitors` skill.
 
 ### Daemon & Sync
 

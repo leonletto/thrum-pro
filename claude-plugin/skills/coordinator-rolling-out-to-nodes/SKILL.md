@@ -90,3 +90,4 @@ The node's local runbook is `coordinator-deploying-a-node` — reference that sk
 - If `fleet.deployment.thrum.products` exists (vestigial), STOP — products live only at `fleet.deployment.products`.
 - If a node reports success by exit code alone without observed-effect verification, treat as not-verified.
 - Never wrap a service restart in a blind timeout on the node (see node skill `service.never_timeout` and `migration.signal_rules`).
+- 🔴 A **macOS** node (including the build host / primary) restarted with the plain `service.restart_command` instead of `service.mac_restart_command` (Thrum: `scripts/mac-daemon-restart-via-cron.sh`). The daemon loses its Local Network permission and its LAN peers go dark while it looks healthy. Put the mac command in every macOS node's dispatch, and use it yourself when you roll the build host last.

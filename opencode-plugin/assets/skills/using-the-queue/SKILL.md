@@ -191,7 +191,7 @@ so this wrapper is defense-in-depth, not load-bearing on its own.
   non-peercred transport (browser/WS, unit tests) - but that is a general,
   already-documented property of the RPC layer (identity trust depends on
   transport), not something unique to `state.set`, and it is explicitly out
-  of scope per `docs/security_model/master.md` §1.5: "Thrum does not attempt
+  of scope per the project's security model: "Thrum does not attempt
   to prevent agent identity forgery" is an owner ruling, stated as
   [INTENDED] and permanent, not tracked as debt.
 
@@ -204,8 +204,7 @@ shapes, chosen by domain, not an oversight.
 
 Non-goal: fail-closed reject-symmetry for `state.set` (mirroring queue's
 `RejectIdentityKeysHandler`) is a possible future non-security hardening
-preference, not built here - out of scope per `docs/security_model/master.md`
-§1.5.
+preference, not built here - out of scope per the project's security model.
 
 ## Common Mistakes
 

@@ -1,7 +1,7 @@
 {
   "name": "thrum-copilot",
   "description": "Thrum session-context delivery for GitHub Copilot CLI",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "license": "Apache-2.0",
   "hooks": "./hooks.json"
 }

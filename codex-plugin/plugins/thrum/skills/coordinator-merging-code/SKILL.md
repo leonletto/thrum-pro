@@ -181,12 +181,12 @@ The §3 lens gates (hotpath + philosophy) are the judgement half. The per-merge
 executed half is **scoped to the change**:
 
 - Build the merged tree (`go build ./...`).
-- 🔴 **RULING 2026-09-29:** the full sharded race suite —
-  `scripts/test-run.sh race all` (~15-20 min) — on the **merged tree**, every
-  Pass-3 verdict. This replaces the prior "changed packages only (+ rpc shard
-  sweep)" race scoping below the ruling; a targeted `-run` is still never
-  acceptable (a targeted run misses cross-test races). Never on primary (the
-  shared fleet build box) — it is CPU-heavy; run it on the gate box.
+- 🔴 **RULING:** the full sharded race suite — `scripts/test-run.sh race all`
+  (~15-20 min) — on the **merged tree**, every Pass-3 verdict. This replaces the
+  prior "changed packages only (+ rpc shard sweep)" race scoping below the
+  ruling; a targeted `-run` is still never acceptable (a targeted run misses
+  cross-test races). Never on primary (the shared fleet build box) — it is
+  CPU-heavy; run it on the gate box.
 - The fast structural checks on the merged tree — `gate-ban-check`,
   `gate-omitempty-check`, `gate-lockspan-check`, `gate-marker-diff`,
   `gate-stamp-protocol-check`, `gate-plugin-bundle-leaks` (seconds each; they
@@ -241,9 +241,9 @@ every package across lanes A/B/C/D, the integration lane,
 box, and it is its own skill: **`coordinator-full-gate`**. A merge never
 triggers it, and its merge-base replay is not a per-merge step. Running it per
 merge is ~2h that on a common-mode- red trunk fails on the baseline every time.
-The RULING 2026-09-29 above widens only the **race lane** to full-sharded per
-merge — it does not pull the other lanes (integration, UI, mutation-check) into
-the per-merge path.
+The RULING above widens only the **race lane** to full-sharded per merge — it
+does not pull the other lanes (integration, UI, mutation-check) into the
+per-merge path.
 
 🔴 **Never kill a test run to stop a collision.** Killing skips Go's cleanup,
 which leaks fixed-name tmux fixtures onto the shared socket and breaks that
@@ -303,12 +303,13 @@ TIP** — ancestry proves a merge EXISTS, never WHAT landed.
 ### 7. AFTER THE MERGE — four things, none optional
 
 1. **The verdict artifact.** The runner saves verdicts to
-   `dev-docs/gate-reports/<ISO-week>/<date>/<gate-slug>/` and **commits them
-   BEFORE removing any worktree.** Save → commit → then destroy. A verdict that
-   exists only in a message cannot be audited later. The artifact must be able
-   to carry a `CLEAN-WITH-GATE-FIXES` outcome, and when one applies it cites the
+   `<gate-reports-dir>/<ISO-week>/<date>/<gate-slug>/` (the project's
+   gate-reports directory) and **commits them BEFORE removing any worktree.**
+   Save → commit → then destroy. A verdict that exists only in a message cannot
+   be audited later. The artifact must be able to carry a
+   `CLEAN-WITH-GATE-FIXES` outcome, and when one applies it cites the
    `GATE-AUTHORED` commit SHA.
-2. **The efficacy row**, in `dev-docs/hotpath-gate-efficacy.md` — required for
+2. **The efficacy row**, in the hotpath-gate efficacy log — required for
    **every** trigger-dir merge, including `SKIPPED_WITH_EVIDENCE` rows and
    orchestrator-run merges. The log measures gate **coverage**, not just
    outcomes. Record `FALSE_POSITIVE=0` explicitly on a clean run so the zero is
@@ -385,7 +386,7 @@ hides staleness.
 - `coordinator-running-review-cycles` — the dual-review cycle feeding §1
 - `coordinator-branch-split-on-block` — when a gate blocks one concern of a
   bundled branch
-- `dev-docs/gate-reports/README.md` — the artifact contract
+- the gate-reports README — the artifact contract
 - `.thrum/hotpath-gate.json` · `.thrum/philosophy.md` — the configs; read these,
   not prose
 

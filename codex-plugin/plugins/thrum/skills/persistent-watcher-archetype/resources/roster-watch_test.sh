@@ -69,8 +69,8 @@ AGENT="watcher_primary"
 # Scenario 1 (MANDATORY, cmain-required regression guard): a worktree that
 # redirects to a main-repo tree. The "roster-editing agent's Edit-tool write"
 # lands in the REDIRECT TARGET (main-repo) copy -- that's the physically
-# correct, shared, redirect-resolved location per internal/paths/paths.go
-# AgentDir ("the agents/ tree is shared, not per-worktree"), and it's what
+# correct, shared, redirect-resolved location per the AgentDir path helper
+# ("the agents/ tree is shared, not per-worktree"), and it's what
 # resolve_watch_params must read. A worktree-LOCAL copy at the naive,
 # unresolved path is a decoy: it's what a broken script (SCRIPT_DIR-relative,
 # no redirect-follow) would read instead, and it must be ignored.

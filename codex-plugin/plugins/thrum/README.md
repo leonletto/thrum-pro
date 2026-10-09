@@ -17,13 +17,13 @@ and one-time migration notes.
 
 ## Contents
 
-| Surface                                  | What it provides                                                                                                                         |
-| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `skills/`                                | 29 skills — `thrum` umbrella + `orchestrate` + 16 role-discipline + 11 command-derived                                                   |
-| `hooks/hooks.json`                       | Wires SessionStart (`startup\|resume\|clear`), PreToolUse (Bash), Stop                                                                   |
-| `scripts/`                               | Three lifecycle hook scripts ported from claude-plugin: `inject-prime-context.sh`, `block-sync-worktree-cd.sh`, `stop-check-messages.sh` |
-| `.codex-plugin/plugin.json`              | Manifest (kept version-aligned with `claude-plugin/.claude-plugin/plugin.json` via `make ci`)                                            |
-| `../../.agents/plugins/marketplace.json` | Marketplace wrapper at `codex-plugin/.agents/plugins/marketplace.json`; `source.path: "./plugins/thrum"` (mirrors openai-bundled layout) |
+| Surface                                  | What it provides                                                                                                                                                                                                                                        |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `skills/`                                | 29 skills — `thrum` umbrella + `orchestrate` + 16 role-discipline + 11 command-derived                                                                                                                                                                  |
+| `hooks/hooks.json`                       | Wires SessionStart (`startup\|resume\|clear`), PreToolUse (Bash), Stop                                                                                                                                                                                  |
+| `scripts/`                               | Five hook scripts wired in `hooks/hooks.json`, ported from claude-plugin: `ensure-permission-activation.sh`, `inject-prime-context.sh`, `block-sync-worktree-cd.sh`, `block-tls-key-exfil.sh`, `stop-check-messages.sh` (plus install and sync helpers) |
+| `.codex-plugin/plugin.json`              | Manifest (kept version-aligned with `claude-plugin/.claude-plugin/plugin.json` via `make ci`)                                                                                                                                                           |
+| `../../.agents/plugins/marketplace.json` | Marketplace wrapper at `codex-plugin/.agents/plugins/marketplace.json`; `source.path: "./plugins/thrum"` (mirrors openai-bundled layout)                                                                                                                |
 
 ## Repository
 

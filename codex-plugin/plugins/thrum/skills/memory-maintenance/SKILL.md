@@ -27,6 +27,9 @@ thrum memory edit <id> --title "<updated title>"
 thrum memory edit <id> --add-tag <new-tag>    # appends (repeatable); --rm-tag removes
 ```
 
+`memory edit` requires a license (memory.substrate); `delete` and `unlink` do
+not.
+
 Edits create a **history record** — the daemon retains the prior version. View
 edit history:
 

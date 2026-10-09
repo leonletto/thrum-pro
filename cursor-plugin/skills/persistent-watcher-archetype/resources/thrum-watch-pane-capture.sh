@@ -74,7 +74,7 @@ AGENT_NAME="$(basename -- "${SCRIPT_DIR}")"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../../.." >/dev/null 2>&1 && pwd)"
 # Resolve watch_params.json through .thrum/redirect. The
 # agents/ tree is the SHARED, redirect-resolved (main-repo) tree, not
-# per-worktree (see internal/paths/paths.go AgentDir) -- reading it
+# per-worktree (see the AgentDir path helper) -- reading it
 # straight off SCRIPT_DIR (this copy's own worktree-local location) reads
 # the wrong, stale file whenever this script is deployed into a feature
 # worktree that redirects: a roster-editing agent's Edit-tool write lands
@@ -185,7 +185,7 @@ log "roster: ${ROSTER[*]}"
 #
 # NOTE ON THE TWO-STEP TOPOLOGY LOOKUP: `thrum state list --kind topology
 # --json`'s CLI output does NOT include each entry's `.value` (verified
-# against cmd/thrum/state.go's stateListEntry struct, which has no Value
+# against the CLI's stateListEntry struct, which has no Value
 # field, and confirmed live -- `state list --json` returns only
 # kind/scope/method/as_of/established_by). Only `state get`/`state show`
 # emit the full entry including `.value`. So topology resolution is
@@ -338,7 +338,7 @@ for agent in "${ROSTER[@]}"; do
   STATUS="clean"
   MATCH_NAME=""
 
-  # thrum detect exit-code contract (cmd/thrum/detect.go):
+  # thrum detect exit-code contract:
   #   exit 0 + matched entry name on stdout  -> match
   #   exit 1, silent                         -> no match
   # `if VAR=$(...); then` is exempt from `set -e` semantics for this

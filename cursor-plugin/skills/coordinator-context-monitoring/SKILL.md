@@ -30,13 +30,13 @@ What's forbidden is a script that bypasses this skill and fires
 
 This skill's tier ladder (Steps 3–5) governs how the coordinator restarts
 **other** agents. When the **coordinator restarts ITSELF**, a different rule
-applies and it is absolute — but D5 (owner-ruled)
+applies and it is absolute — but the current ruling
 REVERSES which command that is:
 
 > **The coordinator ALWAYS uses the EXTENDED snapshot grade for itself — never
 > the standard/compact form. Which command carries that grade is
 > runtime-directed: `/thrum:compact-extended` on any runtime with a verified
-> compact-equivalent skill (D6, the default), `/thrum:restart-extended` ONLY
+> compact-equivalent skill (the default), `/thrum:restart-extended` ONLY
 > as the fallback on a runtime without one (today: muse, copilot).**
 
 This is a REVERSAL of the prior absolute rule ("ALWAYS restart-extended, NEVER
@@ -62,7 +62,7 @@ Practical trigger points for coordinator self-restart/compact:
 In every one of these: run `/thrum:compact-extended` if the coordinator's
 runtime has a compact equivalent (the default); `/thrum:restart-extended` only
 if it does not. (The role-rule `coord-always-restart-extended` — `Coordinator
-ALWAYS uses /thrum:restart-extended` — is RETIRED as of D5; see
+ALWAYS uses /thrum:restart-extended` — is RETIRED; see
 `thrum memory` for its retirement record. This skill is the always-loaded home
 so the CURRENT rule survives even when memory isn't consulted.)
 
@@ -163,7 +163,7 @@ is a single monitor for all lenses in v1, not one per lens.
 | `idle_mid_task`             | ON      | L2 — 30-min idle-with-open-task detection (bead cross-ref). RECOMMEND `/thrum:sleep-extended`; a no-task variant REPORTs `idle-no-task` at lower priority.        |
 | `snapshot_awaiting_restart` | ON      | L3 — pane text + fresh-snapshot two-signal heuristic. RECOMMEND `thrum tmux restart <agent>` (never autonomous).                                                  |
 | `blocked_on_human_modal`    | ON      | L4 — detects spend-limit/permission/consent modal prompts. DETECTION ONLY, never auto-answers; routes into the L5 ledger.                                         |
-| `pending_human_ledger`      | ON      | L5 — flat JSONL ledger of items awaiting a human. EXEMPT from D5 backoff — surfaces every tick. `hb_ledger_resolve` (the resolution path) is defined but has zero call sites — nothing marks an entry resolved, so the ledger is append-only-forever, not "until resolved." |
+| `pending_human_ledger`      | ON      | L5 — flat JSONL ledger of items awaiting a human. EXEMPT from progressive backoff — surfaces every tick. `hb_ledger_resolve` (the resolution path) is defined but has zero call sites — nothing marks an entry resolved, so the ledger is append-only-forever, not "until resolved." |
 | `waiting_on_coord`          | ON      | L9 — 21-rule pattern match (folded in from the standalone waiting-on-coord sweep) + warm-hold exemption. RECOMMEND coordinator answer.                            |
 
 ### Default-OFF lenses (E8, flag-gated — NOT YET IMPLEMENTED as of E7)
@@ -183,8 +183,7 @@ produce no output until enabled.
 ## Configuration
 
 The heartbeat system is configured under the `heartbeat` key in
-`.thrum/config.json` (Go type: `HeartbeatConfig` in
-`internal/config/heartbeat.go`). Example:
+`.thrum/config.json` (Go type: `HeartbeatConfig`). Example:
 
 ```json
 {
@@ -222,10 +221,10 @@ The heartbeat system is configured under the `heartbeat` key in
 | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `cadence_minutes_day`                                    | Daytime cadence target (default 30 min). The underlying monitor runs `@every 30m` and self-gates so only busy-fleet daytime ticks fire.                                |
 | `cadence_minutes_overnight`                              | Overnight cadence target (default 60 min). The monitor fires every other `@every 30m` tick overnight (effective 60-min rate).                                          |
-| `busy_only_daytime`                                      | When `true`, daytime ticks are skipped unless any agent has `agent_status=working` (D3 busy-signal gate).                                                              |
+| `busy_only_daytime`                                      | When `true`, daytime ticks are skipped unless any agent has `agent_status=working` (busy-signal gate).                                                              |
 | `busy_signal`                                            | Algorithm for "is the fleet busy?" Default `working_or_activity_30m`: any agent working OR activity in the last 30 min.                                                |
 | `overnight_window.tz`                                    | **MUST be an explicit IANA timezone** (e.g. `"America/New_York"`). If unset, the sweep warns and falls back to always-daytime-rate rather than silently guessing. |
-| `backoff.start_after`                                    | Number of consecutive unchanged detections of the same problem before D5 progressive backoff begins.                                                                   |
+| `backoff.start_after`                                    | Number of consecutive unchanged detections of the same problem before progressive backoff begins.                                                                   |
 | `backoff.multiplier`                                     | Each backoff step multiplies the surface interval by this factor (default 2×).                                                                                         |
 | `backoff.floor_every`                                    | The surface interval is capped at this many ticks — the problem is never fully silenced (always surfaces at least once per `floor_every` ticks).                       |
 | `lenses.<name>.enabled`                                  | Enable/disable a lens individually.                                                                                                                                    |
@@ -238,8 +237,8 @@ The heartbeat system is configured under the `heartbeat` key in
 `.thrum/config.json`** to configure the heartbeat. Two gotchas make this
 non-obvious; both bite silently.
 
-**1. All-or-nothing merge (the sharp footgun).** The loader
-(`internal/config/daemon.go`, `LoadThrumConfig`) applies
+**1. All-or-nothing merge (the sharp footgun).** The config
+loader (`LoadThrumConfig`) applies
 `DefaultHeartbeatConfig()` **only when the stanza is effectively absent**
 (`schema_version == 0` AND zero lenses):
 
@@ -254,7 +253,7 @@ There is **no field-level deep merge.** The moment you write a stanza with
 `cadence_minutes_day: 0`, `enabled: false`, and **all 12 lenses disabled**. So
 "I'll just set the timezone" with a three-line stanza silently turns the whole
 sweep off. **Always write the COMPLETE stanza** — copy
-`DefaultHeartbeatConfig()` (`internal/config/heartbeat.go`) in full, then change
+`DefaultHeartbeatConfig()` in full, then change
 only what you need.
 
 **2. `overnight_window.tz` MUST be an explicit IANA zone.** Default is `""` (the
@@ -332,7 +331,7 @@ repeals fix-while-warm.
   restart is **under one turn** once context is meaningfully above the re-prime
   floor.
 - **Orchestrators re-prime far cheaper than coordinators, and it is structural:**
-  `internal/cli/prime_filter.go` gives ONLY `role=="coordinator"` the full
+  the prime output filter gives ONLY `role=="coordinator"` the full
   project-state passthrough. Measured orchestrator re-prime ≈ 30k tokens.
 - Coordinators keep the ladder below for a stated reason — larger re-entry cost,
   plus decision-dense context a snapshot cannot faithfully reconstruct.

@@ -64,7 +64,7 @@ read-only scoping) are in "Core Pattern" below.
 
    **Every prompt MUST scope the read-only restriction around its own output
    file, in the same breath:**
-   `READ-ONLY EVERYWHERE EXCEPT YOUR OUTPUT FILE — do not modify source, tests, config, git state, or the issue tracker; you MUST write exactly dev-docs/<topic>/findings_N.md, and that write is expected and authorized.`
+   `READ-ONLY EVERYWHERE EXCEPT YOUR OUTPUT FILE — do not modify source, tests, config, git state, or the issue tracker; you MUST write exactly <topic-dir>/findings_N.md, and that write is expected and authorized.`
    Omitting the exception is the most common cause of a fan-out that returns
    nothing — see Common Mistakes.
 
@@ -140,7 +140,7 @@ Prefer `cat >> <path> <<'EOF'` to append on later rounds.
 ```text
 READ-ONLY EVERYWHERE EXCEPT YOUR OUTPUT FILE.
 Do not modify source, tests, config, git state, or the issue tracker.
-You MUST write your findings to exactly: dev-docs/<topic>/findings_N.md
+You MUST write your findings to exactly: <topic-dir>/findings_N.md
 Write is fine for creating it. To UPDATE it on a later round, Read it first or
 append with a heredoc (cat >> <path> <<'EOF' ... EOF) — Write refuses to
 overwrite a file it has not Read. That single write is expected and authorized.

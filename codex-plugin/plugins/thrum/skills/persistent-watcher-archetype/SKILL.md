@@ -131,8 +131,8 @@ The procedure, every time, no shortcuts:
   panes read-only regardless of capability.
 
 **Worked example** — the standard two-variant Claude Code tool-confirmation
-modal (`internal/daemon/permission/patterns.go`, pattern `tool_confirmation`,
-dialect `claude-tui`), captured verbatim:
+modal (the daemon's permission patterns, pattern `tool_confirmation`, dialect
+`claude-tui`), captured verbatim:
 
 ```
 ⏺ Bash(curl https://example.com)
@@ -148,9 +148,8 @@ dialect `claude-tui`), captured verbatim:
 - **NEVER `--keys 2`** — "Yes, and don't ask again" grants a standing allow-rule
   beyond this one command; the modal judgment rubric above is a per-command
   judgment, not a license to mint blanket permissions. This is pinned by
-  `ApproveKey: "1", // Yes (once) — NEVER "2"` in
-  `internal/daemon/permission/patterns.go` and tested by
-  `TestApproveKeyNeverForeverAllow`.
+  `ApproveKey: "1", // Yes (once) — NEVER "2"` in the daemon's permission
+  patterns and tested by `TestApproveKeyNeverForeverAllow`.
 
 ### Your own restart (auto-restart-at-ctx-threshold)
 

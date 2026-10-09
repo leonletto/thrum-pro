@@ -32,7 +32,7 @@
 # GHOST-TIP DETECTION: Claude Code's TUI renders an unaccepted inline
 # autocomplete suggestion in the input box using the literal SGR
 # "dim/faint" escape code (ESC[2m ... ESC[0m) — confirmed by direct byte
-# inspection (2026-08-17, a reconciler agent's "Stop the sweep loop
+# inspection (a reconciler agent's "Stop the sweep loop
 # for now" tip). Real typed/submitted text never carries that code. `thrum
 # tmux capture` returns plain text with all styling stripped, so a script
 # parsing ONLY that output cannot tell a live ghost-tip apart from real
@@ -50,7 +50,7 @@
 #
 # REDIRECT FIX (the actual bug this reconciliation targets):
 # `watch_params.json` lives under the SHARED, redirect-resolved `agents/`
-# tree (`internal/paths/paths.go` AgentDir: "the agents/ tree is shared,
+# tree (the AgentDir path helper: "the agents/ tree is shared,
 # not per-worktree"), not under this script's own worktree. Both source
 # scripts read it as if it were always reachable via a hardcoded/relative
 # main-repo path (`cd /Users/you/dev/thrum` +
@@ -60,7 +60,7 @@
 # feature worktree. `resolve_watch_params()` below replaces that implicit
 # assumption with the same explicit `.thrum/redirect`-following idiom
 # already used by `scripts/heartbeat-lib.sh:225-232` and
-# `scripts/thrum-check-inbox.sh:25-41`.
+# the check-inbox hook script.
 #
 # PORTABILITY FIX: both source scripts also hardcoded a single operator's
 # absolute paths (`cd /Users/you/dev/thrum`,
@@ -105,7 +105,7 @@ set -uo pipefail
 # ---------------------------------------------------------------------------
 # Args: worktree_root. Prints the redirect-resolved absolute .thrum/ dir.
 # Matches the idiom already used by scripts/heartbeat-lib.sh's
-# hb_sessions_dir() and scripts/thrum-check-inbox.sh's SPOOL_THRUM
+# hb_sessions_dir() and the check-inbox hook script's SPOOL_THRUM
 # resolution: no redirect file present (main repo) -> use the local .thrum/
 # as-is; redirect file present (feature worktree) -> follow it to the main
 # repo's .thrum/.
@@ -648,7 +648,7 @@ except: print(0)
 # entry resolves to a real agent_id via `thrum team --offline --json`, and
 # log ROSTER-CHECK OK/FAIL. Cheap and valuable regardless of execution
 # model (catches the exact "bare `<box>`-as-hostname" class of stale-
-# roster-entry bug watcher-primary hit 2026-07-24..2026-09-06). Runs AFTER
+# roster-entry bug watcher-primary hit). Runs AFTER
 # the dynamic roster is loaded from watch_params.json, not against a
 # hardcoded array.
 # ---------------------------------------------------------------------------

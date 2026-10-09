@@ -82,8 +82,8 @@ to `--method relayed` (low-trust) — never choose `relayed` yourself.
 
 ### Field Mutability Matrix
 
-`Entry` (`internal/state/types.go`) has five mutability classes, not one uniform
-"immutable field" guard:
+The state `Entry` type has five mutability classes, not one uniform "immutable
+field" guard:
 
 - **immutable-identity** — part of the `(Kind, Scope)` addressing key, or fixed
   at creation with no update path. "Changing" one of these isn't an edit, it

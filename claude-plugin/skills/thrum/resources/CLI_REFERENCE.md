@@ -255,7 +255,7 @@ Flags:
 --runtime string         Runtime preset: claude, codex, cursor, gemini, opencode, auggie, cli-only
 --preamble-file string   Custom preamble file to compose with default preamble
 --no-init                Skip runtime config generation, just register agent
---force                  Overwrite existing runtime config files
+--force                  Force runtime config reinitialization; project instruction files are preserved
 --dry-run                Preview changes without writing files or registering
 --no-agent-pid           Persist agent_pid=0 instead of detecting the runtime ancestor; defers PID claim to first /thrum:prime (used for inline tmux quickstart)
 ```
@@ -378,6 +378,10 @@ Flags:
 thrum agent delete <name>
 thrum agent delete coordinator_1B9K --force
 ```
+
+Refuses an agent whose linked worktree still exists (run `worktree teardown`
+first), a live pid/tmux process, and coordinators. Order: teardown (with
+salvage), then delete.
 
 Flags:
 
@@ -858,7 +862,7 @@ thrum tmux cancel <command-id>                 # Cancel a queued or active comma
 --intent string    Initial work intent description
 --runtime string   Runtime preset: claude, codex, cursor, gemini, opencode, auggie
 --no-agent         Skip agent registration (create session only)
---force            Overwrite existing runtime config files
+--force            Re-register even if agent exists; kill and recreate an existing session
 ```
 
 Without `--no-agent`, the command errors if `--name`, `--role`, and `--module`
@@ -900,7 +904,7 @@ thrum worktree create <name> --detach          # Detached HEAD worktree
 thrum worktree create <name> \
   --name <agent> --role <role> --module <mod>  # Create worktree + register agent
 thrum worktree setup <name>                    # Alias for worktree create
-thrum worktree teardown <name>                       # Remove worktree, keep branch
+thrum worktree teardown <name>                       # Retire agent + remove worktree, keep branch (does NOT delete the agent; reap with `thrum agent delete` after)
 thrum worktree teardown <name> --delete-branch       # Also delete the worktree's branch
 thrum worktree list                                  # List worktrees with agent info
 ```
@@ -939,51 +943,52 @@ later.
 
 ## Monitor Jobs
 
-Run a long-lived command, filter output through a regex, and deliver matching
-lines as Thrum messages. Jobs persist across daemon restarts. Max 100
-concurrent. The command must follow `--`.
+Run a command, filter its output through a regex, and deliver matching lines as
+Thrum messages. Without `--schedule` the command runs continuously and restarts
+with backoff; with `--schedule` it runs once per cron tick. Jobs persist across
+daemon restarts. Max 100 concurrent. The command must follow `--`.
 
 ```bash
 thrum monitor start --name <n> --match <re> --to @agent -- <cmd> [args...]
 thrum monitor start --name <n> --match <re> --to @agent \
-  --debounce 120s --env KEY=VALUE -- <cmd>
+  --schedule "*/5 * * * *" --notify-on-success --debounce 120s --env KEY=VALUE -- <cmd>
 thrum monitor list                             # Running jobs only
 thrum monitor list --all                       # Include stopped/dead (<1 week)
 thrum monitor show <id|name>                   # Full detail (env values redacted)
-thrum monitor stop <id|name>                   # SIGTERM → 5s → SIGKILL
-thrum monitor logs <id|name>                   # Last 20 matched lines
-thrum monitor logs <id|name> -n 50             # Last 50 matched lines
+thrum monitor logs <id|name> -n 50             # Last 50 matched lines (default 20)
+thrum monitor update <id|name> --match <re>    # Change match/schedule/target/debounce in place
+thrum monitor stop <id|name>                   # SIGTERM, 5s, SIGKILL
 thrum monitor restart <id|name>                # Restart dead/stopped monitor
+thrum monitor delete <id|name>                 # Remove the record and free the name
+thrum monitor adopt <id|name>                  # Claim a monitor for this daemon
 ```
 
-Note: `monitor add` is retained as an alias for `monitor start`.
+`monitor add` is an alias for `monitor start`.
 
 `monitor start` flags:
 
 ```text
 --name string         Unique monitor name (required)
---match string        Regex pattern — matching lines trigger a message (required)
+--match string        Regex pattern - matching lines trigger a message (required)
 --to string           Target agent or group, e.g. @coordinator (required)
---debounce duration   Leading-edge debounce window, minimum 30s (default 60s)
---env strings         Environment variable in KEY=VALUE form (repeatable)
+--schedule string     5-field cron expression; runs the command once per tick
+--notify-on-success   Deliver a generic [OK] message for a successful run in which no line matched
+--debounce duration   Leading-edge debounce window, minimum 30s (default 1m)
+--env stringArray     Environment variable in KEY=VALUE form (repeatable)
 --cwd string          Working directory for the command (default: current dir)
 ```
 
-`monitor list` flags:
+`monitor update` flags: `--match`, `--to`, `--schedule`, `--debounce`.
+`--schedule` changes the cron of a scheduled monitor at any time; setting or
+removing a schedule switches the mode, which is refused while the monitor is
+running and allowed while it is stopped.
 
-```text
---all   Include stopped/dead monitors younger than one week
-```
+`monitor logs` flag: `-n, --limit int` (default 20).
 
-`monitor logs` flags:
-
-```text
--n, --limit int   Max number of matches to return (default 20)
-```
-
-Key constraints: local Unix socket only, max line length 2KB (lines truncated),
-leading-edge debounce (min 30s), auto-persists across daemon restart, sends a
-notify-only message on child exit.
+Key constraints: local Unix socket only, lines over 2KB are truncated with a
+marker, one matching line is delivered per debounce window, and a message is
+sent when the child exits non-zero. See the `using-monitors` skill for
+reminders, script checks and delivery rules.
 
 ---
 

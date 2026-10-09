@@ -33,7 +33,9 @@ send. See `coordinator-managing-state-and-lifecycle` § "Destroy an agent before
 tearing down its worktree" for the canonical sequence (`thrum tmux kill` BEFORE
 `thrum worktree teardown`). The dispatching skill mentions it here so you find
 the cross-reference when planning a wave recycle, not just when reading the
-lifecycle skill end-to-end.
+lifecycle skill end-to-end. Teardown does not delete the agent row: it stays
+retired until a separate `thrum agent delete <agent>` (after the worktree is
+gone) or the sweeper reaps it.
 
 ### Never spawn sub-agents into worktrees where Thrum agents are running
 

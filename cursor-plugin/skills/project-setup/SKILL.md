@@ -260,8 +260,8 @@ components, data flow, and interfaces.
 
 ### 🔴 Phase 1a — MANDATORY security-frame check (do this BEFORE decomposing)
 
-**Read the project's threat model** (`docs/security_model/master.md` §1 and §1.2
-on thrum; otherwise `docs/security*.md` / `SECURITY.md`) **whenever the plan
+**Read the project's threat model** (its security-model document, or
+`docs/security*.md` / `SECURITY.md`) **whenever the plan
 contains ANY of the following — and note that NONE of them need name an
 attacker:**
 

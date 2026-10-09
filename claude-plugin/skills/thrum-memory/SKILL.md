@@ -70,7 +70,7 @@ thrum memory edit <id> --short @newshort.md
 thrum memory edit <id> --add-tag v0.11 --rm-tag draft
 ```
 
-Link an edge:
+Link an edge. `memory create`, `edit` and `link` need a license (memory.substrate); reads, `delete`, `purge` and `unlink` do not.
 
 ```bash
 thrum memory link <new-id> supersedes <old-id>

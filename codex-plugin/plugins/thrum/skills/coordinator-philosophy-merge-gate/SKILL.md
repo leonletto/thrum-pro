@@ -72,9 +72,9 @@ the one resource it cannot replace and leaves no durable verdict artifact.
 explicitly in the merge record so the gap is visible rather than invisible.
 
 **Verdicts are artifacts:** the runner saves them to
-`dev-docs/gate-reports/<ISO-week>/<date>/<gate-slug>/` and commits them BEFORE
-removing any worktree. A verdict that exists only in a message cannot be audited
-later.
+`<gate-reports-dir>/<ISO-week>/<date>/<gate-slug>/` (the project's gate-reports
+directory) and commits them BEFORE removing any worktree. A verdict that exists
+only in a message cannot be audited later.
 
 ### Gate dispatch preamble
 
@@ -209,7 +209,7 @@ detection is the 10a/10b/10d probe set, not a single grep.
 ### Lens 10 — Conflated multi-responsibility service (Anti-Pattern #10)
 
 This lens uses three sub-procedures from the single-responsibility standing rule
-(`dev-docs/decisions/2026-07-09-single-responsibility-standing-rule.md`).
+(the project's single-responsibility decision record).
 
 #### 10a — Structural backstop (grep before you trust prose review)
 
@@ -455,9 +455,9 @@ coordinator with the exact diff — don't bounce reflexively.
 
 - `.thrum/philosophy.md` — canonical source for all anti-patterns and red flags
   checked by this gate
-- `dev-docs/decisions/2026-07-09-single-responsibility-standing-rule.md` — full
-  standing rule with the three-class scope model, enforcement architecture
-  (3a/3b/3c/3d), and worked examples of previously-traced conflated services
+- the single-responsibility decision record — full standing rule with the
+  three-class scope model, enforcement architecture (3a/3b/3c/3d), and worked
+  examples of previously-traced conflated services
 
 ### Project-specific rules (already loaded)
 

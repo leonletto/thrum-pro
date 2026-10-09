@@ -94,7 +94,7 @@ run_ssh() {
 }
 
 # ssh-add retry: if the SSH hop itself fails at the connection layer (not a
-# thrum-level error), the caller's identities may need re-adding to the
+# CLI-level error), the caller's identities may need re-adding to the
 # keychain-backed ssh-agent. No default keys ship here -- this is a
 # generic plugin script, and baking in one operator's specific key
 # filenames would be wrong for every other fleet/operator that copies it.

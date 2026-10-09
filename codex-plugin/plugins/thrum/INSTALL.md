@@ -42,7 +42,7 @@ After the script completes, follow the "First-run hook approval" steps below.
 
 ### Have an AI agent do it
 
-If you have an AI assistant (claude, codex, kiro, etc.) running locally, point
+If you have an AI assistant (claude, codex, opencode, etc.) running locally, point
 it at the agent-instructions doc — it handles everything up to the manual
 `/hooks` approval:
 

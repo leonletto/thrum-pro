@@ -369,14 +369,14 @@ thrum agent sessions list --all              # every agent, grouped
 archive already self-verifies: `sessionarchive.Archive` computes a SHA-256
 checksum of the snapshot content it read _before_ the move, then re-reads the
 file it just wrote at the destination and confirms the checksums match
-(`sessionarchive.VerifyArchivedIdentity` / `ChecksumContent` — see
-`internal/daemon/sessionarchive/verify.go`) before reporting success. A
-destination that exists but doesn't hash-match its own pre-move content is
-treated as a hard failure of the archive call, not a warning. This is what
-actually proves "the file at `.thrum/agents/<id>/sessions/<ts>-restart.md` IS
-the artifact that was captured," as opposed to merely "a file with a plausible
-name is sitting there" — the latter is what `thrum agent sessions list`'s
-presence-only view alone would let you assume.
+(`sessionarchive.VerifyArchivedIdentity` / `ChecksumContent` in the daemon's
+session-archive package) before reporting success. A destination that exists but
+doesn't hash-match its own pre-move content is treated as a hard failure of the
+archive call, not a warning. This is what actually proves "the file at
+`.thrum/agents/<id>/sessions/<ts>-restart.md` IS the artifact that was
+captured," as opposed to merely "a file with a plausible name is sitting there"
+— the latter is what `thrum agent sessions list`'s presence-only view alone
+would let you assume.
 
 Permissions are user-only (`0600` for each snapshot file, `0700` for the
 sessions folder). Operators on multi-user machines must copy explicitly to share

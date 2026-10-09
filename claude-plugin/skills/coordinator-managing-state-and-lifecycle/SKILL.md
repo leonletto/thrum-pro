@@ -130,8 +130,16 @@ run the two-command destroy sequence **in this order**:
 
 ```bash
 thrum tmux kill <session>          # kills tmux + runtime first
-thrum worktree teardown <name>     # then removes worktree + identity
+thrum worktree teardown <name>     # then retires the agent + removes the worktree (salvage first)
+thrum agent delete <agent>         # SEPARATE reap, after the worktree is gone
 ```
+
+`worktree teardown` does NOT delete the agent: it is preparation for deleting
+one. The row stays `retired` (hidden from default `agent list` / `team` /
+overview / UI; visible with `--include-inactive` / `--phase retired`) until
+`thrum agent delete` or the sweeper reaps it. `agent delete` refuses an agent
+whose linked worktree still exists or whose process (pid/tmux) is live, and
+refuses coordinators; correct order is teardown (with salvage) THEN delete.
 
 Sanity-check: after teardown, `tmux list-sessions` should NOT show the agent's
 session. If it does, the runtime was never killed and step 1 was skipped.

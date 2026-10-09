@@ -25,7 +25,7 @@ Edge kind is an open string (same hybrid pattern as memory kind). Future edges
 like `blocks`, `duplicates`, or `parent-child` can be added without schema
 change.
 
-Add and remove edges:
+Add and remove edges. `memory link` and `memory edit` require a license (memory.substrate); `memory unlink` does not.
 
 ```bash
 thrum memory link <a> supersedes <b>
@@ -59,7 +59,7 @@ thrum memory unlink <new-id> supersedes <old-id>
 thrum memory edit <old-id> --status active
 ```
 
-Both steps are required. If you only need to keep the historical link but
+The `--status active` step needs a license; without one the superseded memory stays superseded. Both steps are required. If you only need to keep the historical link but
 re-surface the old memory, just run the `--status active` edit and leave the
 edge in place.
 

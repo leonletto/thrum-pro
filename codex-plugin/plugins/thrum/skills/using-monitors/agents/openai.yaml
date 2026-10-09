@@ -1,0 +1,4 @@
+interface:
+  display_name: "Using Monitors"
+  short_description: "Use when scheduling a reminder, watching a log, or running a periodic check that must reach an agent - thrum monitor start, cron --schedule, --match, --notify-on-success, --debounce, recurring nudge, script check with exit codes, why a monitor message did not arrive, how to verify a monitor delivered."
+  default_prompt: "Use when scheduling a reminder, watching a log, or running a periodic check that must reach an agent - thrum monitor start, cron --schedule, --match, --notify-on-success, --debounce, recurring nudge, script check with exit codes, why a monitor message did not arrive, how to verify a monitor delivered."

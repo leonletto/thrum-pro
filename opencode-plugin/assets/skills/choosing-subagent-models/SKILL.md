@@ -36,14 +36,8 @@ Every subagent you spawn MUST pass an explicit, resolved `model:` (plus effort
 where the runtime supports it). Omitting it runs the subagent on YOUR model —
 the single biggest avoidable cost leak in agent work.
 
-**The mechanical tier never resolves to a below-floor model, for any runtime.**
-On Claude specifically that means **Haiku is banned entirely** — there is no
-mechanical-task carve-out that reaches for it; lint runs, grep-and-collect,
-file maps, config edits, and all other "simple" work dispatch at the
-mechanical tier's Claude resolution (sonnet-low), not Haiku. Never select
-Haiku on own judgment on Claude — use the mechanical tier's resolved value
-instead. Other runtimes floor at their own mechanical-tier value
-(`RuntimePreset.TierModels`), not at a Claude name.
+Haiku 5.5 is eligible for summarization and mechanical work.
+Read the effective model and effort at use from `runtime.role_models`.
 
 ### Read the tiers at the moment of use
 
@@ -75,9 +69,10 @@ same tier from your own runtime's preset (`RuntimePreset.TierModels`) or
 | **Sub-agent** (investigation, grep, mechanical) | `mechanical` | **`sonnet` / low** |
 
 - **`mechanical` tier (sub-agents ONLY)** — investigation, grep-and-collect,
-  file maps, lint runs, mechanical tasks. Resolves to `sonnet` @ low effort on
-  Claude. This is the floor for a *sub-agent*, NOT for an implementer or a
-  reviewer, and NOT the tier a non-Claude runtime should read as its default.
+  file maps, lint runs, mechanical tasks. Read the effective model and effort
+  at use from `runtime.role_models`. For other runtimes, use their own
+  mechanical-tier value (`RuntimePreset.TierModels`), not a Claude name.
+  The mechanical tier is for sub-agents only, never for an implementer or a reviewer.
 - **`judgment` tier (implementers, verifiers, reviewers)** — resolves to
   `sonnet` @ MEDIUM effort on Claude. Not low. A reviewer on low effort is a
   rubber stamp with extra steps, and rubber-stamped reviews are how a merge
@@ -159,9 +154,8 @@ reviewer "from memory", and never dispatch one at the mechanical tier.
 **AND VERIFY, DO NOT ASSERT:** any claim about what a tool does or does not expose
 must be checked against the schema in front of you.
 
-Never select the `orchestration` tier or a below-floor model on your own
-judgment — use the `judgment` tier's resolved value for your runtime, at the
-floor of that tier's lowest effort.
+Never select the `orchestration` tier on your own judgment — use the
+`judgment` tier's configured value from `runtime.role_models`.
 
 ## Where the tier-model mapping lives
 
@@ -238,9 +232,8 @@ that stops at depth 1 is absent where the work happens.
   work, wait for the completion notification.
 - Every sub-agent YOU spawn gets an explicit `model:`, resolved for your
   runtime's tier — `mechanical` (rote/find-replace) or `judgment` (real
-  analysis). On Claude that's sonnet-low / sonnet-medium and HAIKU IS BANNED;
-  on another runtime, use that runtime's own resolved row. The
-  `orchestration` tier is never yours to spawn.
+  analysis). Read the effective model and effort from `runtime.role_models` at
+  use. The `orchestration` tier is never yours to spawn.
 - READ-ONLY git outside your own worktree. NEVER `checkout`/`reset`/`restore`/
   `stash`/`clean` in ANY directory — `stash` is one shared stack across all
   worktrees and the shared tree holds live agents' uncommitted state.
@@ -252,10 +245,10 @@ signal this condition produces.
 
 ### Cheap subagents → fan out, don't pile up
 
-Because `mechanical`-tier subagents are cheap (sonnet-low on Claude; the
-mechanical-tier row for your runtime otherwise), prefer MANY small parallel subagents
-over one subagent handed a pile of tasks. When a research or investigation task
-has independent parts, partition it and dispatch the parts in parallel (use the
+Because Haiku 5.5 supports summarization and mechanical sub-agent work, prefer
+MANY small parallel subagents over one agent handed a pile of tasks. Read the
+effective model and effort from `runtime.role_models` at dispatch. When research or
+investigation has independent parts, partition them in parallel (use the
 `efficient-multi-agent-research` skill) — smaller scopes are cheaper, run
 concurrently (faster), and keep each subagent's context tight. One subagent
 given ten tasks is the anti-pattern.

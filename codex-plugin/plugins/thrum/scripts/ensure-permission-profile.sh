@@ -58,7 +58,7 @@
 # Non-zero on a genuine I/O failure, OR on a malformed .thrum/redirect (empty,
 # relative, missing/non-directory target, or chained — only a single-hop,
 # absolute, existing, non-chained redirect target is resolved; anything else
-# is a hard failure, mirroring internal/paths.ResolveThrumDir's semantics
+# is a hard failure, mirroring the Go ResolveThrumDir semantics
 # rather than silently mis-resolving to the wrong audit-log dir).
 
 set -uo pipefail
@@ -97,8 +97,17 @@ local_thrum_dir="${found_dir}/.thrum"
 redirect_file="${local_thrum_dir}/redirect"
 resolved_thrum_dir="${local_thrum_dir}"
 
+# BEGIN self_pointing
+# A redirect whose content is this tree's OWN .thrum is no redirect (c934m). Mirrors
+# Go paths.SelfPointingRedirect (the daemon path helper): the WHOLE file content
+# with surrounding whitespace trimmed (trim_ws), absolute, and canonically equal to
+# the local dir. cd -P/pwd -P canonicalize both sides, no realpath.
+trim_ws() { local t="$1"; t="${t#"${t%%[![:space:]]*}"}"; printf '%s' "${t%"${t##*[![:space:]]}"}"; }
+self_pointing() { case "$1" in /*) ;; *) return 1 ;; esac; [ -d "$1" ] && [ -d "$2" ] && [ "$(cd -P -- "$1" && pwd -P)" = "$(cd -P -- "$2" && pwd -P)" ]; }
+# END self_pointing
+
 if [[ -f "${redirect_file}" ]]; then
-  redirect_target="$(head -n1 "${redirect_file}" | tr -d '\r\n' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+  redirect_target="$(trim_ws "$(cat -- "${redirect_file}")")"
   if [[ -z "${redirect_target}" ]]; then
     err "redirect file ${redirect_file} is empty"
     exit 1
@@ -111,11 +120,14 @@ if [[ -f "${redirect_file}" ]]; then
     err "redirect target does not exist or is not a directory: ${redirect_target}"
     exit 1
   fi
-  if [[ -f "${redirect_target}/redirect" ]]; then
+  if self_pointing "${redirect_target}" "${local_thrum_dir}"; then
+    :
+  elif [[ -f "${redirect_target}/redirect" ]]; then
     err "redirect chain detected: ${redirect_file} points to ${redirect_target} which also has a redirect file; only single-hop redirects are supported"
     exit 1
+  else
+    resolved_thrum_dir="${redirect_target}"
   fi
-  resolved_thrum_dir="${redirect_target}"
 fi
 
 audit_dir="${resolved_thrum_dir}/var/log"

@@ -72,7 +72,7 @@ thread:
 - **Push — inbox scan.** Each cycle, read your inbox (`thrum inbox`) for
   messages from a roster brainstormer whose first line matches
   `NEED [<topic>]:` (the convention from
-  `dev-docs/specs/2026-08-24-brainstorm-need-answer-convention.md`). Read
+  the NEED/ANSWER convention spec in the project's design docs). Read
   the topic, question, and options straight from the prose — there is no
   structured payload to parse; you are a judgment agent reading a message
   the way you'd read any message. The sender identity tells you which
@@ -242,9 +242,9 @@ state as soon as the brainstormer advances past it.
 
 ## Reuse note
 
-`dev-docs/templates/brainstorm-steward-watch_params.json` is the canonical
+The brainstorm-steward watch-params template in the project's design docs is the canonical
 starting config for a new Brainstorm Steward — it uses the schema documented
-in `dev-docs/specs/2026-07-22-watch-params-schema.md` unchanged, with an
+in the watch-params schema spec unchanged, with an
 empty `roster` to be populated as brainstormers are launched under it. Its
 `parent` field ships pre-filled with this fleet's own escalation target —
 when copying the template to a different fleet or box, replace that value

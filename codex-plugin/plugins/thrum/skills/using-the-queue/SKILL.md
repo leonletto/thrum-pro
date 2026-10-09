@@ -213,10 +213,9 @@ its own.
 - **EstablishedBy** is influenceable only via `CallerAgentID` on a non-peercred
   transport (browser/WS, unit tests) - but that is a general, already-documented
   property of the RPC layer (identity trust depends on transport), not something
-  unique to `state.set`, and it is explicitly out of scope per
-  `docs/security_model/master.md` §1.5: "Thrum does not attempt to prevent agent
-  identity forgery" is an owner ruling, stated as [INTENDED] and permanent, not
-  tracked as debt.
+  unique to `state.set`, and it is explicitly out of scope per the project's
+  security model: "Thrum does not attempt to prevent agent identity forgery" is
+  an owner ruling, stated as [INTENDED] and permanent, not tracked as debt.
 
 **The convention, stated plainly:** queue rejects raw identity keys at the wire
 as defense-in-depth (even though its request types don't have those fields
@@ -227,8 +226,7 @@ by domain, not an oversight.
 
 Non-goal: fail-closed reject-symmetry for `state.set` (mirroring queue's
 `RejectIdentityKeysHandler`) is a possible future non-security hardening
-preference, not built here - out of scope per `docs/security_model/master.md`
-§1.5.
+preference, not built here - out of scope per the project's security model.
 
 ### Common Mistakes
 

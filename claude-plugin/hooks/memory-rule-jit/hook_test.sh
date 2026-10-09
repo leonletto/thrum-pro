@@ -94,7 +94,7 @@ else
     # doesn't crash (exit code 0 or 2 only).
     result=0
     CLAUDE_SESSION_ID="hook-test-$$-daemon" \
-        printf '{"tool_name":"Write","tool_input":{"file_path":"/Users/user/project/internal/daemon/safecmd/safecmd.go"}}' \
+        printf '{"tool_name":"Write","tool_input":{"file_path":"/Users/user/project/internal/daemon/x.go"}}' \
         | bash "$HOOK" 2>/dev/null || result=$?
     if [ "$result" -eq 0 ] || [ "$result" -eq 2 ]; then
         echo "PASS: Write to daemon path exits 0 or 2 (got $result)"

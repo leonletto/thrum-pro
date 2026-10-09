@@ -201,12 +201,11 @@ the salvage somewhere durable (the main repo, not `/private/tmp`).
 
 ### 🔴 The reap is worktree-removal-only — and TEST every step on ONE item first
 
-**`thrum agent delete --force` is REFUSED by the CAS guard on a stale agent with
-an empty `agent_pid_start_time`** (_"expected-state premise is required …
-refusing rather than treating an empty/never-read premise as a match"_).
-`--force` does NOT bypass it; the guard is correct. So the reap that actually
-frees load is worktree removal — but salvage BEFORE you remove, then remove
-PLAIN (no `--force`):
+**`thrum agent delete` refuses an agent whose linked worktree still exists**
+(and any agent with a live pid/tmux process, and coordinators); `--force` does
+NOT bypass these guards. So the reap that frees load is worktree removal first —
+salvage BEFORE you remove, then remove PLAIN (no `--force`), then
+`thrum agent delete`:
 
 1. Enumerate untracked+ignored `.thrum` content — BOTH flags, one flag alone
    misses a class: `git status --untracked-files=all --ignored -- .thrum`
@@ -228,9 +227,10 @@ PLAIN (no `--force`):
    ignored-file class. (Not a pipe — a pipe returns the last command's rc, not
    `git`'s.)
 
-The delete (`thrum agent delete`) best-effort-fails and leaves a **benign orphan
-DB row**, which you LEAVE (filtered at query per the fleet ruling; never
-`agent cleanup --force` to tidy them).
+Then REAP the agent row with `thrum agent delete <agent>` once the worktree is
+gone and no process is live: orphan rows must be reaped, not left. Never use
+`thrum agent cleanup --force` (it can flag live fleet agents). A refused reap on
+a dead, worktree-less agent is a bug: report it, do not route around it.
 
 ⚠️ **After a large reap you may see a `DeadAgentSweeper` skip alert + elevated
 write-RPC latency — do NOT assume the reap caused it.** This box carries a
@@ -333,8 +333,9 @@ combined table: idle agent · gopls PID · RSS-MB.
   worktree list AND disk), not just the exit code.
 - **Rank candidates by last-message CONTENT, not elapsed time** — your own
   broadcasts reset every recipient's idle clock.
-- **`--force` on agent-delete does NOT bypass the CAS guard** on a stale agent —
-  the reap that frees load is worktree removal, not the delete.
+- **`--force` on agent-delete does NOT bypass its guards** — the worktree must
+  go first (teardown with salvage or plain `git worktree remove`), then
+  `thrum agent delete` reaps the row.
 - **Reap order is `thrum tmux kill <session>` FIRST, THEN
   `git worktree remove`** — removing the worktree alone leaves the agent's tmux
   session alive with a now-deleted cwd, which the fleet flags as recurring "cwd

@@ -44,7 +44,7 @@ monotonic-ish and globally comparable; the larger ULID wins.
 | Concurrent edits to the SAME field                                              | Larger-ULID event wins. Loser preserved in JSONL.        |
 | Concurrent tombstones                                                           | Idempotent. One delete-event wins by ts; status=purged.  |
 | Edit + delete, delete-ULID > edit-ULID                                          | Final `status=purged`.                                   |
-| Edit + delete, edit-ULID > delete-ULID AND edit explicitly sets `status=active` | Edit wins → `status=active` (undelete).                  |
+| Edit + delete, edit-ULID > delete-ULID AND edit explicitly sets `status=active` | Edit wins → `status=active` (undelete; needs a license). |
 | Edit + delete, edit-ULID > delete-ULID AND edit does NOT touch `status`         | Patch applies to body/tags but `status=purged` persists. |
 
 LWW is acceptable here because memories aren't a high-write-conflict surface
@@ -94,6 +94,8 @@ Undelete by writing `status=active`:
 thrum memory edit <id> --status active
 ```
 
+Note: `memory edit` (including `--status active` undelete) requires a license (memory.substrate); soft delete (`memory delete`) and reads stay open.
+
 Undelete works regardless of who won the concurrent edit/delete race (see LWW
 table above). The audit history is intact, so the recovered memory carries its
 full provenance.
@@ -116,10 +118,10 @@ Type DELETE <id> to confirm: DELETE <id>
 The exact token (`DELETE <id>`) must be typed back — matches beads'
 `DESTROY-<prefix>` pattern. There is no `--yes` bypass.
 
-| Mode            | Mechanism                                                      | Recovery                                 |
-| --------------- | -------------------------------------------------------------- | ---------------------------------------- |
-| Soft (default)  | `memory.delete` → projection `status=purged`                   | `thrum memory edit <id> --status active` |
-| Hard (`--hard`) | `memory.purge_executed` → physical JSONL removal at compaction | Not recoverable post-compaction          |
+| Mode            | Mechanism                                                      | Recovery                                                    |
+| --------------- | -------------------------------------------------------------- | ----------------------------------------------------------- |
+| Soft (default)  | `memory.delete` → projection `status=purged`                   | `thrum memory edit <id> --status active` (license required) |
+| Hard (`--hard`) | `memory.purge_executed` → physical JSONL removal at compaction | Not recoverable post-compaction                             |
 
 ## When NOT to hard-delete
 

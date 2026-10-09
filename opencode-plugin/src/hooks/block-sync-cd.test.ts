@@ -35,7 +35,7 @@ const ALLOW: Array<[string, string]> = [
   ["git -C a-sync push", `git -C ${ASYNC} push`],
   ["git -C a-sync log (not branch-changing)", `git -C ${ASYNC} log --oneline`],
   ["ls the path", `ls ${ASYNC}/`],
-  // D5 false-positive guard: cd inside a quoted argument (bare space before it),
+  // quoted-argument false-positive guard: cd inside a quoted argument (bare space before it),
   // not at command position -> must be ALLOWED.
   ["quoted cd inside bd remember", `bd remember "note: do not cd ${ASYNC} directly"`],
 ]

@@ -31,7 +31,7 @@ const SYNC = String.raw`\.git/thrum-sync/a-sync`
 // Command-position anchor: line start or immediately after a shell separator
 // (;, &&, ||), then optional whitespace. This matches `cd`/`git` only when they
 // are the actual command — NOT when those words appear inside a quoted argument
-// preceded by a bare space (the D5 false-positive: `bd remember "... cd
+// preceded by a bare space (the quoted-argument false-positive: `bd remember "... cd
 // .git/thrum-sync/a-sync ..."` must NOT be denied). Match op-shape, not the mere
 // presence of the path string.
 const CMDPOS = String.raw`(^|;|&&|\|\|)\s*`

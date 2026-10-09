@@ -231,7 +231,7 @@ undetected or unprovided. Fill in:
 
 ### Step 6a: MANDATORY — wire the project's security/threat model into the Decision Framework
 
-If the project has a written threat model (search `docs/security_model/`,
+If the project has a written threat model (search the project's security-model directory,
 `docs/security*.md`, `SECURITY.md`), the rendered philosophy MUST carry a
 Decision Framework row pointing at it — and that row MUST NOT be keyed on the
 word "attacker".

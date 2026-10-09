@@ -77,14 +77,13 @@ Two channels feed your queue, because either alone can silently drop a thread:
 
 - **Push — inbox scan.** Each cycle, read your inbox (`thrum inbox`) for
   messages from a roster brainstormer whose first line matches `NEED [<topic>]:`
-  (the convention from
-  `dev-docs/specs/2026-08-24-brainstorm-need-answer-convention.md`). Read the
-  topic, question, and options straight from the prose — there is no structured
-  payload to parse; you are a judgment agent reading a message the way you'd
-  read any message. The sender identity tells you which brainstormer/box the
-  item belongs to. A `--priority high` NEED ranks above ordinary ones in your
-  queue ordering, but is not a default any brainstormer should be reaching for
-  on every question.
+  (the convention from the NEED/ANSWER convention spec in the project's design
+  docs). Read the topic, question, and options straight from the prose — there
+  is no structured payload to parse; you are a judgment agent reading a message
+  the way you'd read any message. The sender identity tells you which
+  brainstormer/box the item belongs to. A `--priority high` NEED ranks above
+  ordinary ones in your queue ordering, but is not a default any brainstormer
+  should be reaching for on every question.
 
 - **Backstop — pane capture.** Pane-capture every roster member each cycle
   (`thrum tmux capture --daemon-id <box>` for a remote pane, same as any other
@@ -245,10 +244,10 @@ brainstormer advances past it.
 
 ### Reuse note
 
-`dev-docs/templates/brainstorm-steward-watch_params.json` is the canonical
-starting config for a new Brainstorm Steward — it uses the schema documented in
-`dev-docs/specs/2026-07-22-watch-params-schema.md` unchanged, with an empty
-`roster` to be populated as brainstormers are launched under it. Its `parent`
-field ships pre-filled with this fleet's own escalation target — when copying
-the template to a different fleet or box, replace that value with the new
-fleet's actual coordinator (see "Your `parent` is..." above).
+The brainstorm-steward watch-params template in the project's design docs is the
+canonical starting config for a new Brainstorm Steward — it uses the schema
+documented in the watch-params schema spec unchanged, with an empty `roster` to
+be populated as brainstormers are launched under it. Its `parent` field ships
+pre-filled with this fleet's own escalation target — when copying the template
+to a different fleet or box, replace that value with the new fleet's actual
+coordinator (see "Your `parent` is..." above).

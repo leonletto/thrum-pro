@@ -45,8 +45,8 @@ NOTIFY_CLASSES = VALID_CLASSES - {"ordinary"}
 REDACTION_TOKEN = "[REDACTED_SECRET]"
 LOCAL_PATH_REDACTION_TOKEN = "[REDACTED_LOCAL_PATH]"
 SECRET_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
-    ("private_key_block", re.compile(r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----.*?-----END [A-Z0-9 ]*PRIVATE KEY-----", re.S)),
-    ("env_secret_assignment", re.compile(r"(?im)^\s*(?:export\s+)?[A-Z0-9_]*(?:API[_-]?KEY|TOKEN|SECRET|PASSWORD|PRIVATE[_-]?KEY|AUTH[_-]?KEY)[A-Z0-9_]*\s*=\s*([^\s#]+)")),
+    ("private_key_block", re.compile(r"-----BEGIN [0-9A-Z ]*PRIVATE KEY-----.*?-----END [0-9A-Z ]*PRIVATE KEY-----", re.S)),
+    ("env_secret_assignment", re.compile(r"(?im)^\s*(?:export\s+)?[0-9A-Z_]*(?:API[_-]?KEY|TOKEN|SECRET|PASSWORD|PRIVATE[_-]?KEY|AUTH[_-]?KEY)[0-9A-Z_]*\s*=\s*([^\s#]+)")),
     ("bearer_token", re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]{16,}")),
     ("openai_key", re.compile(r"\bsk-[A-Za-z0-9_-]{20,}\b")),
     ("thrum_key", re.compile(r"\btskey-[A-Za-z0-9_-]{16,}\b")),
@@ -318,7 +318,7 @@ def prompt_payload(state: dict[str, Any], provider: str = TYPESAFE_PROVIDER) -> 
         },
     }
     if provider == OPENROUTER_PROVIDER:
-        payload["user"] = "thrum-roster-watch-filter"
+        payload["user"] = "roster-watch-filter"
     return payload
 
 
@@ -462,8 +462,8 @@ def classify_remote(state: dict[str, Any], provider: str, api_key: str, timeout:
     }
     if provider == OPENROUTER_PROVIDER:
         headers.update({
-            "HTTP-Referer": "https://github.com/falconleon/thrum",
-            "X-Title": "thrum-roster-watch-filter",
+            "HTTP-Referer": "https://github.com/leonletto/thrum-pro.git",
+            "X-Title": "roster-watch-filter",
         })
     last_error = None
     last_category = None

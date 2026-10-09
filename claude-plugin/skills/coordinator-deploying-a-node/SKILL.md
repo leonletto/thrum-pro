@@ -48,7 +48,9 @@ If the project has no WAL/SHM, this section is N/A — skip and note.
 
 ## 4. Never wrap service start/restart in a blind timeout
 
-Run the project's service restart command (`fleet.deployment.thrum.service.restart_command` or product equivalent) without a blind timeout wrapper. A timeout that kills a migrating restart mid-migration manufactures a half-migrated store.
+🔴 **On macOS, the restart command is NOT `service.restart_command` — it is `service.mac_restart_command`** (Thrum: `scripts/mac-daemon-restart-via-cron.sh`, run from inside the repo). A daemon restarted from a terminal or agent pane gets its Local Network (TCC) permission attributed to that terminal and is silently denied LAN peer dials (`no route to host`): peers go dark while the node itself looks healthy, and `PPID 1` does NOT prove it was re-parented correctly. Check the node's OS before choosing the command; this has been forgotten on primary repeatedly. After a mac restart, verify the peers on the LAN reconnect, not just the version.
+
+Run the project's service restart command (`fleet.deployment.thrum.service.restart_command`, or `service.mac_restart_command` on macOS, or product equivalent) without a blind timeout wrapper. A timeout that kills a migrating restart mid-migration manufactures a half-migrated store.
 
 - Adapter flag `service.never_timeout` is true.
 - Signal-window rules are adapter data: `migration.signal_rules` (`SIGQUIT` fatal-always, `SIGUSR1` fatal-before-socket). Respect them — do not send fatal signals in the forbidden window.

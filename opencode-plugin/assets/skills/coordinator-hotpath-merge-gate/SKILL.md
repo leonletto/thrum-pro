@@ -90,7 +90,7 @@ the one resource it cannot replace and leaves no durable verdict artifact.
 explicitly in the merge record so the gap is visible rather than invisible.
 
 **Verdicts are artifacts:** the runner saves them to
-`dev-docs/gate-reports/<ISO-week>/<date>/<gate-slug>/` and commits them BEFORE
+`<gate-reports-dir>/<ISO-week>/<date>/<gate-slug>/` (the project's gate-reports directory) and commits them BEFORE
 removing any worktree. A verdict that exists only in a message cannot be audited
 later.
 
@@ -99,7 +99,7 @@ later.
 Mandatory checklist handed to the GATE RUNNER (and to any sub-agent it spawns in
 turn) at dispatch time. Each
 rule below currently lives only as prose warnings scattered through
-`dev-docs/hotpath-gate-efficacy.md` and gets re-learned per session — hand this
+the hotpath-gate efficacy log and gets re-learned per session — hand this
 list to the sub-agent verbatim at dispatch time instead of relying on it
 rediscovering these the hard way:
 
@@ -570,7 +570,7 @@ diff — don't bounce reflexively.
 
 ## Efficacy tracking (v1 acceptance requirement)
 
-After every gate run, record the outcome in `dev-docs/hotpath-gate-efficacy.md`
+After every gate run, record the outcome in the hotpath-gate efficacy log
 (created lazily on first run). This is a durable, committed, grep-queryable log
 that measures v1's real-world efficacy so we can iterate to v2 with data.
 
@@ -609,7 +609,7 @@ rows.
 | `CLEAN-WITH-GATE-FIXES` | Gate found only mechanical bookkeeping gaps, fixed them itself as a GATE-AUTHORED commit, re-ran only the affected checks, merge proceeded |
 
 **Retrospective reclassification:** When triaging a new wedge or incident, grep
-`dev-docs/hotpath-gate-efficacy.md` for the merged branch/date. If the gate
+the hotpath-gate efficacy log for the merged branch/date. If the gate
 previously logged `CLEAN` for that branch, append a follow-up line referencing
 the original entry:
 `- YYYY-MM-DD | branch=<branch> | RECLASSIFIED: CLEAN->SLIPPED | notes=<what the gate missed + which lens should have caught it>`.
@@ -625,13 +625,13 @@ gaps and lens improvements for the next version.
   patterns, reference functions, incident prose)
 - `project-hotpath-gate` — the companion builder skill that generates/reconciles
   the config (analog of `project-philosophy`)
-- `dev-docs/brainstorms/hotpath-merge-gate/` — the locked brainstorm (evidence,
+- the hotpath-merge-gate brainstorm record — the locked brainstorm (evidence,
   gap analysis, lens details, decisions)
 - `coordinator-philosophy-merge-gate` — the companion general-structural gate
   (runs in parallel)
 - `.thrum/philosophy.md` — canonical source for general anti-patterns (cross-
   referenced by Lenses 1–2, 6–7 where they overlap)
-- `dev-docs/hotpath-gate-efficacy.md` — running efficacy log (created lazily on
+- the hotpath-gate efficacy log — running efficacy log (created lazily on
   first gate run, appended after each run)
 
 <!-- THRUM-GATE: stage=skill next=review -->

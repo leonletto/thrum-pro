@@ -653,7 +653,7 @@ thrum worktree teardown <name>
 ```
 
 > After set-phase=retired, `thrum team` and the active UI views no longer show
-> this agent (sidebar, pickers, badge, kbd-nav). It remains in the Retired tab.
+> this agent (sidebar, pickers, badge, kbd-nav). It remains in the Retired tab (teardown retires, it does not delete the row).
 > Its messages + runtime transcript persist for audit. `thrum agent delete` is
 > operator-only (gated to the coordinator) and is NOT an orchestrator tool —
 > `set-phase retired` is the orchestrator's retirement command for both normal

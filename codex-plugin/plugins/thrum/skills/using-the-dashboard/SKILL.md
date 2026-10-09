@@ -32,17 +32,8 @@ no dashboard.
 | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `dashboard.set/get/show/clear/delete` RPCs (daemon-side)         | **LANDED** on trunk (merge `6c7539236f83`); usable only against daemons BUILT after that merge — verify your daemon's build before relying on the RPCs         |
 | `thrum dashboard` CLI (set/show/get/update/delete/clear/results) | **LANDED** on trunk (merge `108511a0`); usable only against a `thrum` binary BUILT after that merge — verify your CLI's build before relying on these commands |
-| Web UI Dashboard tab (where the human SEES a board)              | **BUILT, NOT YET DEPLOYED** (E3 landed on trunk, merge `49712f87` — visible after the next deploy)                                                             |
-| Answer round-trip (user clicks → message + nudge to you)         | **BUILT, NOT YET DEPLOYED** (E4 landed on trunk, merge `ea95318a` — visible after the next deploy)                                                             |
-
-**Consequence until the next deploy carries E3 and E4:** publishing a board is
-STILL a no-op for the human on any box running a pre-E3/pre-E4 binary — it
-renders NOWHERE there and, even where it renders, an answer cannot return to
-you, even though the UI and answer-round-trip code now both exist on trunk. Do
-NOT substitute a dashboard for a nudge or a direct message unless you know the
-box you're talking to has deployed a build containing BOTH E3 and E4. If the
-human cannot see the board or their answer cannot reach you, the question DOES
-disappear — the exact failure the dashboard exists to kill.
+| Web UI Dashboard tab (where the human SEES a board)              | **SHIPPED** in v0.11.0-rc.1 (E3, merge `49712f87`)                                                                                                             |
+| Answer round-trip (user clicks → message + nudge to you)         | **SHIPPED** in v0.11.0-rc.1 (E4, merge `ea95318a`)                                                                                                             |
 
 **Consequence, now that E2 has landed:** the `thrum dashboard ...` command
 shapes below are runnable — but, per the E2 row above, only against a CLI binary
@@ -95,7 +86,7 @@ cat > /tmp/board.md <<'EOF'
 {"title": "My board", "widgets": [ ... ]}
 EOF
 thrum dashboard set --doc-file /tmp/board.md
-thrum dashboard set --stdin < /tmp/board.md
+thrum dashboard set < /tmp/board.md   # stdin is the default when --doc-file is omitted
 
 # HTML regions come from FILES ONLY — never inline (backticks in shell strings EXECUTE)
 thrum dashboard set --html-file /tmp/panel.html --html-id my-panel

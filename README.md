@@ -182,7 +182,7 @@ Muse has its own plugin system and marketplace — it does **not** use the Claud
 marketplace. It installs the same Thrum plugin through Muse-native commands, so there
 is no separate Muse plugin to build.
 
-Prerequisites: the `muse` binary **1.0.3 or newer** (validated on `1.0.3-R2198.1`), a
+Prerequisites: the `muse` binary (validated on `1.4.0-R4161.1` and `1.4.2-R4684.1`), a
 Muse account, and the `thrum` binary on your `PATH`. Run these as the same OS user
 that runs your agents.
 

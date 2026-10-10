@@ -270,9 +270,9 @@ The Thrum Pro plugin in this repository is licensed under the
 
 The **Thrum Pro binary** is a separate commercial product and is **not** covered
 by this license — see [Getting the Thrum binary](#getting-the-thrum-binary). Its use
-is governed by the [Thrum EULA](https://my.thrum.team/legal/eula/thrum-eula/0.9.7),
-the [Terms of Service](https://my.thrum.team/legal/eula/thrum-tos/1.3) and the
-[Privacy Policy](https://my.thrum.team/legal/eula/thrum-privacy/1.3).
+is governed by the [Thrum EULA](https://my.thrum.team/legal/eula),
+the [Terms of Service](https://my.thrum.team/legal/terms) and the
+[Privacy Policy](https://my.thrum.team/legal/privacy).
 
 ---
 

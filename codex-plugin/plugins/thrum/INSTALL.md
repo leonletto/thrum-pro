@@ -237,3 +237,11 @@ mv ~/.codex/skills/orchestrate ~/.agents/skills/
 ```
 
 (See pm7n.2 for context on the codex v0.130.0 path change.)
+
+## Stable hook gateway compatibility
+
+The installer validates `thrum-hooks-v1` and provisions handlers under `~/.thrum/hooks/payloads`; keep a gateway-capable Thrum binary on Codex’s hook PATH for the normal path. If an already-installed plugin runs with an older binary that lacks `thrum hook run`, has no executable `thrum` on PATH, or does not recognize the manifest ABI, each hook warns and runs its bundled legacy handler. If that handler is unavailable, the hook warns and fails open until matching versions are installed. This is a bounded binary/plugin compatibility window; install matching versions to close it. The installer itself still requires gateway support to validate and provision the current bundle. Missing gateway support is distinct from hooks awaiting native review.
+
+Use an English Bash locale so missing or non-executable gateway detection selects the compatibility fallback; other locales pass those launch failures through.
+
+Before the first installer update that can prune an existing plugin cache, inventory every live native pane, including panes outside Thrum. Arrange normal exit or authorized continuity relaunch of legacy cache-bound panes, then set `THRUM_LEGACY_HOOK_MIGRATION_COMPLETE=1` for that run. After a successful install, the installer records that the one-time gate is satisfied. Raw native marketplace updates bypass this owner sequencing barrier. Retain owned payload generations across upgrades and rollback.

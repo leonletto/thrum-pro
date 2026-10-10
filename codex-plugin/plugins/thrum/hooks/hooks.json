@@ -3,40 +3,48 @@
     "SessionStart": [
       {
         "matcher": "startup|resume|clear|compact",
-        "hooks": [{
-          "type": "command",
-          "command": "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/ensure-permission-activation.sh",
-          "statusMessage": "Ensuring thrum permission profile",
-          "timeout": 15
-        }, {
-          "type": "command",
-          "command": "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/inject-prime-context.sh",
-          "statusMessage": "Loading Thrum prime context",
-          "timeout": 30
-        }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${PLUGIN_ROOT}/scripts/run-hook.sh thrum-hooks-v1 codex ensure-permission-activation",
+            "statusMessage": "Ensuring thrum permission profile",
+            "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "${PLUGIN_ROOT}/scripts/run-hook.sh thrum-hooks-v1 codex inject-prime-context",
+            "statusMessage": "Loading Thrum prime context",
+            "timeout": 30
+          }
+        ]
       }
     ],
     "PreToolUse": [
       {
         "matcher": "Bash",
-        "hooks": [{
-          "type": "command",
-          "command": "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/block-sync-worktree-cd.sh",
-          "timeout": 5
-        }, {
-          "type": "command",
-          "command": "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/block-tls-key-exfil.sh",
-          "timeout": 5
-        }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${PLUGIN_ROOT}/scripts/run-hook.sh thrum-hooks-v1 codex block-sync-worktree-cd",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "${PLUGIN_ROOT}/scripts/run-hook.sh thrum-hooks-v1 codex block-tls-key-exfil",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "Stop": [
       {
-        "hooks": [{
-          "type": "command",
-          "command": "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/stop-check-messages.sh",
-          "timeout": 15
-        }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${PLUGIN_ROOT}/scripts/run-hook.sh thrum-hooks-v1 codex stop-check-messages",
+            "timeout": 15
+          }
+        ]
       }
     ]
   }

@@ -138,12 +138,12 @@ on it rediscovering these the hard way:
    shards both lanes automatically) — not just that some RPC test ran. A
    bound-timeout with ZERO test failures is a FALSE RED, not a finding:
    distinguish it from a genuine hang/deadlock via
-   `go run ./cmd/testgate classify-timeout --log <file> --shard-config <file> --shard <name>`
-   (fails closed — only BOUND-TIMEOUT exits 0; HANG and UNCLASSIFIED both exit
-   nonzero) before reporting it as a regression. If a gate's own command line
-   invokes the bare package path for RPC, that is a gate defect, not a passing
-   lane. A HANG or UNCLASSIFIED verdict from `classify-timeout` requires human
-   review.
+   `go run ./cmd/testgate classify-timeout --log <file> --shard-config <file> --shard <name> --pkg-dir <package dir>`
+   (shard configs are hash-placed, so `--pkg-dir` is required) (fails closed —
+   only BOUND-TIMEOUT exits 0; HANG and UNCLASSIFIED both exit nonzero) before
+   reporting it as a regression. If a gate's own command line invokes the bare
+   package path for RPC, that is a gate defect, not a passing lane. A HANG or
+   UNCLASSIFIED verdict from `classify-timeout` requires human review.
 8. Build+test the MERGED-tree result as a SEPARATE condition — neither gate
    currently runs a build of the actual post-merge tree; a clean pre-merge
    build/test does not prove the merged result compiles or passes.

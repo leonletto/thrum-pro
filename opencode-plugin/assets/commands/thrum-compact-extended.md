@@ -226,6 +226,11 @@ if [ "$SNAPSHOT_OK" = 1 ] && [ "$SESSION_OK" = 1 ]; then
   # all, so this is caught synchronously, not inferred later from silence.
   thrum tmux send "$AGENT" "/compact"
   SEND_RC=$?
+  # Exit 0 may print "ACCEPTED (non-turn command)": the runtime acknowledged the
+  # command without starting a model turn (for example compaction began). That is
+  # SUCCESS - continue to the next step exactly as for a plain exit 0.
+  # Exit 4 UNCONFIRMED means no acknowledgement was seen: inspect the pane before
+  # doing anything else.
   # Exit 3 = HELD, exit 4 = VERDICT UNKNOWN (thrum tmux send --help). In both
   # the "/compact" text is ALREADY TYPED into this pane and Enter was withheld
   # or unconfirmed. NEVER fall through to the raw retry below: it would append a

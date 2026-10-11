@@ -104,7 +104,7 @@ dispatch time — hand this list verbatim:
    `scripts/test-run.sh race ./internal/daemon/rpc`, or `make gate`) and confirm
    the gate's output shows it executed. A bound-timeout with ZERO test failures
    is a false red: classify it with
-   `go run ./cmd/testgate classify-timeout --log <file> --shard-config <file> --shard <name>`
+   `go run ./cmd/testgate classify-timeout --log <file> --shard-config <file> --shard <name> --pkg-dir <package dir>`
    (only BOUND-TIMEOUT exits 0) before reporting a regression. See item 7 of
    `coordinator-hotpath-merge-gate`.
 7. Build+test the MERGED-tree result as a SEPARATE condition — neither gate

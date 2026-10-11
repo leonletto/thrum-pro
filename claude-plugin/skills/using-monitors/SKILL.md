@@ -1,9 +1,9 @@
 ---
 name: using-monitors
-description: "Use when scheduling a reminder, watching a log, or running a periodic check that must reach an agent - thrum monitor start, cron --schedule, --match, --notify-on-success, --debounce, recurring nudge, script check with exit codes, why a monitor message did not arrive, how to verify a monitor delivered."
+description: "Use when scheduling a reminder, watching a log, or running a periodic check that must reach an agent - thrum monitor start, cron --schedule, --match, --notify-on-success, --debounce, recurring nudge, plan follow-up reminder, remind me to check on my plan, check whether blockers have moved, prompt my pane on a schedule, monitor script that runs thrum tmux send, edit the script not the monitor, change a reminder without recreating the monitor, script check with exit codes, why a monitor message did not arrive, how to verify a monitor delivered."
 ---
 
-# Thrum Monitors - Reminders And Script Checks
+# Thrum Monitors - Reminders, Pane Prompts And Script Checks
 
 ## Overview
 
@@ -13,6 +13,12 @@ kept line, a scheduled monitor sends all the lines of a run in one message. With
 `--schedule` it runs the command once per cron tick; without it the command runs continuously
 and restarts with backoff when it exits. Monitors persist across daemon
 restarts and run only on the daemon that owns them.
+
+A monitor reaches an agent in two ways. Its matched lines arrive as inbox
+messages, read at the next inbox check. Its command can also be a script that
+runs `thrum tmux send` to put a short prompt into the agent's own pane, which
+starts a turn. Keep the wording and logic of anything that will change in a
+script file: you then edit the script, and the monitor stays as it is.
 
 Every flag below appears in `thrum monitor start --help`. Re-read the help
 before relying on a flag not listed here.
@@ -37,6 +43,13 @@ thrum monitor delete <name|id>
   it (`--schedule ""`) switches the mode, which is refused while the monitor is
   running and allowed while it is stopped.
 - `--debounce` is leading-edge with a 30s minimum (default 1m).
+- `update` changes only the match, target, debounce and schedule. The command,
+  its arguments, `--cwd` and `--env` are fixed when the monitor starts, so text
+  written inline in the command can be changed only by deleting the monitor and
+  starting a new one. Text kept in a script file is changed by editing the file.
+- `--cwd` is the working directory the command runs in (default: the directory
+  you start the monitor from). `--env` adds one `KEY=VALUE` variable to the
+  command's environment and can be repeated.
 - `stop` leaves a stopped record that still holds the name; `delete` frees the
   name. Use a unique name per monitor.
 
@@ -45,6 +58,11 @@ thrum monitor delete <name|id>
 Each output line is tested against `--match` on its own. A line is truncated at
 2048 bytes with a marker appended.
 
+Read generated summaries as `<name>@<host>` and system notices as
+`[monitor:<name>@<host>]`; an unavailable hostname omits `@<host>`.
+Matched summaries show up to 160 characters of the deciding line; read the full
+matched output below, within the existing output and message limits.
+
 A scheduled (`--schedule`) job is a one-shot run, so its exit code is
 authoritative. It delivers ONE message at exit that carries every matched line,
 in order. A continuous job has no exit code per line, so it classifies and
@@ -52,11 +70,12 @@ delivers and classifies each matched line on its own, by its words.
 
 | Scheduled job                                                   | Delivered as                                  |
 | --------------------------------------------------------------- | --------------------------------------------- |
-| Non-zero exit, or the command failed to start                   | `[FAIL] <name>: exit code N` with the output tail, then the matched lines |
-| Exit 0, a matched line starts `ERROR:`, `FATAL:` or `FAIL:`     | `[FAIL] <name>: matched error pattern` + all matched lines |
-| Exit 0, highest prefix is `WARN:`, `WARNING:` or `ALERT:`        | `[WARN] <name>: matched WARNING` + all matched lines |
+| Non-zero exit                                                  | `[FAIL] <name>@<host>: exit code N` with the output tail, then the matched lines |
+| Command failed to start                                         | `[FAIL] <name>@<host>: <start error>` with details and an inspect command |
+| Exit 0, a matched line starts `ERROR:`, `FATAL:` or `FAIL:`     | `[FAIL] <name>@<host>: <matched line>` + all matched lines |
+| Exit 0, highest prefix is `WARN:`, `WARNING:` or `ALERT:`        | `[WARN] <name>@<host>: <matched line>` + all matched lines |
 | Exit 0, lines matched, no such prefix                           | All matched lines, in order, verbatim         |
-| Exit 0, nothing matched, `--notify-on-success`                  | `[OK] <name>: succeeded`                      |
+| Exit 0, nothing matched, `--notify-on-success`                  | `[OK] <name>@<host>: succeeded`                      |
 | Exit 0, nothing matched                                         | Nothing (logged only)                         |
 
 Cadence: the first non-zero scheduled run sends its `[FAIL]` notice; repeats of
@@ -93,8 +112,8 @@ past the retained prefix still sets the label.
 
 | Continuous job (no `--schedule`)                                | Delivered as                                  |
 | --------------------------------------------------------------- | --------------------------------------------- |
-| Contains `error`, `fatal`, `fail`, `permission denied`          | `[FAIL] <name>: matched error pattern` + line |
-| Contains `warn` or `warning`                                    | `[WARN] <name>: matched WARNING` + line       |
+| Contains `error`, `fatal`, `fail`, `permission denied`          | `[FAIL] <name>@<host>: <matched line>` + line |
+| Contains `warn` or `warning`                                    | `[WARN] <name>@<host>: <matched line>` + line       |
 | Contains a whole word `success`, `succeeded`, `complete`, `completed`, `done`, `ok` | Not delivered (logged only)   |
 | Any other matched line                                          | The line, verbatim                            |
 
@@ -111,10 +130,22 @@ Delivery limits:
 - The `[FAIL]` body for a non-zero exit carries only the last 500 bytes of
   output, so the message that matters goes last.
 
-## Prompt-Only Reminder
+## Choosing A Reminder Form
 
-A reminder is a monitor whose command only prints a fixed line. Give the line a
-stable prefix and match exactly that prefix.
+| Need                                                              | Form                          |
+| ----------------------------------------------------------------- | ----------------------------- |
+| Fixed wording, enough that it is read at the next inbox check     | Inbox reminder                |
+| Must start a turn, or the wording will change as the work moves   | Pane prompt through a script  |
+| A probe that reports a finding only when something is wrong       | Script check                  |
+
+A reminder that arrives, in the inbox or in the pane, shows the schedule fired.
+It does not show that the work moved. Check the work itself (commits, queue,
+state) before treating the reminder as progress.
+
+## Inbox Reminder
+
+An inbox reminder is a monitor whose command only prints a fixed line. Give the
+line a stable prefix and match exactly that prefix.
 
 ```bash
 thrum monitor start --name standup-nudge --to @me \
@@ -128,9 +159,94 @@ thrum monitor start --name standup-nudge --to @me \
   carries no action.
 - Add `--notify-on-success` only when a delivered line must be guaranteed for a
   run that matched nothing.
-- A delivered reminder shows the schedule fired. It does not show that the work
-  moved. Check the work itself (commits, queue, state) before treating the
-  reminder as progress.
+- An inline `echo` suits wording that will not change. For wording that will
+  change, use a pane prompt through a script.
+
+## Pane Prompt Through A Script
+
+Use this form for a recurring nudge that must start a turn, and for any reminder
+whose wording follows the work. The standard case is plan follow-up: a
+brainstormer or plan owner schedules a prompt that tells it to check how
+implementation of its plan is going and to notify the coordinator or the
+orchestrators working on the plan if blockers have not moved.
+
+The monitor runs a script file. The script runs
+`thrum tmux send <your-agent> "<prompt>"`: the daemon types the text into the
+pane and submits it. The prompt text and all logic live in the script.
+
+Put the script at a stable path you own, outside tracked source, that survives a
+restart of your session. Use its absolute path in the monitor command.
+
+```bash
+#!/usr/bin/env bash
+# plan-nudge.sh: prompt my own pane to follow up on my plan.
+# Edit AGENT and PROMPT when the plan moves. The monitor stays as it is.
+AGENT="<your-agent>"
+PROMPT="Check how implementation of <plan> is going. If the blockers have not moved since the last check, notify the coordinator or the orchestrators working on it."
+
+timeout 30 thrum tmux send "$AGENT" "$PROMPT" >/dev/null 2>&1
+rc=$?
+case "$rc" in
+  0) exit 0 ;;
+  3 | 4)
+    echo "WARN: PLAN-NUDGE send exit $rc, the prompt was typed into $AGENT but its submit is not confirmed; look at the pane"
+    exit 0
+    ;;
+  *)
+    echo "PLAN-NUDGE: thrum tmux send to $AGENT failed with exit $rc"
+    exit "$rc"
+    ;;
+esac
+```
+
+```bash
+chmod +x <script-dir>/plan-nudge.sh
+<script-dir>/plan-nudge.sh    # run once by hand: the prompt lands, nothing prints
+
+thrum monitor start --name plan-nudge-<your-agent> --to @<your-agent> \
+  --match 'PLAN-NUDGE' --schedule "0 */2 * * *" --cwd <your-worktree> -- \
+  <script-dir>/plan-nudge.sh
+```
+
+Exit codes of a text `thrum tmux send`, from its help:
+
+| Exit  | Meaning                                                           | Script does                          |
+| ----- | ----------------------------------------------------------------- | ------------------------------------ |
+| 0     | Delivered                                                         | Prints nothing, exits 0              |
+| 3     | Held: the text was typed, the confirming Enter was withheld       | Prints a `WARN:` line, exits 0       |
+| 4     | Verdict unknown: Enter may or may not have been sent              | Prints a `WARN:` line, exits 0       |
+| 1     | Any other error                                                   | Prints the finding, exits non-zero   |
+
+What the monitor then delivers to `--to`, per the scheduled-job table above:
+
+| Script outcome                         | Target receives                              |
+| -------------------------------------- | -------------------------------------------- |
+| Prompt delivered                       | Nothing in the inbox; the prompt in the pane |
+| Exit 3 or 4                            | One `[WARN]` message for that tick           |
+| Any other non-zero exit, or the `timeout` (124) | One `[FAIL] <name>@<host>: exit code N` message with the finding line |
+
+Rules:
+
+1. Keep the prompt to one or two sentences. It is a nudge; the plan and your
+   state hold the detail.
+2. When the plan moves (a blocker clears, a new one appears, a different
+   orchestrator owns the work), edit the script. The next tick uses the new
+   text. Do not run `thrum monitor update` and do not delete and recreate the
+   monitor for a change of wording or logic.
+3. Change the monitor only for what the monitor owns: `update --schedule` for a
+   new cadence, `update --to` for a new recipient of failure notices.
+4. Bound the send with `timeout`; a hung send holds the tick.
+5. Never call raw `tmux send-keys` from a monitor script. `thrum tmux send` is
+   the only way a script types into a pane.
+6. Target your own pane. Prompt another agent's pane only when that agent's
+   owner asked for it.
+7. Never send the text a second time from the script. After exit 3 or 4 the text
+   may already sit in the pane: look at the pane and submit or clear it. The
+   next tick sends again by itself.
+8. Keep the output quiet on success. A matching line on every tick fills the
+   inbox with the reminder the pane already received.
+9. Start the monitor with `--cwd` set to your own worktree, so the send runs
+   from the checkout that carries your identity.
 
 ## Script Check
 
@@ -145,6 +261,10 @@ thrum monitor start --name disk-check --to @me \
   echo "CHECK-DISK: root volume at ${u} percent used, free space then rerun df -h /"
   exit 3'
 ```
+
+Inline `bash -c` suits a short probe whose text and threshold are fixed. Put a
+probe whose logic, threshold or wording will change in a script file and give
+the monitor the file's path, as in the pane prompt example.
 
 Rules:
 
@@ -161,7 +281,7 @@ Rules:
 | Outcome  | Script does                              | Target receives                    |
 | -------- | ---------------------------------------- | ---------------------------------- |
 | Quiet    | Exit 0, no matching line                 | Nothing                            |
-| Failure  | Non-zero exit, finding line last         | One `[FAIL] <name>: exit code N` message with the tail and the finding line |
+| Failure  | Non-zero exit, finding line last         | One `[FAIL] <name>@<host>: exit code N` message with the tail and the finding line |
 | Finding  | Exit 0, matching line(s)                 | The line(s), verbatim (labeled only by an `ERROR:`/`FATAL:`/`FAIL:` or `WARN:`/`WARNING:`/`ALERT:` prefix) |
 | Reminder | Exit 0, one stable-prefix instruction    | The line, verbatim                 |
 
@@ -186,6 +306,10 @@ Confirm the body carries the prefix, the wording and no unexpected `[FAIL]`
 or `[WARN]` label. Delete the monitor when done; never alter a monitor another
 agent owns.
 
+A pane prompt sends nothing to the inbox when it works. Verify it by running
+the script once by hand and seeing the prompt in the pane, then by `thrum
+monitor show` reporting exit 0 after the first tick.
+
 ## Troubleshooting
 
 - Nothing arrived: `thrum monitor show` for state and last exit, `thrum
@@ -196,3 +320,12 @@ agent owns.
   with `ERROR:`/`FATAL:`/`FAIL:`, or (continuous job) the line contains a fail or
   error substring.
 - Name already in use: a stopped record holds it. `thrum monitor delete` it.
+- Pane prompt did not appear: `thrum monitor show` for the last exit, then run
+  the script by hand. Check that the script path is absolute and executable,
+  that the agent name in the script is current, and that the monitor's
+  `--cwd` is your worktree.
+- Pane prompt shows the old wording: the script was not saved, or the monitor
+  was started with a different script path than the one you edited.
+- `[WARN]` naming a held or unknown send: the text may sit unsubmitted in the
+  pane. Look at the pane and submit or clear the text. Do not send the text
+  again by hand; the next tick sends it.

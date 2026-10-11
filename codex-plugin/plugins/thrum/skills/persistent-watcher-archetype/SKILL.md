@@ -33,11 +33,29 @@ every agent in your `roster`:
    is escalated to your `parent` every cycle until a coordinator or human
    removes it from your roster — never dropped, never silently given up on (see
    Escalation).
-2. **Watch its context% and warn.** Read its ctx% from YOUR OWN tmux capture of
-   its status bar — **never from a figure it claims about itself** (a message, a
-   memory-footer line, anywhere). If it's getting close to the end and hasn't
-   restarted, warn it. This is the exact mechanism — a watcher that trusts the
-   target's self-report would catch none of them.
+2. **Watch context, warn, and compact only when exhausted.** Read ctx% from YOUR
+   OWN tmux capture of its status bar — **never from a figure it claims about
+   itself** (a message, a memory-footer line, anywhere). Reuse your configured
+   `restart_ctx_pct` as the target warning threshold (default 50%); this does
+   not change its separate use for your own self-restart. At that threshold,
+   warn the target if it has not restarted. Do not compact at the threshold
+   alone. Compact only when a fresh pane capture shows the target is out of
+   context AND two consecutive fresh checks show it at rest, using the idle
+   criteria in "Declared-intent reminders" below. Never interrupt an active
+   turn.
+
+   Get the target runtime from that member's `runtime` field in
+   `thrum team --json`; do not guess. Send its verified compact command
+   (`/compact` for Claude, Codex, and OpenCode; `/summarize` for Cursor; no
+   command for runtimes without a verified equivalent) with one
+   `thrum tmux send <session> "<command>"` call. That call settles and withholds
+   Enter if a dialog appears; never send a separate Enter. Exit 3 (Enter
+   withheld) or 4 (verdict unknown) requires a fresh capture before any retry.
+   If a cross-peer send fails (for example, `can_send_keys` is unavailable),
+   escalate to your `parent` instead of retrying or switching transports. Never
+   resend while the command is queued or already visible in the pane. After
+   sending, report one line to your `parent`.
+
 3. **All of it is judgment.** Read pane, judge (unblock / warn-on-ctx /
    escalate), act or escalate. Every cycle, every roster member.
 4. **Catch declared-but-unexecuted intent.** If a roster member's last assistant
@@ -64,13 +82,13 @@ every agent in your `roster`:
 
 #### Approving or dismissing a modal: keys only, never text
 
-> 🔴 **NEVER answer a modal with a text payload — not even a single character,
-> and never a bare positional argument to `thrum tmux send`.** Plain text TYPES
-> INTO the agent's input box; it does not act as a keypress. If the modal isn't
-> actually showing, or focus differs from what you expect, that text lands in
-> the agent's next command line and can corrupt or execute something you never
-> intended. The only correct primitive is `--keys`, on every call, with no
-> exceptions.
+> 🔴 **For modal handling, NEVER answer with a text payload — not even a single
+> character, and never a bare positional argument to `thrum tmux send`.** Plain
+> text TYPES INTO the agent's input box; it does not act as a keypress. If the
+> modal isn't actually showing, or focus differs from what you expect, that text
+> lands in the agent's next command line and can corrupt or execute something
+> you never intended. The only correct primitive is `--keys`, on every call,
+> with no exceptions.
 
 The procedure, every time, no shortcuts:
 

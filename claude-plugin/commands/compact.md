@@ -223,6 +223,11 @@ if [ "$SNAPSHOT_OK" = 1 ] && [ "$SESSION_OK" = 1 ]; then
   # turn regardless, so the delay costs nothing.
   thrum tmux send "$SESSION" "/compact"
   SEND_RC=$?
+  # Exit 0 may print "ACCEPTED (non-turn command)": the runtime acknowledged the
+  # command without starting a model turn (for example compaction began). That is
+  # SUCCESS - continue to the next step exactly as for a plain exit 0.
+  # Exit 4 UNCONFIRMED means no acknowledgement was seen: inspect the pane before
+  # doing anything else.
   # Exit 3 = HELD (Enter withheld), 4 = VERDICT UNKNOWN: "/compact" is already
   # typed in the pane. Do NOT retype it (that yields "/compact/compact"); report
   # and stop so a human/coordinator can inspect the pane.

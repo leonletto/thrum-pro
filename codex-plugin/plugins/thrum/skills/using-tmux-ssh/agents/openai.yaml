@@ -1,0 +1,4 @@
+interface:
+  display_name: "Using Tmux Ssh"
+  short_description: "Use when about to ssh to a host, run a command on a VM or remote box, start a long test or build on another machine, inspect a remote log, or recover after an ssh connection dropped or a remote command timed out. Use tmux-ssh for remote commands, saved-watch resume, and concurrent observation."
+  default_prompt: "Use when about to ssh to a host, run a command on a VM or remote box, start a long test or build on another machine, inspect a remote log, or recover after an ssh connection dropped or a remote command timed out. Use tmux-ssh for remote commands, saved-watch resume, and concurrent observation."

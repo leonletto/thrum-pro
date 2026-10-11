@@ -127,7 +127,8 @@ rediscovering these the hard way:
    A bound-timeout with ZERO test failures is a FALSE RED, not a finding:
    distinguish it from a genuine hang/deadlock via
    `go run ./cmd/testgate classify-timeout --log <file> --shard-config <file>
-   --shard <name>` (fails closed — only BOUND-TIMEOUT exits 0; HANG and
+   --shard <name> --pkg-dir <package dir>` (shard configs are hash-placed, so
+   `--pkg-dir` is required) (fails closed — only BOUND-TIMEOUT exits 0; HANG and
    UNCLASSIFIED both exit nonzero) before reporting it as a regression.
    If a gate's own command line invokes the bare package path for RPC, that is a gate defect, not a passing lane.
    A HANG or UNCLASSIFIED verdict from `classify-timeout` requires human review.

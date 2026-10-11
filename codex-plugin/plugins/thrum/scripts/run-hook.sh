@@ -6,6 +6,7 @@ set -u
 abi=${1:-}
 adapter=${2:-}
 operation=${3:-}
+recorded_plugin_root=${4:-}
 
 case "${adapter}:${operation}" in
   codex:ensure-permission-activation) legacy_script=ensure-permission-activation.sh ;;
@@ -19,15 +20,18 @@ case "${adapter}:${operation}" in
     ;;
 esac
 
-plugin_root=${PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}
-legacy_path="${plugin_root}/scripts/${legacy_script}"
-
 warn_compatibility() {
   printf 'WARNING: Thrum Codex hook gateway compatibility mode (%s/%s, %s): %s. During binary/plugin version skew, a guard is fail-open only if its bundled legacy handler is unavailable; install matching versions to close that compatibility window.\n' \
     "$abi" "$adapter" "$operation" "$1" >&2
 }
 
 run_legacy() {
+  # Resolve the bundle only on compatibility fallback, never on the hot path.
+  plugin_root=${recorded_plugin_root:-${PLUGIN_ROOT:-}}
+  if [[ -z "$plugin_root" && -n "${BASH_SOURCE[0]:-}" ]]; then
+    plugin_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+  fi
+  legacy_path="${plugin_root}/scripts/${legacy_script}"
   if [[ -f "$legacy_path" && -r "$legacy_path" ]]; then
     warn_compatibility "$1; using bundled ${legacy_script}"
     set +e
@@ -58,6 +62,16 @@ if ! cat >"$tmpdir/input"; then
   exit 1
 fi
 
+# Classify launch failures before invocation so native handler statuses never
+# become missing-binary fallbacks, independently of Bash's diagnostic locale.
+thrum_path=$(command -v thrum || true)
+if [[ -z "$thrum_path" ]]; then
+  run_legacy 'installed Thrum gateway executable is missing from PATH'
+fi
+if [[ ! -x "$thrum_path" ]]; then
+  run_legacy 'installed Thrum gateway executable is not executable'
+fi
+
 thrum hook run --abi "$abi" --adapter "$adapter" --operation "$operation" \
   <"$tmpdir/input" >"$tmpdir/stdout" 2>"$tmpdir/stderr"
 gateway_status=$?
@@ -69,15 +83,6 @@ if [[ $gateway_status -eq 0 ]]; then
 fi
 
 gateway_error=$(cat "$tmpdir/stderr")
-# A missing or non-executable command is binary/plugin skew only when Bash
-# emitted its own invocation diagnostic; a native handler can also return 126/127.
-if [[ $gateway_status -eq 127 && "$gateway_error" =~ run-hook\.sh:\ line\ [0-9]+:\ thrum:\ command\ not\ found ]]; then
-  run_legacy 'installed Thrum gateway executable is missing from PATH'
-fi
-if [[ $gateway_status -eq 126 && "$gateway_error" =~ run-hook\.sh:\ line\ [0-9]+:\ .*thrum:\ Permission\ denied ]]; then
-  run_legacy 'installed Thrum gateway executable is not executable'
-fi
-
 # Only classify expected compatibility diagnostics from the CLI, and never
 # reinterpret a native guard denial (exit 2) as a compatibility failure.
 if [[ $gateway_status -eq 1 ]]; then

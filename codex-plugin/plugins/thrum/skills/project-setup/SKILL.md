@@ -4,7 +4,6 @@ description:
   "Use when converting a plan file (from writing-plans skill) into beads epics,
   tasks, implementation prompts, and worktrees — before any coding begins"
 # source: claude-plugin/skills/project-setup/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Project Setup

@@ -6,7 +6,6 @@ description:
   the ANSWER instead of asking the human directly. Fires when your briefing
   names a steward."
 # source: claude-plugin/skills/brainstorm-queue-aware/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Brainstorm: Queue-Aware Mode

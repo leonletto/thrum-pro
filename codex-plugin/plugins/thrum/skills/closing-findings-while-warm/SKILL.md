@@ -11,7 +11,6 @@ description:
   'fast-follow', 'separate PR' - but the trigger is the ACT of deferring, not
   matching one of these exact phrases."
 # source: claude-plugin/skills/closing-findings-while-warm/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Closing Findings While Warm

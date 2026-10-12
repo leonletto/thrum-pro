@@ -6,7 +6,6 @@ description:
   unblocks the work and leaves an audit trail so the decision can be revisited
   if it later proves wrong"
 # source: claude-plugin/skills/adversarial-critique/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Adversarial Critique: Resolving a Blocking Design Fork Mid-Implementation

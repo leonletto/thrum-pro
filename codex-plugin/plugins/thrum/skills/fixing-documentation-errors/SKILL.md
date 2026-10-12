@@ -14,7 +14,6 @@ description:
   Fires regardless of what you were originally doing; a doc error found mid-task
   is still in scope."
 # source: claude-plugin/skills/fixing-documentation-errors/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Fixing Documentation Errors

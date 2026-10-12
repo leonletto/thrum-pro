@@ -8,7 +8,6 @@ description:
   when you are about to read code or a multi-file doc set to investigate, or
   when you catch yourself opening a log to just check quickly."
 # source: claude-plugin/skills/conversation-only-context/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Conversation-only context — spend your own context on the human, dispatch everything else

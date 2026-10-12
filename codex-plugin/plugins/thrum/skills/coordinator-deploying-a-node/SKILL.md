@@ -8,7 +8,6 @@ description:
   install-before-restart ordering, verify-by-effect, and preventing store
   corruption on migration."
 # source: claude-plugin/skills/coordinator-deploying-a-node/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Coordinator: Deploying a Build to a Single Node — migrating or not

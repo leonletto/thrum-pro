@@ -7,7 +7,6 @@ description:
   conflict-resolution semantics, undelete flow, and the `Type DELETE <id>`
   hard-delete gate."
 # source: claude-plugin/skills/memory-audit-recover/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## memory-audit-recover — history, undelete, hard-delete

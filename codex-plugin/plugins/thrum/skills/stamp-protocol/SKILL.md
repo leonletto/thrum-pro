@@ -4,7 +4,6 @@ description:
   "Use when stamping a plan, prompt, or snapshot - Authored-against format,
   derivation commands, never-type rule."
 # source: claude-plugin/skills/stamp-protocol/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Authored-Against Stamp Protocol

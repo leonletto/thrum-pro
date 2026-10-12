@@ -6,7 +6,6 @@ description:
   for designer/architect-grade work where wake may be cold and must recover wire
   contracts + capability matrix + design rationale.
 # source: claude-plugin/commands/sleep-extended.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 # Thrum Sleep Extended

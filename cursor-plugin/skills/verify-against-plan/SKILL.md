@@ -99,7 +99,7 @@ clear error — do not proceed with partial inputs.
 4. **Authored-against drift check (informational; does not block on missing stamp).**
    Look for a stamp of this form near the top of the plan:
 
-   Literal example: `**Authored-against:** \`a1b2c3d4e5\` target: \`thrum-agents\``
+   Literal example: `**Authored-against:** \`a1b2c3d4e5\` target: \`<merge-target>\``
 
    Regex: `^\*\*Authored-against:\*\* \`([0-9a-f]+)\` target: \`([^\`]+)\``
    (sha → capture group 1, merge_target → capture group 2)

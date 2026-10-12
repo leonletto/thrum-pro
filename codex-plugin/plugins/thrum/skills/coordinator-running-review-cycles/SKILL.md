@@ -5,7 +5,6 @@ description:
   when handling implementer pushback on a finding, or when arriving at a review
   gate. Loads coordinator-specific discipline for running review cycles cleanly."
 # source: claude-plugin/skills/coordinator-running-review-cycles/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Coordinator: Running Review Cycles

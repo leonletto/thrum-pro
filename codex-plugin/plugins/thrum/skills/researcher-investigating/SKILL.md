@@ -5,7 +5,6 @@ description:
   asked to find me X, or to investigate Y. Loads researcher-specific discipline
   for running an investigation cleanly."
 # source: claude-plugin/skills/researcher-investigating/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Researcher: Investigating

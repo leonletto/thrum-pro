@@ -2,7 +2,6 @@
 name: thrum-prime
 description: Load AI-optimized session context
 # source: claude-plugin/commands/prime.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 # Thrum Prime

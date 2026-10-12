@@ -9,7 +9,6 @@ description:
   base, and verify the dropped commits are NOT ancestors of the re-cut tip
   before re-gating and merging."
 # source: claude-plugin/skills/coordinator-branch-split-on-block/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Coordinator: Branch-Split When One Concern Blocks a Multi-Concern Branch

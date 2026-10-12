@@ -6,7 +6,6 @@ description:
   and resumes at low context. Use for in-place context relief when you do NOT
   want to kill the session.
 # source: claude-plugin/commands/compact.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 # Thrum Compact

@@ -7,7 +7,6 @@ description:
   from watcher-archetype (the wake-run-exit scan/emit/report substrate) — this
   archetype stays alive."
 # source: claude-plugin/skills/persistent-watcher-archetype/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Persistent Watcher Archetype

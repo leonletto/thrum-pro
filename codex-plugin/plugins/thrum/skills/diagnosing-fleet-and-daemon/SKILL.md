@@ -13,7 +13,6 @@ description:
   522, database locked. Also use BEFORE restarting any daemon — the pre-restart
   migration check lives here."
 # source: claude-plugin/skills/diagnosing-fleet-and-daemon/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Diagnosing the Fleet and the Daemon

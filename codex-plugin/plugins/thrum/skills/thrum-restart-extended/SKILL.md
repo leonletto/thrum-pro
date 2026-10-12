@@ -6,7 +6,6 @@ description:
   capability matrix, anticipated Q&A, and design rationale that the standard
   $thrum:thrum-restart compact format cannot carry.
 # source: claude-plugin/commands/restart-extended.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 # Thrum Restart Extended

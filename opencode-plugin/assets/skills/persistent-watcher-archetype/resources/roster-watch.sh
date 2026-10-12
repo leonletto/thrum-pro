@@ -6,8 +6,8 @@
 # never-merged personal-branch scripts (`origin/agent/watcher-primary` and
 # `origin/agent/brainstorm-steward`, reconciled against a full byte-level
 # diff account of both) into one canonical, git-tracked script.
-# Neither branch is an ancestor of thrum-agents; this is the first time
-# either design lands in the shared tree.
+# Neither branch is an ancestor of the shared integration branch; this is
+# the first time either design lands in the shared tree.
 #
 # EXECUTION MODEL: single-pass / cron-driven by default (ported from
 # brainstorm-steward, the LATER of the two designs, Sep 10 vs Sep 6). Its

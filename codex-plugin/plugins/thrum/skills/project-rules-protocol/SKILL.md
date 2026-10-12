@@ -3,7 +3,6 @@ name: project-rules-protocol
 description:
   "Use when loading project-specific rules - shared rule skill for role skills."
 # source: claude-plugin/skills/project-rules-protocol/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Project-Specific Rules Protocol

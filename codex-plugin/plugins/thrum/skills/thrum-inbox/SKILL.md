@@ -2,7 +2,6 @@
 name: thrum-inbox
 description: Check message inbox
 # source: claude-plugin/commands/inbox.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 # Thrum Inbox

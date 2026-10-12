@@ -2,7 +2,6 @@
 name: thrum-wait
 description: Block until a message arrives
 # source: claude-plugin/commands/wait.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 # Thrum Wait

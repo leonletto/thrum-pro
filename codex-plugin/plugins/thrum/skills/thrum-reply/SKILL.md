@@ -2,7 +2,6 @@
 name: thrum-reply
 description: Reply to a message
 # source: claude-plugin/commands/reply.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 # Thrum Reply

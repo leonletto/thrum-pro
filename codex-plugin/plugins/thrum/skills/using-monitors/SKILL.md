@@ -10,7 +10,6 @@ description:
   check with exit codes, why a monitor message did not arrive, how to verify a
   monitor delivered."
 # source: claude-plugin/skills/using-monitors/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Thrum Monitors - Reminders, Pane Prompts And Script Checks

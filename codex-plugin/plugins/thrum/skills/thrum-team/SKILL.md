@@ -2,7 +2,6 @@
 name: thrum-team
 description: Show active team members
 # source: claude-plugin/commands/team.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 # Thrum Team

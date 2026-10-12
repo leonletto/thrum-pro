@@ -10,7 +10,6 @@ description:
   in a sub-agent worktree rather than burning main-context tokens on Q-by-Q
   dialog."
 # source: claude-plugin/skills/coordinator-running-brainstorm-cycles/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Coordinator: Running Brainstorm Cycles

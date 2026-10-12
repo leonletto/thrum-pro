@@ -6,7 +6,6 @@ description:
   discipline — when to write, the role-rule pattern, the kind-diversification
   roadmap (deferred to follow-up)."
 # source: claude-plugin/skills/coordinator-maintaining-memory/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Coordinator memory discipline

@@ -10,7 +10,6 @@ description:
   project-setup, about to create epics or beads, plan review, 'does the plan
   cover the spec', 'did we miss anything', 'is the plan complete'."
 # source: claude-plugin/skills/trace-spec-to-plan/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Trace Spec → Plan

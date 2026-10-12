@@ -14,7 +14,6 @@ description:
   flagged always_run in the config runs on EVERY commit regardless of directory,
   including the master-giant-process batch-decomposition lens."
 # source: claude-plugin/skills/coordinator-hotpath-merge-gate/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Coordinator: Hot-Path Merge Gate

@@ -6,7 +6,6 @@ description:
   conventions, title prose convention, tags-as-slug pattern, and scope
   semantics. Common across all roles that write memory."
 # source: claude-plugin/skills/memory-write-discipline/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Writing thrum memory entries

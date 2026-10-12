@@ -6,7 +6,6 @@ description:
   answerable action-picks, consume routed ANSWERS from dashboard results, and
   keep the board's view of your question in sync with reality."
 # source: claude-plugin/skills/brainstormer-dashboard-needs/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Brainstormer/researcher: NEEDs on the dashboard

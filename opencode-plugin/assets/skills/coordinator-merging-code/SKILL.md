@@ -379,7 +379,7 @@ agreeing (`rev-parse origin/<branch>` and `ls-remote`). **Assert the branch TIP*
    agent's memory across restarts. **Never `git add -f`.**
 4. **Delete the merged branch AND drop its queue bundle — one ritual, at merge
    time**, after the push is verified. `feature/*` and `fix/*` are one-shot —
-   delete freely. **`agent/*`, `salvage/*`, `website-dev` and `release/*` are
+   delete freely. **`agent/*`, `salvage/*`, the documentation deployment branch and `release/*` are
    ongoing or archival — do NOT delete.** Then, in the same turn: `thrum queue
    done <bundle>` + `thrum queue drop <bundle>` for the bundle that tracked this
    branch, and `bd close <id>` any beads this merge closed. A merge is not
@@ -430,7 +430,7 @@ hides staleness.
 - `go test … | tail`, or `$?` read after any pipe.
 - Pushing without guarding on the merge's exit status.
 - Declaring a class closed on a count you did not re-derive.
-- Deleting `agent/*`, `salvage/*`, `website-dev` or `release/*`.
+- Deleting `agent/*`, `salvage/*`, the documentation deployment branch or `release/*`.
 - Pushing a merge without dropping the queue bundle that tracked it.
 
 ## See also

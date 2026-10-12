@@ -6,7 +6,6 @@ description:
   CLI. Loads decision flowchart, kind taxonomy, default-safe behaviors, and
   pointers to advanced sub-skills."
 # source: claude-plugin/skills/thrum-memory/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## thrum memory — capture and query structured memories

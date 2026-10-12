@@ -7,7 +7,6 @@ description:
   kicking off implementation work - routing by requirement and checking the
   target's load first."
 # source: claude-plugin/skills/coordinator-dispatching-work/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Coordinator: Dispatching Work

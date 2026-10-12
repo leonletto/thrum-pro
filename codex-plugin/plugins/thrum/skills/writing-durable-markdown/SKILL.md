@@ -8,7 +8,6 @@ description:
   state-the-rule-and-stop, because narrative in a loaded file costs tokens at
   every wake and leaves contradictions nobody can untangle."
 # source: claude-plugin/skills/writing-durable-markdown/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Writing or editing ANY markdown file — state the rule and stop

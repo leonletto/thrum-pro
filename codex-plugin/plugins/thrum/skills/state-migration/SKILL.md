@@ -9,7 +9,6 @@ description:
   thrum state redesign lands, `thrum state list` returning empty while State.md
   exists on disk, being asked to migrate your personal state."
 # source: claude-plugin/skills/state-migration/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Migrating personal State.md into `thrum state`

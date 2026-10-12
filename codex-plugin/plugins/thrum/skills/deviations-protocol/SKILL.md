@@ -4,7 +4,6 @@ description:
   "Use when authoring a plan or implementation prompt - Deviations-from-Source
   block format, required even when empty."
 # source: claude-plugin/skills/deviations-protocol/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Deviations from Source Protocol

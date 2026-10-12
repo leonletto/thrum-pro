@@ -5,7 +5,6 @@ description:
   answer, carrying a decision or request through an intermediary, summarizing
   another author's message, or adding interpretation to someone else's words."
 # source: claude-plugin/skills/agent-messaging-protocol/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Agent Messaging Protocol for Forwarding and Relaying

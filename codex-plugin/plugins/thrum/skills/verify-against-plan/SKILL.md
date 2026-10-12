@@ -8,7 +8,6 @@ description:
   structured findings - missing scope, unmet acceptance criteria, silent
   deviations from the spec, newly-introduced surprises."
 # source: claude-plugin/skills/verify-against-plan/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Verify Against Plan
@@ -108,7 +107,7 @@ clear error — do not proceed with partial inputs.
    stamp).** Look for a stamp of this form near the top of the plan:
 
    Literal example: `**Authored-against:** \`a1b2c3d4e5\` target:
-   \`thrum-agents\``
+   \`<merge-target>\``
 
    Regex: `^\*\*Authored-against:\*\* \`([0-9a-f]+)\` target: \`([^\`]+)\`` (sha
    → capture group 1, merge_target → capture group 2)

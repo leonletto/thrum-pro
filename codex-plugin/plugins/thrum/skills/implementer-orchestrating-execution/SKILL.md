@@ -6,7 +6,6 @@ description:
   procedure — dispatch research, implementation, and verification to sub-agents
   and synthesize their output instead of doing the legwork inline."
 # source: claude-plugin/skills/implementer-orchestrating-execution/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Implementer: Orchestrating Execution

@@ -7,7 +7,6 @@ description:
   discipline assumption); step 2 surfaces newly-shipped skills since the agent
   last ran."
 # source: claude-plugin/skills/prime-agent/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Thrum: Prime Scheduled Agent (Lean)

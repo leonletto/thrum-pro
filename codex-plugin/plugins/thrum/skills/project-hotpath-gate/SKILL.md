@@ -10,7 +10,6 @@ description:
   invocation generates from project inspection; subsequent invocations reconcile
   against current project state and propose diffs."
 # source: claude-plugin/skills/project-hotpath-gate/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Project Hot-Path Gate

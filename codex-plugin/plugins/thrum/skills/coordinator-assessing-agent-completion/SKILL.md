@@ -13,7 +13,6 @@ description:
   from the transcript plus a DIRECT-OBSERVATION liveness check (live tmux pane /
   ppid, not a snapshot-presence proxy), never a kill list."
 # source: claude-plugin/skills/coordinator-assessing-agent-completion/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Assessing Whether an Agent Is Finished — and Whether a Worktree Is Safe to Reap

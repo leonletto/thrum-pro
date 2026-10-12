@@ -7,7 +7,6 @@ description:
   status-driven read semantics, cycle and single-parent rules, and the
   unlink-supersede footgun."
 # source: claude-plugin/skills/memory-curate/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## memory-curate — edges, status, hierarchy

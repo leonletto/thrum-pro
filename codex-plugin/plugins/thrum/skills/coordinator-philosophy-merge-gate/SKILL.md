@@ -10,7 +10,6 @@ description:
   distinct pass rather than folded into the dual review. NEVER skipped except
   for a one-line config change, a typo, or a test-only diff."
 # source: claude-plugin/skills/coordinator-philosophy-merge-gate/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Coordinator: Philosophy Merge Gate

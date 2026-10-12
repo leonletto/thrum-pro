@@ -7,7 +7,6 @@ description:
   the domain skill-pack plug-in contract for security/lint/deps/etc. watchers
   built on the v0.11 watcher substrate."
 # source: claude-plugin/skills/watcher-archetype/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Watcher Archetype: the deterministic run cycle

@@ -7,7 +7,6 @@ description:
   posted question is a PROMISE — it stays answerable and visible until answered,
   and nothing on the board disappears silently on your side."
 # source: claude-plugin/skills/coordinator-dashboard-human-loop/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Coordinator dashboard: the human loop

@@ -12,7 +12,6 @@ description:
   orchestration) resolved to a concrete model+effort for whichever runtime you
   are actually running under, and cheap parallel fan-out."
 # source: claude-plugin/skills/choosing-subagent-models/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Choosing Subagent Models

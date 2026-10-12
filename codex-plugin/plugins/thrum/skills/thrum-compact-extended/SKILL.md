@@ -7,7 +7,6 @@ description:
   capability matrix, and design rationale that the standard $thrum:thrum-compact
   format cannot carry.
 # source: claude-plugin/commands/compact-extended.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 # Thrum Compact Extended

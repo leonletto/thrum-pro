@@ -2,7 +2,6 @@
 name: thrum-overview
 description: Combines identity, team, inbox, and sync status
 # source: claude-plugin/commands/overview.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 # Thrum Overview

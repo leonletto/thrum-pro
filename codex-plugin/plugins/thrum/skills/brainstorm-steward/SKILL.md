@@ -8,7 +8,6 @@ description:
   (the brainstormer runs its own project-setup after approval). Never decides
   content."
 # source: claude-plugin/skills/brainstorm-steward/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Brainstorm Steward

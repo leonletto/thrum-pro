@@ -7,7 +7,6 @@ description:
   order and the promotion gate between stages, and delegates each node to the
   coordinator-deploying-a-node runbook. Load this BEFORE dispatching any node."
 # source: claude-plugin/skills/coordinator-rolling-out-to-nodes/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Coordinator: Rolling Out a Build Across All Nodes — staged order, canary, promotion gate

@@ -4,7 +4,6 @@ description:
   "Use when generating config or docs from templates - idempotency invariant for
   generator skills."
 # source: claude-plugin/skills/generator-idempotency-protocol/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Generator Idempotency Protocol

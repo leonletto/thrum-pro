@@ -2,7 +2,6 @@
 name: thrum-update-project
 description: Update project state with session summary and mechanical state
 # source: claude-plugin/commands/update-project.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 # Thrum Update Project

@@ -6,7 +6,6 @@ description:
   wonder what is actually usable today. Carries the CLI surface, the write/read
   discipline, and the live-vs-coming honesty table."
 # source: claude-plugin/skills/using-the-dashboard/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Using the Agent Dashboard

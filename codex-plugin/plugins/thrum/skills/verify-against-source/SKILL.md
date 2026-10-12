@@ -7,7 +7,6 @@ description:
   planning-skill review loop. Outputs structured findings - missing scope,
   silent deviations from the source, scope creep, misunderstandings."
 # source: claude-plugin/skills/verify-against-source/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Verify Against Source

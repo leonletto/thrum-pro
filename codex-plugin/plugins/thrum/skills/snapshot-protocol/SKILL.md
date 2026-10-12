@@ -4,7 +4,6 @@ description:
   "Use when composing a restart snapshot or continuation - snapshot structure,
   worktree resolution, write rules."
 # source: claude-plugin/skills/snapshot-protocol/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Snapshot Composition Protocol

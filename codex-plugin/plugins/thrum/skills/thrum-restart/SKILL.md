@@ -4,7 +4,6 @@ description:
   Save a conversation snapshot and prepare for session restart. Use when you
   need a fresh session due to context exhaustion, rate limits, or stuck state.
 # source: claude-plugin/commands/restart.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 # Thrum Restart

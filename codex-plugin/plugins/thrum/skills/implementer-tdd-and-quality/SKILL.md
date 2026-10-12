@@ -5,7 +5,6 @@ description:
   reporting a task done. Loads project-specific test and quality discipline that
   complements superpowers:test-driven-development."
 # source: claude-plugin/skills/implementer-tdd-and-quality/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Implementer: TDD and Quality

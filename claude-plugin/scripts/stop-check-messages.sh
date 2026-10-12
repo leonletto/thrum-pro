@@ -6,12 +6,20 @@
 # Dependencies: jq 1.6+ (for now/fromdate), thrum CLI
 # This is an instant check (no blocking wait) — runs in <1s per turn.
 
+# Start the runtime's 15-second Stop budget before input or preflight.
+SECONDS=0
+
 # Read hook input JSON — we need stop_hook_active to prevent infinite loops
 INPUT=$(cat)
+
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 
 # Check if we're already in a stop-hook continuation cycle
 STOP_HOOK_ACTIVE=$(echo "$INPUT" | grep -o '"stop_hook_active":\s*true' || true)
 if [ -n "$STOP_HOOK_ACTIVE" ]; then
+  AGENT_ID="${THRUM_AGENT_ID:-${THRUM_NAME:-}}"
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  bash "${SCRIPT_DIR}/stop-set-idle.sh" "$PROJECT_DIR" "$AGENT_ID" "$((15 - SECONDS - 1))"
   exit 0
 fi
 
@@ -23,7 +31,6 @@ if ! thrum daemon status &>/dev/null; then
   exit 0
 fi
 
-PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 THRUM_CONFIG="${PROJECT_DIR}/.thrum/config.json"
 
 # Early exit: no thrum workspace
@@ -70,6 +77,8 @@ fi
 TMUX_SESSION=$(cd "$PROJECT_DIR" && THRUM_AGENT_ID="$AGENT_ID" \
   thrum whoami --field tmux_session 2>/dev/null)
 if [ -n "$TMUX_SESSION" ]; then
+	SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	bash "${SCRIPT_DIR}/stop-set-idle.sh" "$PROJECT_DIR" "$AGENT_ID" "$((15 - SECONDS - 1))"
   exit 0
 fi
 
@@ -95,6 +104,13 @@ if ! kill -0 "$LISTENER_PID" 2>/dev/null; then
   rm -f "$PID_FILE"
   exit 2
 fi
+
+# All stop gates passed: clear only a still-working status. Keep the RPC
+# bounded because Stop hooks run synchronously in the agent's turn lifecycle.
+# The client deadline bounds our wait; the daemon may already have accepted
+# the write when that deadline expires.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+bash "${SCRIPT_DIR}/stop-set-idle.sh" "$PROJECT_DIR" "$AGENT_ID" "$((15 - SECONDS - 1))"
 
 # No unread messages and listener is healthy — let Claude proceed normally
 exit 0

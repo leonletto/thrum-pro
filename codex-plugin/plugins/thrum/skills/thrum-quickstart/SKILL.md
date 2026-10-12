@@ -2,7 +2,6 @@
 name: thrum-quickstart
 description: Register agent and start session
 # source: claude-plugin/commands/quickstart.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 # Thrum Quickstart

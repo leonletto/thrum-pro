@@ -8,7 +8,6 @@ description:
   schema / release-gating items, for items the human flagged as theirs, or for
   the dispatch and execution mechanics themselves."
 # source: claude-plugin/skills/coordinator-running-autonomous-feature-development/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Coordinator: Running Autonomous Feature Development

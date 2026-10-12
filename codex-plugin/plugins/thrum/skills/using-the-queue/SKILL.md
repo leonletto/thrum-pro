@@ -12,7 +12,6 @@ description:
   thrum queue CLI - bundles, embedded items, status, assignment provenance, and
   reading another agent's queue."
 # source: claude-plugin/skills/using-the-queue/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Using the Thrum Queue

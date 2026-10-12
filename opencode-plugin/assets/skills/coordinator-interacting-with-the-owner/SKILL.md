@@ -131,7 +131,7 @@ a rule gets obeyed.** Same situation, both ways.
 ❌ *"<orchestrator> just finished reviewing <implementer>'s branch. The review found two
 minor issues: an unused import in redact.go and a missing test case for the
 empty-string path. Both were fixed and the branch is now clean. I'm going to
-merge it into thrum-agents now and then check on the next epic..."*
+merge it into the shared integration branch now and then check on the next epic..."*
 ✅ Nothing to the pane. If the agent needs an ack, `thrum reply <msg_id>
 --stdin <<'EOF'` with `merged, see <merge-target>` as the body — the pane stays
 silent.

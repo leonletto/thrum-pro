@@ -8,7 +8,6 @@ description:
   merge state, drops rot, adds missing committed work. Any role. A repeatable
   subset of a full multi-agent reconcile - scoped to YOUR queue only."
 # source: claude-plugin/skills/update-queue/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Thrum: Update Your Queue (reconcile against ground truth)

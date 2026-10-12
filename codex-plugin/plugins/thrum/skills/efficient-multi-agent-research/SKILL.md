@@ -6,7 +6,6 @@ description:
   task with partitionable items that would pollute the main agent's context if
   read directly"
 # source: claude-plugin/skills/efficient-multi-agent-research/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Efficient Multi-Agent Research

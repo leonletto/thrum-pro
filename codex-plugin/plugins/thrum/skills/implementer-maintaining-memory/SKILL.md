@@ -6,7 +6,6 @@ description:
   discipline — single write path (agent_rule), refactoring opportunities go to
   bd not memory, stay minimal."
 # source: claude-plugin/skills/implementer-maintaining-memory/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Implementer memory discipline

@@ -5,7 +5,6 @@ description:
   your Thrum agents. Creates .thrum/role_templates/ files that auto-apply on
   agent registration."
 # source: claude-plugin/skills/configure-roles/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Configure Roles

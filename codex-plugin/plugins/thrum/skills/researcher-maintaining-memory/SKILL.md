@@ -7,7 +7,6 @@ description:
   via git diff, namespace conventions. References common memory skills for
   write/read/maintain basics."
 # source: claude-plugin/skills/researcher-maintaining-memory/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Researcher memory discipline

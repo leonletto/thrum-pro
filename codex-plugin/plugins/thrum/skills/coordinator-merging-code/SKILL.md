@@ -10,7 +10,6 @@ description:
   the lenses yourself, tripwire checks, gating the MERGED tree, the committed
   verdict artifact, the efficacy row, and branch disposal."
 # source: claude-plugin/skills/coordinator-merging-code/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Coordinator: Merging Code — the full sequence, every time
@@ -395,12 +394,12 @@ TIP** — ancestry proves a merge EXISTS, never WHAT landed.
    the agent's memory across restarts. **Never `git add -f`.**
 4. **Delete the merged branch AND drop its queue bundle — one ritual, at merge
    time**, after the push is verified. `feature/*` and `fix/*` are one-shot —
-   delete freely. **`agent/*`, `salvage/*`, `website-dev` and `release/*` are
-   ongoing or archival — do NOT delete.** Then, in the same turn:
-   `thrum queue done <bundle>` + `thrum queue drop <bundle>` for the bundle that
-   tracked this branch, and `bd close <id>` any beads this merge closed. A merge
-   is not complete until the branch ref AND its queue bundle are both gone — the
-   same act that lands the code retires its tracking.
+   delete freely. **`agent/*`, `salvage/*`, the documentation deployment branch
+   and `release/*` are ongoing or archival — do NOT delete.** Then, in the same
+   turn: `thrum queue done <bundle>` + `thrum queue drop <bundle>` for the
+   bundle that tracked this branch, and `bd close <id>` any beads this merge
+   closed. A merge is not complete until the branch ref AND its queue bundle are
+   both gone — the same act that lands the code retires its tracking.
 
 ### 7a. BEFORE YOU ACCEPT A VERDICT — CONFIRM THE RUNNER TORE ITS OWN THINGS DOWN
 
@@ -449,7 +448,8 @@ hides staleness.
 - `go test … | tail`, or `$?` read after any pipe.
 - Pushing without guarding on the merge's exit status.
 - Declaring a class closed on a count you did not re-derive.
-- Deleting `agent/*`, `salvage/*`, `website-dev` or `release/*`.
+- Deleting `agent/*`, `salvage/*`, the documentation deployment branch or
+  `release/*`.
 - Pushing a merge without dropping the queue bundle that tracked it.
 
 ### See also

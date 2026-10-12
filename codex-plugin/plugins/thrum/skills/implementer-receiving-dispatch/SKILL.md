@@ -5,7 +5,6 @@ description:
   scoping a fresh task, or receiving dispatch. Loads implementer-specific
   discipline for kicking off work cleanly."
 # source: claude-plugin/skills/implementer-receiving-dispatch/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Implementer: Receiving Dispatch
@@ -110,9 +109,9 @@ the `implementer-maintaining-memory` skill — it references the
 
 Immediately after sending the dispatch ACK, write `agent_status="working"` to
 your local identity file. This is the Pattern D self-write that makes
-`agent_status` carry signal across the fleet — the sweep script +
-coordinator-context-monitoring skill use it to flag agents that go tmux-quiet
-despite claiming `working` (STUCK-WORKING classification).
+`agent_status` carry signal across the fleet; the coordinator context monitoring
+sweep uses it to flag agents that go tmux-quiet despite claiming `working`
+(STUCK-WORKING classification).
 
 ```bash
 # Step 1: ACK the dispatch within 2 minutes

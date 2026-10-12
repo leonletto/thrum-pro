@@ -12,6 +12,9 @@
 # -e intentionally omitted: external commands use || true / || exit 0 guards.
 set -uo pipefail
 
+# Start the runtime's 15-second Stop budget before input or preflight.
+SECONDS=0
+
 # Read hook input JSON — we need stop_hook_active to prevent infinite loops
 INPUT=$(cat)
 
@@ -28,6 +31,9 @@ CWD=$(echo "$INPUT" | jq -r '.cwd // "."')
 # Check if we're already in a stop-hook continuation cycle
 STOP_HOOK_ACTIVE=$(echo "$INPUT" | grep -o '"stop_hook_active":\s*true' || true)
 if [ -n "$STOP_HOOK_ACTIVE" ]; then
+  AGENT_ID="${THRUM_AGENT_ID:-${THRUM_NAME:-}}"
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  bash "${SCRIPT_DIR}/stop-set-idle.sh" "$CWD" "$AGENT_ID" "$((15 - SECONDS - 1))"
   exit 0
 fi
 
@@ -91,6 +97,8 @@ fi
 TMUX_SESSION=$(cd "$CWD" && THRUM_AGENT_ID="$AGENT_ID" \
   thrum whoami --field tmux_session 2>/dev/null)
 if [ -n "$TMUX_SESSION" ]; then
+	SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	bash "${SCRIPT_DIR}/stop-set-idle.sh" "$CWD" "$AGENT_ID" "$((15 - SECONDS - 1))"
   exit 0
 fi
 
@@ -114,6 +122,13 @@ if ! kill -0 "$LISTENER_PID" 2>/dev/null; then
   printf '{"decision":"block","reason":"Your background message listener has stopped (stale PID file). Restart it."}\n'
   exit 0
 fi
+
+# All stop gates passed: clear only a still-working status. Keep the RPC
+# bounded because Stop hooks run synchronously in the agent's turn lifecycle.
+# The client deadline bounds our wait; the daemon may already have accepted
+# the write when that deadline expires.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+bash "${SCRIPT_DIR}/stop-set-idle.sh" "$CWD" "$AGENT_ID" "$((15 - SECONDS - 1))"
 
 # No unread messages and listener is healthy — let Codex proceed normally
 exit 0

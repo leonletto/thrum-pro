@@ -8,7 +8,6 @@ description:
   verbs. For advanced FTS5 plus embedding search options, see also the
   memory-search-advanced skill."
 # source: claude-plugin/skills/memory-read-discipline/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Reading thrum memory entries

@@ -2,7 +2,6 @@
 name: thrum-send
 description: Send a message to an agent
 # source: claude-plugin/commands/send.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 # Thrum Send

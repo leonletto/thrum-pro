@@ -3,7 +3,6 @@ name: thrum-load-context
 description:
   Restore saved agent work context after compaction or session restart
 # source: claude-plugin/commands/load-context.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 # Thrum Load Context

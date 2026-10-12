@@ -6,7 +6,6 @@ description:
   leave the worktree clean. Resolves the target and merge owner from Thrum
   config, preserves local work, and verifies freshness after the merge."
 # source: claude-plugin/skills/brainstormer-staying-current/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Brainstormer: Stay Current with the Merge Target

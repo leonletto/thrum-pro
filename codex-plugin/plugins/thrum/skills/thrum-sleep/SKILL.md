@@ -6,7 +6,6 @@ description:
   when the operator is shutting down (e.g. computer restart) and the agent
   should resume from snapshot on next boot.
 # source: claude-plugin/commands/sleep.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 # Thrum Sleep

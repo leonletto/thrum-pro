@@ -67,8 +67,8 @@ Report the result as one line:
 Branch pushed: <branch-name> @ <sha> (git ls-remote origin refs/heads/<branch-name> confirms)
 ```
 
-**Never push `thrum-agents`, `main`, or `website-dev`** — the coordinator merges
-those.
+**Never push protected integration or release branches** — the coordinator
+merges those.
 
 Never report DONE with the push status silently omitted — an orchestrator
 that removes a worktree assuming "DONE implies pushed" on a project that
@@ -121,8 +121,8 @@ When reporting DONE to the coordinator, write `agent_status="idle"` to your
 local identity file. This closes the `working→idle` transition opened by the ACK
 template's `set-status working` (sibling skill
 `implementer-receiving-dispatch`). The sweep script reads this field to
-distinguish "agent finished cleanly" from "agent stuck claiming to work" — see
-`coordinator-context-monitoring` SKILL.md for the tier-ladder consumption.
+distinguish "agent finished cleanly" from "agent stuck claiming to work";
+the coordinator context monitoring sweep uses it as one signal in its tier ladder.
 
 ```bash
 # Step 1: Report DONE to coordinator

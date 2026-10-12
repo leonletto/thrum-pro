@@ -19,7 +19,10 @@ The scripts are auditable plain Bash under `codex-plugin/scripts/`:
   `.thrum/var/tls/` (the daemon's CA keys) into git, or pipes a CA private key
   into a network or transmit command.
 - `stop-check-messages.sh` — reads inbox and listener state; may emit a
-  block-stop continuation prompt.
+  block-stop continuation prompt. When no unread messages exist, it may make
+  one best-effort local-daemon status update from `working` to `idle`. The
+  update is conditional, so `blocked` and `stuck` statuses are preserved; the
+  status call uses the local daemon's Unix socket.
 
 If `jq` is missing, or a guard hook's input cannot be read or parsed, the two
 guard hooks above allow the command and print one line on stderr naming the

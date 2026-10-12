@@ -5,7 +5,6 @@ description:
   execution with review gates, and preparing merge reports. Use when the
   orchestrator receives a plan handoff from the coordinator."
 # source: claude-plugin/skills/orchestrate/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Orchestrate: Managed Plan Execution

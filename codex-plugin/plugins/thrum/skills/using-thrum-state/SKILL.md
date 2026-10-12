@@ -11,7 +11,6 @@ description:
   - citing a fleet fact, deploying, restarting a daemon, migrating schema,
   reconciling state at session start, receiving a stale-row ping."
 # source: claude-plugin/skills/using-thrum-state/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Using Thrum State

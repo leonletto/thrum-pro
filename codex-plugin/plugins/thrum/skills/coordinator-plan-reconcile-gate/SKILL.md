@@ -11,7 +11,6 @@ description:
   the single standing exception to the never-select-Fable rule — see Step 2 for
   the cited scope of that exception."
 # source: claude-plugin/skills/coordinator-plan-reconcile-gate/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Coordinator: Plan Reconcile Gate

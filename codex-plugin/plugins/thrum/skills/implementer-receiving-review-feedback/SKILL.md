@@ -5,7 +5,6 @@ description:
   a review cycle, or when responding to review. Loads implementer-specific
   discipline that complements superpowers:receiving-code-review."
 # source: claude-plugin/skills/implementer-receiving-review-feedback/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Implementer: Receiving Review Feedback

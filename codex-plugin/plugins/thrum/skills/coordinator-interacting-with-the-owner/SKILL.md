@@ -12,7 +12,6 @@ description:
   than a heredoc, or a context percentage has not been re-measured since it was
   first noticed."
 # source: claude-plugin/skills/coordinator-interacting-with-the-owner/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Coordinator: Interacting with the Owner
@@ -139,10 +138,10 @@ rule gets obeyed.** Same situation, both ways.
 **An agent reports a completed review.** ❌ _"<orchestrator> just finished
 reviewing <implementer>'s branch. The review found two minor issues: an unused
 import in redact.go and a missing test case for the empty-string path. Both were
-fixed and the branch is now clean. I'm going to merge it into thrum-agents now
-and then check on the next epic..."_ ✅ Nothing to the pane. If the agent needs
-an ack, `thrum reply <msg_id> --stdin <<'EOF'` with `merged, see <merge-target>`
-as the body — the pane stays silent.
+fixed and the branch is now clean. I'm going to merge it into the shared
+integration branch now and then check on the next epic..."_ ✅ Nothing to the
+pane. If the agent needs an ack, `thrum reply <msg_id> --stdin <<'EOF'` with
+`merged, see <merge-target>` as the body — the pane stays silent.
 
 **An agent surfaces a decision that genuinely needs the owner.** ❌ 300 words of
 background, the options considered, the tradeoffs, and a recommendation, before

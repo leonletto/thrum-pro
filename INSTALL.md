@@ -139,6 +139,18 @@ muse plugins update thrum
 muse plugins approve thrum
 ```
 
+Check the result with `muse plugins list`. If the version did not change, or
+`muse plugins install` reports that `thrum` is `already installed from a
+different source` (an install made from another marketplace or a local
+folder), remove the plugin and install it again from this marketplace, then
+approve it:
+
+```bash
+muse plugins remove thrum
+muse plugins install thrum@leonletto
+muse plugins approve thrum
+```
+
 ## Cursor
 
 Install the Cursor Agent CLI, log in, and add this GitHub repository as a

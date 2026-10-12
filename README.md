@@ -134,6 +134,8 @@ opencode plugin opencode-thrum-pro
 ```
 
 Use `opencode plugin opencode-thrum-pro --global` for the global configuration.
+That command does not update an existing install (OpenCode keeps its cached
+copy); see [INSTALL.md](INSTALL.md#opencode) for the update step.
 To configure it manually, add the package to `opencode.json` (or the global
 `~/.config/opencode/opencode.jsonc`).
 

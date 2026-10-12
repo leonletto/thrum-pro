@@ -214,5 +214,31 @@ Then add it to your project's `opencode.json` (or global
 }
 ```
 
+Updating an existing install:
+
+OpenCode caches an npm plugin the first time it fetches it and does not fetch
+it again, so re-running `opencode plugin opencode-thrum-pro` leaves an existing
+install on its old version. To move to the newest release, pin the version and
+overwrite the configured entry:
+
+```bash
+opencode plugin "opencode-thrum-pro@$(npm view opencode-thrum-pro version)" --global --force
+```
+
+Drop `--global` and run it inside the project for a project configuration.
+Alternatively keep the unpinned entry and clear the cached copy, then start
+OpenCode:
+
+```bash
+rm -r ~/.cache/opencode/packages/opencode-thrum-pro@latest
+```
+
+Either step has to be repeated for each new release. Confirm the loaded
+version with:
+
+```bash
+opencode debug config --print-logs 2>&1 | grep "assets installed"
+```
+
 Verification: start OpenCode and confirm its log contains the Thrum asset
 installation message and per-skill install lines.

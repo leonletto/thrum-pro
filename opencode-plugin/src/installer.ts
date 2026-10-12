@@ -273,11 +273,9 @@ export function readFilePatternFor(filePath: string): string {
   return stripLeadingSlash(filePath)
 }
 
-// loadAllowlist reads the canonical allowlist JSON asset bundled with this
-// plugin (opencode-plugin/assets/thrum_allowlist.json — a byte-for-byte
-// copy of the Go-owned canonical allowlist source, kept in sync by
-// scripts/sync-skills.sh's sync_opencode step; see that script's comment
-// for why a copy is needed instead of a live cross-language import).
+// loadAllowlist reads this plugin's bundled command allowlist. The project
+// build keeps the bundled copy identical to its canonical source; update the
+// source and rebuild instead of editing either copy by hand.
 export function loadAllowlist(assetPath: string = ALLOWLIST_ASSET_PATH): AllowlistSource {
   const raw = fs.readFileSync(assetPath, "utf8")
   return JSON.parse(raw) as AllowlistSource

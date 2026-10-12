@@ -321,7 +321,7 @@ not write "### BLOCKING #0 — none".
 
 - **BLOCKING** — a named acceptance criterion is unmet, or the implementation
   contradicts a stated invariant. Must be fixed before merge. Example: plan's
-  File Structure claims `internal/auth/session.go` exists but no such file was
+  File Structure claims `<path/to/file>` exists but no such file was
   added; plan's Test plan names a test that isn't present in the diff. Also:
   drift check found that a specific plan claim (file:line anchor, function name,
   or precondition) is now demonstrably false after cited files moved.

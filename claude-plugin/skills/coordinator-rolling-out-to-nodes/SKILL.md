@@ -62,7 +62,7 @@ Build once per artifact on its `artifact.build_host` via `artifact.build_command
 ## 5. The staged order — canary, waves, prepare-and-hold, promotion gate
 
 > 🔴 **If any node fails during the rollout — canary or any wave — STOP THE ROLLOUT.** Do not roll, restart, or recommend
-> restarting any further node (including the build host / primary) until the failure is root-caused and fixed or the
+> restarting any further node (including the build host) until the failure is root-caused and fixed or the
 > owner explicitly decides to continue. A node that went down and was recovered by hand is a FAILURE, not a green.
 
 - **Canary first, alone.** One node (adapter `topology.canary`) rolls first. Its health must be observed green before any wave proceeds.
@@ -94,4 +94,4 @@ The node's local runbook is `coordinator-deploying-a-node` — reference that sk
 - If `fleet.deployment.thrum.products` exists (vestigial), STOP — products live only at `fleet.deployment.products`.
 - If a node reports success by exit code alone without observed-effect verification, treat as not-verified.
 - Never wrap a service restart in a blind timeout on the node (see node skill `service.never_timeout` and `migration.signal_rules`).
-- 🔴 A **macOS** node (including the build host / primary) restarted with the plain `service.restart_command` instead of `service.mac_restart_command` (Thrum: `scripts/mac-daemon-restart-via-cron.sh`). The daemon loses its Local Network permission and its LAN peers go dark while it looks healthy. Put the mac command in every macOS node's dispatch, and use it yourself when you roll the build host last.
+- 🔴 A **macOS** node restarted with the plain `service.restart_command` instead of `service.mac_restart_command` (Example — Thrum adapter: `service.mac_restart_command`). The daemon loses its Local Network permission and its LAN peers go dark while it looks healthy. Put the mac command in every macOS node's dispatch, and use it yourself when you roll the build host last.

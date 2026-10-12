@@ -93,7 +93,7 @@ dispatch time — hand this list verbatim:
    **Exception: `internal/daemon/rpc` must NEVER be run monolithically** — a
    bare `go test [-race] ./internal/daemon/rpc` cannot finish inside any
    gate-length timeout. Run it through the sharded runner (`race-shard`,
-   `scripts/test-run.sh race ./internal/daemon/rpc`, or `make gate`) and confirm
+   the project's sharded race test runner on `./internal/daemon/rpc`, or `make gate`) and confirm
    the gate's output shows it executed. A bound-timeout with ZERO test failures
    is a false red: classify it with `go run ./cmd/testgate classify-timeout
    --log <file> --shard-config <file> --shard <name> --pkg-dir <package dir>` (only BOUND-TIMEOUT exits

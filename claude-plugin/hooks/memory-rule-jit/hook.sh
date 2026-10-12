@@ -27,7 +27,7 @@
 # not propagate hooks to opencode/codex/cursor plugins (they use different hook
 # registration mechanisms). Manual step required per plugin when adopting.
 #
-# Smoke test: edit internal/daemon/x.go → hard rule (safedb) fires ask.
+# Smoke test: edit path/to/x.go → hard rule (safedb) fires ask.
 #             Edit again → dedup prevents re-fire (exits 0 for already-injected).
 
 set -u

@@ -261,5 +261,5 @@ name the wrong path or wrong query explicitly, so the next reader recognises
 their own mistake rather than just reading the right answer; and if a claim is
 about runtime behaviour, say how it was measured.
 
-> _Dev-fleet only: after editing, run `scripts/sync-skills.sh` so every runtime
-> plugin picks it up._
+> _Dev-fleet only: after editing, regenerate the runtime plugin mirrors so every
+> runtime plugin picks it up._

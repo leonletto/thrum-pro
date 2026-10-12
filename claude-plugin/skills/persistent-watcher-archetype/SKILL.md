@@ -454,7 +454,7 @@ problem rather than a clean tick.
 
 ## Relationship to the deterministic context-monitoring sweep
 
-You are NOT a replacement for `scripts/error-and-context-agent-sweep.sh`
+You are NOT a replacement for the fleet's deterministic context-monitoring sweep
 (the `context-monitoring` `thrum monitor` job, `@every 30m`,
 self-gated to ~30-60min effective) — the two COEXIST. The sweep stays the fleet-wide, always-on,
 zero-incremental-cost tripwire covering every agent, including ones with no

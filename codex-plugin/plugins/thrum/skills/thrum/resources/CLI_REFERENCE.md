@@ -1057,7 +1057,7 @@ thrum memory migrate-from-bd --rollback --confirm-rollback "DELETE 53"
 
 # Explicit manifest, hard purge:
 thrum memory migrate-from-bd --rollback \
-  --manifest dev-docs/migrations/2026-05-26T1500Z-bd-to-thrum-migration-manifest.json \
+  --manifest <migration-manifest.json> \
   --hard --confirm-rollback "DELETE 53"
 ```
 

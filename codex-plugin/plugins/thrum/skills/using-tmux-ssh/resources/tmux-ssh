@@ -1,0 +1,1158 @@
+#!/usr/bin/env bash
+#
+# tmux-ssh - run commands on a remote host through one persistent ssh login session.
+# Usage: tmux-ssh --help.
+set -uo pipefail
+
+print_help() {
+  cat <<'TSSH_HELP_EOF'
+tmux-ssh - run commands on a remote host through one persistent ssh login session.
+
+QUICK START  (HOST is an ssh alias or [user@]host)
+  tmux-ssh HOST "make test"                      run a command that ENDS: prints its output, exits with its code
+  tmux-ssh HOST "tmux new -d -s NAME 'cmd'"      start a long job in a remote tmux session, detached
+  tmux-ssh HOST --send "vim f"                   drive a program that stays open (vim, top, REPL, prompt):
+  tmux-ssh HOST --read --settle                    type, look at the screen,
+  tmux-ssh HOST --send --key Escape                send a named key
+  tmux-ssh HOST --timeout 900 "cmd"              long command; on exit 124 keep waiting: tmux-ssh HOST --resume
+  tmux-ssh HOST --expect 'Password:=secret' "cmd"   answer a prompt automatically
+  tmux-ssh HOST --abort                          stuck host: Ctrl-C the command and clear the watch
+  tmux-ssh HOST --kill                           still stuck: drop the ssh session
+
+TWO MODES
+  run mode          tmux-ssh HOST "cmd"    waits for cmd to FINISH; for commands that end.
+  interactive mode  --send / --read        for programs that stay open (vim, tmux attached, top, REPLs, prompts).
+
+COMMANDS
+  tmux-ssh HOST                     connect if needed; print status
+  tmux-ssh HOST "cmd"               run mode (see above)
+  tmux-ssh HOST --status            show the recorded session (prints "not connected" if there is none)
+  tmux-ssh HOST --resume            keep waiting for a timed-out command (never re-sends it)
+  tmux-ssh HOST --abort             send Ctrl-C to the watched command, wait briefly, clear the watch
+                                    exit 0: host ready for the next command; 1: the shell did not answer (--read, then --send --key or --kill)
+  tmux-ssh HOST --kill              close the ssh session and clear all saved state
+  tmux-ssh HOST --attach            attach your terminal to the session (detach with C-b d)
+  tmux-ssh HOST --send "text"       type text + Enter into the live session
+  tmux-ssh HOST --send --no-enter "text"    type without Enter
+  tmux-ssh HOST --send --key KEY    send a named tmux key (C-c, Escape, Up, Enter, ...)
+  tmux-ssh HOST --read [--settle]   print the current screen (--settle waits until it stops changing); also works while another tmux-ssh command is still running, as does --status
+
+FLAGS
+  --timeout SEC          max wait for a command, 1-2700 (default 120). --resume reuses the original command's value.
+  --lines N              return the last N lines of output/screen (default 50)
+  --connect-timeout SEC  max wait for ssh + remote shell on (re)connect (default 25)
+  --no-reconnect         refuse instead of reconnecting a dead session
+  --interrupt-on-timeout on timeout send Ctrl-C (default: leave the command running)
+  --force-run            run mode: skip the refusal of interactive commands (vim, top, tmux attach, ...)
+  --expect 'PAT=RESP'    when PAT appears on screen after the command starts, type RESP + Enter (once per rule).
+                         PAT is a literal SINGLE-LINE substring; a PAT containing a newline or CR is refused (exit 2).
+  --expect-secret 'PAT=@FILE' | 'PAT=env:VAR'   like --expect, RESP read from a file or env var (not shown in argv).
+                         The reply is typed into the pane: a prompt that echoes it will show it in --read output.
+  --expect-host NAME     OPTIONAL. Refuse unless the host reports hostname NAME (short or FQDN, any case). Use it for
+                         an alias you could mistype or that may point at the wrong box. Find NAME with: ssh HOST hostname.
+                         Also settable via TMUX_SSH_EXPECT_HOST.
+  -h, --help             this text
+
+GOTCHAS
+  - Run mode is only for commands that FINISH. A command that stays open (vim, top, less, "tmux new" without -d,
+    "tmux attach", a prompt with no --expect) never returns: use interactive mode, or "tmux new -d".
+    Obvious interactive commands are refused (exit 2) before anything is sent; --force-run overrides.
+  - A command or --send text over about 16,000 bytes is refused (exit 2) before anything is sent. Copy the data over with scp and run a short command (scp patch.diff HOST:/tmp/ ; tmux-ssh HOST 'git apply /tmp/patch.diff').
+  - The command runs in the remote user's login shell (may be zsh, not bash). Bash-only syntax such as
+    "read -p" differs: wrap it as  bash -c '...'  .
+  - Quote the whole remote command once, locally. "$VAR" inside double quotes expands on YOUR machine; use single quotes.
+  - After exit 124 the host is "watched": every other command returns 125 until you use --resume, --abort or --kill.
+  - --kill closes the ssh session only. Remote processes started in it (e.g. a tmux session) keep running.
+  - A dropped ssh loses any command running in it. Run long work under "tmux new -d" or nohup and re-run after a drop.
+  - A host that reports THIS machine's own hostname is refused (125); clear it with --kill.
+  - A live session keeps the TMUX_SSH_OPTS it started with; to change them run --kill first.
+  - --expect that never matched is reported as a warning after the command finishes.
+
+EXIT CODES
+  0-123, 126+  the remote command's own exit code.
+  124          timed out; the command may still be running or waiting for input.
+               Next: --read (see the screen) | --resume [--timeout N] (keep waiting) | --send --key C-c then --resume | --abort
+  125          not done; the MESSAGE says why. Common: another command is still watched (--resume | --abort | --kill),
+               not connected, hostname mismatch, unresolved input (--kill). Nothing new was typed unless the message says
+               "completion unknown" (ssh dropped mid-command: do NOT blindly retry).
+  2            usage error (including a refused interactive command).
+  3            input state UNKNOWN (a keystroke failed or ssh dropped during --send). The host is guarded: every
+               typing call is refused until --kill; --read, --status and --resume still work.
+
+ENVIRONMENT
+  TMUX_SSH_DIR          where session state lives (default ~/.thrum/tmux-ssh)
+  TMUX_SSH_OPTS         extra ssh options (e.g. '-i ~/.ssh/key -o IdentitiesOnly=yes'); chars [A-Za-z0-9 _./=:,@~+%-] only
+  TMUX_SSH_EXPECT_HOST  default for --expect-host
+TSSH_HELP_EOF
+}
+
+# tssh_has_done <nonce> <pane-text>: 0 iff a line of the pane text is the
+# completion marker for <nonce>. Pure bash (no pipe, no temp file, no fork):
+# `printf | grep -q` exits early and printf died on SIGPIPE under pipefail on a
+# large pane capture. The leading newline makes the line anchor.
+tssh_has_done() {
+  local re=$'\n'"TSSHDONE_${1}_ rc=[0-9]+"
+  [[ $'\n'"$2" =~ $re ]]
+}
+
+SCRIPT_NAME="tmux-ssh"
+SOCKET="tmux-ssh"                      # single tmux server for all tmux-ssh sessions
+REF_DIR="${TMUX_SSH_DIR:-$HOME/.thrum/tmux-ssh}"
+
+# Defaults (overridable by flags)
+CMD_TIMEOUT=120
+CONNECT_TIMEOUT=25
+LINES=50
+ALLOW_RECONNECT=true
+INTERRUPT_ON_TIMEOUT=false
+CAPTURE_LINES=5000                     # scrollback window captured for output slicing
+LOCK_WAIT=${TMUX_SSH_LOCK_WAIT:-30}    # seconds to wait for the per-host lock (env override is a TEST seam)
+SEND_ENTER=true
+SEND_KEY=""
+SETTLE=false
+FORCE_RUN=false
+TIMEOUT_GIVEN=false
+WATCH_TIMEOUT=""
+ABORT_WAIT=5                           # seconds --abort waits for the DONE marker after Ctrl-C
+EXPECT_HOST="${TMUX_SSH_EXPECT_HOST:-}"    # a later --expect-host flag wins
+EXPECT_PATS=()
+EXPECT_RESPS=()
+EXPECT_SECRET=()
+EXPECT_FIRED=()
+
+log()  { printf '[%s] %s\n' "$SCRIPT_NAME" "$*" >&2; }
+die()  { local code="${2:-2}"; printf '[%s] error: %s\n' "$SCRIPT_NAME" "$1" >&2; exit "$code"; }
+usage(){ print_help >&2; }
+
+# ---- naming derived deterministically from the host ------------------------
+sanitize() { printf '%s' "$1" | tr -c 'A-Za-z0-9_-' '_'; }
+
+# ---- per-host advisory lock (portable: mkdir, no flock dependency) ---------
+LOCK_HELD=""
+acquire_lock() {
+  local dir="$1" waited=0 max="$LOCK_WAIT" merr
+  while ! merr=$(mkdir "$dir" 2>&1); do
+    # mkdir fails when the lock exists (another tmux-ssh holds the host: wait) or when it cannot be created at all
+    # (permissions, read-only filesystem, missing parent: waiting never helps). If the directory is not there after a
+    # failed mkdir, try once more: the holder may have released it between the two calls.
+    if [ ! -d "$dir" ]; then
+      merr=$(mkdir "$dir" 2>&1) && break
+      [ -d "$dir" ] || die "cannot create the host lock directory $dir: ${merr:-unknown error} (this is not lock contention; check the permissions of $(dirname "$dir"))" 125
+    fi
+    if [ -f "$dir/pid" ]; then
+      local p; p=$(cat "$dir/pid" 2>/dev/null || true)
+      if [ -n "$p" ] && ! kill -0 "$p" 2>/dev/null; then
+        rm -f "$dir/pid" 2>/dev/null; rmdir "$dir" 2>/dev/null; continue   # steal stale
+      fi
+    fi
+    waited=$((waited + 1))
+    if [ "$waited" -gt "$((max * 5))" ]; then
+      die "could not acquire lock for this host (held by pid $(cat "$dir/pid" 2>/dev/null || echo '?'))" 125
+    fi
+    sleep 0.2
+  done
+  printf '%s\n' "$$" > "$dir/pid"
+  LOCK_HELD="$dir"
+}
+release_lock() {
+  [ -n "$LOCK_HELD" ] || return 0
+  rm -f "$LOCK_HELD/pid" 2>/dev/null; rmdir "$LOCK_HELD" 2>/dev/null
+  LOCK_HELD=""
+}
+trap release_lock EXIT
+
+# ---- reference file --------------------------------------------------------
+read_ref() {
+  EXPECTED_HOSTNAME=""
+  [ -f "$REF_FILE" ] || return 0
+  EXPECTED_HOSTNAME=$(grep '^expected_hostname=' "$REF_FILE" 2>/dev/null | head -1 | cut -d= -f2- || true)
+}
+
+# ---- identity guard ---------------------------------------------------------
+# A stale recorded identity (or a probe that leaked onto a local shell in the pane) can
+# make this script treat the box it was launched FROM as the remote target. These checks are independent of,
+# and layered ON TOP OF, the existing prior-vs-new drift check: that check only catches DRIFT from a previously
+# recorded value; it says nothing about whether that value (or a brand-new first-connect value) was ever
+# trustworthy.
+# local_hostname tries three ways to learn this machine's own hostname,
+# since any single one can be absent (a minimal container may lack
+# `hostname`; `uname -n` and `HostName`/`LocalHostName` can disagree on
+# macOS. Prints nothing and fails if all three do.
+local_hostname() {
+  local h
+  h=$(hostname 2>/dev/null); [ -n "$h" ] && { printf '%s' "$h"; return 0; }
+  h=$(uname -n 2>/dev/null); [ -n "$h" ] && { printf '%s' "$h"; return 0; }
+  if command -v scutil >/dev/null 2>&1; then
+    h=$(scutil --get LocalHostName 2>/dev/null)
+    [ -n "$h" ] && { printf '%s' "$h"; return 0; }
+  fi
+  return 1
+}
+# resolve_local_hostname memoizes local_hostname for the lifetime of this
+# invocation, into the globals below -- it's called from every identity-guard
+# check, and each underlying lookup is its own subprocess.
+#
+# [CORRECTNESS] MUST be called directly (never as `x=$(resolve_local_hostname)`
+# or inside any other command substitution) -- a command substitution forks a
+# SUBSHELL, and an assignment made inside a subshell is discarded the instant
+# it exits. Calling it that way silently defeats the memoization (every call
+# would re-run local_hostname from scratch, each in its own throwaway
+# subshell) without producing any error. Callers read the result back from
+# $LOCAL_HOSTNAME_CACHE afterward, in the SAME (non-subshell) context.
+LOCAL_HOSTNAME_CACHE=""
+LOCAL_HOSTNAME_CACHE_SET=false
+resolve_local_hostname() {
+  [ "$LOCAL_HOSTNAME_CACHE_SET" = true ] && return 0
+  LOCAL_HOSTNAME_CACHE=$(local_hostname) || true
+  LOCAL_HOSTNAME_CACHE_SET=true
+}
+first_label() { printf '%s' "$1" | cut -d. -f1; }
+lower() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
+# hostnames_match compares two hostnames tolerant of short-vs-FQDN form
+# (either side's first dot-label may match the other's full value),
+# case-insensitively.
+hostnames_match() {
+  local a b al bl
+  a="$1"; b="$2"
+  [ -n "$a" ] && [ -n "$b" ] || return 1
+  al=$(lower "$a"); bl=$(lower "$b")
+  [ "$al" = "$bl" ] && return 0
+  [ "$(lower "$(first_label "$a")")" = "$bl" ] && return 0
+  [ "$al" = "$(lower "$(first_label "$b")")" ] && return 0
+  return 1
+}
+# alias_is_explicitly_local reports whether $HOST (optional user@ stripped)
+# is a literal loopback alias -- the one case where "reported hostname ==
+# local hostname" is the CORRECT, intended outcome, not a hazard.
+alias_is_explicitly_local() {
+  # ::1 deliberately excluded: HOST's
+  # own charset validation rejects ':' with "invalid host" before ANY alias
+  # ever reaches this function, and IPv6 aliases are not a fleet use case --
+  # so it would be dead code, unreachable via the real CLI.
+  case "${1#*@}" in localhost|127.0.0.1) return 0 ;; esac
+  return 1
+}
+# An unknown local hostname is refused, not silently passed: if this
+# machine's own identity can't be determined, NEITHER of the checks below
+# can rule out that a reported/recorded value IS this machine, so trusting
+# either would be fail-open on exactly the case they exist to catch.
+die_unknown_local_identity() {
+  die "IDENTITY GUARD: cannot determine this machine's own hostname (hostname / uname -n / scutil all failed or returned empty) -- refusing $1 rather than risk it silently being this machine" 125
+}
+# reject_if_local_identity_ref refuses a RECORDED (from an earlier session)
+# hostname that equals this machine's own hostname -- a ref file poisoned by
+# a past instance of this exact bug. Fires before any (re)connect attempt.
+reject_if_local_identity_ref() {
+  local recorded="$1" lh
+  [ -n "$recorded" ] || return 0
+  alias_is_explicitly_local "$HOST" && return 0
+  resolve_local_hostname; lh="$LOCAL_HOSTNAME_CACHE"
+  [ -n "$lh" ] || die_unknown_local_identity "the ref file for $HOST"
+  if hostnames_match "$recorded" "$lh"; then
+    die "IDENTITY GUARD: the ref file for $HOST records '$recorded', which matches THIS machine's own hostname ('$lh') -- treating it as POISONED. Clear it: $SCRIPT_NAME $HOST --kill" 125
+  fi
+}
+# reject_if_local_identity refuses a FRESHLY-PROBED hostname that equals this
+# machine's own hostname. Runs on every (re)connect, including the very
+# first one -- a first connect is never trusted blindly.
+reject_if_local_identity() {
+  local h="$1" lh
+  [ -n "$h" ] || return 0
+  alias_is_explicitly_local "$HOST" && return 0
+  resolve_local_hostname; lh="$LOCAL_HOSTNAME_CACHE"
+  [ -n "$lh" ] || die_unknown_local_identity "$HOST's reported hostname '$h'"
+  if hostnames_match "$h" "$lh"; then
+    die "IDENTITY GUARD: $HOST's reported hostname '$h' matches THIS machine's own hostname ('$lh') -- refusing to treat the local box as the remote target" 125
+  fi
+}
+# reject_if_expect_host_mismatch enforces an operator-supplied expectation
+# (--expect-host / TMUX_SSH_EXPECT_HOST), when one was given. Deliberately
+# NOT derived automatically from the alias name: an alias's OS hostname can
+# legitimately differ from its ssh-config name (see the flag's help text for
+# how to look it up and set this explicitly).
+reject_if_expect_host_mismatch() {
+  local h="$1"
+  [ -n "$EXPECT_HOST" ] || return 0
+  hostnames_match "$h" "$EXPECT_HOST" && return 0
+  die "IDENTITY GUARD: $HOST's reported hostname '$h' does not match --expect-host/TMUX_SSH_EXPECT_HOST '$EXPECT_HOST' -- refusing" 125
+}
+
+# A timeout may leave the remote command running. Persist its exact marker so
+# another invocation can observe that command without reconnecting or typing.
+WATCH_NONCE=""
+read_watch() {
+  WATCH_NONCE=""; WATCH_TIMEOUT=""
+  [ -f "$WATCH_FILE" ] || return 0
+  WATCH_NONCE=$(grep '^nonce=' "$WATCH_FILE" 2>/dev/null | head -1 | cut -d= -f2- || true)
+  WATCH_TIMEOUT=$(grep '^timeout=' "$WATCH_FILE" 2>/dev/null | head -1 | cut -d= -f2- || true)
+  case "$WATCH_TIMEOUT" in *[!0-9]*) WATCH_TIMEOUT="" ;; esac
+  case "$WATCH_NONCE" in ''|*[!A-Za-z0-9_]*) WATCH_NONCE=""; return 1 ;; esac
+}
+write_watch() { # returns nonzero (and sets no WATCH_NONCE) unless the watch file was written AND renamed into place
+  local n="$1" tmp="${WATCH_FILE}.tmp.$$"
+  printf 'nonce=%s\nstarted_at=%s\ntimeout=%s\n' "$n" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$CMD_TIMEOUT" > "$tmp" 2>/dev/null || { rm -f "$tmp"; return 1; }
+  mv -f "$tmp" "$WATCH_FILE" 2>/dev/null || { rm -f "$tmp"; return 1; }
+  [ -f "$WATCH_FILE" ] || return 1
+  WATCH_NONCE="$n"
+}
+# ---- input guard ------------------------------------------------------------
+# A payload-free file armed under the host lock BEFORE any keystroke that changes the remote input, and cleared only
+# after every primitive of that input succeeded (and, for a command, after its watch was published). If any
+# primitive fails, the guard STAYS with the stage and tmux's native rc: what reached the remote input is UNKNOWN, so
+# every later mutating call (run, ensure, probe, setup, --send, --key) is refused before it types anything, and
+# nothing is cleared, killed or reconnected automatically. Observers (--read, --status, --resume) keep working. Only
+# an explicit --kill that kills the exact session (or proves it absent) clears it.
+guard_arm() { # $1=stage : 0 only if the guard file is in place
+  local tmp="${GUARD_FILE}.tmp.$$"
+  printf 'state=armed\nstage=%s\narmed_at=%s\n' "$1" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$tmp" 2>/dev/null || { rm -f "$tmp"; return 1; }
+  mv -f "$tmp" "$GUARD_FILE" 2>/dev/null || { rm -f "$tmp"; return 1; }
+  [ -f "$GUARD_FILE" ]
+}
+guard_mark() { # $1=stage $2=step $3=native rc : record UNKNOWN (best effort; the armed guard stays either way)
+  { printf 'state=UNKNOWN\nstage=%s\nfailed_step=%s\nnative_rc=%s\nmarked_at=%s\n' "$1" "$2" "$3" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+      > "${GUARD_FILE}.tmp.$$" && mv -f "${GUARD_FILE}.tmp.$$" "$GUARD_FILE"; } 2>/dev/null || rm -f "${GUARD_FILE}.tmp.$$"
+}
+guard_clear() { rm -f "$GUARD_FILE" 2>/dev/null; }
+guard_present() { [ -e "$GUARD_FILE" ]; }
+guard_summary() { tr '\n' ' ' < "$GUARD_FILE" 2>/dev/null; }
+refuse_if_guarded() { # pre-input admission for every mutating path
+  guard_present || return 0
+  die "UNRESOLVED input on $HOST ($(guard_summary| sed 's/ $//')): a previous keystroke's effect is unknown, so NOTHING new is typed. Inspect with $SCRIPT_NAME $HOST --read / --status; when resolved, clear it with $SCRIPT_NAME $HOST --kill" 125
+}
+clear_watch() { rm -f "$WATCH_FILE"; WATCH_NONCE=""; }
+write_ref() {
+  mkdir -p "$REF_DIR"
+  # Atomic: write to a temp file then rename, so a concurrent reader never sees
+  # a half-written ref (and a crash mid-write can't truncate the live file).
+  local tmp="${REF_FILE}.tmp.$$"
+  printf 'host=%s\nssh_target=%s\nsocket=%s\nsession=%s\nexpected_hostname=%s\nestablished_at=%s\n' \
+    "$HOST" "$HOST" "$SOCKET" "$SESSION" "$EXPECTED_HOSTNAME" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    > "$tmp"
+  mv -f "$tmp" "$REF_FILE"
+}
+
+# ---- tmux primitives -------------------------------------------------------
+has_session() { tmux -L "$SOCKET" has-session -t "$STGT" 2>/dev/null; }
+pane_cmd()    { tmux -L "$SOCKET" list-panes -t "$PTGT" -F '#{pane_current_command}' 2>/dev/null | head -1; }
+capture()     { tmux -L "$SOCKET" capture-pane -p -t "$PTGT" -S "-${CAPTURE_LINES}" -J 2>/dev/null; }
+# send_line: type the text, then Enter, checking each primitive. Never clears, kills or reconnects on failure. Returns
+# 1 if the literal failed, 2 if the literal was accepted and Enter failed; SEND_STEP, SEND_RC (tmux's native rc) and
+# SEND_ERR (its stderr) describe the failure. Callers hold an armed input guard around it.
+SEND_ERR=""; SEND_RC=0; SEND_STEP=""
+send_line()   {
+  SEND_ERR=$(tmux -L "$SOCKET" send-keys -t "$PTGT" -l "$1" 2>&1 >/dev/null); SEND_RC=$?
+  if [ "$SEND_RC" -ne 0 ]; then SEND_STEP=literal; return 1; fi
+  SEND_ERR=$(tmux -L "$SOCKET" send-keys -t "$PTGT" Enter 2>&1 >/dev/null); SEND_RC=$?
+  if [ "$SEND_RC" -ne 0 ]; then SEND_STEP=enter; return 2; fi
+  SEND_STEP=""; SEND_ERR=""
+}
+# guarded_line <stage> <text> : arm the guard, send, clear only on full success. rc 0 ok; rc 125 = guard could not be
+# armed (NOTHING was sent); rc 3 = a primitive failed (guard kept, input UNKNOWN).
+guarded_line() {
+  guard_arm "$1" || { log "🔴 REFUSED ($1): could not arm the input guard in $REF_DIR; nothing was sent"; return 125; }
+  if ! send_line "$2"; then
+    guard_mark "$1" "$SEND_STEP" "$SEND_RC"
+    log "🔴 INPUT UNKNOWN ($1): tmux $SEND_STEP failed (native rc $SEND_RC: ${SEND_ERR:-no message}). What reached $HOST's input is unknown; the host is now guarded: nothing more is typed until $SCRIPT_NAME $HOST --kill. Do NOT blindly retry."
+    return 3
+  fi
+  [ "${GUARD_KEEP:-0}" = 1 ] || guard_clear
+  return 0
+}
+pane_dead()   { tmux -L "$SOCKET" list-panes -t "$PTGT" -F '#{pane_dead}' 2>/dev/null | head -1; }
+# the pane is a LIVE ssh client: alive (a remain-on-exit pane keeps reporting its last command when dead) and
+# its foreground process is ssh
+pane_is_ssh() { [ "$(pane_dead)" = 0 ] && [ "$(pane_cmd)" = "ssh" ]; }
+# connected == the pane's foreground process is a live ssh (gate 1)
+is_connected(){ has_session && pane_is_ssh; }
+
+# Pattern tests on a captured buffer. NOT `printf | grep -q`: under pipefail, grep -q exits at the first match,
+# and if the buffer is larger than a pipe (a 5000-line capture can be ~1 MB) printf then fails on the closed pipe,
+# the pipeline is nonzero, and a PRESENT marker reads as absent (missed DONE -> false timeout; missed BEGIN ->
+# leaked history; missed --expect prompt). grep without -q reads all of its input, so printf always completes.
+buf_has_re()    { printf '%s\n' "$1" | grep -E -- "$2" >/dev/null; }
+buf_has_fixed() { printf '%s\n' "$1" | grep -F -- "$2" >/dev/null; }
+
+# Per-command marker token. pid + epoch-seconds + two $RANDOM draws so the
+# anchored DONE regex cannot collide with a concurrent or prior call's sentinel.
+nonce() { printf '%s_%s_%s%s' "$$" "$(date +%s)" "${RANDOM}" "${RANDOM}"; }
+
+# ---- probe the remote hostname (gate 2 / establish-time learning) ----------
+# Echoes the discovered hostname on success (rc 0); rc 1 on timeout.
+# The recorded-hostname line is matched ANCHORED (^TSSHHOST_<n>=), which the
+# echoed input line (starts with ':') can never match — so only a live shell's
+# resolved output is ever read.
+probe_hostname() {
+  local timeout="${1:-8}" n
+  # [SECURITY] gate on a live ssh pane BEFORE sending, mirroring cmd_send/handle_expects. A dead pane
+  # never answers, so the probe times out instead of reading anything.
+  if ! pane_is_ssh; then
+    log "probe: pane is not ssh (connection not confirmed) -- refusing to probe"
+    return 1
+  fi
+  n=$(nonce)
+  local grc=0; guarded_line probe "$(printf ': TSSHBEGIN_%s; echo ""; echo "TSSHHOST_%s=$(hostname)"; echo "TSSHDONE_%s_ rc=$?"' "$n" "$n" "$n")" || grc=$?
+  [ "$grc" = 0 ] || return "$grc"   # 3 = input UNKNOWN (fatal), 125 = nothing sent
+  local deadline=$(( $(date +%s) + timeout )) buf
+  while [ "$(date +%s)" -lt "$deadline" ]; do
+    buf=$(capture)
+    if tssh_has_done "$n" "$buf"; then
+      local h
+      h=$(printf '%s\n' "$buf" | grep -E "^TSSHHOST_${n}=" | tail -1 | sed "s/^TSSHHOST_${n}=//")
+      # [SECURITY] This value is interpolated into gate 3's guard string
+      # (build_wrapper: [ "$(hostname)" = "<h>" ]). A hostile/compromised remote
+      # returning a hostname containing '"' or ';' could break out and, on the
+      # local-shell fallback path, execute locally. A real hostname is
+      # [A-Za-z0-9._-]+; reject anything else and fail the probe (fail-safe).
+      case "$h" in
+        ''|*[!A-Za-z0-9._-]*) log "refusing probed hostname with unexpected characters: '$h'"; return 1 ;;
+      esac
+      printf '%s\n' "$h"
+      return 0
+    fi
+    sleep 0.2
+  done
+  return 1
+}
+
+# ---- build the sentinel-wrapped payload (gate 3 inline host-guard) ---------
+# Resolved DONE line carries the exit code; the echoed input line contains the
+# literal format so it can never false-match the anchored resolved DONE regex.
+# A command that runs `exit` (or `logout`) would close the remote login shell before the DONE line is printed: the pane
+# dies, the run is reported as a dropped connection (rc 125, completion unknown) although it finished. Such a command is
+# typed inside a subshell, where `exit N` just becomes the command's exit code. Other commands run in the login shell
+# itself, so a `cd` or `export` in one still applies to the next. Over-matching only costs that persistence.
+cmd_exits_shell() { [[ "$1" =~ (^|[^A-Za-z0-9_./-])(exit|logout)($|[^A-Za-z0-9_./-]) ]]; }
+# The command is TYPED into the remote login shell (send-keys -l), so that shell's line editor sees it key by key. zsh with
+# oh-my-zsh's url-quote-magic then backslash-quotes ; & | { ... in any word containing "://": `curl http://h/a; echo B` becomes
+# one command, and a command that ends in a URL swallows the appended `; __tsrc=$?` (no DONE line, a timeout). Such a command
+# is sent base64-encoded and decoded on the remote, so no widget can rewrite it. A failed decode is an error, never a no-op.
+cmd_needs_encoding() { case "$1" in *://*) return 0 ;; esac; return 1; }
+encode_cmd() { # prints the typed form of a command that contains a URL
+  local b64; b64=$(printf '%s' "$1" | base64 | tr -d '\n')
+  printf '%s' '__tsd=$(printf %s '"$b64"' | { base64 -d 2>/dev/null || base64 -D; }) && eval "$__tsd"'
+}
+build_wrapper() {
+  local n="$1" cmd="$2"
+  if cmd_exits_shell "$cmd"; then cmd="( $cmd"$'\n'")"; fi
+  if cmd_needs_encoding "$cmd"; then cmd=$(encode_cmd "$cmd"); fi
+  # A final heredoc delimiter must occupy its own line, even when the caller
+  # omitted a trailing newline. Keep the wrapper suffix on a separate line.
+  printf ': TSSHBEGIN_%s; if [ "$(hostname)" = "%s" ]; then %s\n__tsrc=$?; else __tsrc=125; fi; echo ""; echo "TSSHDONE_%s_ rc=$__tsrc"' \
+    "$n" "$EXPECTED_HOSTNAME" "$cmd" "$n"
+}
+
+# ---- slice this command's output out of the pane buffer --------------------
+emit_output() {
+  local buf="$1" n="$2" sliced
+  sliced=$(printf '%s\n' "$buf" | awk -v n="$n" '
+    index($0, "TSSHBEGIN_" n) { seen=1; next }
+    seen && $0 ~ ("^TSSHDONE_" n "_ rc=[0-9]") { exit }
+    seen { print }
+  ')
+  # Fallback ONLY if the BEGIN anchor scrolled out of the capture window. A command that printed nothing has an
+  # empty slice WITH its BEGIN present: falling back then leaked old pane history as its output.
+  if [ -z "$sliced" ] && ! buf_has_fixed "$buf" "TSSHBEGIN_${n}"; then
+    sliced=$(printf '%s\n' "$buf" | awk -v n="$n" '$0 ~ ("^TSSHDONE_" n "_ rc=[0-9]") { exit } { print }')
+  fi
+  # Strip trailing blank lines (the wrapper's separator echo), then tail.
+  printf '%s\n' "$sliced" | awk '{ L[NR]=$0 } END { last=NR; while (last>0 && L[last] ~ /^[[:space:]]*$/) last--; for (i=1;i<=last;i++) print L[i] }' \
+    | tail -n "$LINES"
+}
+
+# ---- expect: auto-answer known prompts while a command runs (Tier B) -------
+# Scans only the region AFTER this command's BEGIN marker so a stale prompt in
+# scrollback cannot fire. Each rule is one-shot (tracked in EXPECT_FIRED).
+handle_expects() {
+  local buf="$1" n="$2" i pat resp region
+  [ "${#EXPECT_PATS[@]}" -eq 0 ] && return 0
+  region=$(printf '%s\n' "$buf" | awk -v n="$n" 'index($0,"TSSHBEGIN_" n){seen=1;next} seen{print}')
+  for i in "${!EXPECT_PATS[@]}"; do
+    [ "${EXPECT_FIRED[$i]:-0}" -eq 1 ] && continue
+    pat="${EXPECT_PATS[$i]}"
+    # SINGLE-LINE CONTRACT: $pat is one literal substring (from --expect); a value with a newline is not supported.
+    if [[ $region == *"$pat"* ]]; then
+      # [SECURITY] Gate 1 the response too: if ssh dropped mid-command the pane is dead, and a response
+      # (esp. an --expect-secret) must not be typed anywhere. The identity probe can't run mid-command.
+      if ! pane_is_ssh; then
+        log "expect: pane is no longer ssh (connection dropped) — REFUSING to send response for '$pat' (the connection is gone)"
+        continue
+      fi
+      resp="${EXPECT_RESPS[$i]}"
+      local erc=0; guarded_line expect "$resp" || erc=$?
+      if [ "$erc" != 0 ]; then EXPECT_SEND_FAILED=$erc; return 1; fi   # stop: no further responses or actions
+      EXPECT_FIRED[$i]=1
+      if [ "${EXPECT_SECRET[$i]:-0}" -eq 1 ]; then log "expect: matched '$pat' → sent secret response"
+      else log "expect: matched '$pat' → sent '$resp'"; fi
+    fi
+  done
+}
+
+# ssh command line for the pane; caller TMUX_SSH_OPTS go first (ssh: first -o wins).
+ssh_cmd_line() {
+  local o="${TMUX_SSH_OPTS:-}"
+  echo "ssh ${o:+$o }-o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o LogLevel=ERROR -- $HOST"
+}
+# the same command as an argv array (SSH_ARGV), so tmux execs ssh DIRECTLY: no $SHELL -c in between. Splitting on
+# spaces is exact: TMUX_SSH_OPTS and HOST are validated to a charset with no quotes or glob characters.
+ssh_argv() { read -r -a SSH_ARGV <<< "$(ssh_cmd_line)"; }
+
+# ---- establish or reconnect the ssh session --------------------------------
+establish() {
+  read_ref
+  local prior="$EXPECTED_HOSTNAME"
+  reject_if_local_identity_ref "$prior"
+  # [SECURITY] ssh is the pane's OWN process (exec'd by tmux directly, argv form, no shell), never a command typed into a local
+  # shell. Keys sent while ssh is still authenticating used to sit in the tty and be read by the LOCAL shell when
+  # auth failed (publickey denied -> the probe ran on the fleet box). With no shell in the pane, a failed or
+  # dropped ssh leaves a DEAD pane (remain-on-exit) that executes nothing; its last screen stays readable.
+  ssh_argv
+  if ! has_session; then
+    tmux -L "$SOCKET" new-session -d -s "$SESSION" -x 220 -y 50 "${SSH_ARGV[@]}" \; \
+      set-option -t "$PTGT" remain-on-exit on >/dev/null 2>&1 || die "tmux new-session failed" 1
+  elif ! pane_is_ssh; then
+    # dead ssh pane, or a legacy session whose pane is a local shell: replace the pane's process outright (-k)
+    tmux -L "$SOCKET" set-option -t "$PTGT" remain-on-exit on >/dev/null 2>&1
+    tmux -L "$SOCKET" respawn-pane -k -t "$PTGT" "${SSH_ARGV[@]}" >/dev/null 2>&1 || die "tmux respawn-pane failed" 1
+  fi
+  has_session || die "ssh to $HOST exited immediately (auth/host-key issue? see: ssh $HOST)" 125
+  # Wait for the ssh client to become the pane's foreground process.
+  local deadline=$(( $(date +%s) + CONNECT_TIMEOUT ))
+  while [ "$(date +%s)" -lt "$deadline" ]; do pane_is_ssh && break; sleep 0.2; done
+  if ! pane_is_ssh; then
+    capture | awk 'NF' | tail -5 | sed 's/^/  ssh: /' >&2
+    die "ssh did not start within ${CONNECT_TIMEOUT}s or has exited (auth/host-key issue? see the ssh lines above; nothing was sent)" 125
+  fi
+  # Wait for a live remote shell (only a returned sentinel counts; keys only go
+  # in AFTER pane==ssh, so this can never learn the LOCAL hostname).
+  sleep 1
+  local h="" pdeadline=$(( $(date +%s) + CONNECT_TIMEOUT ))
+  while [ "$(date +%s)" -lt "$pdeadline" ]; do
+    local prc=0; h=$(probe_hostname 8) || prc=$?
+    case "$prc" in 3) exit 3 ;; 125) exit 125 ;; esac   # fatal send failure: no further probe, setup or user send
+    [ "$prc" = 0 ] && [ -n "$h" ] && break
+    h=""; sleep 0.5
+  done
+  if [ -z "$h" ]; then
+    capture | awk 'NF' | grep -v 'TSSH' | tail -5 | sed 's/^/  ssh: /' >&2
+    if pane_is_ssh; then
+      die "connected but no remote shell confirmed within ${CONNECT_TIMEOUT}s (auth prompt? try: $SCRIPT_NAME $HOST --attach)" 125
+    fi
+    die "ssh to $HOST exited before a remote shell was confirmed (see the ssh lines above; nothing ran on any shell)" 125
+  fi
+  # never trust a probed hostname -- first connect or not --
+  # before it clears the identity guard, and before it can be written as
+  # ground truth below.
+  reject_if_local_identity "$h"
+  reject_if_expect_host_mismatch "$h"
+  if [ -n "$prior" ] && [ "$h" != "$prior" ]; then
+    die "IDENTITY MISMATCH on (re)connect: recorded '$prior' but got '$h' — refusing to use this session" 125
+  fi
+  EXPECTED_HOSTNAME="$h"
+  # [SECURITY] re-check the live ssh pane one last time, AFTER identity is confirmed but
+  # BEFORE this send and before write_ref: a ref must never record a validated identity for a pane that has died.
+  if ! pane_is_ssh; then
+    die "IDENTITY GUARD: connection to $HOST dropped between identity confirmation and session setup -- refusing before recording anything" 125
+  fi
+  # Make output clean and deterministic for a driven session.
+  local src=0; guarded_line setup 'export PAGER=cat GIT_PAGER=cat 2>/dev/null; true' || src=$?
+  [ "$src" = 0 ] || exit "$src"   # no ref, no "connected", no user payload after an uncertain setup line
+  write_ref
+  if [ -n "$prior" ]; then
+    log "RECONNECTED to $HOST ($h) — remote shell state (cwd, env, running jobs) was RESET"
+  else
+    log "connected to $HOST ($h)"
+  fi
+}
+
+# ---- ensure a usable, identity-confirmed connection ------------------------
+ensure_connected() {
+  read_ref
+  reject_if_local_identity_ref "$EXPECTED_HOSTNAME"
+  if is_connected; then
+    local h prc=0; h=$(probe_hostname 12) || prc=$?
+    case "$prc" in 3) exit 3 ;; 125) exit 125 ;; esac   # fatal send failure: not "busy", not a reconnect
+    if [ -n "$h" ]; then
+      reject_if_local_identity "$h"
+      reject_if_expect_host_mismatch "$h"
+      if [ -n "$EXPECTED_HOSTNAME" ] && [ "$h" != "$EXPECTED_HOSTNAME" ]; then
+        die "IDENTITY MISMATCH: recorded '$EXPECTED_HOSTNAME' but live shell is '$h' — refusing" 125
+      fi
+      if [ -z "$EXPECTED_HOSTNAME" ]; then EXPECTED_HOSTNAME="$h"; write_ref; fi
+      return 0
+    fi
+    # pane==ssh but no sentinel: a command is in flight, or the shell is wedged.
+    if [ -n "$EXPECTED_HOSTNAME" ]; then
+      die "session for $HOST is busy or unresponsive (a command may be running) — retry, or: $SCRIPT_NAME $HOST --attach" 125
+    fi
+  fi
+  # Not connected.
+  if [ "$ALLOW_RECONNECT" != "true" ]; then
+    die "not connected to $HOST and --no-reconnect is set (the command did NOT run)" 125
+  fi
+  establish
+}
+
+# ---- observe one exact command marker without ever sending input ------------
+observe_watch() {
+  local n="$1" permit_actions="${2:-false}"
+  local deadline=$(( $(date +%s) + CMD_TIMEOUT )) buf found=0
+  while [ "$(date +%s)" -lt "$deadline" ]; do
+    buf=$(capture)
+    if tssh_has_done "$n" "$buf"; then found=1; break; fi
+    # If ssh exits mid-command the pane's foreground process stops being `ssh`
+    # (a remote program never changes it — only the ssh client dying does).
+    # Bail fast instead of waiting out the whole timeout; completion is unknown.
+    if ! pane_is_ssh; then
+      # The remote wrapper may have printed DONE immediately before an `exit`
+      # closed ssh. Re-capture once and prefer that authoritative exact marker
+      # over a false completion-unknown classification.
+      buf=$(capture)
+      if tssh_has_done "$n" "$buf"; then found=1; break; fi
+      emit_output "$buf" "$n"
+      clear_watch
+      log "connection to $HOST dropped mid-command (ssh exited) — completion unknown; NOT retried"
+      return 125
+    fi
+    if [ "$permit_actions" = "true" ]; then
+      EXPECT_SEND_FAILED=0; handle_expects "$buf" "$n"
+      if [ "$EXPECT_SEND_FAILED" != 0 ]; then emit_output "$(capture)" "$n"; log "--expect response failed; watch kept, observation stopped"; return 3; fi
+    fi
+    sleep 0.2
+  done
+  if [ "$found" -ne 1 ]; then
+    buf=$(capture)
+    # A completion at the deadline is still authoritative; do not turn it
+    # into a timeout merely because it arrived between loop iterations.
+    if tssh_has_done "$n" "$buf"; then found=1
+    else
+      emit_output "$buf" "$n"
+      if [ "$permit_actions" = "true" ] && [ "$INTERRUPT_ON_TIMEOUT" = "true" ]; then
+        tmux -L "$SOCKET" send-keys -t "$PTGT" C-c
+        log "command timed out after ${CMD_TIMEOUT}s — sent Ctrl-C; collect the result with: $SCRIPT_NAME $HOST --resume"
+      else
+        log "command timed out after ${CMD_TIMEOUT}s — still running remotely, or waiting for input. Next steps:"
+        log "  $SCRIPT_NAME $HOST --read                       see the screen"
+        log "  $SCRIPT_NAME $HOST --resume [--timeout N]       keep waiting"
+        log "  $SCRIPT_NAME $HOST --send --key C-c             interrupt it, then --resume to collect"
+        log "  $SCRIPT_NAME $HOST --abort                      Ctrl-C and clear the watch"
+      fi
+      return 124
+    fi
+  fi
+  emit_output "$buf" "$n"
+  local rc; rc=$(printf '%s\n' "$buf" | grep -E "^TSSHDONE_${n}_ rc=[0-9]+" | tail -1 | sed 's/.*rc=//')
+  if [ "$permit_actions" = "true" ] && [ "${#EXPECT_PATS[@]}" -gt 0 ]; then
+    local xi
+    for xi in "${!EXPECT_PATS[@]}"; do
+      [ "${EXPECT_FIRED[$xi]:-0}" -eq 1 ] || log "warning: --expect pattern '${EXPECT_PATS[$xi]}' never matched; its response was NOT sent"
+    done
+  fi
+  clear_watch
+  [ -n "$rc" ] || rc=125
+  return "$rc"
+}
+
+# ---- run one command, retaining its nonce if observation times out ---------
+run_command() {
+  local cmd="$1" n
+  # [SECURITY] explicit pane gate, not just reliance
+  # on build_wrapper's inline `hostname == EXPECTED_HOSTNAME` guard -- cheap,
+  # and consistent with every other send site in this file.
+  if ! pane_is_ssh; then
+    log "run_command: pane is not ssh (connection not confirmed) -- refusing to send"
+    return 125
+  fi
+  n=$(nonce)
+  # The guard is armed before the first keystroke and kept until the watch is published, so there is never a moment
+  # where the command may be on the remote input with neither a guard nor a watch recording it.
+  local grc=0; GUARD_KEEP=1 guarded_line run "$(build_wrapper "$n" "$cmd")" || grc=$?
+  [ "$grc" = 0 ] || return "$grc"
+  if ! write_watch "$n"; then
+    guard_mark run watch-publish 0
+    log "🔴 SUBMITTED, BUT THE WATCH COULD NOT BE WRITTEN ($WATCH_FILE): the command is running on $HOST unobserved; the host is guarded. Read it with --read; clear with --kill. Do NOT blindly retry."
+    return 3
+  fi
+  guard_clear
+  observe_watch "$n" true
+}
+
+cmd_resume() {
+  read_watch || die "saved command watch is invalid; use --kill before starting another command" 125
+  [ -n "$WATCH_NONCE" ] || die "no timed-out command watch for $HOST (nothing was sent)" 125
+  if [ "$TIMEOUT_GIVEN" != true ] && [ -n "$WATCH_TIMEOUT" ] && [ "$WATCH_TIMEOUT" -ge 1 ] && [ "$WATCH_TIMEOUT" -le 2700 ]; then
+    CMD_TIMEOUT="$WATCH_TIMEOUT"; log "resume: waiting up to ${CMD_TIMEOUT}s (the original command's --timeout; override with --timeout N)"
+  fi
+  # Never ensure/reconnect here: a remote program may own its TTY. This is a
+  # capture-pane-only observer and reports a dead pane as unknown.
+  observe_watch "$WATCH_NONCE" false
+}
+
+# ---- interactive primitives (Tier A) ---------------------------------------
+# send raw keystrokes into the live session. Gate-1 only (a program may own
+# stdin, so the identity probe can't run); refuses on a dead session because a
+# reconnect would silently discard interactive state.
+#
+# [SECURITY] Handshake-gated on EVERY send, not just once at function entry: is_connected() (live pane, foreground
+# ssh) is re-run immediately before the send-keys call below and again immediately after. ANY mismatch REFUSES.
+# The session is NOT killed: a dead pane executes nothing (ssh is the pane's process), and keeping it lets --read
+# show the last screen (the denial, or the output before the drop). --kill or the next connect clears it.
+refuse_send() { # pre-send only: nothing was transmitted
+  log "🔴 REFUSING send (pre-send): the ssh connection to $HOST is not live (pane dead or not ssh). Nothing was sent. Read its last screen with: $SCRIPT_NAME $HOST --read ; clear it with --kill"
+}
+cmd_send() {
+  # Pre-send gate: checked immediately before transmitting, not carried over
+  # from an earlier check — this is what "--send does not auto-reconnect"
+  # protects: a dead/dropped session is refused, never reconnected under a running interactive program.
+  if ! is_connected; then
+    refuse_send
+    return 125
+  fi
+  guard_arm send || { log "🔴 REFUSED (pre-send): could not arm the input guard in $REF_DIR. Nothing was sent."; return 125; }
+  local step="" nrc=0 nerr=""
+  if [ -n "$SEND_KEY" ]; then
+    nerr=$(tmux -L "$SOCKET" send-keys -t "$PTGT" "$SEND_KEY" 2>&1 >/dev/null); nrc=$?; step=key        # named key (NOT literal)
+  else
+    nerr=$(tmux -L "$SOCKET" send-keys -t "$PTGT" -l "$COMMAND" 2>&1 >/dev/null); nrc=$?; step=literal
+    if [ "$nrc" = 0 ] && [ "$SEND_ENTER" = "true" ]; then nerr=$(tmux -L "$SOCKET" send-keys -t "$PTGT" Enter 2>&1 >/dev/null); nrc=$?; step=enter; fi
+  fi
+  if [ "$nrc" != 0 ]; then
+    guard_mark send "$step" "$nrc"
+    log "🔴 INPUT UNKNOWN (send): tmux $step failed (native rc $nrc: ${nerr:-no message}). What reached $HOST's input is unknown; the host is guarded until --kill. Do NOT blindly retry."
+    return 3
+  fi
+  if [ -n "$SEND_KEY" ]; then log "sent key: $SEND_KEY"; else log "sent: ${COMMAND}$([ "$SEND_ENTER" = "true" ] && echo ' <Enter>')"; fi
+  # The keys WERE transmitted; if the connection is gone right after, they may or may not have reached the remote
+  # (nothing local can read them: ssh is the pane's process). Distinct rc 3 and wording, because unlike the
+  # pre-send 125 a blind retry could repeat the action.
+  if ! is_connected; then
+    guard_mark send post-send-drop 0
+    log "🔴 SENT, THEN THE CONNECTION DROPPED (post-send): the keys were sent to $HOST, then the ssh connection was lost. Remote effect UNKNOWN: check with $SCRIPT_NAME $HOST --read (last screen) and do NOT blindly retry; the host is guarded until --kill."
+    return 3
+  fi
+  guard_clear
+}
+
+# read the current screen (read-only; safe even on a dead session, warns if so).
+cmd_read() {
+  if [ "$SETTLE" = "true" ]; then
+    local prev="" cur stable=0 k
+    for k in $(seq 1 150); do
+      cur=$(capture | cksum)
+      if [ "$cur" = "$prev" ]; then stable=$((stable + 1)); else stable=0; fi
+      [ "$stable" -ge 3 ] && break
+      prev="$cur"; sleep 0.2
+    done
+  fi
+  read_ref
+  is_connected || log "note: the ssh connection is not live (dead pane or no session) — this is the last screen"
+  # hide tmux-ssh's own wrapper lines (sentinels and the echoed wrapper); keep everything the remote printed
+  capture | { grep -v -e 'TSSHBEGIN_' -e '^TSSHDONE_' -e '^TSSHHOST_' || true; } | awk '{ L[NR]=$0 } END { last=NR; while (last>0 && L[last] ~ /^[[:space:]]*$/) last--; for (i=1;i<=last;i++) print L[i] }' | tail -n "$LINES"
+}
+
+# ---- subcommands -----------------------------------------------------------
+cmd_status() {
+  read_ref
+  local buf=""
+  read_watch || printf 'active watch:      INVALID (use --kill before starting another command)\n'
+  has_session && buf=$(capture)
+  printf 'host:              %s\n' "$HOST"
+  printf 'socket/session:    %s / %s\n' "$SOCKET" "$SESSION"
+  printf 'ref file:          %s%s\n' "$REF_FILE" "$([ -f "$REF_FILE" ] && echo '' || echo ' (absent)')"
+  printf 'recorded hostname: %s\n' "${EXPECTED_HOSTNAME:-<none>}"
+  printf 'tmux session:      %s\n' "$(has_session && echo present || echo ABSENT)"
+  printf 'pane foreground:   %s\n' "$(pane_cmd || echo '<none>')"
+  printf 'input guard:       %s\n' "$(guard_present && guard_summary || echo none)"
+  # Status is an observer: it must be safe to run while the remote TTY is
+  # owned by a command, so it deliberately never calls a probe or send-keys.
+  # pane==ssh and the recorded hostname are local observations, not a fresh
+  # identity check. Command execution still uses ensure_connected's probes.
+  # A DONE may have appeared immediately before the remote command closed ssh;
+  # the saved exact nonce remains authoritative even though pane==ssh is false.
+  if [ -n "$WATCH_NONCE" ] && tssh_has_done "$WATCH_NONCE" "$buf"; then
+    printf 'identity probe:    NOT RUN (observer mode)\n'
+    printf 'active watch:      complete (run --resume to collect rc/output)\n'
+    printf 'remote cwd:        not queried (observer mode)\n'
+    printf 'verdict:           COMPLETED — exact saved marker observed\n'
+    return 0
+  fi
+  if is_connected; then
+    if [ -n "$EXPECTED_HOSTNAME" ]; then
+      printf 'identity probe:    NOT RUN (observer mode; recorded=%s)\n' "$EXPECTED_HOSTNAME"
+    else
+      printf 'identity probe:    NOT RUN (observer mode; no recorded hostname)\n'
+    fi
+    if [ -n "$WATCH_NONCE" ] && tssh_has_done "$WATCH_NONCE" "$buf"; then
+      printf 'active watch:      complete (run --resume to collect rc/output)\n'
+    elif [ -n "$WATCH_NONCE" ]; then
+      printf 'active watch:      running or no exact completion marker observed\n'
+    else
+      printf 'active watch:      none\n'
+    fi
+    printf 'remote cwd:        not queried (observer mode)\n'
+    printf 'verdict:           OBSERVED — ssh pane present; identity not reverified\n'
+    return 0
+  fi
+  printf 'not connected\n'
+  printf 'verdict:           NOT connected (a command would need to (re)connect first)\n'
+  return 0
+}
+
+# A failed inventory proves absence ONLY when no server can exist: no socket file (ENOENT) or nothing listening
+# (ECONNREFUSED; older tmux says "no server running"). Permission/other connect errors are UNKNOWN: the server and
+# the session may be alive behind them.
+no_server_proof() {
+  case "$1" in
+    *"no server running"*|*"error connecting to "*"(No such file or directory)"*|*"error connecting to "*"(Connection refused)"*) return 0 ;;
+  esac
+  return 1
+}
+
+cmd_kill() { # caller holds the host lock. Custody (ref, watch, guard) is cleared ONLY after the exact session was
+  # killed, or proven absent by a complete inventory; any uncertainty keeps all of it.
+  local q qerr inv irc
+  qerr=$(tmux -L "$SOCKET" has-session -t "$STGT" 2>&1 >/dev/null); q=$?
+  if [ "$q" = 0 ]; then
+    if ! qerr=$(tmux -L "$SOCKET" kill-session -t "$STGT" 2>&1 >/dev/null); then
+      log "kill-session FAILED (${qerr:-no message}): session $SESSION may still be alive; ref, watch and input guard KEPT"; return 125
+    fi
+    log "killed session $SESSION (remote processes started in that session keep running)"
+  else
+    inv=$(tmux -L "$SOCKET" list-sessions -F '#{session_name}' 2>&1); irc=$?
+    if [ "$irc" = 0 ] && ! printf '%s\n' "$inv" | grep -Fx -- "$SESSION" >/dev/null; then
+      log "no session to kill ($SESSION absent from the inventory)"
+    elif [ "$irc" != 0 ] && no_server_proof "$inv"; then
+      log "no session to kill (no tmux-ssh server: ${inv})"
+    else
+      log "cannot verify $SESSION is gone (has-session rc $q: ${qerr:-no message}; inventory rc $irc): ref, watch and input guard KEPT"; return 125
+    fi
+  fi
+  [ -f "$REF_FILE" ] && rm -f "$REF_FILE" && log "removed $REF_FILE"
+  clear_watch
+  guard_present && guard_clear && log "cleared the input guard"
+  return 0
+}
+
+# --abort: Ctrl-C the watched command, wait briefly for its DONE marker, then clear the watch. Typing goes through the
+# same input guard and gate-1 (live ssh pane) checks as --send; with an unresolved guard nothing is typed.
+cmd_abort() { # caller holds the host lock
+  if guard_present; then
+    die "cannot abort: UNRESOLVED input on $HOST ($(guard_summary | sed 's/ $//')); nothing is typed while that is unresolved. Inspect with $SCRIPT_NAME $HOST --read; then clear it with $SCRIPT_NAME $HOST --kill" 125
+  fi
+  read_watch || die "saved command watch is invalid; use $SCRIPT_NAME $HOST --kill" 125
+  if [ -z "$WATCH_NONCE" ]; then
+    log "no command is being watched on $HOST; nothing to abort (a program left open on the screen: --read, then --send --key C-c)"
+    return 0
+  fi
+  local n="$WATCH_NONCE" buf rc
+  buf=$(capture)
+  if tssh_has_done "$n" "$buf"; then
+    rc=$(printf '%s\n' "$buf" | grep -E "^TSSHDONE_${n}_ rc=[0-9]+" | tail -1 | sed 's/.*rc=//')
+    clear_watch
+    log "the command had already finished (rc=${rc:-?}); watch cleared, nothing sent"
+    return 0
+  fi
+  if ! is_connected; then
+    clear_watch
+    log "the ssh connection to $HOST is not live, so the command is gone with it; nothing was sent; watch cleared"
+    return 0
+  fi
+  guard_arm abort || { log "🔴 REFUSED (abort): could not arm the input guard in $REF_DIR. Nothing was sent; the watch is kept. Use $SCRIPT_NAME $HOST --kill"; return 125; }
+  local nerr nrc
+  nerr=$(tmux -L "$SOCKET" send-keys -t "$PTGT" C-c 2>&1 >/dev/null); nrc=$?
+  if [ "$nrc" != 0 ]; then
+    guard_mark abort key "$nrc"
+    log "🔴 INPUT UNKNOWN (abort): tmux key failed (native rc $nrc: ${nerr:-no message}). The host is guarded until $SCRIPT_NAME $HOST --kill. Do NOT blindly retry."
+    return 3
+  fi
+  guard_clear
+  log "sent Ctrl-C to $HOST; waiting up to ${ABORT_WAIT}s for the command to end"
+  local deadline=$(( $(date +%s) + ABORT_WAIT ))
+  while :; do
+    buf=$(capture)
+    if tssh_has_done "$n" "$buf"; then
+      rc=$(printf '%s\n' "$buf" | grep -E "^TSSHDONE_${n}_ rc=[0-9]+" | tail -1 | sed 's/.*rc=//')
+      clear_watch
+      log "aborted: the command ended (rc=${rc:-?}); watch cleared, the next command can run"
+      return 0
+    fi
+    [ "$(date +%s)" -lt "$deadline" ] || break
+    sleep 0.2
+  done
+  clear_watch
+  # no marker: shells such as zsh drop the whole line on Ctrl-C. If the shell now answers a probe, the abort worked.
+  read_ref
+  local h prc=0
+  h=$(probe_hostname 8) || prc=$?
+  [ "$prc" = 3 ] && return 3
+  if [ "$prc" = 0 ] && [ -n "$h" ] && { [ -z "$EXPECTED_HOSTNAME" ] || [ "$h" = "$EXPECTED_HOSTNAME" ]; }; then
+    log "aborted: the command was interrupted and the shell on $HOST is ready; the next command can run"
+    return 0
+  fi
+  log "Ctrl-C was sent but the shell did not answer within ${ABORT_WAIT}s+8s (the program may ignore Ctrl-C). Watch cleared. Look with $SCRIPT_NAME $HOST --read; if the screen is still occupied use --send --key (e.g. q, Escape, C-d), or $SCRIPT_NAME $HOST --kill"
+  return 1
+}
+
+cmd_attach() {
+  has_session || die "no session for $HOST to attach to (run: $SCRIPT_NAME $HOST)" 125
+  exec tmux -L "$SOCKET" attach -t "$STGT"
+}
+
+# ---- expect rule parsing ---------------------------------------------------
+# spec is 'PATTERN=RESPONSE' for --expect, or 'PATTERN=@file' / 'PATTERN=env:VAR'
+# for --expect-secret. Splits on the FIRST '='.
+add_expect() {
+  local spec="$1" secret="$2" pat resp src
+  case "$spec" in *=*) : ;; *) die "--expect needs 'PATTERN=RESPONSE' (got '$spec')" 2 ;; esac
+  pat="${spec%%=*}"; src="${spec#*=}"
+  [ -n "$pat" ] || die "--expect pattern must be non-empty" 2
+  # Single-line contract: a newline or carriage return in PATTERN is not a supported
+  # shape (matching is a literal substring test on the screen text). Refuse here, at
+  # argument parsing, so no tmux/ssh call has happened yet. Only PATTERN is checked.
+  case "$pat" in
+    *$'\n'* | *$'\r'*) die "--expect/--expect-secret PATTERN must be a single line (no newline or carriage return)" 2 ;;
+  esac
+  if [ "$secret" = "true" ]; then
+    case "$src" in
+      @*)     resp=$(cat "${src#@}" 2>/dev/null) || die "--expect-secret: cannot read file '${src#@}'" 2 ;;
+      env:*)  local v="${src#env:}"; resp="${!v:-}"; [ -n "$resp" ] || die "--expect-secret: env var '$v' is empty/unset" 2 ;;
+      *)      die "--expect-secret source must be '@file' or 'env:VAR' (got '$src')" 2 ;;
+    esac
+    EXPECT_SECRET+=("1")
+  else
+    resp="$src"
+    EXPECT_SECRET+=("0")
+  fi
+  EXPECT_PATS+=("$pat")
+  EXPECT_RESPS+=("$resp")
+  EXPECT_FIRED+=("0")
+}
+
+# ---- argument parsing ------------------------------------------------------
+HOST=""
+COMMAND=""
+MODE="ensure"          # ensure | run | resume | send | read | status | kill | attach
+have_command=false
+RESUME_REQUESTED=false
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -h|--help)               print_help; exit 0 ;;
+    --status)                MODE="status"; shift ;;
+    --resume)                MODE="resume"; RESUME_REQUESTED=true; shift ;;
+    --kill)                  MODE="kill"; shift ;;
+    --abort)                 MODE="abort"; shift ;;
+    --force-run)             FORCE_RUN=true; shift ;;
+    --attach)                MODE="attach"; shift ;;
+    --send)                  MODE="send"; shift ;;
+    --read)                  MODE="read"; shift ;;
+    --no-reconnect)          ALLOW_RECONNECT=false; shift ;;
+    --interrupt-on-timeout)  INTERRUPT_ON_TIMEOUT=true; shift ;;
+    --no-enter)              SEND_ENTER=false; shift ;;
+    --settle)                SETTLE=true; shift ;;
+    --key)                   SEND_KEY="${2:-}"; shift 2 ;;
+    --timeout)               CMD_TIMEOUT="${2:-}"; TIMEOUT_GIVEN=true; shift 2 ;;
+    --lines)                 LINES="${2:-}"; shift 2 ;;
+    --connect-timeout)       CONNECT_TIMEOUT="${2:-}"; shift 2 ;;
+    --expect)                add_expect "${2:-}" false; shift 2 ;;
+    --expect-secret)         add_expect "${2:-}" true;  shift 2 ;;
+    --expect-host)           EXPECT_HOST="${2:-}"; shift 2 ;;
+    --)                      shift; break ;;
+    -*)                      die "unknown flag: $1" 2 ;;
+    *)
+      if [ -z "$HOST" ]; then HOST="$1"
+      elif [ "$have_command" = false ]; then COMMAND="$1"; have_command=true
+      else die "unexpected extra argument: $1 (quote the command as a single argument)" 2
+      fi
+      shift ;;
+  esac
+done
+# Anything after `--` is the command (allows unquoted commands with flags).
+if [ $# -gt 0 ]; then
+  if [ "$have_command" = false ]; then COMMAND="$*"; have_command=true
+  else die "command already given; unexpected: $*" 2; fi
+fi
+
+[ -n "$HOST" ] || { usage; exit 2; }
+# [SECURITY] $HOST becomes an ssh argument (and a session/ref name). A legitimate ssh target is an alias or
+# [user@]host: letters, digits, dot, underscore, hyphen, and one '@', not starting with '-' (it would be read as an
+# ssh option). (IPv6 literals with ':' are intentionally unsupported — use an ssh-config alias.)
+case "$HOST" in
+  -*) die "invalid host '$HOST' — a host may not start with '-'" 2 ;;
+  *[!A-Za-z0-9._@-]*) die "invalid host '$HOST' — allowed characters: letters, digits, . _ - @ (use an ssh-config alias for anything else)" 2 ;;
+esac
+# TMUX_SSH_OPTS becomes ssh arguments (split on spaces): refuse anything outside a safe set
+# (C locale so the ranges mean ASCII). --status and --kill never type it.
+if [ "$MODE" != "kill" ] && [ "$MODE" != "status" ]; then
+  _lc_all_saved="${LC_ALL-}"; LC_ALL=C
+  case "${TMUX_SSH_OPTS:-}" in
+    *[!A-Za-z0-9\ _./=:,@~+%-]*)
+      die "TMUX_SSH_OPTS contains a disallowed character (allowed: letters digits space - _ . / = : , @ ~ + %)" 2 ;;
+  esac
+  if [ -n "$_lc_all_saved" ]; then LC_ALL="$_lc_all_saved"; else unset LC_ALL; fi
+  # every token must be an option: a bare word would become ssh's destination (and the real host the remote
+  # command). An ssh option that takes a value (-o X, -i F, -p N ...) consumes the next token as that value.
+  _want_val=0
+  for _t in ${TMUX_SSH_OPTS:-}; do
+    if [ "$_want_val" = 1 ]; then _want_val=0; continue; fi
+    case "$_t" in
+      -[BbcDEeFIiJLlmOoPpQRSWw]) _want_val=1 ;;
+      -?*) ;;
+      *) die "TMUX_SSH_OPTS token '$_t' is not an ssh option (each token must start with '-', or be the value of the option before it)" 2 ;;
+    esac
+  done
+  [ "$_want_val" = 0 ] || die "TMUX_SSH_OPTS ends with an option that needs a value" 2
+fi
+if [ -n "$EXPECT_HOST" ]; then
+  case "$EXPECT_HOST" in
+    *[!A-Za-z0-9._-]*) die "--expect-host/TMUX_SSH_EXPECT_HOST must contain only letters, digits, . _ - (got '$EXPECT_HOST')" 2 ;;
+  esac
+fi
+for v in CMD_TIMEOUT CONNECT_TIMEOUT LINES; do
+  val="${!v}"
+  case "$val" in ''|*[!0-9]*) die "$v must be a non-negative integer (got '$val')" 2 ;; esac
+done
+if [ "$CMD_TIMEOUT" -lt 1 ] || [ "$CMD_TIMEOUT" -gt 2700 ]; then
+  die "--timeout must be between 1 and 2700 seconds (got $CMD_TIMEOUT)" 2
+fi
+if [ "$RESUME_REQUESTED" = "true" ] && [ "$MODE" != "resume" ]; then
+  die "--resume cannot be combined with another mode" 2
+fi
+if [ "$MODE" = "resume" ]; then
+  [ "$INTERRUPT_ON_TIMEOUT" != "true" ] || die "--resume is capture-only; --interrupt-on-timeout is not allowed" 2
+  [ "${#EXPECT_PATS[@]}" -eq 0 ] || die "--resume is capture-only; --expect/--expect-secret are not allowed" 2
+  [ -z "$SEND_KEY" ] && [ "$SEND_ENTER" = "true" ] || die "--resume is capture-only; send flags are not allowed" 2
+  [ "$have_command" = false ] || die "--resume does not accept a command; use it only to observe the saved watch" 2
+fi
+if [ "${#EXPECT_PATS[@]}" -gt 0 ] && { [ "$MODE" = "send" ] || [ "$MODE" = "read" ] || [ "$MODE" = "status" ] || [ "$MODE" = "kill" ] || [ "$MODE" = "attach" ] || [ "$MODE" = "abort" ]; }; then
+  die "--expect/--expect-secret only apply when running a command" 2
+fi
+if [ "$MODE" = "abort" ] && [ "$have_command" = true ]; then
+  die "--abort does not accept a command" 2
+fi
+if [ "$MODE" = "send" ] && [ "$have_command" = false ] && [ -z "$SEND_KEY" ]; then
+  die "--send needs text (or --key <name>)" 2
+fi
+
+# ---- refuse interactive commands in run mode (before anything is sent) ----------
+# Looks ONLY at the leading command (after optional sudo / env VAR=x / exec / VAR=x), never at pipelines or later
+# commands. Prints the interactive form and returns 0 when the command would never finish; 1 otherwise.
+interactive_hint() {
+  local -a w; local i=0 t base sub
+  read -r -a w <<< "$1"
+  [ "${#w[@]}" -gt 0 ] || return 1
+  while [ "$i" -lt "${#w[@]}" ]; do
+    t="${w[$i]}"
+    case "$t" in
+      sudo)  i=$((i+1))
+             while [ "$i" -lt "${#w[@]}" ]; do
+               case "${w[$i]}" in
+                 -[ughprCrtTU]) i=$((i+2)) ;;
+                 -*) i=$((i+1)) ;;
+                 *=*) i=$((i+1)) ;;
+                 *) break ;;
+               esac
+             done ;;
+      env)   i=$((i+1))
+             while [ "$i" -lt "${#w[@]}" ]; do
+               case "${w[$i]}" in -*|*=*) i=$((i+1)) ;; *) break ;; esac
+             done ;;
+      exec)  i=$((i+1)) ;;
+      *=*)   i=$((i+1)) ;;
+      *)     break ;;
+    esac
+  done
+  [ "$i" -lt "${#w[@]}" ] || return 1
+  base="${w[$i]##*/}"
+  case "$base" in
+    vim|vi|nvim|nano|emacs|top|htop|less|more|man|watch)
+      INTERACTIVE_MSG="'$base' stays open and never finishes in run mode. Drive it instead: $SCRIPT_NAME $HOST --send \"$base ...\" ; $SCRIPT_NAME $HOST --read --settle ; $SCRIPT_NAME $HOST --send --key Escape (or q / C-c). To run it anyway add --force-run."
+      return 0 ;;
+    tmux)
+      i=$((i+1)); sub=""
+      while [ "$i" -lt "${#w[@]}" ]; do
+        case "${w[$i]}" in
+          -[LSfcT]) i=$((i+2)) ;;
+          -*) i=$((i+1)) ;;
+          *) sub="${w[$i]}"; break ;;
+        esac
+      done
+      case "$sub" in
+        '') INTERACTIVE_MSG="bare 'tmux' opens an interactive session and never finishes in run mode. Use: $SCRIPT_NAME $HOST \"tmux new -d -s NAME 'cmd'\" (detached), or drive it with --send / --read. To run it anyway add --force-run."
+            return 0 ;;
+        attach|attach-session|a|at)
+            INTERACTIVE_MSG="'tmux $sub' attaches and never finishes in run mode. Drive the attached program with $SCRIPT_NAME $HOST --send / --read, or start work detached: $SCRIPT_NAME $HOST \"tmux new -d -s NAME 'cmd'\". To run it anyway add --force-run."
+            return 0 ;;
+        new|new-session)
+            local k detached=false
+            for k in "${w[@]:$((i+1))}"; do
+              case "$k" in -[A-Za-z]*) case "${k#-}" in *[!A-Za-z]*) ;; *d*) detached=true ;; esac ;; esac
+            done
+            if [ "$detached" = false ]; then
+              INTERACTIVE_MSG="'tmux $sub' without -d attaches and never finishes in run mode. Use: $SCRIPT_NAME $HOST \"tmux new -d -s NAME 'cmd'\" (detached), or drive it with --send / --read. To run it anyway add --force-run."
+              return 0
+            fi ;;
+      esac ;;
+  esac
+  return 1
+}
+INTERACTIVE_MSG=""
+if [ "$MODE" = "ensure" ] && [ "$have_command" = true ] && [ "$FORCE_RUN" != true ]; then
+  if interactive_hint "$COMMAND"; then die "$INTERACTIVE_MSG" 2; fi
+fi
+
+# One tmux send-keys carries about 16,300 bytes (measured on tmux 3.6a: 16,300 passes, 16,340 fails with "failed to send
+# command", 16,360+ with "command too long"; the session target takes part of that). A bigger command used to fail AFTER
+# arming the input guard (rc 3, INPUT UNKNOWN). Refuse it up front, before any tmux call. Run mode adds the DONE wrapper.
+# TMUX_SSH_MAX_BYTES overrides the limit (test seam).
+SEND_MAX_BYTES=${TMUX_SSH_MAX_BYTES:-16000}
+oversize_check() { # <what> <overhead bytes>
+  local n; n=$(printf '%s' "$COMMAND" | LC_ALL=C wc -c | tr -d ' ')
+  if [ "$1" = command ] && cmd_needs_encoding "$COMMAND"; then n=$(( (n + 2) / 3 * 4 + 100 )); fi   # sent base64-encoded: 4/3 the size plus the decoder
+  if [ "$((n + $2))" -gt "$SEND_MAX_BYTES" ]; then
+    die "the $1 is $n bytes; one tmux send carries at most about 16,000 bytes (limit here $SEND_MAX_BYTES, wrapper included). Nothing was sent. Do not split it into several sends: put the text in a file, copy it over (scp FILE $HOST:/tmp/FILE), then run a short command that uses it (e.g. $SCRIPT_NAME $HOST 'git apply /tmp/FILE')." 2
+  fi
+}
+if [ "$have_command" = true ]; then
+  case "$MODE" in
+    ensure) oversize_check command 400 ;;
+    send)   [ -n "${SEND_KEY:-}" ] || oversize_check "text to send" 0 ;;
+  esac
+fi
+
+SANITIZED=$(sanitize "$HOST")
+SESSION="ts_${SANITIZED}"
+# Exact targets: a bare -t NAME also matches a unique PREFIX (tmux target-session rules), so ts_host could select
+# ts_host_extra. "=NAME" restricts to the exact session; "=NAME:" is the same for window/pane targets.
+STGT="=${SESSION}"
+PTGT="=${SESSION}:"
+REF_FILE="$REF_DIR/${SANITIZED}.session"
+WATCH_FILE="$REF_DIR/${SANITIZED}.watch"
+GUARD_FILE="$REF_DIR/${SANITIZED}.input-guard"
+LOCK_DIR="$REF_DIR/${SANITIZED}.lock"
+EXPECTED_HOSTNAME=""
+
+case "$MODE" in
+  attach)  cmd_attach ;;                         # exec's away; no lock needed
+  kill)    mkdir -p "$REF_DIR"; acquire_lock "$LOCK_DIR"; cmd_kill; exit $? ;;   # local teardown, under the host lock
+  status)  mkdir -p "$REF_DIR"; cmd_status; exit $? ;;   # observer: no lock, so it works while a long command holds the host (state files are written atomically)
+  abort)   mkdir -p "$REF_DIR"; acquire_lock "$LOCK_DIR"; cmd_abort; exit $? ;;
+  resume)  mkdir -p "$REF_DIR"; acquire_lock "$LOCK_DIR"; cmd_resume; exit $? ;;
+  send)    mkdir -p "$REF_DIR"; acquire_lock "$LOCK_DIR"; refuse_if_guarded; cmd_send;  exit $? ;;
+  read)    mkdir -p "$REF_DIR"; cmd_read;  exit $? ;;   # read-only capture: no lock, so a long watcher can be observed
+esac
+
+# ensure (host only) or run (host + command): both need a live, confirmed session.
+mkdir -p "$REF_DIR"
+acquire_lock "$LOCK_DIR"
+refuse_if_guarded
+read_watch || die "saved command watch is invalid; use --kill before starting another command" 125
+if [ -n "$WATCH_NONCE" ]; then
+  die "a previous command is still being watched on $HOST -- NOT resent. Ways out: $SCRIPT_NAME $HOST --resume [--timeout N] (keep waiting) | $SCRIPT_NAME $HOST --abort (Ctrl-C it and clear the watch) | $SCRIPT_NAME $HOST --kill (drop the ssh session; remote processes keep running)" 125
+fi
+ensure_connected
+if [ "$have_command" = true ]; then
+  run_command "$COMMAND"
+  exit $?
+fi
+log "ready: $HOST ($EXPECTED_HOSTNAME)"
+exit 0

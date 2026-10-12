@@ -52,7 +52,7 @@ findings yet. Each line ≤120 chars; cite a file area or epic if relevant.
 Example:
 
 ```text
-- Is the embedding adapter wired post-<epic>? (check internal/memory/embed/adapter_ollama.go)
+- Is the embedding adapter wired post-<epic>? (check the embedding adapter source)
 - thrum-abc monitor reliability follow-up still has 4 child bugs open
 - Open: does --scope role on memory.create auto-infer the role, or does it require explicit value?
 ```

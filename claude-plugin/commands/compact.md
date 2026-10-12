@@ -252,7 +252,7 @@ if [ "$SNAPSHOT_OK" = 1 ] && [ "$SESSION_OK" = 1 ]; then
     # >>> postcompact-marker
     # Runtimes with a PostCompact hook only: leave a marker the hook consumes to
     # skip its own nudge (exactly-once). Written only on a successful queue; no
-    # marker => the hook nudge stays the fallback. scripts/sync-skills.sh drops
+    # marker => the hook nudge stays the fallback. the plugin sync step drops
     # this block for runtimes whose hook manifest has no PostCompact hook.
     mkdir -p "${REPO}/.thrum/var" && date +%s > "${REPO}/.thrum/var/${SESSION}-compact-resume-queued"
     # <<< postcompact-marker
@@ -306,7 +306,7 @@ of that is needed here. Resume LEAN, in this order:
    crons rather than re-dispatching.
 
 Two hooks fire on `/compact`: `PostCompact`
-(`claude-plugin/scripts/post-compact-recover.sh`) and `SessionStart` with
+(the plugin's post-compact recovery script) and `SessionStart` with
 `source=compact` (`inject-prime-context.sh`). On a healthy daemon the
 SessionStart hook auto-injects the briefing directly, Resume Plan body included
 — you already have your context with no turn spent getting it. The PostCompact

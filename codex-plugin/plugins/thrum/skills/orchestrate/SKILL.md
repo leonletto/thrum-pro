@@ -793,10 +793,10 @@ wrong code and report a confident verdict about it.
 - **Require the reviewer to report back the SHA it actually scanned.** If the
   SHA it reports is not the SHA you pinned, the verdict is VOID — re-dispatch.
   Do not accept a verdict that cannot name its own base.
-- Cite `origin/<branch>` (e.g. `git show origin/thrum-agents:path/to/file.go`),
-  never a working copy, when reasoning about tip state. A stale local clone
-  produces confident, wrong impeachments — and sub-agents reading that same
-  stale clone will "corroborate" it. That is echo, not corroboration.
+- Cite `origin/<branch>` (e.g. `git show origin/<base>:path/to/file.go`), never
+  a working copy, when reasoning about tip state. A stale local clone produces
+  confident, wrong impeachments — and sub-agents reading that same stale clone
+  will "corroborate" it. That is echo, not corroboration.
 
 **Stop condition:** zero BLOCKING remaining. IMPORTANT + MINOR may ship — LOG
 them, forward to coordinator at merge-approval.

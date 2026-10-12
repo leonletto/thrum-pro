@@ -62,7 +62,7 @@ EOF
 ```
 
 If the coordinator asks you to file the bead, write the description to a scratch
-file and pass `--body-file <file>` to `scripts/bd-shared` (and
+file and pass `--body-file <file>` to the project's shared `bd` wrapper (and
 `comments add <id> -f <file>` for comments).
 
 Then continue with the assigned work. Do not implement the refactoring.

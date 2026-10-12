@@ -133,9 +133,9 @@ on it rediscovering these the hard way:
    either lane** — a bare package-level `go test [-race] ./internal/daemon/rpc`
    starves and hits the configured `-timeout` wall in both the race and non-race
    lane. The gate's OUTPUT must show the sharded runner actually executed for
-   RPC (`race-shard` / `package-shard --mode norace`, or
-   `scripts/test-run.sh race|norace ./internal/daemon/rpc`, or `make gate` which
-   shards both lanes automatically) — not just that some RPC test ran. A
+   RPC (`race-shard` / `package-shard --mode norace`, or the project's sharded
+   test runner (race or norace lane) on `./internal/daemon/rpc`, or `make gate`
+   which shards both lanes automatically) — not just that some RPC test ran. A
    bound-timeout with ZERO test failures is a FALSE RED, not a finding:
    distinguish it from a genuine hang/deadlock via
    `go run ./cmd/testgate classify-timeout --log <file> --shard-config <file> --shard <name> --pkg-dir <package dir>`
@@ -216,6 +216,14 @@ bumps a ceiling/aggregate in the ledger file without a `RATCHET-WAIVER:` tag,
 even when the ledger-equality test alone would pass.
 
 ### Delta re-gate continuity — walk the whole branch, read the whole function
+
+**When a delta re-gate exists at all:** only after a gate found a failing test
+or a blocking finding that the change itself causes, and the author pushed a fix
+for it. Then the gate reruns only the lanes that were red plus the packages the
+fix touches. A delta re-gate is NEVER asked for because trunk moved, because the
+branch merged trunk, because a generated file was regenerated, or because a
+minor finding was fixed: a green run lands as it is (coordinator-merging-code,
+"LAND ON GREEN").
 
 **Why:** A commit introducing a lock can be an ancestor of a delta-re-gate's
 base and never appear in any walked diff, even when a later commit edits the

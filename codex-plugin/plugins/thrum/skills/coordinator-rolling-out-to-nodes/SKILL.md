@@ -134,9 +134,9 @@ the pin.
 
 > 🔴 **If any node fails during the rollout — canary or any wave — STOP THE
 > ROLLOUT.** Do not roll, restart, or recommend restarting any further node
-> (including the build host / primary) until the failure is root-caused and
-> fixed or the owner explicitly decides to continue. A node that went down and
-> was recovered by hand is a FAILURE, not a green.
+> (including the build host) until the failure is root-caused and fixed or the
+> owner explicitly decides to continue. A node that went down and was recovered
+> by hand is a FAILURE, not a green.
 
 - **Canary first, alone.** One node (adapter `topology.canary`) rolls first. Its
   health must be observed green before any wave proceeds.
@@ -189,9 +189,8 @@ skill by name in the dispatch.
   verification, treat as not-verified.
 - Never wrap a service restart in a blind timeout on the node (see node skill
   `service.never_timeout` and `migration.signal_rules`).
-- 🔴 A **macOS** node (including the build host / primary) restarted with the
-  plain `service.restart_command` instead of `service.mac_restart_command`
-  (Thrum: `scripts/mac-daemon-restart-via-cron.sh`). The daemon loses its Local
-  Network permission and its LAN peers go dark while it looks healthy. Put the
-  mac command in every macOS node's dispatch, and use it yourself when you roll
-  the build host last.
+- 🔴 A **macOS** node restarted with the plain `service.restart_command` instead
+  of `service.mac_restart_command` (Example — Thrum adapter:
+  `service.mac_restart_command`). The daemon loses its Local Network permission
+  and its LAN peers go dark while it looks healthy. Put the mac command in every
+  macOS node's dispatch, and use it yourself when you roll the build host last.

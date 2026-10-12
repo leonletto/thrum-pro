@@ -59,7 +59,7 @@
 # worktree-local copy) the moment this script or its cwd ever moves to a
 # feature worktree. `resolve_watch_params()` below replaces that implicit
 # assumption with the same explicit `.thrum/redirect`-following idiom
-# already used by `scripts/heartbeat-lib.sh:225-232` and
+# already used by the heartbeat library and
 # the check-inbox hook script.
 #
 # PORTABILITY FIX: both source scripts also hardcoded a single operator's
@@ -104,8 +104,8 @@ set -uo pipefail
 # both of which were independently reimplementing this same body).
 # ---------------------------------------------------------------------------
 # Args: worktree_root. Prints the redirect-resolved absolute .thrum/ dir.
-# Matches the idiom already used by scripts/heartbeat-lib.sh's
-# hb_sessions_dir() and the check-inbox hook script's SPOOL_THRUM
+# Matches the idiom already used by the heartbeat library's
+# session-dir helper and the check-inbox hook script's SPOOL_THRUM
 # resolution: no redirect file present (main repo) -> use the local .thrum/
 # as-is; redirect file present (feature worktree) -> follow it to the main
 # repo's .thrum/.

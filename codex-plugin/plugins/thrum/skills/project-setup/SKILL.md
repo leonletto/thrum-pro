@@ -242,7 +242,7 @@ configuration from day one.
 ### Inputs
 
 Primary input: **plan file path** (output of writing-plans, e.g.
-`dev-docs/plans/2026-02-21-feature-plan.md`). The plan references the design doc
+`dev-docs/plans/YYYY-MM-DD-feature-plan.md`). The plan references the design doc
 — both are read in Phase 1.
 
 Also needed from CLAUDE.md or conversation context:
@@ -481,11 +481,12 @@ If not found, create one:
 
 `--description` is multi-line prose — never double-quoted inline. Use
 `--body-file` to pass the content from a file instead; see the heredoc-or-file
-rule in your role preamble. `scripts/bd-shared` delivers `--body-file` (and
-`--stdin`) content: it reads the file on your box and pipes those bytes to bd,
-and an empty or blank body is refused loudly; only `-f`/`--file` and `--graph`
-(bulk-plan files) are refused there. Scratch files go in `/private/tmp` on
-macOS, where `/tmp` is a symlink (check `[ -L /tmp ]`), and in `/tmp` elsewhere.
+rule in your role preamble. The project's shared `bd` wrapper delivers
+`--body-file` (and `--stdin`) content: it reads the file on your box and pipes
+those bytes to bd, and an empty or blank body is refused loudly; only
+`-f`/`--file` and `--graph` (bulk-plan files) are refused there. Scratch files
+go in `/private/tmp` on macOS, where `/tmp` is a symlink (check `[ -L /tmp ]`),
+and in `/tmp` elsewhere.
 
 ```bash
 # Scratch dir: /private/tmp on macOS (where /tmp is a symlink), /tmp elsewhere.
@@ -646,8 +647,8 @@ cat .thrum/redirect    # should point to <project-root>/.thrum
 cat .beads/redirect    # should point to <project-root>/.beads
 
 # If redirects are missing or wrong, fix them:
-# (from project root)
-./scripts/setup-worktree-thrum.sh <worktree-path>
+# (from the worktree; non-destructive and idempotent)
+thrum worktree adopt
 
 # Verify beads sees shared database
 bd where    # Should show <project-root>/.beads
@@ -678,15 +679,10 @@ thrum worktree create <worktree-name> --branch <branch-name> \
 thrum worktree setup <worktree-name> --branch <branch-name> \
   --name <agent-name> --role implementer
 
-# Alternative: shell script (does the same thing; the SCRIPT keeps its own
-# <worktree-path> <branch> --identity interface — distinct from the CLI above)
-./scripts/setup-worktree-thrum.sh \
-  <worktree-path> <branch-name> \
-  --identity <agent-name> --role implementer
 ```
 
-All three handle: branch creation, worktree creation, thrum redirect, beads
-redirect, and `thrum quickstart` registration.
+Both handle: branch creation, worktree creation, thrum redirect, beads redirect,
+and `thrum quickstart` registration.
 
 ##### For current worktree (small fixes)
 
@@ -903,8 +899,8 @@ Worktree ready at `{{WORKTREE_PATH}}` on branch `{{BRANCH_NAME}}`. Agent
 
 <!-- If worktree needs to be created by the implementation agent: -->
 
-./scripts/setup-worktree-thrum.sh {{WORKTREE_PATH}} {{BRANCH_NAME}} \
- --identity {{AGENT_NAME}} --role implementer
+thrum worktree create <worktree-name> --branch {{BRANCH_NAME}} \
+ --name {{AGENT_NAME}} --role implementer
 
 ---
 

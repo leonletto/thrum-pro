@@ -48,6 +48,11 @@ thrum monitor delete <name|id>
 ```
 
 - `--name`, `--match` and `--to` are required; the command follows `--`.
+- The daemon accepts caller-relative target aliases on start/update and persists
+  the registered caller's concrete ID. Register the runtime with
+  `thrum quickstart`, or give an explicit recipient. Repair a legacy unresolved
+  alias with `thrum monitor update <id> --to @<agent>`, then restart; list/show
+  display its unresolved-target warning.
 - `--schedule` takes a 5-field cron expression. `update --schedule` changes the
   cron of a scheduled monitor at any time. Setting a first schedule or removing
   it (`--schedule ""`) switches the mode, which is refused while the monitor is
@@ -158,7 +163,7 @@ An inbox reminder is a monitor whose command only prints a fixed line. Give the
 line a stable prefix and match exactly that prefix.
 
 ```bash
-thrum monitor start --name standup-nudge --to @me \
+thrum monitor start --name standup-nudge --to @<your_agent_name> \
   --match '^REMINDER-STANDUP:' --schedule "0 9 * * 1-5" -- \
   echo "REMINDER-STANDUP: post the status update, then reply to the open review"
 ```
@@ -264,7 +269,7 @@ A script check runs a bounded, synchronous probe and reports through its exit
 code and one structured line.
 
 ```bash
-thrum monitor start --name disk-check --to @me \
+thrum monitor start --name disk-check --to @<your_agent_name> \
   --match '^CHECK-DISK:' --schedule "*/15 * * * *" -- \
   bash -c 'u=$(df --output=pcent / | tail -1 | tr -dc 0-9)
   [ "$u" -lt 90 ] && exit 0
@@ -304,7 +309,7 @@ Start the monitor with a unique name, `--to` the verifying agent, and a
 one-minute schedule, then read the delivered message back in full.
 
 ```bash
-thrum monitor start --name verify-<unique> --to @me --match '^VERIFY-<unique>:' \
+thrum monitor start --name verify-<unique> --to @<your_agent_name> --match '^VERIFY-<unique>:' \
   --schedule "* * * * *" -- echo "VERIFY-<unique>: delivery body check"
 thrum inbox --unread
 thrum message get <message-id>      # the complete delivered body

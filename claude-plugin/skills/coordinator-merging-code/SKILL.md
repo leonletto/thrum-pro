@@ -26,6 +26,78 @@ authority for this branch in practice (check with your team, or your
 project's own operational convention); if that is not you, route the merge
 to them the same as if the map had named them explicitly.
 
+## LAND ON GREEN — read this before anything else in this skill
+
+**If a green gate run comes in, that is enough. Land it in the same turn.**
+Sending a green change back costs hours on every landing and delays all
+development. Nothing below in this skill overrides this section; where another
+line seems to, this section wins.
+
+1. **Green run + clean merge against trunk = merge now**, in the turn the
+   verdict, or the request to land, arrives.
+2. **Trunk moving never invalidates a green run.** The gate takes trunk once for
+   its landing tree. Do not ask for a merge-forward, a fast-forward, a rebase or
+   a re-run because trunk has moved since.
+3. **No "delta gates".** A merge-forward followed by a second gate of the new
+   tip is the same send-back loop under another name. So is a "validation run",
+   a "confirmation run", a "re-pin", a "re-admit" or a "fresh full gate" of a
+   change that already has a green run. Do not ask for any of them.
+4. **Minor findings do not reopen a gate.** If a small commit on the branch
+   already fixes them, land the tip and name that commit in the merge message.
+   If they are not fixed, land and route the fix as a follow-up.
+5. **Generated-file conflicts are the gate's to regenerate**, as a
+   gate-authored commit on the landing ref, with no race re-run and no trip
+   back to the implementer.
+6. **No post-landing verification gate.** The next gate's landing tree contains
+   the landing and covers it.
+7. **Do not hold a ready change behind another landing** unless the two
+   actually conflict when merged.
+8. **A chain of branches built on top of each other lands as ONE merge.** They
+   build on each other; gate the top of the chain once (it contains the rest)
+   and merge it once. Do not gate or merge the links separately, and do not ask
+   for four merges when the chain has four links.
+9. **A request to land gets a merge or a named blocking finding**, with the
+   failing test name or the file and line. Never a status report, and never a
+   place in a queue.
+
+### What the per-landing gate runs (owner ruling, 2026-10-11) — no race on every landing
+
+**A full race is NOT run for every landing.** Landings go in on a non-race
+gate, and trunk is raced in batches. **Nothing gets to deploy without a race.**
+
+The per-landing gate:
+
+1. Landing tree on trunk, taken once.
+2. Build and vet (default and darwin).
+3. The NON-RACE lane (the project test runner's `norace` lane, one concrete package per
+   call) for the packages the diff touches. The non-race lane runs every test;
+   the race lane runs the same tests with the detector on.
+4. The structural checks (shard configs, census coverage, the guard tests the
+   change names); the gate regenerates generated files itself.
+5. Only where the change is itself a concurrency change — it adds or changes a
+   lock, a channel, a goroutine, a context-cancellation path, or a fence
+   against a concurrent actor — also the change's OWN focused race selectors
+   (the tests it adds), not the whole package under race.
+6. An explicit verdict with the landing ref. Green lands the same turn.
+
+The batch race:
+
+- After every FIVE landings, dispatch ONE full race of trunk
+  (the project test runner's `race all`) to one gate.
+- A failure is attributed to a landing by test name and stack trace and fixed
+  as a follow-up. Landings are not unwound, and other landings do not wait.
+- **A bundle is built only from a trunk commit that has a green full race.**
+  If the last batch race is older than trunk's tip, race the tip first.
+
+A non-race run may take a pool slot above the cap (lower load); a race run
+uses a normal slot.
+
+The only things that stop a landing: a failing test that the change itself
+causes, named; a blocking review finding, with file and line; a hand-written
+merge conflict (the implementer resolves that one conflict, and only the
+conflicting part is checked again); or no gate run at all, in which case the
+change goes on a gate as that gate's next job, not back to its author.
+
 > 🔴 **THE ONE THING MOST OFTEN GOT WRONG: YOU DO NOT RUN THE GATES. YOU DISPATCH
 > THEM TO THE GATE RUNNER.** See §3. A coordinator that walks the lenses inline
 > burns the one resource it cannot replace and leaves **no auditable verdict** —
@@ -49,10 +121,12 @@ agent and either one finding or an explicit zero, per axis. **An absent report a
 a clean report are different things**, and silence defaults to the reading you
 want. If an axis goes silent twice, re-route it rather than re-spawning.
 
-**A verdict attaches to an OBJECT.** If the branch takes a new commit after review
-— including a merge-forward — the prior verdicts do not transfer. **Re-dispatch the
-axes on the delta.** A fix produced in response to a finding is exactly where the
-next defect lives.
+**A review verdict attaches to the change it read.** If the branch takes a new
+commit that changes behaviour after review, a reviewer reads that commit before
+it lands. A merge of trunk into the branch, a regenerated generated file, or a
+commit that only fixes a minor finding the gate already named is NOT a new
+object: the prior review and the green gate run stand, and nothing is
+re-dispatched for it (see "LAND ON GREEN" above).
 
 **Consolidate into ONE numbered list** across all severities before anything goes
 back to the implementer. Never send partial findings; they fix batch 1 and miss
@@ -170,7 +244,7 @@ executed half is **scoped to the change**:
 
 - Build the merged tree (`go build ./...`).
 - 🔴 **RULING:** the full sharded race suite —
-  `scripts/test-run.sh race all` (~15-20 min) — on the **merged tree**, every
+  the project's sharded race test runner over all packages (~15-20 min) — on the **merged tree**, every
   Pass-3 verdict. This replaces the prior "changed packages only (+ rpc shard
   sweep)" race scoping below the ruling; a targeted `-run` is still never
   acceptable (a targeted run misses cross-test races). Never on primary (the

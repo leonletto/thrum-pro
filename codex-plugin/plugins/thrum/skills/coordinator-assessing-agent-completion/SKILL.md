@@ -181,10 +181,10 @@ partition them across background sub-agents that examine each worktree read-only
 and RETURN a verdict — they never reap. Per worktree each reports:
 sleeping-agent marker present?; branch containment (ancestor of trunk / pushed /
 UNMERGED-with-commit-list); only-copy authored content (docs/plans/specs,
-undelivered reports, restart snapshots), ignoring regenerable dirt
-(`scripts/thrum-*.sh`, `.thrum/redirect`, `runtime_config.json`). Fence them
-READ-ONLY (no checkout/reset/stash/clean/rebase/commit/push, no
-`worktree remove`, no `agent delete`, no `rm`). You consolidate and decide.
+undelivered reports, restart snapshots), ignoring regenerable dirt (`thrum-*.sh`
+helper scripts, `.thrum/redirect`, `runtime_config.json`). Fence them READ-ONLY
+(no checkout/reset/stash/clean/rebase/commit/push, no `worktree remove`, no
+`agent delete`, no `rm`). You consolidate and decide.
 
 **Cross-check the reap set against the live + sleeping roster before ANY
 deletion** — one protected agent in the set aborts the batch. Build the
@@ -281,26 +281,24 @@ Once you've classified an agent as idle, its `gopls` process (if any) is a
 second, independent reclaim candidate — an idle agent's gopls is dead weight
 sitting in RAM.
 
-`scripts/reap-idle-gopls.sh` matches each running `gopls` process to its owning
-agent (ppid chain → tmux pane_pid → `thrum team --json` session) and uses
-`tmux_state` as a cheap first-pass filter — anything not idle by that signal is
-skipped outright. That filter is bounded, not authoritative: it does not replace
-this skill's own idle/finished judgment, which still comes from the transcript
-per the rules above. Run the script alongside the scan above, apply the same
-transcript-based gate to whatever it surfaces, and fold the result into a single
-combined table: idle agent · gopls PID · RSS-MB.
+Match each running `gopls` process to its owning agent (ppid chain → tmux
+pane_pid → `thrum team --json` session) and use `tmux_state` as a cheap
+first-pass filter — anything not idle by that signal is skipped outright. That
+filter is bounded, not authoritative: it does not replace this skill's own
+idle/finished judgment, which still comes from the transcript per the rules
+above. Do this alongside the scan above, apply the same transcript-based gate to
+whatever it surfaces, and fold the result into a single combined table: idle
+agent · gopls PID · RSS-MB.
 
 - Killing an idle agent's gopls is a no-op — it respawns on the agent's next LSP
   request. Never destructive to the agent itself.
-- **NEVER kill a pool or active-worker gopls.** The script excludes by ROLE
-  (orchestrator, gate, coordinator, brainstormer, researcher — the roles that
-  are never reap targets) plus the non-idle-state skip above, plus one named
-  exception for a role-uncovered pool agent. It also runs a canary self-check
-  before printing anything: if it can't prove the exclusion still resolves
-  correctly, it aborts loudly instead of printing a kill-list. Do not override
-  or bypass any of this.
-- Same framing as the rest of this skill: the script **produces information, you
-  decide**. It is read-only and dry-run — it prints a kill-list, it never kills
+- **NEVER kill a pool or active-worker gopls.** Exclude by ROLE (orchestrator,
+  gate, coordinator, brainstormer, researcher — the roles that are never reap
+  targets) plus the non-idle-state skip above. Before building any kill-list,
+  prove the exclusion still resolves correctly; if you cannot, abort rather than
+  print one. Do not override or bypass any of this.
+- Same framing as the rest of this skill: this step **produces information, you
+  decide**. It is read-only — it yields a candidate list, it never kills
   anything.
 
 ### 🔴 Footguns — never do these (each measured, each cost real time or state)

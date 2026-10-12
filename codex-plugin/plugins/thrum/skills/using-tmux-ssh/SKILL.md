@@ -5,8 +5,6 @@ description:
   long test or build on another machine, inspect a remote log, or recover after
   an ssh connection dropped or a remote command timed out. Use tmux-ssh for
   remote commands, saved-watch resume, and concurrent observation."
-# source: claude-plugin/skills/using-tmux-ssh/SKILL.md
-# generated-by: scripts/sync-skills.sh
 ---
 
 ## Running Remote Commands With tmux-ssh
@@ -16,33 +14,44 @@ for every command on another machine or VM, short or long, including remote
 tests, builds, and log reads. Use `--read` and `--status` to observe; never use
 plain SSH polling or Monitor loops.
 
-### Where the script is
+### Resolve the bundled executable
 
-From a Thrum source checkout, run `scripts/tmux-ssh` from the repository root
-and read `scripts/tmux-ssh --help` for current flags. Read the design doc at
-`dev-docs/proxmox/32-tmux-ssh-design.md`. If no source checkout is present, ask
-the coordinator for its path rather than guessing.
+Resolve `resources/tmux-ssh` relative to the active `using-tmux-ssh` skill
+folder supplied by your runtime. Set `TMUX_SSH` to that absolute executable
+path, then read its live help:
+
+```bash
+TMUX_SSH='/absolute/path/to/using-tmux-ssh/resources/tmux-ssh'
+"$TMUX_SSH" --help
+```
+
+The runtime's loaded plugin root contains
+`skills/using-tmux-ssh/resources/tmux-ssh` for Claude, Codex, Cursor, and Muse;
+OpenCode contains `assets/skills/using-tmux-ssh/resources/tmux-ssh`. Locate the
+root from the active skill's path rather than assuming plugin root environment
+variables are set in an interactive shell. Nothing else from Thrum is required;
+local `tmux` and `ssh` must be installed.
 
 ### Usage
 
-The examples below use `tmux-ssh` for the resolved executable. `HOST` is an SSH
-config alias or `user@host`.
+The examples below invoke the resolved executable through `"$TMUX_SSH"`. `HOST`
+is an SSH config alias or `user@host`.
 
 ```bash
-tmux-ssh HOST                                  # connect if needed; print status
-tmux-ssh HOST 'uname -a'                        # finite command; return its exit code
-tmux-ssh HOST --timeout 900 'make test'          # bounded observation, in seconds
-tmux-ssh HOST --resume --timeout 900            # continue the saved watch; never resend
-tmux-ssh HOST --status                          # session and recorded state
-tmux-ssh HOST --read --settle                    # screen; usable during another call
-tmux-ssh HOST --abort                           # deliberately interrupt and clear the watch
-tmux-ssh HOST --kill                            # close SSH and clear saved state
+"$TMUX_SSH" HOST                                  # connect if needed; print status
+"$TMUX_SSH" HOST 'uname -a'                        # finite command; return its exit code
+"$TMUX_SSH" HOST --timeout 900 'make test'          # bounded observation, in seconds
+"$TMUX_SSH" HOST --resume --timeout 900            # continue the saved watch; never resend
+"$TMUX_SSH" HOST --status                          # session and recorded state
+"$TMUX_SSH" HOST --read --settle                    # screen; usable during another call
+"$TMUX_SSH" HOST --abort                           # deliberately interrupt and clear the watch
+"$TMUX_SSH" HOST --kill                            # close SSH and clear saved state
 
-tmux-ssh HOST --send 'top'                      # interactive program
-tmux-ssh HOST --read
-tmux-ssh HOST --send --key C-c
+"$TMUX_SSH" HOST --send 'top'                      # interactive program
+"$TMUX_SSH" HOST --read
+"$TMUX_SSH" HOST --send --key C-c
 
-tmux-ssh HOST "tmux new -d -s JOB 'long-command >job.log 2>&1'"
+"$TMUX_SSH" HOST "tmux new -d -s JOB 'long-command >job.log 2>&1'"
 ```
 
 Run mode waits for a command that ends. For editors, REPLs, attached tmux, and
@@ -94,7 +103,7 @@ from the current lease. Keep these values outside the skill.
 ```bash
 TMUX_SSH_OPTS='-i /path/to/lease-key -o IdentitiesOnly=yes -o UserKnownHostsFile=/path/to/lease-known-hosts -o StrictHostKeyChecking=yes' \
 TMUX_SSH_EXPECT_HOST='<remote-os-hostname>' \
-tmux-ssh user@<lease-address> 'uname -a'
+"$TMUX_SSH" user@<lease-address> 'uname -a'
 ```
 
 Options precede built-in defaults, so SSH's first `-o` wins. Allowed characters

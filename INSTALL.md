@@ -235,8 +235,8 @@ opencode debug config --print-logs 2>&1 | grep "assets installed"
 
 You can instead pin a version (`"opencode-thrum-pro@0.1.14"` in the `plugin`
 array), which is fetched once into its own cache entry. Two things to know if
-you pin: a project configuration replaces the global plugin list rather than
-adding to it, and when both `opencode.json` and `opencode.jsonc` exist in the
+you pin: when a project configuration and the global one both name the
+plugin, the project entry is the one used, and when both `opencode.json` and `opencode.jsonc` exist in the
 same directory OpenCode uses the plugin list from `opencode.jsonc`. Put the
 entry in the file that is actually read, and check the result with
 `opencode debug config`.

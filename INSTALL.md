@@ -131,25 +131,21 @@ muse plugins inspect thrum --json
 
 Run the approval command again after every plugin update.
 
-To update the installed plugin:
+To update the installed plugin, refresh the marketplace, then remove the
+plugin and install it again. On the Muse versions validated so far,
+`muse plugins update thrum` reports success but leaves the installed version
+unchanged:
 
 ```bash
 muse plugins marketplace update leonletto
-muse plugins update thrum
-muse plugins approve thrum
-```
-
-Check the result with `muse plugins list`. If the version did not change, or
-`muse plugins install` reports that `thrum` is `already installed from a
-different source` (an install made from another marketplace or a local
-folder), remove the plugin and install it again from this marketplace, then
-approve it:
-
-```bash
 muse plugins remove thrum
 muse plugins install thrum@leonletto
 muse plugins approve thrum
+muse plugins list
 ```
+
+`muse plugins list` must show the new version. Run the commands while no Muse
+session is in the middle of a turn.
 
 ## Cursor
 

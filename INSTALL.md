@@ -45,6 +45,20 @@ claude plugin marketplace add ./claude-plugin
 claude plugin install thrum@thrum
 ```
 
+`marketplace remove` uninstalls the plugin and deletes its saved data, so
+avoid it while Claude Code sessions are running.
+
+To switch an existing local-path install to this GitHub repository without
+uninstalling it, point the marketplace at GitHub, then update. If
+`~/.claude/settings.json` has an `extraKnownMarketplaces.thrum` entry, first
+change its value to `{"source":{"source":"github","repo":"leonletto/thrum-pro"}}`;
+otherwise `marketplace add` refuses the new source.
+
+```bash
+claude plugin marketplace add leonletto/thrum-pro
+claude plugin update thrum@thrum
+```
+
 Verify with `claude plugin list`; `thrum@thrum` must be installed and enabled.
 
 ## Codex

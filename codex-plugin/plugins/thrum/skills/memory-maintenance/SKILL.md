@@ -10,6 +10,11 @@ description:
 
 ## Maintaining thrum memory entries
 
+> **Before writing or editing any memory or state entry, use the
+> `memory-current-rule` skill:** a memory states only the CURRENT rule
+> (exceptions allowed), never a timeline of rulings, corrections or reversals,
+> and every touch re-examines the whole memory.
+
 This skill carries the canonical lifecycle operations on existing memory entries
 — edit, delete, supersede, history audit.
 

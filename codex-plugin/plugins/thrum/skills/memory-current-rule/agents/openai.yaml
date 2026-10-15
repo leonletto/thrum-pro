@@ -1,0 +1,4 @@
+interface:
+  display_name: "Memory Current Rule"
+  short_description: "Use BEFORE writing or editing ANY memory - thrum memory create/update, thrum state set, a file-based memory, a memory index line (MEMORY.md), or a restart snapshot. A memory states only the CURRENT rule, never a timeline of rulings, corrections and reversals. Also use to audit or rewrite existing memories; written so a helper agent can apply it with no other context."
+  default_prompt: "Use BEFORE writing or editing ANY memory - thrum memory create/update, thrum state set, a file-based memory, a memory index line (MEMORY.md), or a restart snapshot. A memory states only the CURRENT rule, never a timeline of rulings, corrections and reversals. Also use to audit or rewrite existing memories; written so a helper agent can apply it with no other context."

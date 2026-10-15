@@ -82,7 +82,7 @@ Three distinct fields, do not conflate them:
 | `thrum queue wait <bundle-id> [--reason "..."]`                      | -> waiting (alias for `queue update --status=waiting`; `--reason` optional)                                                                                                                                                                               |
 | `thrum queue ready <bundle-id>`                                      | -> ready (alias for `queue update --status=ready`)                                                                                                                                                                                                        |
 | `thrum queue update <bundle-id> [flags]`                             | General partial update: `--status`, `--stage`, `--reason` (status_reason), `--title`, `--ref` (repeatable, replaces existing refs), `--priority`, `--assigned-by`, `--assigned-to-remove` - at least one required; `--status=blocked` requires `--reason` |
-| `thrum queue drop <bundle-id>`                                       | DELETE bundle + all its items, any status (the one destructive verb - drop promptly once a done bundle's record stops being useful)                                                                                                                       |
+| `thrum queue drop <bundle-id>`                                       | DELETE bundle + all its items, any status. This is the normal close-out: drop a bundle in the same turn its work lands                                                                                                                                    |
 | `thrum queue assign <bundle-id> <agent-id>...`                       | Append agent(s) to assigned_to (routing metadata only)                                                                                                                                                                                                    |
 | `thrum queue note <bundle-id> --stdin` (or `--body-file <f>`)        | Append a dated progress note (append-only; shown by `show`, last note previewed by `list`)                                                                                                                                                                |
 | `thrum queue item add <bundle-id> --title "..."`                     | Add one embedded item                                                                                                                                                                                                                                     |
@@ -161,9 +161,9 @@ thrum queue list --agent @impl_foo --status in_progress
 **Finish vs discard:** `done` is a WAYPOINT, not a resting place - it marks a
 bundle done and KEEPS it visible (`start` reopens it), but it is not where
 finished work should live. `drop` DELETES it and every item inside, regardless
-of status. Reconcile at session start and natural breakpoints: `done` then a
-prompt `drop` is the normal close-out; `drop` alone is fine too. Don't let a
-done bundle outlive your next reconcile unless you deliberately keep it.
+of status. When the work lands, `drop` it in the same turn (`done` first is
+optional). A finished bundle is never kept: its history lives in git and the
+bead, not in the queue.
 
 **Close on a TRIGGER, not a reminder.** The moment a bundle's branch merges into
 trunk, OR its last referenced bead closes, `done` + `drop` it in that same
@@ -248,9 +248,8 @@ preference, not built here - out of scope per the project's security model.
   recipient adds it themselves via `--from-message` (with that message's exact
   id).
 - **Leaving done bundles to pile up.** `done` never removes anything - the
-  bundle stays, and only `drop` deletes it. Drop each done bundle promptly once
-  its record stops being useful; a queue full of undropped done bundles is the
-  primary rot mode.
+  bundle stays, and only `drop` deletes it. Drop each bundle the turn its work
+  lands; a queue full of undropped done bundles is the primary rot mode.
 - **Reaching for a `remove`/item-`drop` verb.** Removal (of a bundle and every
   item inside it) happens only at the bundle level via `drop` - there is no
   finer-grained delete. Renaming/re-titling is NOT in this category:

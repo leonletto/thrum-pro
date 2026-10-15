@@ -5,6 +5,8 @@ description: "Use when the implementer writes a role-rule after user correction,
 
 # Implementer memory discipline
 
+> **Before writing or editing any memory or state entry, use the `memory-current-rule` skill:** a memory states only the CURRENT rule (exceptions allowed), never a timeline of rulings, corrections or reversals, and every touch re-examines the whole memory.
+
 You are the implementer. Your memory discipline is intentionally narrow: you
 READ rules at session start and you WRITE rules when the user corrects your judgment
 mid-implementation. Refactoring opportunities, lessons learned, design questions

@@ -10,6 +10,11 @@ description:
 
 ## Writing thrum memory entries
 
+> **Before writing or editing any memory or state entry, use the
+> `memory-current-rule` skill:** a memory states only the CURRENT rule
+> (exceptions allowed), never a timeline of rulings, corrections or reversals,
+> and every touch re-examines the whole memory.
+
 This skill carries the canonical write-command shape + content discipline shared
 by every role that writes memory. Per-role skills
 (researcher/coordinator/implementer-maintaining-memory) reference this skill for

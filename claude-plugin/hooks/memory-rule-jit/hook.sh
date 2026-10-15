@@ -23,7 +23,7 @@
 #     + permissionDecisionReason. Exit 2 triggers the ask dialog. hookEventName
 #     is optional (omitted here).
 #
-# Plugin sync: this hook is wired in claude-plugin only. sync-skills.sh does
+# Plugin sync: this hook is wired in claude-plugin only. The build-time sync does
 # not propagate hooks to opencode/codex/cursor plugins (they use different hook
 # registration mechanisms). Manual step required per plugin when adopting.
 #

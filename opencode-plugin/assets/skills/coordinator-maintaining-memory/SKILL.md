@@ -5,6 +5,8 @@ description: "Use when the coordinator writes a role-rule, captures an observati
 
 # Coordinator memory discipline
 
+> **Before writing or editing any memory or state entry, use the `memory-current-rule` skill:** a memory states only the CURRENT rule (exceptions allowed), never a timeline of rulings, corrections or reversals, and every touch re-examines the whole memory.
+
 As coordinator, write role-rules (when the user corrects your judgment),
 capture observations about agent behavior, and periodically note
 project-state changes. Common memory operations (write command shape, body

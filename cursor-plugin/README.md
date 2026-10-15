@@ -40,8 +40,8 @@ This deploys into `.cursor/` with:
 - **rules/** — `.mdc` files for sync worktree safety and session lifecycle
 - **hooks.json** — session start, shell guard, stop check, compact hooks
 - **mcp.json** — Thrum MCP server configuration
-- **skills/** — Thrum skills (populated by `sync-skills.sh`)
-- **commands/** — Thrum commands (populated by `sync-skills.sh`)
+- **skills/** — Thrum skills (generated at build time)
+- **commands/** — Thrum commands (generated at build time)
 
 ## Updating
 

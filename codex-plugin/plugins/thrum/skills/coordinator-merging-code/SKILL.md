@@ -261,11 +261,12 @@ executed half is **scoped to the change**:
   targeted run misses cross-test races). Never on primary (the shared fleet
   build box) — it is CPU-heavy; run it on the gate box.
 - The fast structural checks on the merged tree — `gate-ban-check`,
-  `gate-omitempty-check`, `gate-lockspan-check`, `gate-marker-diff`,
-  `gate-stamp-protocol-check`, `gate-plugin-bundle-leaks` (seconds each; they
-  catch banned flags, `omitempty` drift, lock-span, marker and stamp drift
-  regardless of the change; `gate-plugin-bundle-leaks` self-skips when no plugin
-  path changed).
+  `gate-omitempty-check`, `gate-lockspan-check`, `gate-sourcetree-check`,
+  `gate-marker-diff`, `gate-stamp-protocol-check`, `gate-plugin-bundle-leaks`
+  (seconds each; they catch banned flags, `omitempty` drift, lock-span, shipped
+  code that needs a source-tree-only file, marker and stamp drift regardless of
+  the change; `gate-plugin-bundle-leaks` self-skips when no plugin path
+  changed).
 - The `merge-base --is-ancestor` fast-forward check (§6).
 - Any `*_tripwire_test.go` the change touches must stay green or the diff must
   state why its premise changed; a tripwire edited to accommodate the change is

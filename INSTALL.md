@@ -175,11 +175,29 @@ agent
 
 In Cursor Agent, open `/plugin list`, switch to **Marketplace**, search for
 `thrum`, open its details, and choose user or project scope. Verify that the
-plugin is marked installed. Update the repository index with:
+plugin is marked installed.
+
+To update, remove the marketplace and add it again. Cursor pins the
+marketplace to the commit it fetched when it was added, and
+`agent plugin marketplace update thrum` re-indexes that same commit even when
+it reports success:
 
 ```bash
-agent plugin marketplace update thrum
+agent plugin marketplace remove thrum
+agent plugin marketplace add https://github.com/leonletto/thrum-pro
 ```
+
+Confirm the fetched version, then open `/plugin` in Cursor Agent and install
+or enable `thrum` again (or start a new agent session). A running session keeps
+the version it loaded:
+
+```bash
+MP=$(find ~/.cursor/plugins/marketplaces/github.com/leonletto/thrum-pro -mindepth 1 -maxdepth 1 -type d | head -1)
+python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['version'])" "$MP/cursor-plugin/.cursor-plugin/plugin.json"
+```
+
+For a project install from the command line, run the bundled installer from
+that clone: `bash "$MP/cursor-plugin/local-install.sh" --target /path/to/project`.
 
 From an existing clone:
 

@@ -111,8 +111,16 @@ agent
 ```
 
 In Cursor Agent, open `/plugin list`, switch to **Marketplace**, search for
-`thrum`, and install it at user or project scope. Update the marketplace with
-`agent plugin marketplace update thrum`.
+`thrum`, and install it at user or project scope. To update, remove and re-add
+the marketplace (`agent plugin marketplace update thrum` keeps the old commit),
+then reinstall from `/plugin` or start a new agent session:
+
+```bash
+agent plugin marketplace remove thrum
+agent plugin marketplace add https://github.com/leonletto/thrum-pro
+```
+
+See [INSTALL.md](INSTALL.md#cursor) for how to check the fetched version.
 
 From an existing clone, install into a project directly:
 

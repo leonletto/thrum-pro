@@ -57,6 +57,67 @@ function copyDirRecursive(src: string, dest: string) {
   }
 }
 
+// Older pro releases (0.1.x) installed flat (skills/<name>) with the marker in
+// skills/thrum, the same layout open-core still uses. OpenCode resolves
+// duplicate skill names to the flat copy, so stale flat pro skills would shadow
+// the nested ones. Remove them only when the install is positively identified
+// as pro; anything else (open-core, unknown version, unreadable) is left alone.
+function isLegacyProInstall(markerDir: string): boolean {
+  const read = (name: string): string | undefined => {
+    try {
+      return fs.readFileSync(path.join(markerDir, name), "utf8").trim()
+    } catch {
+      return undefined
+    }
+  }
+  const flavor = read(FLAVOR_FILE)
+  if (flavor !== undefined) return flavor === "pro"
+  const version = read(VERSION_FILE)
+  return version !== undefined && /^0\.1\.\d+([-+].*)?$/.test(version)
+}
+
+async function cleanLegacyFlatInstall(
+  skillsDir: string,
+  log: (msg: string) => unknown,
+) {
+  const markerDir = path.join(skillsDir, DEFAULT_SKILLS_SUBDIR)
+  if (!fs.existsSync(path.join(markerDir, VERSION_FILE))) return
+  if (!isLegacyProInstall(markerDir)) {
+    await log(
+      `Legacy flat install found at ${markerDir}; not removed (not identified as an old pro install). If it is one, delete it and its sibling skill dirs manually.`,
+    )
+    return
+  }
+  const assetsSkillsDir = path.join(ASSETS_DIR, "skills")
+  let removed = 0
+  if (fs.existsSync(assetsSkillsDir)) {
+    for (const entry of fs.readdirSync(assetsSkillsDir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue
+      const flat = path.join(skillsDir, entry.name)
+      if (!fs.existsSync(flat)) continue
+      try {
+        fs.rmSync(flat, { recursive: true })
+        removed++
+      } catch {
+        // best-effort; a locked dir must not block the install
+      }
+    }
+  }
+  for (const marker of [VERSION_FILE, FLAVOR_FILE]) {
+    try {
+      fs.rmSync(path.join(markerDir, marker), { force: true })
+    } catch {
+      // best-effort
+    }
+  }
+  try {
+    fs.rmdirSync(markerDir) // only succeeds when empty
+  } catch {
+    // not empty or already gone
+  }
+  await log(`Removed ${removed} legacy flat pro skill dirs under ${skillsDir}`)
+}
+
 export async function installAssets(
   ctx: PluginInput,
   opts: { skillsSubdir?: string } = {},
@@ -86,14 +147,7 @@ export async function installAssets(
     })
 
   if (subdir !== DEFAULT_SKILLS_SUBDIR) {
-    // Pro build: a pre-existing skills/thrum copy cannot be attributed to pro
-    // vs open-core (same marker file, no flavor field), so never delete it.
-    const legacy = path.join(skillsDir, DEFAULT_SKILLS_SUBDIR, VERSION_FILE)
-    if (fs.existsSync(legacy)) {
-      await log(
-        `Legacy flat install found at ${path.join(skillsDir, DEFAULT_SKILLS_SUBDIR)}; not removed (cannot tell pro from open-core). If it is an old pro install, delete it and its sibling skill dirs manually.`,
-      )
-    }
+    await cleanLegacyFlatInstall(skillsDir, log)
   }
 
   // Copy each skill subdirectory

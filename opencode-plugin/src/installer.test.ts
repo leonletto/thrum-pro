@@ -57,3 +57,56 @@ test("invalid subdir falls back to default", () => {
   }
   assert.equal(sanitizeSkillsSubdir("thrum-pro"), "thrum-pro")
 })
+
+function seedLegacy(cfg: string, marker: { version?: string; flavor?: string }) {
+  const skills = path.join(cfg, "skills")
+  const thrumDir = path.join(skills, "thrum")
+  fs.mkdirSync(thrumDir, { recursive: true })
+  if (marker.version !== undefined) fs.writeFileSync(path.join(thrumDir, ".thrum-plugin-version"), marker.version)
+  if (marker.flavor !== undefined) fs.writeFileSync(path.join(thrumDir, ".thrum-plugin-flavor"), marker.flavor)
+  for (const n of ["configure-roles", "adversarial-critique", "user-own-skill"]) {
+    fs.mkdirSync(path.join(skills, n), { recursive: true })
+    fs.writeFileSync(path.join(skills, n, "SKILL.md"), "stale")
+  }
+  return skills
+}
+
+test("pro: legacy flavor=pro removes matching flat dirs, keeps others", withConfig(async (cfg) => {
+  const skills = seedLegacy(cfg, { version: "0.1.16", flavor: "pro" })
+  await installAssets(ctx, { skillsSubdir: "thrum-pro" })
+  assert.ok(!fs.existsSync(path.join(skills, "configure-roles")))
+  assert.ok(!fs.existsSync(path.join(skills, "adversarial-critique")))
+  assert.ok(fs.existsSync(path.join(skills, "user-own-skill", "SKILL.md")))
+  assert.ok(!fs.existsSync(path.join(skills, "thrum", ".thrum-plugin-version")))
+  assert.ok(!fs.existsSync(path.join(skills, "thrum", ".thrum-plugin-flavor")))
+  assert.ok(fs.existsSync(path.join(skills, "thrum-pro", "configure-roles")))
+}))
+
+test("pro: legacy 0.1.16 without flavor is removed", withConfig(async (cfg) => {
+  const skills = seedLegacy(cfg, { version: "0.1.16" })
+  await installAssets(ctx, { skillsSubdir: "thrum-pro" })
+  assert.ok(!fs.existsSync(path.join(skills, "configure-roles")))
+  assert.ok(fs.existsSync(path.join(skills, "user-own-skill")))
+  assert.ok(!fs.existsSync(path.join(skills, "thrum", ".thrum-plugin-version")))
+}))
+
+test("pro: legacy 0.3.105 without flavor removes nothing", withConfig(async (cfg) => {
+  const skills = seedLegacy(cfg, { version: "0.3.105" })
+  await installAssets(ctx, { skillsSubdir: "thrum-pro" })
+  assert.ok(fs.existsSync(path.join(skills, "configure-roles", "SKILL.md")))
+  assert.ok(fs.existsSync(path.join(skills, "thrum", ".thrum-plugin-version")))
+}))
+
+test("pro: legacy flavor=open-core removes nothing", withConfig(async (cfg) => {
+  const skills = seedLegacy(cfg, { version: "0.1.16", flavor: "open-core" })
+  await installAssets(ctx, { skillsSubdir: "thrum-pro" })
+  assert.ok(fs.existsSync(path.join(skills, "configure-roles", "SKILL.md")))
+  assert.ok(fs.existsSync(path.join(skills, "thrum", ".thrum-plugin-flavor")))
+}))
+
+test("open-core build: existing flat install is not cleaned", withConfig(async (cfg) => {
+  const skills = seedLegacy(cfg, { version: "0.1.16", flavor: "pro" })
+  await installAssets(ctx, { skillsSubdir: "thrum" })
+  assert.ok(fs.existsSync(path.join(skills, "user-own-skill", "SKILL.md")))
+  assert.equal(fs.readFileSync(path.join(skills, "thrum", ".thrum-plugin-flavor"), "utf8"), "open-core")
+}))

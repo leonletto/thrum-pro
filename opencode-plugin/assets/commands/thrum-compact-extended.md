@@ -1,18 +1,14 @@
 ---
-description:
-  Stage a comprehensive 16-section snapshot, verify it landed, then send /compact
-  to this agent's OWN tmux pane so it stays alive and resumes at low context. Use
-  for designer/architect-grade work needing wire contracts, capability matrix,
-  and design rationale that the standard /thrum:compact format cannot carry.
+description: "Stage and verify a comprehensive snapshot, settle owned background tasks, then compact this tmux session in place. Use for designer or architect work needing wire contracts, a capability matrix, and design rationale."
 ---
 
 # Compact — Extended (16-section snapshot)
 
 Compose a comprehensive 16-section prose continuation, write it directly to your
 restart file, verify it landed, then send `/compact` to your own tmux pane. Same
-in-place semantics as `/thrum:compact` — the agent stays ALIVE,
-sub-agents/loops/crons survive (confirmed empirically), no session end, no tmux
-kill. The only difference is snapshot grade.
+in-place semantics as `/thrum:compact` — the agent stays ALIVE, its background
+loops and cron schedules survive (confirmed empirically), no session end, no
+tmux kill. The only difference is snapshot grade.
 
 ## When to use extended vs standard
 
@@ -70,7 +66,7 @@ survives even if post-compact orientation fails, so it is read-first and
 self-contained:
 
 > 🔴 ON RESUME — you were COMPACTED, not restarted. Daemon binding is intact
-> (subagents/loops/crons survived). Resume LEAN: this file is delivered inline in the injected briefing (read it FIRST). Expect a
+> (background loops and cron schedules survived). Resume LEAN: this file is delivered inline in the injected briefing (read it FIRST). Expect a
 > `thrum prime --light` briefing already auto-injected by the SessionStart
 > hook; only run `thrum:prime-agent` if it did NOT appear. Do NOT manually run
 > full `thrum prime`. Then continue from §16.
@@ -147,6 +143,12 @@ block (paste the two values printed by the Step 3 PREP block into its first two
 lines) re-resolves identity (the Bash tool does NOT persist shell state across
 calls, so earlier steps' variables are gone), verifies the snapshot on disk, and
 only then fires `/compact` — all in ONE call so nothing depends on a prior block.
+
+Before Step 4, settle owned background tasks. In Claude Code, inspect the running-task list,
+wait for active sub-agents, list Monitors with `thrum monitor list`, stop your own
+Monitors, and stop or wait for background shells. In other runtimes, use only
+existing task controls; skip this check if none exist. Send only when none remain;
+if one cannot be settled, report and hold without sending.
 
 ```bash
 SNAPSHOT="<PASTE SNAPSHOT_PATH FROM STEP 3>"
@@ -341,7 +343,7 @@ is synchronous.
 ## How resume works
 
 After `/compact` the SAME process and session survive — the daemon binding is
-intact (that is why your sub-agents, loops, and crons kept running). Full
+intact (that is why your background loops and cron schedules kept running). Full
 `thrum prime` rebuilds identity + binding + full briefing for a NEW session; none
 of that is needed here. Resume LEAN, in this order:
 
@@ -361,8 +363,8 @@ of that is needed here. Resume LEAN, in this order:
    complete - please continue" prompt on the daemon right behind `/compact`; it
    is delivered once the pane is idle after compaction, so a turn starts even
    with an empty inbox.
-3. **Continue** from §16. Reconnect to your still-live sub-agents, loops, and
-   crons rather than re-dispatching.
+3. **Continue** from §16. Reconnect to your still-live background loops and
+   cron schedules rather than re-dispatching them.
 
 Runtime-specific compaction-recovery hooks (if this runtime has any) are
 documented in that runtime's own plugin tree (its hooks manifest and

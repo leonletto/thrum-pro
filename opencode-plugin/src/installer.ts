@@ -7,15 +7,35 @@ import type { PluginInput } from "@opencode-ai/plugin"
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ASSETS_DIR = path.resolve(__dirname, "..", "assets")
 const VERSION_FILE = ".thrum-plugin-version"
+// Written next to the version file so a later release can tell pro from
+// open-core installs and clean up safely.
+const FLAVOR_FILE = ".thrum-plugin-flavor"
 
-function getPluginVersion(): string {
+const DEFAULT_SKILLS_SUBDIR = "thrum"
+
+function readPackageJson(): { version?: string; thrum?: { skillsSubdir?: string } } {
   const pkgPath = path.resolve(__dirname, "..", "package.json")
   try {
-    const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"))
-    return pkg.version ?? "0.0.0"
+    return JSON.parse(fs.readFileSync(pkgPath, "utf8"))
   } catch {
-    return "0.0.0"
+    return {}
   }
+}
+
+function getPluginVersion(): string {
+  return readPackageJson().version ?? "0.0.0"
+}
+
+// The pro build sets thrum.skillsSubdir in the packaged package.json to
+// "thrum-pro" so it never shares a directory with the open-core package.
+export function sanitizeSkillsSubdir(sub: string | undefined): string {
+  return sub && /^[A-Za-z0-9._-]+$/.test(sub) && sub !== "." && sub !== ".."
+    ? sub
+    : DEFAULT_SKILLS_SUBDIR
+}
+
+export function getSkillsSubdir(): string {
+  return sanitizeSkillsSubdir(readPackageJson().thrum?.skillsSubdir)
 }
 
 export function getConfigDir(): string {
@@ -37,11 +57,18 @@ function copyDirRecursive(src: string, dest: string) {
   }
 }
 
-export async function installAssets(ctx: PluginInput) {
+export async function installAssets(
+  ctx: PluginInput,
+  opts: { skillsSubdir?: string } = {},
+) {
   const configDir = getConfigDir()
   const skillsDir = path.join(configDir, "skills")
   const commandsDir = path.join(configDir, "commands")
-  const versionPath = path.join(skillsDir, "thrum", VERSION_FILE)
+  const subdir = opts.skillsSubdir !== undefined
+    ? sanitizeSkillsSubdir(opts.skillsSubdir)
+    : getSkillsSubdir()
+  const installRoot = path.join(skillsDir, subdir)
+  const versionPath = path.join(installRoot, VERSION_FILE)
 
   const currentVersion = getPluginVersion()
 
@@ -58,6 +85,17 @@ export async function installAssets(ctx: PluginInput) {
       body: { service: "opencode-thrum", level: "info", message: msg },
     })
 
+  if (subdir !== DEFAULT_SKILLS_SUBDIR) {
+    // Pro build: a pre-existing skills/thrum copy cannot be attributed to pro
+    // vs open-core (same marker file, no flavor field), so never delete it.
+    const legacy = path.join(skillsDir, DEFAULT_SKILLS_SUBDIR, VERSION_FILE)
+    if (fs.existsSync(legacy)) {
+      await log(
+        `Legacy flat install found at ${path.join(skillsDir, DEFAULT_SKILLS_SUBDIR)}; not removed (cannot tell pro from open-core). If it is an old pro install, delete it and its sibling skill dirs manually.`,
+      )
+    }
+  }
+
   // Copy each skill subdirectory
   const assetsSkillsDir = path.join(ASSETS_DIR, "skills")
   if (fs.existsSync(assetsSkillsDir)) {
@@ -66,7 +104,12 @@ export async function installAssets(ctx: PluginInput) {
     })) {
       if (!entry.isDirectory()) continue
       const src = path.join(assetsSkillsDir, entry.name)
-      const dest = path.join(skillsDir, entry.name)
+      // Open-core keeps its historical flat layout (skills/<name>); only a
+      // non-default subdir (pro) nests skills under skills/<subdir>/.
+      const dest = path.join(
+        subdir === DEFAULT_SKILLS_SUBDIR ? skillsDir : installRoot,
+        entry.name,
+      )
       copyDirRecursive(src, dest)
       await log(`Installed skill: ${entry.name}`)
     }
@@ -91,6 +134,10 @@ export async function installAssets(ctx: PluginInput) {
   // Write version marker
   fs.mkdirSync(path.dirname(versionPath), { recursive: true })
   fs.writeFileSync(versionPath, currentVersion)
+  fs.writeFileSync(
+    path.join(installRoot, FLAVOR_FILE),
+    subdir === DEFAULT_SKILLS_SUBDIR ? "open-core" : "pro",
+  )
   await log(`opencode-thrum v${currentVersion} assets installed`)
 }
 

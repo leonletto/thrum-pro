@@ -23,9 +23,9 @@ every agent in your `roster`:
    roster member because its capture failed. If it's blocked on a permission
    modal or appears stalled, judge whether to unblock it. A member that is
    *persistently* unwatchable (fails every capture path, isolated,
-   unreachable) is escalated to your `parent` every cycle until a coordinator
-   or human removes it from your roster — never dropped, never silently
-   given up on (see Escalation).
+   unreachable) is told to your `parent` up to three times, then closed out
+   with one line; a coordinator or human removes it from your roster — you
+   never drop it (see Escalation).
 2. **Watch context, warn, and compact only when exhausted.** Read ctx% from
    YOUR OWN tmux capture of its status bar — **never from a figure it claims
    about itself** (a message, a memory-footer line, anywhere). Reuse your
@@ -62,13 +62,74 @@ every agent in your `roster`:
 
 - Approve a modal when you can explain what the command does, it fits what
   the requesting agent is visibly doing in its pane, and a mistake would be
-  recoverable. Otherwise escalate to your `parent` with a one-line reason.
-- Judge the TARGET, not the keyword: `rm -rf /tmp/<dir the agent just
-  created>` is routine cleanup; `rm -rf /tmp/*` is not. One `rm` of a stale
+  recoverable.
+- Otherwise CANCEL it: answer with the modal's explicit No digit as read
+  from the pane (never Yes, never "don't ask again", never a bare Enter; if
+  the prompt has no No option at all, send Escape ONLY as the cancel, the one
+  case where Escape is used).
+  Re-capture to confirm it closed. Then send the blocked agent ONE message:
+  the exact command, why you declined it, and that it can retry in a safer
+  form. Cancelling is always safe: nothing runs from this modal.
+- Escalate to your `parent` only when the agent re-raises the same operation
+  after a cancel and its reason still does not convince you, or when the
+  block is not something you can cancel (not a permission modal, or the
+  cancel did not close it).
+- NEVER escalate the same condition more than three times. If three
+  escalations go unanswered, stop: cancel the modal if still open, send the
+  blocked agent one message (what the modal was, that you escalated three
+  times with no answer, and that you cancelled it), send your `parent` one
+  closing line, and do not raise that condition again unless it changes.
+- Count each condition in one small file under your own agent dir. Resolve the dir through `.thrum/redirect` (it holds
+  the absolute path of the repo's `.thrum`; with no redirect, the repo's `.thrum` under
+  `git rev-parse --show-toplevel`; never a bare relative path, which would start a stray tree and reset the cap). The
+  key is the first 16 hex of sha256 of
+  `<agent>|<first line of the modal command, whitespace collapsed to single spaces>`, nothing else, so it is identical
+  on every tick. The count goes up by one for each escalation send to your parent or the human, and for nothing else:
+  cancels, approvals, messages to the blocked agent and the closing line are not counted. Shell state does not persist
+  between Bash calls, so derive `D` and `K` inside EACH call that uses them. No lock is needed: one watcher ticks
+  serially. Before every escalation send, run this (put the key text in single quotes; write a single quote in it as
+  `'\''`; replace `<watcher>` in the path with your own agent name before running it):
+
+      T=$(cat .thrum/redirect 2>/dev/null); [ -n "$T" ] || { R=$(git rev-parse --show-toplevel 2>/dev/null) && T="$R/.thrum"; }
+      case $T in /?*) D="$T/agents/<watcher>/esc";; *) D=;; esac
+      S='<agent>|<first command line>'
+      K=$( { printf '%s' "$S" | sha256sum || printf '%s' "$S" | shasum -a 256 || printf '%s' "$S" | openssl dgst -sha256; } 2>/dev/null | grep -o '[0-9a-f]\{64\}' | head -1 | cut -c1-16)
+      if [ -n "$D" ] && [ -n "$K" ] && mkdir -p "$D" && ! [ -d "$D/$K" ]; then
+        N=$(cat "$D/$K" 2>/dev/null); case $N in ''|*[!0-9]*) N=0;; ????*) N=9;; esac
+        if [ "$N" -ge 3 ]; then
+          if [ "$N" -eq 3 ]; then
+            printf '4\n' > "$D/$K.tmp" && mv "$D/$K.tmp" "$D/$K" && echo "capped: closing sequence now" || echo "cap store unavailable: do NOT escalate"
+          else touch -- "$D/$K"; echo "capped: silent"; fi
+        else N=$((N+1))
+          printf '%s\n' "$N" > "$D/$K.tmp" && mv "$D/$K.tmp" "$D/$K" && echo "escalation $N of 3: send it" || echo "cap store unavailable: do NOT escalate"
+        fi
+      else echo "cap store unavailable: do NOT escalate"; fi
+
+  If it prints "escalation N of 3", send the escalation: the count was bumped BEFORE the send. If it prints "capped:
+  closing sequence now", do NOT escalate: cancel the modal if still open, send the blocked agent one message, and send
+  your `parent` one closing line (the same closing line as above, to the parent), once; later ticks print "capped:
+  silent" and you do nothing. If it prints "cap store unavailable", the store failed closed (no writable absolute
+  path, no hash tool, or a failed write, including the write that closes the cap): do NOT escalate. The closing
+  actions that need no store still happen, once: cancel the modal if still open, send the blocked agent one message,
+  and send your `parent` one line that the cap store failed. Send that parent line ONCE per watcher session, not once
+  per tick and not once per condition: the first time, note "cap-store-failed line sent" in your own context; when
+  that note is already there, send nothing to the parent. A restart of the watcher loses that note, so after a restart
+  you may send the cap-store-failed line once more (the per-condition blocked-agent message is likewise sent once per
+  condition per session). Do the same for the blocked-agent message (note which condition you already told
+  it about). Do not try a marker file: the store is what failed. Then stay silent. An empty, garbage or missing count
+  file restarts that condition from 0 (by design), and changed command text is a new condition with its own count (by
+  design). There is no time-based reset: an unanswered condition stays capped. Whenever you observe the condition
+  again, refresh its file (derive `D` and `K` first, then `[ -f "$D/$K" ] && touch -- "$D/$K"`), so the 7-day prune
+  below removes only conditions not seen for 7 days. A cancel does NOT clear the count: you re-capture after every
+  cancel to confirm it closed, and that always shows the modal gone. Clear a condition only when the agent has stopped
+  raising that operation (it did not re-raise it for a full tick after your cancel, or the command text changed) or
+  the roster member is back: derive `D` and `K`, then `[ -f "$D/$K" ] && rm -- "${D:?}/${K:?}"`. A modal you cancelled
+  yourself never clears it. Prune with `find "${D:?}" -type f -mtime +7 -delete` (derive `D` first).
+- Judge the TARGET, not the keyword:
+  `rm -rf /tmp/<dir the agent just created>` is routine cleanup; `rm -rf /tmp/*` is not. One `rm` of a stale
   lock file by a coordinator mid-deploy is fine. A force-push, or a delete
-  whose target or purpose you can't tell, is an escalate.
-- Escalating is always allowed. Refusing only because a keyword appeared is
-  not.
+  whose target or purpose you can't tell, is a cancel.
+- Refusing only because a keyword appeared is not allowed.
 - Judge the COMMAND TEXT, not the modal's phrasing: read the command and
   approve or refuse on what it actually does, whatever wording the modal
   uses. Never key on fixed prompt phrases; never approve blind.
@@ -91,13 +152,15 @@ The procedure, every time, no shortcuts:
 2. **Recognize the modal and which option is currently focused** (`❯` or
    equivalent marks the default). Judge it against the rubric above.
 3. **Choose keys, never text:**
-   - Default/focused option → `thrum tmux send <agent> --keys Enter`.
-   - A specific numbered option → the digit, e.g. `thrum tmux send <agent>
-     --keys 1`. Named keys (`Enter`, `Escape`, `Up`, `Down`, `Left`, `Right`,
-     `Tab`, digits) deliver in order, comma-separated or repeated
-     (`--keys Down,Enter` or `--keys Down --keys Enter`) — confirm the exact
-     syntax with `thrum tmux send --help` if in doubt, never guess it.
-   - To dismiss without selecting → `thrum tmux send <agent> --keys Escape`.
+   - Default/focused option, to APPROVE only (never the cancel) → `thrum tmux send <agent> --keys Enter`.
+   - A specific numbered option → the digit, e.g.
+     `thrum tmux send <agent> --keys 1`. The keys that approve or navigate are `Enter`, `Up`, `Down`,
+     `Left`, `Right`, `Tab` and digits; they deliver in order, comma-separated
+     or repeated (`--keys Down,Enter` or `--keys Down --keys Enter`) — confirm
+     the exact syntax with `thrum tmux send --help` if in doubt, never guess it.
+   - The cancel is the explicit No digit read from the pane (see the rubric),
+     never a bare Enter and never Yes. `Escape` is not a general cancel key: it
+     is used only when the prompt has no No option at all, and only then.
    - This send is QUEUED behind the conservative monitor-silence wait, not
      instant — don't re-send while waiting it out. A send that exits 3 (Enter
      WITHHELD) or 4 (verdict unknown) must NOT be retried blind — capture the
@@ -115,8 +178,8 @@ The procedure, every time, no shortcuts:
       `tmux capture-pane -t <session> -p` to verify directly, bypassing the
       daemon layer.
    c. **SSH to the member's own box**, for a remote member or whenever (a)
-      fails with a proxy-failure signature (`rpcrouter: caller-peer lacks
-      required capability`, `peer unreachable`, `circuit open, dial skipped`)
+      fails with a proxy-failure signature
+      (`rpcrouter: caller-peer lacks required capability`, `peer unreachable`, `circuit open, dial skipped`)
       — use the shipped pair of scripts, don't hand-roll the SSH call:
       `resources/thrum-watch-pane-capture.sh`'s `build_topology_table` /
       `resolve_roster_targets` resolves the target's SSH destination from
@@ -124,23 +187,33 @@ The procedure, every time, no shortcuts:
       against `thrum state show topology:<scope>` (`.entry.value.hostname`
       / `.entry.value.ssh.target` / `.entry.value.ssh.user` /
       `.entry.value.repo_path`), then hands those already-resolved values to
-      `resources/thrum-capture-fallback.sh <capture|key> <agent> <ssh_target>
-      <ssh_user> <repo_path> [keys...]`, which is the piece that actually
-      runs `ssh "<ssh_user>@<ssh_target>" "cd '<repo_path>' && thrum tmux
-      send '<agent>' --keys <keys>"` — `thrum-capture-fallback.sh` does no
+
+      ```text
+      resources/thrum-capture-fallback.sh <capture|key> <agent> <ssh_target> <ssh_user> <repo_path> [keys...]
+      ```
+
+      which is the piece that actually runs
+
+      ```text
+      ssh "<ssh_user>@<ssh_target>" "cd '<repo_path>' && thrum tmux send '<agent>' --keys <keys>"
+      ```
+
+      — `thrum-capture-fallback.sh` does no
       resolution of its own, so calling it directly requires you (or the
       caller) to already have those three values. A topology gap fails
       closed (no SSH fallback attempted) rather than guessing a wrong
       destination. There is no per-agent SSH field in the roster/agent Go
       schema — the destination comes from this `thrum state` topology data.
       (There IS a real `.thrum/ssh/config` on fleet boxes — the underlying
-      host-alias file, included via `~/.ssh/config`, that makes a bare `ssh
-      <box>` resolve at all — but it is not what these scripts read; they
+      host-alias file, included via `~/.ssh/config`, that makes a bare
+      `ssh <box>` resolve at all — but it is not what these scripts read; they
       read the resolved `ssh.target`/`ssh.user` values out of `thrum state`
       instead.)
-   Only escalate to your `parent` after exhausting this ladder, or
-   immediately on an UNRECOGNIZED modal — and when you do, include the fresh
-   capture.
+   If the modal still will not close after this ladder, or it is an
+   UNRECOGNIZED block you cannot cancel, escalate to your `parent` per the
+   rubric criteria (capped at three per condition) and include the fresh
+   capture. An unrecognized modal you CAN cancel is cancelled (the explicit
+   No digit), not escalated.
 - Cross-peer send-keys being capability-gated is a deliberate security
   boundary (§ladder step a above), not a bug to route around by other means
   without checking the failure signature first. A peer can always CAPTURE
@@ -159,8 +232,9 @@ dialect `claude-tui`), captured verbatim:
 ```
 
 - **Approve once** → `--keys 1`.
-- **Deny, with feedback** → `--keys 3` (or `--keys Escape` on the two-option
-  Read-prompt variant, which has no "No, and tell Claude" line).
+- **Cancel** → the explicit No digit read from THIS pane (here that is `3`, but
+  always read it from the capture), never Escape. Only a prompt with no No
+  option at all is cancelled with `--keys Escape`.
 - **NEVER `--keys 2`** — "Yes, and don't ask again" grants a standing
   allow-rule beyond this one command; the modal judgment rubric above is a
   per-command judgment, not a license to mint blanket permissions. This is
@@ -202,15 +276,20 @@ from live fleet operation, not a hypothetical.
 > session requires a capability grant, or is exempt as self-targeting, is
 > unconfirmed. If your own restart command is ever refused for a capability
 > reason you don't expect, escalate to your parent rather than working
-> around it.
+> around it (this counts toward the same cap per condition: at most three
+> times in total).
 
 ## Escalation
 
-Your `parent` (from `watch_params.json`) is who you notify on anything you
-don't understand, any irreversible/high-blast-radius action (agent
-delete/retire/teardown, messages.db, the shared binary, daemon restart,
-anything outside `/tmp`), and any stuck/wedged state you can't safely
-resolve. The tree is REFERENCE DATA — who to notify — not an active
+Your `parent` (from `watch_params.json`) is who you notify only when an
+agent re-raised the same operation after your cancel and its reason still
+does not convince you, or when the block is not something you can cancel
+(not a permission modal, or the cancel did not close it). A modal for an
+irreversible/high-blast-radius action (agent delete/retire/teardown,
+messages.db, the shared binary, daemon restart, anything outside `/tmp`)
+that you cannot judge is cancelled like any other. Anything else you don't
+understand is cancelled, not escalated. Every escalation is capped at three
+per condition (see the count store in the rubric). The tree is REFERENCE DATA — who to notify — not an active
 enforcement structure. If you're the root watcher, your parent is the
 human operator directly.
 
@@ -237,35 +316,37 @@ a name — and deliver it as a message, not pane text:
     [ESCALATION] <what needs a decision>: <why>. Action needed: <what>.
     EOF
 
-Writing the escalation only into your own pane is not delivery — nobody reads
-watcher panes. If you get no response within 15 minutes, resend and verify
-delivery (`thrum sent --unread`) before assuming it was seen. SAFE recognized
-modals stay approver-of-record and are approved directly, unchanged — this
-rule applies only to escalations that need a human decision.
+Writing the escalation only into your own pane is not delivery — nobody reads watcher panes. Verify delivery
+(`thrum sent --unread`) before assuming it was seen. Send it at most three times in total: the first send when you
+find the condition, then a later send only on a later tick while the same condition is still open and unanswered, at
+most once per tick and never three in one tick. Then stop: never escalate the same condition more than three times. If
+three sends go unanswered, cancel the modal if one is still open, send your parent one closing line, and do not raise
+the condition again unless it changes. SAFE recognized modals stay approver-of-record and are approved directly,
+unchanged — this rule applies only to escalations that need a human decision.
 
-### An unwatchable roster member: escalate every cycle until it is removed
+### An unwatchable roster member: tell the parent three times, then stay silent until it changes
 
 A roster member you **cannot watch at all** — capture fails by every path
 (local proxy *and* SSH fallback), the agent is fully isolated, or its owning
 daemon is unreachable so you cannot even message it — is NOT a member you may
-drop, mark dead, or fall silent on. It stays in your roster and it stays your
+drop or mark dead. It stays in your roster and it stays your
 duty.
 
-- **Escalate it to your `parent` every cycle it remains unwatchable —
-  repeatedly, not once.** A single "fully isolated" notice that you then stop
-  repeating is exactly the silent-give-up this archetype exists to prevent:
-  the roster member goes dark with nobody positioned to notice. Re-send the
-  escalation on each tick it is still unwatchable. (This is a standing
-  per-cycle duty, unlike the one-shot declared-intent nudge.)
+- **Tell your `parent` when you first find it unwatchable, and again on
+  later cycles while it stays so, up to three times in total** (same count
+  store as the rubric; key: the first 16 hex of sha256 of
+  `<agent>|unwatchable|<one-line reason>`, with a short fixed reason such as
+  `capture failed` so the key is stable). Then send your `parent` one closing line and stay
+  silent about it until it changes. An unwatchable coordinator is escalated
+  to the human, per Escalation.
 - **You never remove it from your own roster.** Roster membership is
   coordinator-owned config in `watch_params.json`, which you only ever read.
   Only a **coordinator or the human** may remove an agent from your roster —
   the signal that it no longer needs watching. Until that removal lands in
-  `watch_params.json`, you keep escalating.
+  `watch_params.json`, it stays in your roster.
 - **Do not borrow the empty-roster shutdown rule here.** "Shut yourself down"
   applies only when your *whole* roster is empty/missing. One unwatchable
-  *member* out of several is not that case: keep watching the rest, keep
-  escalating the unwatchable one.
+  *member* out of several is not that case: keep watching the rest.
 
 ## Declared-intent reminders (duty #4)
 
@@ -299,11 +380,12 @@ anti-pattern already rejected for the wake-loop itself.
      anything) → the reminder SUCCEEDED. Done — do not separately verify
      the nudge marker arrived.
   2. ONLY if the pane is IDENTICAL to your reminder-send capture **and**
-     the nudge marker is also absent → escalate to your `parent`.
+     the nudge marker is also absent → escalate to your `parent` (this
+     counts toward the same cap per condition: at most three times in total).
   Check for the GENERIC arrival template when checking for the marker
   (step 2 only) — `thrum send` injects `tmux.FormatNudge`'s
-  `"New message from @<you> -- run \`thrum inbox --unread\`..."` line,
-  never the message body. Look for your own agent name inside that generic
+  line that starts with "New message from @<you> -- run" and then names the
+  command `thrum inbox --unread`, never the message body. Look for your own agent name inside that generic
   line. `FormatNudge` has two branches — with a trailing `(Sent:...)`
   suffix and without (when no send timestamp was available) — and the
   sender name is rendered through `paneref.Agent()`, which only strips
@@ -338,11 +420,11 @@ choice of plumbing.
 Register the loop as a `thrum monitor` instead — a daemon-scheduled job,
 independent of your session, that keeps running across your restarts.
 
-**A ready-to-use script ships with this skill** — `resources/thrum-watch-
-pane-capture.sh` (paired with `resources/thrum-capture-fallback.sh`).
+**A ready-to-use script ships with this skill** —
+`resources/thrum-watch-pane-capture.sh` (paired with `resources/thrum-capture-fallback.sh`).
 It is generic and roster-driven: it reads your own
-`watch_params.json`, captures each roster member's pane (local `thrum tmux
-capture` first, always — that already reaches remote agents by name via the
+`watch_params.json`, captures each roster member's pane (local
+`thrum tmux capture` first, always — that already reaches remote agents by name via the
 normal rpcrouter proxy; see "SSH fallback" below for what the second script
 is for), runs `thrum detect --category permission`, applies the two-capture
 stability check, writes one report file, and emits one matchable summary
@@ -400,8 +482,8 @@ run time. Captures and their archive land under `.thrum/agents/<you>/watch-captu
 (redirect-resolved), not beside the deployed script itself.
 
 Register roster-watch.sh's own monitor the same way, matching its actual
-output lines (`"roster capture ready:"` for a normal tick, `"ROSTER
-INCIDENT:"` for a capture-failure incident):
+output lines (`"roster capture ready:"` for a normal tick,
+`"ROSTER INCIDENT:"` for a capture-failure incident):
 
 ```bash
 thrum monitor start --name roster-watch-<you> \

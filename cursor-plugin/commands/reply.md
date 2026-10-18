@@ -1,6 +1,6 @@
 ---
 description: Reply to a message
-argument-hint: [msg-id --stdin]
+argument-hint: '[msg-id --stdin]'
 ---
 
 Reply to a message with the same audience as the original.

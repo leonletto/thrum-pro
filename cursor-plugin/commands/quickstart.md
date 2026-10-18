@@ -1,6 +1,6 @@
 ---
 description: Register agent and start session
-argument-hint: [--role R --module M --intent "..."]
+argument-hint: '[--role R --module M --intent "..."]'
 ---
 
 Register as an agent, start a session, and set intent in one step.

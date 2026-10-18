@@ -89,10 +89,11 @@ the one resource it cannot replace and leaves no durable verdict artifact.
 **Only run it yourself when there is NO gate-role agent available**, and say so
 explicitly in the merge record so the gap is visible rather than invisible.
 
-**Verdicts are artifacts:** the runner saves them to
-`<gate-reports-dir>/<ISO-week>/<date>/<gate-slug>/` (the project's gate-reports directory) and commits them BEFORE
-removing any worktree. A verdict that exists only in a message cannot be audited
-later.
+**Verdicts are one log line:** the runner appends ONE line (date, gate, candidate SHA,
+target SHA, verdict, one short reason) to `dev-docs/gate-log.md` and commits it. That
+line is the only record a gate keeps; the verdict itself travels in the report message.
+Never commit per-gate report directories, logs, archives or evidence (owner ruling 2026-10-17:
+once a gate has decided and the candidate is landed or rejected, its output is deleted).
 
 ## Gate dispatch preamble
 
@@ -462,10 +463,18 @@ circuit-breaker — **BLOCKING**. Peer call with timeout but no circuit-breaker 
 **Triage:**
 `git diff main...HEAD --name-only | xargs grep -n '{peer_call_patterns}'`
 
+## Test impact selection plan (per-merge gate)
+
+Owner ruling, verbatim: "default ON as soon as it lands, no side-by-side; safety net = daily full gate + RDP load/regression test before deploy".
+
+Run the per-merge test lanes through the repository's test-impact-selection plan wrapper (the gate role's documented
+command, taking `--base`, `--head` and `--lane`), not the bare full-lane runner. It runs the plan, prints the `TIS_PLAN` line, and passes `--producer-rc` to the runner. Quote the `TIS_PLAN` line in the
+verdict. FULL (`decision=FULL RUN`) is the normal fallback: a plan error or any fail-closed reason runs the whole lane. For a per-landing gate, a FULL RUN fallback means the full NON-race lane, never race-all.
+
 ## Lens 11 — Census classification coverage (mandatory test, not a pattern check)
 
-**Why:** `go test ./...` never runs in Pass-3 — targeted-test selection is
-scoped to files the diff touches, and `internal/daemon/rpc/testcensus` is an ad
+**Why:** `go test ./...` never runs in Pass-3 — test impact selection
+(the plan wrapper) is scoped to files the diff touches, and `internal/daemon/rpc/testcensus` is an ad
 hoc test target nothing routes to. A merge that adds a `state.NewState(...)`
 call site in an `internal/daemon/rpc/*_test.go` file (test-fixture setup, not a
 handler) can leave it unclassified and desync the frozen census snapshot with

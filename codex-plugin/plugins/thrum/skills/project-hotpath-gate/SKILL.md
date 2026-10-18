@@ -246,6 +246,19 @@ content. Append a provenance comment:
 
 On decline — do NOT write. Record the skipped proposal for future runs.
 
+### Test impact selection plan (per-merge gate)
+
+Owner ruling, verbatim: "default ON as soon as it lands, no side-by-side; safety
+net = daily full gate + RDP load/regression test before deploy".
+
+Run the per-merge test lanes through the repository's test-impact-selection plan
+wrapper (the gate role's documented command, taking `--base`, `--head` and
+`--lane`), not the bare full-lane runner. It runs the plan, prints the
+`TIS_PLAN` line, and passes `--producer-rc` to the runner. Quote the `TIS_PLAN`
+line in the verdict. FULL (`decision=FULL RUN`) is the normal fallback: a plan
+error or any fail-closed reason runs the whole lane. For a per-landing gate, a
+FULL RUN fallback means the full NON-race lane, never race-all.
+
 ### Reference
 
 - `.thrum/hotpath-gate.json` — the config file this skill generates

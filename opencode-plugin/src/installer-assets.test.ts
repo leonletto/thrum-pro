@@ -10,7 +10,7 @@ import assert from "node:assert/strict"
 import fs from "fs"
 import os from "os"
 import path from "path"
-import { getConfigDir, installAssets } from "./installer.js"
+import { getConfigDir, getSkillsSubdir, installAssets } from "./installer.js"
 
 function stubCtx(): any {
   return { client: { app: { log: async () => {} } } }
@@ -25,7 +25,10 @@ test("installAssets stages skills and commands; version gate skips reinstall", a
     const cfg = path.join(tmp, "opencode")
     assert.equal(getConfigDir(), cfg)
     // protocol skills ride the wholesale skills copy (o4jgf item 5)
-    const skillFile = path.join(cfg, "skills", "snapshot-protocol", "SKILL.md")
+    // open-core is flat (skills/<name>); the pro build nests under skills/<subdir>
+    const sub = getSkillsSubdir()
+    const skillsRoot = sub === "thrum" ? path.join(cfg, "skills") : path.join(cfg, "skills", sub)
+    const skillFile = path.join(skillsRoot, "snapshot-protocol", "SKILL.md")
     assert.ok(fs.existsSync(skillFile))
     assert.ok(fs.existsSync(path.join(cfg, "commands", "thrum-sleep.md")))
     const mtimeBefore = fs.statSync(skillFile).mtimeMs

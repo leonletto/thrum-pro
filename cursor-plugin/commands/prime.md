@@ -1,4 +1,5 @@
 ---
+name: prime
 description: Load AI-optimized session context
 ---
 

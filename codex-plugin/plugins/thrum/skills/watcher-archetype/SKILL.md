@@ -102,7 +102,18 @@ name — and deliver it as a message, not pane text:
     EOF
 
 Writing the escalation only into your own pane is not delivery — nobody reads
-watcher panes. If you get no response within 15 minutes, resend and verify
-delivery (`thrum sent --unread`) before assuming it was seen. SAFE recognized
-modals stay approver-of-record and are approved directly, unchanged — this rule
-applies only to escalations that need a human decision.
+watcher panes. Verify delivery (`thrum sent --unread`) before assuming it was
+seen. Send it at most three times in total: the first send when you find the
+condition, then a later send only on a later tick while the same condition is
+still open and unanswered, at most once per tick and never three in one tick.
+Then stop: never escalate the same condition more than three times. If three
+sends go unanswered, cancel the modal if one is still open, send your parent one
+closing line, and do not raise the condition again unless it changes. SAFE
+recognized modals stay approver-of-record and are approved directly, unchanged —
+this rule applies only to escalations that need a human decision.
+
+This read-only archetype only reports: it never sends keys and cancels nothing,
+so "cancel" above applies to the persistent watcher; here the cap means three
+reports per condition. Count them with the snippet in
+`persistent-watcher-archetype` (same key rule, one count file per condition,
+unwatchable key `<agent>|unwatchable|<one-line reason>`).

@@ -1,6 +1,6 @@
 ---
 description: Send a message to an agent
-argument-hint: [--to @name --stdin]
+argument-hint: '[--to @name --stdin]'
 ---
 
 Send a direct message or broadcast.

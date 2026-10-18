@@ -196,7 +196,8 @@ fi
 mkdir -p "$(dirname "${CODEX_CONFIG}")" || { err "could not create $(dirname "${CODEX_CONFIG}")"; exit 1; }
 [[ -f "${CODEX_CONFIG}" ]] || : > "${CODEX_CONFIG}"
 
-PY_OUT=$(python3 - "${CODEX_CONFIG}" "${audit_dir}" "${socket_path}" "${resolved_thrum_dir}" "${codex_skills_dir}" "${codex_plugin_cache_dir}" "${tmp_exception_dir}" "${local_bin_dir}" <<'PY'
+_hoist_heredoc_1() {
+python3 - "${CODEX_CONFIG}" "${audit_dir}" "${socket_path}" "${resolved_thrum_dir}" "${codex_skills_dir}" "${codex_plugin_cache_dir}" "${tmp_exception_dir}" "${local_bin_dir}" <<'PY'
 import os
 import re
 import sys
@@ -542,7 +543,8 @@ except BaseException:
 for m in messages:
     print(m)
 PY
-)
+}
+PY_OUT=$(_hoist_heredoc_1)
 py_status=$?
 if [[ ${py_status} -ne 0 ]]; then
   err "failed to update ${CODEX_CONFIG}"

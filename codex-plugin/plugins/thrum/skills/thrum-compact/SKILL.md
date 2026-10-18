@@ -1,10 +1,9 @@
 ---
 name: thrum-compact
 description:
-  Stage a standard 11-section snapshot, verify it landed, then send /compact to
-  this agent's OWN tmux pane so it stays alive (subagents, loops, crons survive)
-  and resumes at low context. Use for in-place context relief when you do NOT
-  want to kill the session.
+  Stage and verify a standard snapshot, settle owned background tasks, then
+  compact this tmux session in place. Use for context relief when you want to
+  keep the current session.
 # source: claude-plugin/commands/compact.md
 ---
 
@@ -20,16 +19,16 @@ Compose a standard 11-section prose continuation, write it directly to your
 restart file, verify it landed, then send `/compact` to your own tmux pane.
 Unlike `$thrum:thrum-restart` and `$thrum:thrum-sleep`, compact does NOT end
 your session and does NOT kill your tmux pane — the agent stays ALIVE. Any
-sub-agents, background loops, and cron schedules you own keep running across the
-compaction (confirmed empirically). After compaction you Read your snapshot by
-hand and re-prime lean.
+background loops and cron schedules you own keep running across the compaction
+(confirmed empirically). After compaction, read your snapshot by hand and
+re-prime lean.
 
 ### When to Use
 
 - Your context is high and you want relief WITHOUT losing the live session — you
-  own sub-agents, a background loop, or a cron that must survive.
-- You are mid-task and a fresh session (which loses in-flight sub-agent handles
-  and scheduler state) would be more expensive than a compaction.
+  own a background loop or a cron schedule that must survive.
+- You are mid-task and a fresh session would disrupt a scheduled loop or cron
+  that you own.
 
 For context-exhaustion or stuck-state cases where a FRESH session is the right
 answer — or where the coordinator should move you — use `$thrum:thrum-restart`.
@@ -80,10 +79,10 @@ survives even if post-compact orientation fails, so it is read-first and
 self-contained:
 
 > 🔴 ON RESUME — you were COMPACTED, not restarted. Daemon binding is intact
-> (subagents/loops/crons survived). Resume LEAN: this file is delivered inline
-> in the injected briefing (read it FIRST). Expect a `thrum prime --light`
-> briefing already auto-injected by the SessionStart hook; only run
-> `thrum:prime-agent` if it did NOT appear. Do NOT manually run full
+> (background loops and cron schedules survived). Resume LEAN: this file is
+> delivered inline in the injected briefing (read it FIRST). Expect a
+> `thrum prime --light` briefing already auto-injected by the SessionStart hook;
+> only run `thrum:prime-agent` if it did NOT appear. Do NOT manually run full
 > `thrum prime`. Then continue from §9. If you must re-read this file (no
 > briefing appeared): read the NEWEST
 > `.thrum/agents/<your-id>/sessions/*-restart.md` in the MAIN repo (the prime
@@ -158,6 +157,13 @@ lines) re-resolves identity (the Bash tool does NOT persist shell state across
 calls, so earlier steps' variables are gone), verifies the snapshot on disk, and
 only then fires `/compact` — all in ONE call so nothing depends on a prior
 block.
+
+Before Step 4, settle owned background tasks. In Claude Code, inspect the
+running-task list, wait for active sub-agents, list Monitors with
+`thrum monitor list`, stop your own Monitors, and stop or wait for background
+shells. In other runtimes, use only existing task controls; skip this check if
+none exist. Send only when none remain; if one cannot be settled, report and
+hold without sending.
 
 ```bash
 SNAPSHOT="<PASTE SNAPSHOT_PATH FROM STEP 3>"
@@ -287,7 +293,7 @@ your pane goes idle, which only happens if you stop acting now.
 ### How resume works
 
 After `/compact` the SAME process and session survive — the daemon binding is
-intact (that is why your sub-agents, loops, and crons kept running). Full
+intact (that is why your background loops and cron schedules kept running). Full
 `thrum prime` rebuilds identity + binding + full briefing for a NEW session;
 none of that is needed here. Resume LEAN, in this order:
 
@@ -309,8 +315,8 @@ none of that is needed here. Resume LEAN, in this order:
    complete - please continue" prompt on the daemon right behind `/compact`; it
    is delivered once the pane is idle after compaction, so a turn starts even
    with an empty inbox.
-3. **Continue** from §9. Reconnect to your still-live sub-agents, loops, and
-   crons rather than re-dispatching.
+3. **Continue** from §9. Reconnect to your still-live background loops and cron
+   schedules rather than re-dispatching them.
 
 Runtime-specific compaction-recovery hooks (if this runtime has any) are
 documented in that runtime's own plugin tree (its hooks manifest and the scripts

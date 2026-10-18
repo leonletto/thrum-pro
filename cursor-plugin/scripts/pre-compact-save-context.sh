@@ -28,7 +28,8 @@ BD_READY=$(bd ready 2>/dev/null | head -15 || echo "none")
 THRUM_STATUS=$(thrum status 2>/dev/null | head -10 || echo "unavailable")
 
 # Compose context
-CONTEXT=$(cat <<CTXEOF
+_hoist_heredoc_1() {
+cat <<CTXEOF
 ## Pre-Compact State Snapshot
 
 **Saved automatically before context compaction.**
@@ -67,7 +68,8 @@ $BD_READY
 $THRUM_STATUS
 \`\`\`
 CTXEOF
-)
+}
+CONTEXT=$(_hoist_heredoc_1)
 
 # Save to thrum context — APPEND to existing context, don't overwrite.
 # First load existing context, strip any previous pre-compact snapshot, then append.

@@ -203,6 +203,7 @@ thrum message read <msg-id> [<msg-id>...]      # Mark as read
 thrum message read --all                       # DRY RUN: list what --apply/--force would mark, marks nothing
 thrum message read --all --apply               # Mark the shown (already-seen) candidates
 thrum message read --all --force               # Mark ALL unread, seen or not (needs a fresh `--all` dry run first)
+thrum message read --all --from @reviewer      # DRY RUN restricted to one sender (also scopes --apply/--force)
 thrum message search "<term>"                  # Full-text search across all messages (see § inbox above)
 thrum message reindex                          # Rebuild the FTS index if search looks wrong
 ```
@@ -218,6 +219,7 @@ Subcommand flags:
 --force   Confirm deletion (required)
 
 # message read
+--from string  Only read messages from this agent (accepts @agent or agent ID)
 --all     List seen+unread candidates (dry run); combine with --apply or --force to mark
 --apply   With --all: mark the shown (already-seen) candidates
 --force   With --all: mark ALL unread, seen or not (needs a fresh --all dry run first)
@@ -252,7 +254,7 @@ Flags:
 --name string            Human-readable agent name (defaults to role_hash)
 --display string         Display name for the agent
 --intent string          Initial work intent description
---runtime string         Runtime preset: claude, codex, cursor, gemini, opencode, auggie, cli-only
+--runtime string         Runtime preset: claude, codex, cursor, opencode, auggie, cli-only
 --preamble-file string   Custom preamble file to compose with default preamble
 --no-init                Skip runtime config generation, just register agent
 --force                  Force runtime config reinitialization; project instruction files are preserved
@@ -548,7 +550,7 @@ thrum init --skills --runtime cursor           # Install skill to Cursor's skill
 Flags:
 
 ```text
---runtime string        Generate runtime-specific configs: claude|codex|cursor|gemini|opencode|cli-only|all
+--runtime string        Generate runtime-specific configs: claude|codex|cursor|opencode|cli-only|all
 --skills                Install thrum skill only (no MCP config, no startup script)
 --stealth               Use .git/info/exclude instead of .gitignore (zero footprint)
 --force                 Force reinitialization. On a TTY this re-runs the wizard with existing values pre-seeded.
@@ -734,7 +736,7 @@ thrum runtime show claude --json
 thrum runtime set-default <name>               # Set the default runtime preset
 ```
 
-Supported runtimes: `claude`, `codex`, `cursor`, `gemini`, `opencode`, `auggie`,
+Supported runtimes: `claude`, `codex`, `cursor`, `opencode`, `auggie`,
 `cli-only`
 
 ---
@@ -841,13 +843,19 @@ thrum tmux connect                             # Attach (interactive picker)
 thrum tmux connect <name>                      # Attach directly by name
 thrum tmux restart <name>                      # Restart session with context snapshot
 thrum tmux restart <name>                      # PREFERRED — re-applies the --model pin
-thrum tmux restart <name> --force              # Skips confirmation AND DROPS THE --model PIN
+thrum tmux restart <name> --force              # Skip the snapshot save prompt
+thrum tmux restart <name> --resume             # Resume the same pinned vendor session; skips Thrum snapshot
 thrum tmux kill <name>                         # Tear down a session
 thrum tmux queue <session> <command>           # Submit command to session queue
 thrum tmux queue <session> <command> --wait    # Queue + block until complete
 thrum tmux queue-status <session>              # Show active + queued commands
 thrum tmux cancel <command-id>                 # Cancel a queued or active command
 ```
+
+Resume skips the Thrum snapshot phase. Registration must be proven before the
+daemon submits one continue; the CLI reports `Resume continue: <outcome>` and
+prints warnings when an unsupported effort argument is omitted. A staged restart
+failure leaves the original session alive.
 
 `tmux start` flags (operates on current working directory):
 
@@ -864,7 +872,7 @@ thrum tmux cancel <command-id>                 # Cancel a queued or active comma
 --role string      Agent role (required unless --no-agent)
 --module string    Agent module (required unless --no-agent)
 --intent string    Initial work intent description
---runtime string   Runtime preset: claude, codex, cursor, gemini, opencode, auggie
+--runtime string   Runtime preset: claude, codex, cursor, opencode, auggie
 --no-agent         Skip agent registration (create session only)
 --force            Re-register even if agent exists; kill and recreate an existing session
 ```
@@ -923,7 +931,7 @@ thrum worktree list                                  # List worktrees with agent
 --role string         Agent role
 --module string       Agent module
 --intent string       Initial work intent description
---runtime string      Runtime preset: claude, codex, cursor, gemini, opencode, auggie
+--runtime string      Runtime preset: claude, codex, cursor, opencode, auggie
 ```
 
 `worktree teardown` flags:

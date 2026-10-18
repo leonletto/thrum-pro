@@ -70,10 +70,12 @@ the one resource it cannot replace and leaves no durable verdict artifact.
 **Only run it yourself when there is NO gate-role agent available**, and say so
 explicitly in the merge record so the gap is visible rather than invisible.
 
-**Verdicts are artifacts:** the runner saves them to
-`<gate-reports-dir>/<ISO-week>/<date>/<gate-slug>/` (the project's gate-reports
-directory) and commits them BEFORE removing any worktree. A verdict that exists
-only in a message cannot be audited later.
+**Verdicts are one log line:** the runner appends ONE line (date, gate,
+candidate SHA, target SHA, verdict, one short reason) to `dev-docs/gate-log.md`
+and commits it. That line is the only record a gate keeps; the verdict itself
+travels in the report message. Never commit per-gate report directories, logs,
+archives or evidence (owner ruling 2026-10-17: once a gate has decided and the
+candidate is landed or rejected, its output is deleted).
 
 ### Gate dispatch preamble
 

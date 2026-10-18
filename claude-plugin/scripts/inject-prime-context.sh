@@ -38,6 +38,14 @@
 
 set -uo pipefail
 
+# One absolute Unix-seconds deadline for ALL Thrum work this hook starts.
+# Computed here, at the first executable step (before stdin is read and before
+# any thrum invocation), exported once, and inherited unchanged by every
+# thrum child (whoami, prime --light, prime). It is never recomputed or
+# renewed, and any value the caller pre-set is overwritten on purpose.
+THRUM_SESSIONSTART_DEADLINE=$(( $(date +%s) + 10 ))
+export THRUM_SESSIONSTART_DEADLINE
+
 # Project doesn't use thrum — silent no-op.
 if ! command -v thrum >/dev/null 2>&1; then
   exit 0

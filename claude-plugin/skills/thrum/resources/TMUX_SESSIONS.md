@@ -97,20 +97,28 @@ No listener sub-agent, no polling, no CronCreate watchdog. Messages just arrive.
 
 ## Session Restart
 
-When the context window is running low, restart with a conversation snapshot
-preserved:
+When the context window is running low, use a snapshot restart. If the vendor
+login/session is broken but the vendor still has the conversation, use the
+resume fallback instead:
 
 - **Self-initiated:** Run `/thrum:restart` — saves snapshot, notifies
   coordinator
-- **Coordinator-initiated:** `thrum tmux restart <name>` — **PLAIN, not `--force`.**
-  `--force` **drops the `--model` pin**; a plain restart re-applies it at the
-  readiness probe. Only use `--force` if a plain restart does not take, and then
-  re-pin and verify the model **off the pane** (`runtime-config get` reports what
-  was requested, not what is running).
+- **Coordinator-initiated:** `thrum tmux restart <name>` — saves and restores a
+  Thrum snapshot. `--force` skips the graceful save prompt and snapshot flow.
+- **Vendor-session recovery:** `thrum tmux restart <name> --resume` — skips the
+  Thrum snapshot phase and resumes the same pinned runtime's vendor session.
+  This is a fallback for a broken login/session, not a cross-runtime transfer.
+  It refuses `--force`, `--runtime`, and `--model`; the RPC also refuses
+  `provider`. Some runtimes discover the vendor ID by sending `/exit`, which can
+  close the current runtime process. A refusal after discovery may mean that
+  process already exited, so inspect the pane before retrying.
 - **Automatic:** Configure `restart.auto_threshold` in `.thrum/config.json`
 
 The snapshot is automatically included in `thrum prime` on the next session
-start.
+start. Resume skips this snapshot path; verify that the same vendor conversation
+opened, ask for a small known-context response, and wait for visible activity.
+`outcome_unknown` means the continue was accepted but its terminal state could
+not be observed; inspect the pane and queue status before retrying.
 
 ## When Tmux Isn't Available
 

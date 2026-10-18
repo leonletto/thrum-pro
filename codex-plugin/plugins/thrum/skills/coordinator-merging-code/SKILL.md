@@ -120,6 +120,20 @@ role preamble.
 
 **Do not duplicate lens definitions here.** Point at them and keep the order.
 
+### 0a. OVERBUILD CHECK — first step, before any gate
+
+Before a product branch goes to a gate, run one judgment-tier sub-agent with
+`resources/overbuild-check-prompt.md` from this skill's folder. Fill in the ask
+(issue, plan, dispatch message), later rulings and gate findings, the trunk ref,
+the branch tip and the owner's report.
+
+- **PROPORTIONATE:** continue to §1.
+- **OVERBUILT:** send the findings to the owner for the simplest version, with a
+  files-and-lines plan first. Do not dispatch a gate.
+- **UNCLEAR:** read the findings against source and decide.
+
+Test-only, docs and tooling branches skip this step.
+
 ### 1. PRECONDITION — dual review, and it is NOT the gate
 
 Two axes, run in parallel, on the branch: **code-quality** and **spec-compliance
@@ -376,13 +390,13 @@ TIP** — ancestry proves a merge EXISTS, never WHAT landed.
 
 ### 7. AFTER THE MERGE — four things, none optional
 
-1. **The verdict artifact.** The runner saves verdicts to
-   `<gate-reports-dir>/<ISO-week>/<date>/<gate-slug>/` (the project's
-   gate-reports directory) and **commits them BEFORE removing any worktree.**
-   Save → commit → then destroy. A verdict that exists only in a message cannot
-   be audited later. The artifact must be able to carry a
-   `CLEAN-WITH-GATE-FIXES` outcome, and when one applies it cites the
-   `GATE-AUTHORED` commit SHA.
+1. **The gate-log line.** The runner appends ONE line (date, gate, candidate
+   SHA, target SHA, verdict, one short reason) to `dev-docs/gate-log.md` and
+   commits it. That line is the only record a gate keeps: never commit per-gate
+   report directories, logs, archives or evidence, and delete the gate's output
+   once you confirm the candidate landed or was rejected (owner ruling
+   2026-10-17). The line must be able to carry a `CLEAN-WITH-GATE-FIXES`
+   outcome, and when one applies it cites the `GATE-AUTHORED` commit SHA.
 2. **The efficacy row**, in the hotpath-gate efficacy log — required for
    **every** trigger-dir merge, including `SKIPPED_WITH_EVIDENCE` rows and
    orchestrator-run merges. The log measures gate **coverage**, not just
@@ -460,7 +474,7 @@ hides staleness.
 - `coordinator-running-review-cycles` — the dual-review cycle feeding §1
 - `coordinator-branch-split-on-block` — when a gate blocks one concern of a
   bundled branch
-- the gate-reports README — the artifact contract
+- `dev-docs/gate-log.md` — the one-line-per-gate record
 - `.thrum/hotpath-gate.json` · `.thrum/philosophy.md` — the configs; read these,
   not prose
 

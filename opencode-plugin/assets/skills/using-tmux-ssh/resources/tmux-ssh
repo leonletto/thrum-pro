@@ -65,7 +65,7 @@ GOTCHAS
   - --kill closes the ssh session only. Remote processes started in it (e.g. a tmux session) keep running.
   - A dropped ssh loses any command running in it. Run long work under "tmux new -d" or nohup and re-run after a drop.
   - A host that reports THIS machine's own hostname is refused (125); clear it with --kill.
-  - A live session keeps the TMUX_SSH_OPTS it started with; to change them run --kill first.
+  - A live session keeps the TMUX_SSH_OPTS it started with; a different non-empty TMUX_SSH_OPTS only warns; run --kill first to apply it.
   - --expect that never matched is reported as a warning after the command finishes.
 
 EXIT CODES
@@ -325,10 +325,30 @@ write_ref() {
   # Atomic: write to a temp file then rename, so a concurrent reader never sees
   # a half-written ref (and a crash mid-write can't truncate the live file).
   local tmp="${REF_FILE}.tmp.$$"
-  printf 'host=%s\nssh_target=%s\nsocket=%s\nsession=%s\nexpected_hostname=%s\nestablished_at=%s\n' \
+  printf 'host=%s\nssh_target=%s\nsocket=%s\nsession=%s\nexpected_hostname=%s\nestablished_at=%s\n%s' \
     "$HOST" "$HOST" "$SOCKET" "$SESSION" "$EXPECTED_HOSTNAME" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    "$([ -n "$SSH_OPTS_UNKNOWN" ] || printf 'ssh_opts=%s\n' "$SSH_OPTS_STARTED")" \
     > "$tmp"
   mv -f "$tmp" "$REF_FILE"
+}
+
+# A live session keeps the TMUX_SSH_OPTS it was started with, so a caller whose non-empty TMUX_SSH_OPTS differ gets
+# a warning (the run continues; --kill applies the new ones). A legacy ref with no ssh_opts= line is "unknown": warn only, and never record a guess for it.
+SSH_OPTS_STARTED="${TMUX_SSH_OPTS:-}"   # what write_ref records; becomes the recorded value while the session lives
+SSH_OPTS_UNKNOWN=""
+check_ssh_opts() {
+  [ -f "$REF_FILE" ] && has_session || return 0
+  local want rec; want=$(echo ${TMUX_SSH_OPTS:-})
+  if ! grep -q '^ssh_opts=' "$REF_FILE" 2>/dev/null; then
+    SSH_OPTS_UNKNOWN=1
+    [ -z "$want" ] || log "WARNING: this session predates ssh option recording, so the ssh options it runs with are unknown and may not be your TMUX_SSH_OPTS; to apply them run: $SCRIPT_NAME $HOST --kill"
+    return 0
+  fi
+  rec=$(grep '^ssh_opts=' "$REF_FILE" | head -1 | cut -d= -f2-)
+  SSH_OPTS_STARTED="$rec"
+  [ -z "$want" ] || [ "$(echo $rec)" = "$want" ] && return 0
+  log "WARNING: the session for $HOST was started with different ssh options ('${rec:-<none>}', not your '$want'); those stay in force. To apply your TMUX_SSH_OPTS run: $SCRIPT_NAME $HOST --kill"
+  return 0
 }
 
 # ---- tmux primitives -------------------------------------------------------
@@ -1145,6 +1165,7 @@ esac
 mkdir -p "$REF_DIR"
 acquire_lock "$LOCK_DIR"
 refuse_if_guarded
+check_ssh_opts
 read_watch || die "saved command watch is invalid; use --kill before starting another command" 125
 if [ -n "$WATCH_NONCE" ]; then
   die "a previous command is still being watched on $HOST -- NOT resent. Ways out: $SCRIPT_NAME $HOST --resume [--timeout N] (keep waiting) | $SCRIPT_NAME $HOST --abort (Ctrl-C it and clear the watch) | $SCRIPT_NAME $HOST --kill (drop the ssh session; remote processes keep running)" 125

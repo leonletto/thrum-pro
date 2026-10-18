@@ -12,6 +12,35 @@ SECONDS=0
 # Read hook input JSON — we need stop_hook_active to prevent infinite loops
 INPUT=$(cat)
 PROJECT_DIR="${CURSOR_PROJECT_DIR:-${CLAUDE_PROJECT_DIR:-.}}"
+# BEGIN resolve-thrum-dir
+# Same rule as internal/paths.ResolveThrumDir (the CLI's resolver), so this hook
+# reads the same config.json and listener PID as the CLI. A worktree holds
+# .thrum/redirect (the absolute path of the main repo's .thrum) and no
+# config.json, so checking only the local .thrum made the hook exit silently in
+# every worktree. Single hop only. Every case the CLI rejects (missing or
+# non-directory target, a chained target, empty, relative, or multi-line
+# content) falls back to the local .thrum, which the hook treats as "no config":
+# fail quiet. Prints the .thrum directory itself.
+resolve_thrum_dir() {
+  local local_dir="$1/.thrum" target
+  if [ ! -f "$local_dir/redirect" ]; then
+    printf '%s' "$local_dir"; return 0
+  fi
+  target=$(cat -- "$local_dir/redirect" 2>/dev/null) || target=""
+  target=${target//$'\r'/}
+  target="${target#"${target%%[![:space:]]*}"}"
+  target="${target%"${target##*[![:space:]]}"}"
+  case "$target" in /*) ;; *) printf '%s' "$local_dir"; return 0 ;; esac
+  case "$target" in *$'\n'*) printf '%s' "$local_dir"; return 0 ;; esac
+  if [ ! -d "$target" ]; then printf '%s' "$local_dir"; return 0; fi
+  if [ "$(cd -P -- "$target" && pwd)" = "$(cd -P -- "$local_dir" && pwd)" ]; then
+    printf '%s' "$local_dir"; return 0
+  fi
+  if [ -e "$target/redirect" ]; then printf '%s' "$local_dir"; return 0; fi
+  printf '%s' "$target"
+}
+# END resolve-thrum-dir
+THRUM_DIR_RESOLVED=$(resolve_thrum_dir "$PROJECT_DIR")
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 write_idle() {
@@ -67,7 +96,7 @@ if ! bounded_preflight . /dev/null thrum daemon status; then
   exit 0
 fi
 
-THRUM_CONFIG="${PROJECT_DIR}/.thrum/config.json"
+THRUM_CONFIG="${THRUM_DIR_RESOLVED}/config.json"
 
 # Early exit: no thrum workspace
 if [ ! -f "$THRUM_CONFIG" ]; then
@@ -95,6 +124,8 @@ fi
 # Phase 1: Resolve agent identity — must happen before inbox check so the
 # query is scoped to this agent only (resolveLocalAgentID checks THRUM_AGENT_ID).
 AGENT_ID="${THRUM_AGENT_ID:-${THRUM_NAME:-}}"
+IDENTITY_FROM_WHOAMI=0
+IDENTITY_TMUX_SESSION=""
 if [ -z "$AGENT_ID" ]; then
   # Without jq there is no safe way to parse a resolved identity or unread
   # count. Keep Stop permissive, but do not write an unknown agent's status.
@@ -104,6 +135,10 @@ if [ -z "$AGENT_ID" ]; then
   bounded_preflight "$PROJECT_DIR" "$PREFLIGHT_OUTPUT" thrum whoami --json || exit 0
   AGENT_ID=$(jq -r '.agent_id // empty' "$PREFLIGHT_OUTPUT" 2>/dev/null) || exit 0
   [ -n "$AGENT_ID" ] || exit 0
+  # The same JSON carries tmux_session, so the tmux check below reuses it instead
+  # of a second whoami.
+  IDENTITY_FROM_WHOAMI=1
+  IDENTITY_TMUX_SESSION=$(jq -r '.tmux_session // empty' "$PREFLIGHT_OUTPUT" 2>/dev/null || true)
 fi
 
 # Phase 2: Check unread messages scoped to this agent
@@ -130,25 +165,34 @@ fi
 # If tmux_session is set in the identity file, the agent was launched via tmux.
 # The session may have died, but if so the agent wouldn't be running this hook
 # either (it runs inside the tmux pane). So field presence is sufficient here.
-if [ -z "${PREFLIGHT_OUTPUT:-}" ]; then
-  PREFLIGHT_OUTPUT=$(mktemp "${TMPDIR:-/tmp}/cursor-stop.XXXXXX") || { write_idle; exit 0; }
-  trap 'rm -f "$PREFLIGHT_OUTPUT"' EXIT
+if [ "$IDENTITY_FROM_WHOAMI" = 1 ]; then
+  TMUX_SESSION="$IDENTITY_TMUX_SESSION"
+else
+  if [ -z "${PREFLIGHT_OUTPUT:-}" ]; then
+    PREFLIGHT_OUTPUT=$(mktemp "${TMPDIR:-/tmp}/cursor-stop.XXXXXX") || { write_idle; exit 0; }
+    trap 'rm -f "$PREFLIGHT_OUTPUT"' EXIT
+  fi
+  if ! THRUM_AGENT_ID="$AGENT_ID" bounded_preflight "$PROJECT_DIR" "$PREFLIGHT_OUTPUT" thrum whoami --field tmux_session; then
+    # Listener state is unknown after a failed identity lookup; allow Stop and
+    # attempt only the conditional status write within the remaining budget.
+    write_idle
+    exit 0
+  fi
+  TMUX_SESSION=$(cat "$PREFLIGHT_OUTPUT")
 fi
-if ! THRUM_AGENT_ID="$AGENT_ID" bounded_preflight "$PROJECT_DIR" "$PREFLIGHT_OUTPUT" thrum whoami --field tmux_session; then
-  # Listener state is unknown after a failed identity lookup; allow Stop and
-  # attempt only the conditional status write within the remaining budget.
-  write_idle
-  exit 0
-fi
-TMUX_SESSION=$(cat "$PREFLIGHT_OUTPUT")
 if [ -n "$TMUX_SESSION" ]; then
   write_idle
   exit 0
 fi
 
-# Phase 3: Check if listener process is alive via PID file
-THRUM_DIR="${THRUM_HOME:-$PROJECT_DIR}"
-PID_FILE="$THRUM_DIR/.thrum/var/${AGENT_ID}-listener.pid"
+# Phase 3: Check if listener process is alive via PID file. `thrum listen` writes
+# the PID into the resolved .thrum/var. This hook resolves from THRUM_HOME when it
+# is set, else from the project dir: THRUM_HOME-first. The CLI's EffectiveRepoPath
+# gives the cwd authority and uses THRUM_HOME only when no .thrum exists above the
+# cwd. So the two agree for a redirected worktree; they differ only when a stale
+# THRUM_HOME points at another project than the cwd (a named residual).
+PID_VAR="$(resolve_thrum_dir "${THRUM_HOME:-$PROJECT_DIR}")/var"
+PID_FILE="$PID_VAR/${AGENT_ID}-listener.pid"
 
 if [ ! -f "$PID_FILE" ]; then
   echo "Your background message listener is not running. Start it now." >&2

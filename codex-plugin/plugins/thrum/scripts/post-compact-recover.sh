@@ -43,6 +43,35 @@ if command -v jq >/dev/null 2>&1; then
   HOOK_CWD=$(printf '%s' "$INPUT" | jq -r '.cwd // "."' 2>/dev/null || echo ".")
 fi
 THRUM_DIR="${THRUM_HOME:-$HOOK_CWD}"
+# BEGIN resolve-thrum-dir
+# Same rule as internal/paths.ResolveThrumDir (the CLI's resolver), so this hook
+# reads the same config.json and listener PID as the CLI. A worktree holds
+# .thrum/redirect (the absolute path of the main repo's .thrum) and no
+# config.json, so checking only the local .thrum made the hook exit silently in
+# every worktree. Single hop only. Every case the CLI rejects (missing or
+# non-directory target, a chained target, empty, relative, or multi-line
+# content) falls back to the local .thrum, which the hook treats as "no config":
+# fail quiet. Prints the .thrum directory itself.
+resolve_thrum_dir() {
+  local local_dir="$1/.thrum" target
+  if [ ! -f "$local_dir/redirect" ]; then
+    printf '%s' "$local_dir"; return 0
+  fi
+  target=$(cat -- "$local_dir/redirect" 2>/dev/null) || target=""
+  target=${target//$'\r'/}
+  target="${target#"${target%%[![:space:]]*}"}"
+  target="${target%"${target##*[![:space:]]}"}"
+  case "$target" in /*) ;; *) printf '%s' "$local_dir"; return 0 ;; esac
+  case "$target" in *$'\n'*) printf '%s' "$local_dir"; return 0 ;; esac
+  if [ ! -d "$target" ]; then printf '%s' "$local_dir"; return 0; fi
+  if [ "$(cd -P -- "$target" && pwd)" = "$(cd -P -- "$local_dir" && pwd)" ]; then
+    printf '%s' "$local_dir"; return 0
+  fi
+  if [ -e "$target/redirect" ]; then printf '%s' "$local_dir"; return 0; fi
+  printf '%s' "$target"
+}
+# END resolve-thrum-dir
+THRUM_DIR_RESOLVED=$(resolve_thrum_dir "$THRUM_DIR")
 
 IDENTITIES_DIR="$THRUM_DIR/.thrum/identities"
 IDENTITY_AGENT_ID=""
@@ -79,14 +108,9 @@ _restart_file="$THRUM_DIR/.thrum/restart/${IDENTITY_AGENT_ID}.md"
 if [ -s "$_restart_file" ]; then
   COMPACT_SNAPSHOT="$_restart_file"
 else
-  # A worktree's .thrum/redirect names the main repo's .thrum directory.
-  _main_thrum="$THRUM_DIR/.thrum"
-  if [ -f "$THRUM_DIR/.thrum/redirect" ]; then
-    _redir=$(head -n 1 "$THRUM_DIR/.thrum/redirect" 2>/dev/null | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' || true)
-    # A relative redirect resolves against the worktree root, not the hook's cwd.
-    case "$_redir" in ""|/*) ;; *) _redir="$THRUM_DIR/$_redir" ;; esac
-    if [ -n "$_redir" ] && [ -d "$_redir" ]; then _main_thrum="$_redir"; fi
-  fi
+  # The main repo's .thrum, through the same resolver as the stop hooks and the
+  # CLI (a relative, chained, or missing redirect falls back to the local .thrum).
+  _main_thrum="$THRUM_DIR_RESOLVED"
   _sessions_dir="$_main_thrum/agents/${IDENTITY_AGENT_ID}/sessions"
   if [ -d "$_sessions_dir" ]; then
     _newest=$(ls -1t "$_sessions_dir"/*-restart.md 2>/dev/null | head -n 1 || true)
@@ -94,21 +118,14 @@ else
   fi
 fi
 
+# Plain double-quoted assignments, not a heredoc inside $( ). bash 3.2 (the macOS
+# /bin/bash) mis-parses a quoted heredoc inside a command substitution when its
+# body holds an apostrophe, and the hook dies before sending. The snapshot path is
+# the only expansion here; its value is never re-parsed.
 if [ -n "$COMPACT_SNAPSHOT" ]; then
-  # Quoted heredoc ('MSGEOF') — no command substitution ever runs on this
-  # body. The dynamic snapshot path is spliced in afterward via plain
-  # parameter-expansion string replacement, never by re-opening the heredoc
-  # to shell expansion.
-  COMPACT_MSG=$(cat <<'MSGEOF'
-You've been compacted. Please read your snapshot at __SNAPSHOT_PATH__ (use the Read tool).
-MSGEOF
-)
-  COMPACT_MSG="${COMPACT_MSG//__SNAPSHOT_PATH__/$COMPACT_SNAPSHOT}"
+  COMPACT_MSG="You've been compacted. Please read your snapshot at ${COMPACT_SNAPSHOT} (use the Read tool)."
 else
-  COMPACT_MSG=$(cat <<'MSGEOF'
-You've been compacted. No snapshot found — please re-prime normally.
-MSGEOF
-)
+  COMPACT_MSG="You've been compacted. No snapshot found — please re-prime normally."
 fi
 
 if command -v thrum >/dev/null 2>&1; then

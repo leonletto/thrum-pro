@@ -206,13 +206,13 @@ RESTART_PREAMBLE=""
 if grep -q '^# Previous Session Context' <<<"$PRIME_OUTPUT"; then  # here-string: a pipe + grep -q SIGPIPEs printf under pipefail on big output
   append_to RESTART_PREAMBLE '# 🛑 ACTION REQUIRED — you left yourself a Resume Plan'$'\n'
   append_to RESTART_PREAMBLE $'\n'
-  append_to RESTART_PREAMBLE 'Before anything else, go to the **`# Previous Session Context`** section below, read its **`## Resume Plan`** (or its final next-actions section) in full, and execute the numbered steps in order. If the briefing was truncated or persisted to a file, first read the whole file with your file-reading tool, every page in order, do not jump to the Resume Plan, and name one fact from it before acting.'
+  append_to RESTART_PREAMBLE 'Before anything else, if the briefing was truncated or persisted to a file, FIRST read the whole file from its first page through EOF in bounded sequential 200-line chunks (for example, `sed -n '\''1,200p'\'' "$FILE"`, then `sed -n '\''201,400p'\'' "$FILE"`, continuing without gaps), and name one fact from the middle. Only AFTER that full read, locate the **`## Resume Plan`** (or final next-actions section) in **`# Previous Session Context`**, read it in full, and execute its numbered steps in order.'
   if [ "$LIGHT_MODE" -eq 1 ]; then
-    append_to RESTART_PREAMBLE " In light mode your snapshot is also at \`${SNAPSHOT_SHOWN:-.thrum/restart/${AGENT_ID}.md}\` (archived under \`.thrum/agents/${AGENT_ID}/sessions/\` once a prime has run); Read it first if the section is truncated or missing."
+    append_to RESTART_PREAMBLE " In light mode your snapshot is also at \`${SNAPSHOT_SHOWN:-.thrum/restart/${AGENT_ID}.md}\` (archived under \`.thrum/agents/${AGENT_ID}/sessions/\` once a prime has run); if the section is truncated or missing, finish reading the whole snapshot in sequential pages through EOF before locating the Resume Plan."
   fi
   append_to RESTART_PREAMBLE $'\n'
   append_to RESTART_PREAMBLE $'\n'
-  append_to RESTART_PREAMBLE '> ⚠️ **If this briefing was persisted to a file instead of delivered inline, read it with your file-reading tool (paging with offset/limit) — NOT with `sed`, `grep`, `head`, `tail`, or `cat` via a shell command.**'$'\n'
+  append_to RESTART_PREAMBLE '> ⚠️ **If this briefing was persisted to a file instead of delivered inline, read it with bounded sequential shell pages such as `sed -n '\''1,200p'\'' "$FILE"`, then `sed -n '\''201,400p'\'' "$FILE"`, continuing page by page through EOF.**'$'\n'
   append_to RESTART_PREAMBLE $'\n---\n\n'
 fi
 

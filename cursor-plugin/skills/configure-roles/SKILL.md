@@ -113,7 +113,6 @@ which is single-variant):
 | tester       | Writes and runs tests, verifies acceptance criteria  |
 | deployer     | Handles builds, releases, deployment operations      |
 | documenter   | Creates and maintains documentation                  |
-| monitor      | Watches system health, reports anomalies             |
 | orchestrator | Drives plan execution across agents (single-variant) |
 
 ### 4b: Autonomy Level Per Role

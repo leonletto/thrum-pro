@@ -243,7 +243,7 @@ if command -v jq >/dev/null 2>&1; then
         thrum whoami --field tmux_session 2>/dev/null || true)
     fi
     if [ -n "$TMUX_SESSION" ]; then
-      bash "${SCRIPT_DIR}/stop-nudge-pane.sh" "$AGENT_ID" "$MSG_COUNT" "$PROJECT_DIR"
+      bash "${SCRIPT_DIR}/stop-nudge-pane.sh" "$AGENT_ID" "$MSG_COUNT" "$PROJECT_DIR" "$TMUX_SESSION"
       write_idle
       exit 0
     fi

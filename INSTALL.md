@@ -257,12 +257,12 @@ Then add it to your project's `opencode.json` (or global
 Updating an existing install:
 
 OpenCode caches an npm plugin the first time it fetches it and does not fetch
-it again, so re-running `opencode plugin opencode-thrum-pro` leaves an existing
-install on its old version. To move to the newest release, remove the cached
-copy and start OpenCode; it fetches the current release on the next start:
+it again, so re-running `opencode plugin opencode-thrum-pro` without `-f`
+leaves an existing install on its old version. To move to the newest release,
+force a reinstall (do not delete the cache directory by hand):
 
 ```bash
-rm -r ~/.cache/opencode/packages/opencode-thrum-pro@latest
+opencode plugin opencode-thrum-pro --global -f
 ```
 
 This has to be repeated for each new release, and it covers the global and

@@ -259,7 +259,15 @@ Updating an existing install:
 OpenCode caches an npm plugin under a directory named after the plugin spec and
 reuses it without checking the version, so re-running `opencode plugin
 opencode-thrum-pro` (even with `-f`) leaves an existing install on its old
-version. To move to the newest release, remove that cached copy and reinstall:
+version. To move to the newest release, run the refresh script from the root
+of your clone of this repository. It removes only that cached copy, reinstalls,
+and fails unless the cached version matches the newest published version:
+
+```bash
+bash opencode-plugin/scripts/opencode-plugin-refresh.sh
+```
+
+Without a clone, do the same by hand:
 
 ```bash
 rm -r "${XDG_CACHE_HOME:-$HOME/.cache}/opencode/packages/opencode-thrum-pro@latest" && opencode plugin opencode-thrum-pro --global -f

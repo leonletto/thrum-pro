@@ -1,17 +1,95 @@
 #!/bin/bash
 # Stop hook: check for unread thrum messages before allowing the agent to stop.
-# If unread messages exist, block the stop and direct the agent to check inbox.
-# If no unread messages, exit 0 to let the agent stop normally.
+# ONE source for every runtime (claude-plugin/scripts is authoritative; the
+# codex and cursor copies are generated from it). Only what a runtime's hook
+# contract requires differs, and it is selected by STOP_RUNTIME below:
+#   claude: project dir from CLAUDE_PROJECT_DIR; block = Stop feedback JSON on
+#           stdout (Claude Code >= 2.1.163) else stderr + exit 2
+#   codex:  project dir from the hook input's "cwd" (walked up to .thrum);
+#           block = {"decision":"block","reason":...} on stdout, exit 0
+#   cursor: project dir from CURSOR_PROJECT_DIR; block = stderr + exit 2
+# A tmux-managed agent is never blocked on unread mail: one nudge is queued to
+# its own pane (stop-nudge-pane.sh) and the stop proceeds.
 #
-# Dependencies: jq 1.6+ (for now/fromdate), thrum CLI
-# This is an instant check (no blocking wait) — runs in <1s per turn.
+# Dependencies: jq 1.6+, thrum CLI. Instant check, no blocking wait.
 
 # Start the runtime's 15-second Stop budget before input or preflight.
 SECONDS=0
 
-# Read hook input JSON — we need stop_hook_active to prevent infinite loops
+# Generated copies rewrite the default on this line; THRUM_STOP_RUNTIME
+# overrides it (tests).
+STOP_RUNTIME="${THRUM_STOP_RUNTIME:-cursor}"
+
+# Read hook input JSON; stop_hook_active prevents infinite loops.
 INPUT=$(cat)
-PROJECT_DIR="${CURSOR_PROJECT_DIR:-${CLAUDE_PROJECT_DIR:-.}}"
+
+thrum_project_root() {
+  local d
+  d=$(cd -- "$1" 2>/dev/null && pwd -P) || { printf '%s' "$1"; return 0; }
+  while [ "$d" != "/" ]; do
+    if [ -d "$d/.thrum" ]; then printf '%s' "$d"; return 0; fi
+    d=$(dirname "$d")
+  done
+  if [ -d "/.thrum" ]; then printf '%s' "/"; return 0; fi
+  printf '%s' "$1"
+}
+
+case "$STOP_RUNTIME" in
+  codex)
+    # Codex always supplies cwd on stdin; without jq it cannot be read.
+    if ! command -v jq >/dev/null 2>&1; then
+      echo "thrum stop-check-messages.sh: jq is required to check unread messages but was not found on PATH; unread-message check NOT active. Install jq (apt install jq / brew install jq)." >&2
+      exit 0
+    fi
+    PROJECT_DIR=$(echo "$INPUT" | jq -r '.cwd // "."')
+    PROJECT_DIR=$(thrum_project_root "$PROJECT_DIR")
+    ;;
+  cursor) PROJECT_DIR="${CURSOR_PROJECT_DIR:-${CLAUDE_PROJECT_DIR:-.}}" ;;
+  *) PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}" ;;
+esac
+
+# Claude Code 2.1.163+ displays Stop-hook additionalContext as feedback and
+# continues the turn. Older or unrecognized versions need the legacy exit-2
+# behavior so the message is not silently dropped.
+claude_supports_stop_feedback() {
+  local version major minor patch
+  command -v claude >/dev/null 2>&1 || return 1
+  version=$(claude --version 2>/dev/null) || return 1
+  [[ "$version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)([[:space:]]|$) ]] || return 1
+  major=$((10#${BASH_REMATCH[1]}))
+  minor=$((10#${BASH_REMATCH[2]}))
+  patch=$((10#${BASH_REMATCH[3]}))
+  (( major > 2 || (major == 2 && minor > 1) || (major == 2 && minor == 1 && patch >= 163) ))
+}
+
+stop_with_feedback() {
+  local message="$1" payload
+  if claude_supports_stop_feedback && command -v jq >/dev/null 2>&1; then
+    if payload=$(jq -cn --arg text "$message" '{hookSpecificOutput:{hookEventName:"Stop",additionalContext:$text}}' 2>/dev/null); then
+      printf '%s\n' "$payload"
+      exit 0
+    fi
+  fi
+  printf '%s\n' "$message" >&2
+  exit 2
+}
+# Block the stop with MESSAGE in this runtime's contract.
+emit_block() {
+  local message="$1" payload
+  case "$STOP_RUNTIME" in
+    codex)
+      payload=$(jq -cn --arg reason "$message" '{decision:"block",reason:$reason}')
+      printf '%s\n' "$payload"
+      exit 0
+      ;;
+    cursor)
+      printf '%s\n' "$message" >&2
+      exit 2
+      ;;
+    *) stop_with_feedback "$message" ;;
+  esac
+}
+
 # BEGIN resolve-thrum-dir
 # Same rule as internal/paths.ResolveThrumDir (the CLI's resolver), so this hook
 # reads the same config.json and listener PID as the CLI. A worktree holds
@@ -130,7 +208,7 @@ if [ -z "$AGENT_ID" ]; then
   # Without jq there is no safe way to parse a resolved identity or unread
   # count. Keep Stop permissive, but do not write an unknown agent's status.
   command -v jq >/dev/null 2>&1 || exit 0
-  PREFLIGHT_OUTPUT=$(mktemp "${TMPDIR:-/tmp}/cursor-stop.XXXXXX") || exit 0
+  PREFLIGHT_OUTPUT=$(mktemp "${TMPDIR:-/tmp}/thrum-stop.XXXXXX") || exit 0
   trap 'rm -f "$PREFLIGHT_OUTPUT"' EXIT
   bounded_preflight "$PROJECT_DIR" "$PREFLIGHT_OUTPUT" thrum whoami --json || exit 0
   AGENT_ID=$(jq -r '.agent_id // empty' "$PREFLIGHT_OUTPUT" 2>/dev/null) || exit 0
@@ -144,7 +222,7 @@ fi
 # Phase 2: Check unread messages scoped to this agent
 if command -v jq >/dev/null 2>&1; then
   if [ -z "${PREFLIGHT_OUTPUT:-}" ]; then
-    PREFLIGHT_OUTPUT=$(mktemp "${TMPDIR:-/tmp}/cursor-stop.XXXXXX") || { write_idle; exit 0; }
+    PREFLIGHT_OUTPUT=$(mktemp "${TMPDIR:-/tmp}/thrum-stop.XXXXXX") || { write_idle; exit 0; }
     trap 'rm -f "$PREFLIGHT_OUTPUT"' EXIT
   fi
   if ! THRUM_AGENT_ID="$AGENT_ID" bounded_preflight "$PROJECT_DIR" "$PREFLIGHT_OUTPUT" thrum inbox --unread --json; then
@@ -156,8 +234,20 @@ if command -v jq >/dev/null 2>&1; then
   MSG_COUNT=$(jq -r '.unread // 0' "$PREFLIGHT_OUTPUT" 2>/dev/null) || { write_idle; exit 0; }
   case "$MSG_COUNT" in ''|*[!0-9]*) write_idle; exit 0 ;; esac
   if [ "$MSG_COUNT" -gt 0 ]; then
-    echo "ACTION REQUIRED: You have $MSG_COUNT unread message(s). Run \`thrum inbox --unread\` now to read and respond to them. Then mark them read: \`thrum message read <id> [<id>...]\` for the ids shown, or \`thrum message read --all\` (dry run) followed by \`thrum message read --all --force\` to clear everything — so this hook doesn't fire again on old messages." >&2
-    exit 2
+    # A tmux-managed agent is never blocked from stopping: queue one nudge to
+    # its own pane (the daemon waits for idle) and let the stop proceed.
+    if [ "$IDENTITY_FROM_WHOAMI" = 1 ]; then
+      TMUX_SESSION="$IDENTITY_TMUX_SESSION"
+    else
+      TMUX_SESSION=$(cd "$PROJECT_DIR" && THRUM_AGENT_ID="$AGENT_ID" \
+        thrum whoami --field tmux_session 2>/dev/null || true)
+    fi
+    if [ -n "$TMUX_SESSION" ]; then
+      bash "${SCRIPT_DIR}/stop-nudge-pane.sh" "$AGENT_ID" "$MSG_COUNT" "$PROJECT_DIR"
+      write_idle
+      exit 0
+    fi
+    emit_block "ACTION REQUIRED: You have $MSG_COUNT unread message(s). Run \`thrum inbox --unread\` now to read and respond to them. Then mark them read: \`thrum message read <id> [<id>...]\` for the ids shown, or \`thrum message read --all\` (dry run) followed by \`thrum message read --all --force\` to clear everything — so this hook doesn't fire again on old messages."
   fi
 fi
 
@@ -169,7 +259,7 @@ if [ "$IDENTITY_FROM_WHOAMI" = 1 ]; then
   TMUX_SESSION="$IDENTITY_TMUX_SESSION"
 else
   if [ -z "${PREFLIGHT_OUTPUT:-}" ]; then
-    PREFLIGHT_OUTPUT=$(mktemp "${TMPDIR:-/tmp}/cursor-stop.XXXXXX") || { write_idle; exit 0; }
+    PREFLIGHT_OUTPUT=$(mktemp "${TMPDIR:-/tmp}/thrum-stop.XXXXXX") || { write_idle; exit 0; }
     trap 'rm -f "$PREFLIGHT_OUTPUT"' EXIT
   fi
   if ! THRUM_AGENT_ID="$AGENT_ID" bounded_preflight "$PROJECT_DIR" "$PREFLIGHT_OUTPUT" thrum whoami --field tmux_session; then
@@ -195,8 +285,7 @@ PID_VAR="$(resolve_thrum_dir "${THRUM_HOME:-$PROJECT_DIR}")/var"
 PID_FILE="$PID_VAR/${AGENT_ID}-listener.pid"
 
 if [ ! -f "$PID_FILE" ]; then
-  echo "Your background message listener is not running. Start it now." >&2
-  exit 2
+  emit_block "Your background message listener is not running. Start it now."
 fi
 
 # PID file exists but cannot be parsed without jq: allow Stop and clear status.
@@ -206,14 +295,12 @@ if ! command -v jq >/dev/null 2>&1; then
 fi
 LISTENER_PID=$(jq -r '.pid // empty' "$PID_FILE" 2>/dev/null || true)
 if [ -z "$LISTENER_PID" ]; then
-  echo "Your background message listener is not running (invalid PID file). Start it now." >&2
-  exit 2
+  emit_block "Your background message listener is not running (invalid PID file). Start it now."
 fi
 
 if ! kill -0 "$LISTENER_PID" 2>/dev/null; then
-  echo "Your background message listener has stopped (stale PID file). Restart it." >&2
   rm -f "$PID_FILE"
-  exit 2
+  emit_block "Your background message listener has stopped (stale PID file). Restart it."
 fi
 
 # All stop gates passed: clear only a still-working status within the remaining

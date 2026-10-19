@@ -469,7 +469,8 @@ Owner ruling, verbatim: "default ON as soon as it lands, no side-by-side; safety
 
 Run the per-merge test lanes through the repository's test-impact-selection plan wrapper (the gate role's documented
 command, taking `--base`, `--head` and `--lane`), not the bare full-lane runner. It runs the plan, prints the `TIS_PLAN` line, and passes `--producer-rc` to the runner. Quote the `TIS_PLAN` line in the
-verdict. FULL (`decision=FULL RUN`) is the normal fallback: a plan error or any fail-closed reason runs the whole lane. For a per-landing gate, a FULL RUN fallback means the full NON-race lane, never race-all.
+verdict. FULL (`decision=FULL RUN`) is the normal fallback: a plan error or any fail-closed reason runs the whole lane.
+For a per-landing gate, a FULL RUN fallback means the full NON-race lane, never race-all.
 
 ## Lens 11 — Census classification coverage (mandatory test, not a pattern check)
 

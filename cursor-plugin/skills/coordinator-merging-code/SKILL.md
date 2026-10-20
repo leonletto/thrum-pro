@@ -92,6 +92,22 @@ The batch race:
 A non-race run may take a pool slot above the cap (lower load); a race run
 uses a normal slot.
 
+### Changes with no production code — no gate, no load test
+
+A gate or load test re-runs code the change did not touch, so it cannot find
+anything in these diffs:
+
+- **Comment-only or docs-only:** merge directly.
+- **Test-only** (test files and test fixtures): the author reports that the
+  changed tests ran and passed, with the runner's return code and the executed
+  count. The coordinator confirms the diff touches no production file, then
+  merges.
+- **Any production line in the diff:** the normal per-landing gate, with the
+  load test in parallel.
+
+A comment that carries meaning to the compiler (`//go:embed`, `//go:build`,
+`//nolint`) and any file embedded into the binary count as production. See §5.
+
 The only things that stop a landing: a failing test that the change itself
 causes, named; a blocking review finding, with file and line; a hand-written
 merge conflict (the implementer resolves that one conflict, and only the
@@ -220,7 +236,8 @@ at the tree under gate — never from prose, including this file.**
 proven otherwise.** A typo'd `jq` path and a clean skip are byte-identical in the
 output.
 
-**Skip BOTH only for a one-line config change, a typo, or a test-only diff.**
+**Skip BOTH only for a one-line config change, a typo, or a diff with no
+production code** (see "Changes with no production code" above).
 
 **Dispatch is the default at every diff size.** Diff size changes what you ask
 for; it never changes who runs it. Only run a gate yourself when **no** gate-role

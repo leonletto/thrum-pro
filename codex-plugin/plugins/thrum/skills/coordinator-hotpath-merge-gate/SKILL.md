@@ -128,8 +128,13 @@ on it rediscovering these the hard way:
    fast-forward check) — git silently deduplicates content-identical commits on
    both sides of a rebase, so a tree that "builds clean" can still be carrying
    dupes instead of the real content.
-6. Run full-package `-race`, not targeted `-run` — a targeted race run misses
-   cross-test races.
+6. A PER-LANDING gate is non-race (build, vet, norace on touched packages,
+   structural checks) plus the change's OWN focused race selectors (the
+   project's race runner on that package with a `--run` selector), only for a
+   concurrency change. Never run a full-package race per landing: the full race
+   runs on trunk in batches before any deploy, which is what catches cross-test
+   races. A focused `--run` race on `./internal/daemon/rpc` is not a monolithic
+   run (item 7 is about the unfiltered package).
 7. **`internal/daemon/rpc` must NEVER be run monolithically at gate time, in
    either lane** — a bare package-level `go test [-race] ./internal/daemon/rpc`
    starves and hits the configured `-timeout` wall in both the race and non-race

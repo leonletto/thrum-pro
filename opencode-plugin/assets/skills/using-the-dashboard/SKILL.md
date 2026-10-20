@@ -55,8 +55,14 @@ Semantics that matter to you as an author:
 - **Answer path:** when the user answers an action-pick, you get a **nudge**
   and the answer lands as a thrum MESSAGE (payload type `dashboard.answer`,
   carrying `question_id`, the option `pick`, optional `text`). You read
-  answers with `thrum dashboard results`, then flip the widget's status via
-  `thrum dashboard update` so the board shows it resolved.
+  answers with `thrum dashboard results`.
+- **Action-pick `status`** is `open` or `resolved`, set with `thrum dashboard
+  update`, which takes the whole widget. `dashboard show` prints a pick as
+  `RESOLVED` when its status is `resolved` and it has no answer, and as
+  `ANSWERED (<pick>)` whenever an answer exists, whatever the status. `status`
+  also drives `dashboard results --unanswered`, which leaves out answers whose
+  pick is `resolved`. A card's `status` shows after its title, for example
+  `(resolved)`.
 - **User deletes are SILENT.** If a widget you posted disappears, the user
   dismissed it — you are NOT nudged. Notice it on your next `show`; do not
   repost it reflexively (the user saw it and removed it on purpose).
@@ -123,12 +129,17 @@ resubmit — do not recompute the whole board inside one invocation.
   {"id": "hdr",  "type": "stat-row", "stats": [{"label": "<label>", "value": "<value>"}]},
   {"id": "rows", "type": "list",     "title": "<list title>", "rows": [{"id": "r0", "text": "<one-line markdown>"}]},
   {"id": "note", "type": "card",     "title": "<card title>", "body": "<markdown>"},
-  {"id": "grp",  "type": "section",  "label": "<section label>"}
+  {"id": "grp",  "type": "section",  "label": "<section label>"},
+  {"id": "ask",  "type": "action-pick", "question_id": "<stable question id>", "prompt": "<markdown question>",
+   "options": [{"id": "a", "label": "<option A and its consequence>"}, {"id": "b", "label": "<option B>"}],
+   "allow_text": true, "status": "open"}
 ]}
 ```
 
 - `stat-row` takes `stats`, `list` takes `rows` (each row has its own `id`), `card` takes
   `title` + `body`, `section` takes `label`. Widget `id`s are the upsert key — keep them stable.
+- `action-pick` requires `question_id`, `prompt`, a non-empty `options` list (each with `id` and
+  `label`) and `allow_text`; `submit_label` is optional. `status` is optional: `open` or `resolved`.
 - Write the document to a file; `thrum dashboard set --doc-file <f>`. Pass `--replace` when one
   generator owns the whole board.
 - Regenerate the board from a script that prints one summary line, run from the agent's own

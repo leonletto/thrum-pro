@@ -32,12 +32,14 @@ a PROMISE with four parts:
 3. **Tracked** — check `thrum dashboard results` after every relevant nudge; an
    answer arrives as a message carrying `question_id` + pick + optional text.
    Unread answers + a PENDING widget = you broke the loop.
-4. **Closed** — on consuming an answer, `thrum dashboard update <widget-id>` to
-   flip that pick's `status` to `resolved` (and log the resolution in your
-   decisions list). An answered question that still shows PENDING is the
-   coordinator-loop failure mode. If something else wrote the board first, your
-   `update` can be rejected as an `expected_rev` mismatch — re-read with
-   `dashboard show` and resubmit against the fresh `rev` (see
+4. **Closed** — on consuming an answer, log the resolution in your decisions
+   list and mark the pick done with `thrum dashboard update <widget-id>`,
+   resubmitting the whole widget with `"status": "resolved"`. `dashboard show`
+   prints an answered pick as `ANSWERED (<pick>)` whatever its status, and a
+   resolved pick with no answer as `RESOLVED`; `dashboard results --unanswered`
+   leaves out answers whose pick is `resolved`. If something else wrote the
+   board first, your `update` can be rejected as an `expected_rev` mismatch —
+   re-read with `dashboard show` and resubmit against the fresh `rev` (see
    `using-the-dashboard`).
 
 ### Authoring discipline

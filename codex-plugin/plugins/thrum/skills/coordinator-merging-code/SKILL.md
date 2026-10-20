@@ -132,6 +132,15 @@ the branch tip and the owner's report.
   files-and-lines plan first. Do not dispatch a gate.
 - **UNCLEAR:** read the findings against source and decide.
 
+Run it on EVERY tip before you dispatch it, including a re-gate after review
+rounds, and also when an owner reports scope or progress mid-build. A landing
+recipe in your own notes or snapshot does not replace this step.
+
+Tripwire, checked by eye before anything else: if the ask fits in one sentence
+and the production diff is over 100 lines, or it adds any condition the ask did
+not name, treat it as OVERBUILT until the check says otherwise. Each review
+round that adds code is a reason to rerun the check, never a reason to skip it.
+
 Test-only, docs and tooling branches skip this step.
 
 ### 1. PRECONDITION — dual review, and it is NOT the gate

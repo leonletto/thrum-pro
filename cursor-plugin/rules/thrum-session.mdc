@@ -5,3 +5,8 @@ alwaysApply: true
 At session start, run `thrum prime` to load identity and context.
 Before compaction or session handoff, run the update-project workflow.
 Check `thrum inbox --unread` for pending messages from other agents.
+- Send: `thrum send --to @agent --stdin <<'EOF'`
+- Reply: `thrum reply <msg-id> --stdin <<'EOF'`
+Run each send and reply above as ONE standalone command, with the heredoc as its only redirection.
+Write any `--body-file` contents in a separate tool call.
+Never chain with `&&`, `;` or `||`, or prefix `VAR=`, in the same command.

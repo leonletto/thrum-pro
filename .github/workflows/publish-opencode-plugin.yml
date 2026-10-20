@@ -4,10 +4,10 @@ on:
   push:
     # Only npm package tags (v0.1.N) publish. Plugin release tags
     # (v0.11.0-dev.1.N) share a commit with the npm tag and would race it
-    # into an E409 while npm propagates the new version.
+    # into an E409 while npm propagates the new version. Binary release
+    # tags (v0.11.0, v0.11.0-rc.N) from goreleaser must not publish either.
     tags:
-      - "v*"
-      - "!v0.11.0-dev.*"
+      - "v0.1.*"
   workflow_dispatch:
 
 permissions:

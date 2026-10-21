@@ -146,9 +146,9 @@ muse plugins inspect thrum --json
 Run the approval command again after every plugin update.
 
 To update the installed plugin, refresh the marketplace, then remove the
-plugin and install it again. On the Muse versions validated so far,
-`muse plugins update thrum` reports success but leaves the installed version
-unchanged:
+plugin and install it again. Do not rely on `muse plugins update thrum`: on
+Muse 1.4.0 to 1.4.6 it reports success but leaves the installed version
+unchanged, and on Muse 1.4.11 it fails with an error:
 
 ```bash
 muse plugins marketplace update leonletto
@@ -159,7 +159,8 @@ muse plugins list
 ```
 
 `muse plugins list` must show the new version. Run the commands while no Muse
-session is in the middle of a turn.
+session is in the middle of a turn, then restart running Muse agents; a running
+agent keeps the plugin version it loaded.
 
 ## Cursor
 

@@ -192,7 +192,7 @@ Muse has its own plugin system and marketplace — it does **not** use the Claud
 marketplace. It installs the same Thrum plugin through Muse-native commands, so there
 is no separate Muse plugin to build.
 
-Prerequisites: the `muse` binary (validated on `1.4.0-R4161.1`, `1.4.2-R4684.1` and `1.4.6-R6000.1`), a
+Prerequisites: the `muse` binary (validated on `1.4.0-R4161.1`, `1.4.2-R4684.1`, `1.4.6-R6000.1` and `1.4.11`), a
 Muse account, and the `thrum` binary on your `PATH`. Run these as the same OS user
 that runs your agents.
 
@@ -219,6 +219,22 @@ that runs your agents.
 3. On first run, Muse asks *"Do you trust the files in this folder?"* — priming is
    blocked until you dismiss it. Muse launches Thrum worktrees with
    `--disable-sandbox --trust-workspace`.
+
+To update, refresh the marketplace, then remove the plugin, install it again and
+re-approve it. Do not rely on `muse plugins update thrum`: depending on the Muse
+version it either fails with an error or reports success without changing the
+installed version.
+
+```bash
+muse plugins marketplace update leonletto
+muse plugins remove thrum
+muse plugins install thrum@leonletto
+muse plugins approve thrum
+muse plugins list
+```
+
+Restart running Muse agents afterwards; a running agent keeps the plugin
+version it loaded.
 
 An MCP config at `.muse/mcp.json` is optional (advanced use); basic operation primes
 through the `SessionStart` hook without it.

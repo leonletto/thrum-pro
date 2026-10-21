@@ -76,6 +76,17 @@ codex plugin add thrum@thrum-marketplace
 Update with `codex plugin marketplace upgrade thrum-marketplace`, then repeat
 the `codex plugin add` command.
 
+If Codex is logged in with a ChatGPT account, Thrum's default Codex model
+(`gpt-6-luna`) is rejected on every turn with HTTP 400 "not supported when
+using Codex with a ChatGPT account" (seen with codex-cli 0.163.0). Pin a model
+the account supports before launching the agent:
+
+```bash
+thrum agent runtime-config set <agent-name> --model gpt-5.6-luna
+```
+
+or pass `--model gpt-5.6-luna` to `thrum tmux create` and `thrum tmux launch`.
+
 ### GitHub Copilot CLI — install from the marketplace
 
 From a shell:
@@ -185,6 +196,10 @@ Then reference it as a local `file:` plugin in your project's `opencode.json`
   "plugin": ["file:///path/to/thrum-pro/opencode-plugin"]
 }
 ```
+
+OpenCode has no launch flag for reasoning effort, so Thrum ignores `--effort`
+for OpenCode agents. Choose the effort inside OpenCode by picking the model
+variant.
 
 ### Muse — install with Muse's native plugin system
 

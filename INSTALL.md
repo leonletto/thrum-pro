@@ -215,6 +215,34 @@ For the local fallback, verify that `.cursor/hooks.json`, `.cursor/mcp.json`,
 `.cursor/skills/`, `.cursor/commands/`, `.cursor/agents/`, and `.cursor/rules/`
 exist in the target project.
 
+## Antigravity
+
+Antigravity (`agy`) installs the Claude Code plugin and converts it. Install it
+from the `claude-plugin` folder of this repository:
+
+```bash
+agy plugin install https://github.com/leonletto/thrum-pro/tree/main/claude-plugin
+agy plugin list
+```
+
+`agy plugin list` must show `thrum` as enabled. From a local clone, use
+`agy plugin install /path/to/thrum-pro/claude-plugin` instead.
+
+To update, run the same install command again, then restart `agy`; it reads
+its settings only at startup.
+
+The conversion keeps the skills, the agent and the commands, but skips hooks
+and MCP, so type `/thrum:prime` after starting an agent. Add the MCP server with
+`agy mcp add` if you want it.
+
+Install from the `claude-plugin` URL above, not from the repository root:
+the root URL (and the `.git#claude-plugin` form) also installs the Copilot
+payload as a second plugin, `thrum-copilot`. If that happened, remove it with
+`agy plugin uninstall thrum-copilot`. `agy` 1.4.2 supports only its official
+marketplace, so `thrum@thrum` and `agy plugin link` fail with
+"unknown marketplace". `agy plugin validate claude-plugin` also fails; that is
+expected, because install converts the plugin.
+
 ## OpenCode
 
 Install the published package and update the current project's configuration:

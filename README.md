@@ -197,7 +197,7 @@ Then reference it as a local `file:` plugin in your project's `opencode.json`
 }
 ```
 
-OpenCode has no launch flag for reasoning effort, so Thrum ignores `--effort`
+OpenCode has no launch flag for reasoning effort, so the current release ignores `--effort`
 for OpenCode agents. Choose the effort inside OpenCode by picking the model
 variant.
 

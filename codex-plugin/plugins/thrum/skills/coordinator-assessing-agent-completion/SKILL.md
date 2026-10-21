@@ -211,7 +211,9 @@ salvage BEFORE you remove, then remove PLAIN (no `--force`), then
    copy is byte-identical to its source:
    - `?? .thrum/agents/<agent>/sessions/*-restart.md` — the restart snapshot.
    - `!! .thrum/context/<agent>.md` — gitignored, NOT daemon-held, the **only
-     copy**; losing it is permanent. (`_preamble.md` is regenerable — skip it.)
+     copy**; losing it is permanent. The file is no longer loaded at startup,
+     but its existing contents still need salvaging. (`_preamble.md` is
+     regenerable — skip it.)
 3. THEN `git worktree remove <path>` — **plain, no `--force`.** ⚠️ This refusal
    is a REAL backstop only for untracked/modified content (git's own rc=128
    refusal) — it is NOT a backstop for the gitignored

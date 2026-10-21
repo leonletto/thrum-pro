@@ -1,4 +1,4 @@
 interface:
   display_name: "Thrum Load Context"
-  short_description: "Restore saved agent work context after compaction or session restart"
+  short_description: "Restore your session after compaction or session restart by running thrum prime"
   default_prompt: "Run the thrum load-context workflow and summarize the result."

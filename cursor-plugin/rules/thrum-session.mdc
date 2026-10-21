@@ -3,7 +3,8 @@ description: Thrum session lifecycle protocol
 alwaysApply: true
 ---
 At session start, run `thrum prime` to load identity and context.
-Before compaction or session handoff, run the update-project workflow.
+Before compaction, the coordinator runs the update-project workflow when it owns project state.
+Other agents save a restart snapshot before any restart, and keep state and queue current.
 Check `thrum inbox --unread` for pending messages from other agents.
 - Send: `thrum send --to @agent --stdin <<'EOF'`
 - Reply: `thrum reply <msg-id> --stdin <<'EOF'`

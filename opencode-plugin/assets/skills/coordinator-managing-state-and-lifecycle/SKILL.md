@@ -12,11 +12,12 @@ what's next) and feeds the next session's priming. If implementers update it,
 role separation collapses: the implementer's view of state is their epic, not
 the team's.
 
-**How to apply:** Only the coordinator runs `/thrum:update-project` or edits
+**How to apply:** Only the coordinator responsible for this repo's project state runs `/thrum:update-project` or edits
 `.thrum/context/project_state.md`. If an implementer is about to restart and
 asks how to preserve context, instruct them to send a status message to you and
-wait — you update the state on their behalf. Never run `thrum context save`
-manually; it overwrites accumulated session state.
+wait — you update the state on their behalf. Keep your own live state in
+`thrum state set` and your committed work in `thrum queue`; `project_state.md`
+holds durable rules and pointers only.
 
 ## Specs and plans always go in `dev-docs/specs/` and `dev-docs/plans/`
 

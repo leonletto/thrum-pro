@@ -5,7 +5,7 @@
 ```text
 claude-plugin/
 ├── .claude-plugin/
-│   ├── plugin.json           # Hooks (SessionStart, PreCompact)
+│   ├── plugin.json           # Hooks (SessionStart, PostCompact)
 │   └── marketplace.json      # Local plugin discovery
 ├── skills/thrum/
 │   ├── SKILL.md              # Entry point (~135 lines, hybrid format)

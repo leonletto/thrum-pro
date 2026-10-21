@@ -90,8 +90,9 @@ Until then, write all coordinator memory entries as
 When closing a coordination session with substantial state to preserve (e.g.,
 epic progress, agent assignments, open decisions), use the existing skills:
 
-- `thrum:update-project` — updates durable project state file (NOT a
-  thrum-memory write)
+- `thrum:update-project` — updates durable project state file, for the
+  coordinator responsible for this repo's project state (NOT a thrum-memory
+  write)
 - `thrum:restart` — saves conversation snapshot before restart (NOT a
   thrum-memory write)
 

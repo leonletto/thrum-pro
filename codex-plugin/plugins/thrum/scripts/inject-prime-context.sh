@@ -178,6 +178,50 @@ if [ "$PRIME_DONE" -ne 1 ]; then
   fi
 fi
 
+# Briefing split. `thrum prime` emits an exact marker line between the inline
+# part and the reference part. The line right after it carries the absolute
+# paths of the role preamble and Project State that the agent reads from disk:
+#   <!-- thrum:briefing-paths preamble="<abs>" project_state="<abs or empty>" -->
+# An empty project_state means there is no Project State file to name. Split
+# only when the output is over BRIEFING_INLINE_MAX bytes AND the marker line AND
+# a well-formed paths line (absolute preamble; project_state empty or absolute)
+# are all present. Otherwise the output is used unchanged. The hook never builds
+# these paths itself.
+BRIEFING_SPLIT_MARKER='<!-- thrum:briefing-split -->'
+BRIEFING_INLINE_MAX=9000
+SPLIT_FIRST_LINE=""
+if [ "$(printf '%s' "$PRIME_OUTPUT" | LC_ALL=C wc -c | tr -d ' ')" -gt "$BRIEFING_INLINE_MAX" ]; then
+  _split_wrapped=$'\n'"$PRIME_OUTPUT"$'\n'
+  _split_marker_line=$'\n'"$BRIEFING_SPLIT_MARKER"$'\n'
+  case "$_split_wrapped" in
+    *"$_split_marker_line"*)
+      _split_after=${_split_wrapped#*"$_split_marker_line"}
+      _split_paths_line=${_split_after%%$'\n'*}
+      _split_ok=0
+      case "$_split_paths_line" in
+        '<!-- thrum:briefing-paths preamble="/'*'" project_state="'*'" -->')
+          _split_pair=${_split_paths_line#'<!-- thrum:briefing-paths preamble="'}
+          _split_preamble=${_split_pair%%'" project_state="'*}
+          _split_project=${_split_pair#*'" project_state="'}
+          _split_project=${_split_project%'" -->'}
+          case "$_split_project" in
+            ''|/*) _split_ok=1 ;;
+          esac
+          ;;
+      esac
+      if [ "$_split_ok" -eq 1 ]; then
+        _split_inline=${_split_wrapped%%"$_split_marker_line"*}
+        PRIME_OUTPUT=${_split_inline#$'\n'}
+        if [ -n "$_split_project" ]; then
+          SPLIT_FIRST_LINE="The briefing was SPLIT: only its inline part is below. Your first action is to read your role preamble ${_split_preamble} and the Project State file ${_split_project}. Other reference sections (State.md, knowledge-tree domains, Past Sessions, messaging protocol) are omitted from this output."
+        else
+          SPLIT_FIRST_LINE="The briefing was SPLIT: only its inline part is below. Your first action is to read your role preamble ${_split_preamble}. Other reference sections (State.md, knowledge-tree domains, Past Sessions, messaging protocol) are omitted from this output."
+        fi
+      fi
+      ;;
+  esac
+fi
+
 # Two-phase build: assemble BANNER, RESTART_PREAMBLE, and BRIEFING into
 # separate variables, total their byte count, then choose the
 # size-appropriate directive and emit in the canonical order.
@@ -203,7 +247,7 @@ append_to BANNER $'\n---\n\n'
 # "# Previous Session Context" section emitted by `thrum prime` — keeping
 # the full prose in both places duplicates lines into every restart briefing.
 RESTART_PREAMBLE=""
-if grep -q '^# Previous Session Context' <<<"$PRIME_OUTPUT"; then  # here-string: a pipe + grep -q SIGPIPEs printf under pipefail on big output
+if [ -z "$SPLIT_FIRST_LINE" ] && grep -q '^# Previous Session Context' <<<"$PRIME_OUTPUT"; then  # here-string: a pipe + grep -q SIGPIPEs printf under pipefail on big output
   append_to RESTART_PREAMBLE '# 🛑 ACTION REQUIRED — you left yourself a Resume Plan'$'\n'
   append_to RESTART_PREAMBLE $'\n'
   append_to RESTART_PREAMBLE 'Before anything else, if the briefing was truncated or persisted to a file, FIRST read the whole file from its first page through EOF in bounded sequential 200-line chunks (for example, `sed -n '\''1,200p'\'' "$FILE"`, then `sed -n '\''201,400p'\'' "$FILE"`, continuing without gaps), and name one fact from the middle. Only AFTER that full read, locate the **`## Resume Plan`** (or final next-actions section) in **`# Previous Session Context`**, read it in full, and execute its numbered steps in order.'
@@ -232,7 +276,11 @@ build_directive() {
   else
     append_to DIRECTIVE '> ✅ **Context auto-loaded by SessionStart hook.**'$'\n'
     append_to DIRECTIVE '>'$'\n'
-    append_to DIRECTIVE '> **Do NOT run `$thrum:thrum-prime` or `thrum prime` — the full briefing is already in your context below.**'$'\n'
+    if [ -n "$SPLIT_FIRST_LINE" ]; then
+      append_to DIRECTIVE '> **The briefing was SPLIT — only its inline part is below.** Do not treat it as the full briefing; your first action is the SPLIT line at the top of this output.'$'\n'
+    else
+      append_to DIRECTIVE '> **Do NOT run `$thrum:thrum-prime` or `thrum prime` — the full briefing is already in your context below.**'$'\n'
+    fi
     append_to DIRECTIVE '> Only invoke them manually if this hook fell through to a degraded "auto-injection failed" notice.'$'\n'
     if [ "$LIGHT_MODE" -eq 1 ]; then
       append_to DIRECTIVE "> In light mode, read your snapshot at \`${SNAPSHOT_SHOWN:-.thrum/restart/${AGENT_ID}.md}\` for the Resume Plan if the section below is truncated or missing."$'\n'
@@ -252,6 +300,8 @@ build_briefing_head() {
     fi
   elif [ "$TRUNCATED" -eq 1 ]; then
     append_to BRIEFING 'A **truncated** `thrum prime` output is included below — this runtime caps SessionStart hook output, so the tail was cut. Run `thrum prime` yourself for the full briefing (it is NOT already in your context in full).'$'\n'
+  elif [ -n "$SPLIT_FIRST_LINE" ]; then
+    append_to BRIEFING 'The inline part of the `thrum prime` output is included below. Read it in full.'$'\n'
   else
     append_to BRIEFING 'The complete `thrum prime` output is included below. Read it in full.'$'\n'
   fi
@@ -295,7 +345,7 @@ byte_len() { printf '%s' "$1" | wc -c | tr -d '[:space:]'; }
 TRUNCATED=0
 build_directive
 build_briefing_head
-FULL_LEN=$(( $(byte_len "$BANNER") + $(byte_len "$DIRECTIVE") + $(byte_len "$ACK_INSTRUCTION") + $(byte_len "$RESTART_PREAMBLE") + $(byte_len "$BRIEFING") + $(byte_len "$PRIME_OUTPUT") + 1 ))
+FULL_LEN=$(( $(byte_len "$BANNER") + $(byte_len "$DIRECTIVE") + $(byte_len "$ACK_INSTRUCTION") + $(byte_len "$RESTART_PREAMBLE") + $(byte_len "$BRIEFING") + $(byte_len "$PRIME_OUTPUT") + $(byte_len "$SPLIT_FIRST_LINE") + 1 ))
 if [ "$HOOK_CAP" -gt 0 ] && [ "$FULL_LEN" -gt "$HOOK_CAP" ]; then
   TRUNCATED=1
   build_directive
@@ -305,7 +355,7 @@ if [ "$HOOK_CAP" -gt 0 ] && [ "$FULL_LEN" -gt "$HOOK_CAP" ]; then
   else
     TRUNC_NOTICE=$'\n\n[thrum: hook output truncated to fit this runtime'"'"'s '"${HOOK_CAP}"'-byte cap. Run `thrum prime` for the full briefing.]\n'
   fi
-  FIXED_LEN=$(( $(byte_len "$BANNER") + $(byte_len "$DIRECTIVE") + $(byte_len "$ACK_INSTRUCTION") + $(byte_len "$RESTART_PREAMBLE") + $(byte_len "$BRIEFING") + $(byte_len "$TRUNC_NOTICE") ))
+  FIXED_LEN=$(( $(byte_len "$BANNER") + $(byte_len "$DIRECTIVE") + $(byte_len "$ACK_INSTRUCTION") + $(byte_len "$RESTART_PREAMBLE") + $(byte_len "$BRIEFING") + $(byte_len "$TRUNC_NOTICE") + $(byte_len "$SPLIT_FIRST_LINE") ))
   BUDGET=$(( HOOK_CAP - FIXED_LEN - 16 ))
   if [ "$BUDGET" -gt 0 ]; then
     # Cut on a line boundary so a multi-byte character is never split: take
@@ -339,6 +389,9 @@ fi
 
 # Emit in canonical order: banner → directive → ack → restart preamble →
 # briefing. Banner + directive + ack always land inside the preview.
+if [ -n "$SPLIT_FIRST_LINE" ]; then
+  printf '%s\n\n' "$SPLIT_FIRST_LINE"
+fi
 printf '%s' "$BANNER"
 printf '%s' "$DIRECTIVE"
 printf '%s' "$ACK_INSTRUCTION"

@@ -63,11 +63,12 @@ thrum roles deploy --dry-run             Preview without writing
 thrum session start                      Start session
 thrum session end                        End session
 thrum session set-intent "..."           Update work description
-thrum context show                       Show saved work context
-thrum context save --file <path>         Save context from file
+thrum state set --kind <k> --scope <s> --value '<json>'   Upsert your personal state
+thrum state list                         List your state entries
+thrum queue list                         List your committed-work bundles
 thrum overview                           Combined status + team + inbox
-/thrum:update-project                    Guided project state update (narrative + state)
-/thrum:load-context                      Restore work context after compaction
+/thrum:update-project                    Guided project state update (only the coordinator responsible for this repo's project state)
+/thrum:load-context                      Restore session after compaction (runs thrum prime)
 ```
 
 ### Tmux Sessions (Recommended)
@@ -155,7 +156,7 @@ It calls `thrum wait` (blocking) and returns when messages arrive. See
   post-compact resume)
 - PreCompact is NOT registered — run `/thrum:compact` to save a restart
   snapshot deliberately before compacting
-- **After compaction:** run `/thrum:load-context` to restore your work context
+- **After compaction:** resume from the Resume Plan in the injected `# Previous Session Context`; check your personal state with `thrum state list` and your committed work with `thrum queue list`
 - Agent identity persists in `.thrum/identities/`
 
 ## Resources

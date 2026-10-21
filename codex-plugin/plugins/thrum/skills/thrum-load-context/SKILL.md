@@ -1,7 +1,8 @@
 ---
 name: thrum-load-context
 description:
-  Restore saved agent work context after compaction or session restart
+  Restore your session after compaction or session restart by running thrum
+  prime
 # source: claude-plugin/commands/load-context.md
 ---
 
@@ -11,15 +12,9 @@ Use this skill when the user explicitly wants the `load-context` Thrum workflow.
 Prefer the umbrella `thrum` skill when the request spans multiple commands or
 needs broader coordination judgment.
 
-Run `thrum prime` to restore your complete session context. Prime now includes
-project state and session context inline — no separate load step needed.
+Run `thrum prime` to restore your session. The briefing includes your restart
+snapshot, personal state, and committed-work queue.
 
 ```bash
 thrum prime
-```
-
-If you need only the session context (without the full briefing):
-
-```bash
-thrum context show --session
 ```

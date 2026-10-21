@@ -61,37 +61,40 @@ jq -r '.runtime.role_models' .thrum/config.json
 ```
 
 Launching with `--role` and no `--model` resolves the role default
-automatically. A `--model` / `--effort` flag in a launch command takes its value
-from `runtime.role_models` for the target role, per this skill.
+automatically. When pinning `--model` or `--effort`, read the effective values
+from `runtime.role_models`; otherwise use the named role's built-in default or
+the runtime's own preset.
 
 #### Agent tiers
 
 Effort tier governs whether an agent does the hard thing or the expedient thing.
-These are the three tiers, with their Claude-runtime resolution shown as a
-worked example — **if you are running under a different runtime, resolve the
-same tier from your own runtime's preset (`RuntimePreset.TierModels`) or
-`runtime.role_models`, not from the Claude column:**
+These are the three tiers, with Claude's built-in role defaults shown as
+concrete values. **If you are running under a different runtime, resolve the
+role from that runtime's preset (`RuntimePreset.TierModels`) or
+`runtime.role_models`, not from the Claude defaults:**
 
-| Role                                            | Tier            | Resolved for Claude (example) |
-| ----------------------------------------------- | --------------- | ----------------------------- |
-| **Orchestrator / coordinator**                  | `orchestration` | **`opus` / low**              |
-| **Implementer**                                 | `judgment`      | **`sonnet` / medium**         |
-| **Verifier / reviewer**                         | `judgment`      | **`sonnet` / medium**         |
-| **Sub-agent** (investigation, grep, mechanical) | `mechanical`    | **`sonnet` / low**            |
+| Role                                                         | Tier            | Claude built-in default          |
+| ------------------------------------------------------------ | --------------- | -------------------------------- |
+| **Coordinator**                                              | `orchestration` | **`claude-opus-5-5` / low**      |
+| **Orchestrator**                                             | `orchestration` | **`claude-opus-5-5` / low**      |
+| **Brainstormer**                                             | `orchestration` | **`claude-opus-5-5` / medium**   |
+| **Implementer**                                              | `judgment`      | **`claude-haiku-5-5` / high**    |
+| **Researcher**                                               | `judgment`      | **`claude-sonnet-5-5` / high**   |
+| **Verifier / reviewer**                                      | `judgment`      | **`claude-sonnet-5-5` / medium** |
+| **Role-neutral sub-agent** (investigation, grep, mechanical) | `mechanical`    | **`claude-sonnet-5-5` / low**    |
 
-- **`mechanical` tier (sub-agents ONLY)** — investigation, grep-and-collect,
-  file maps, lint runs, mechanical tasks. Read the effective model and effort at
-  use from `runtime.role_models`. For other runtimes, use their own
-  mechanical-tier value (`RuntimePreset.TierModels`), not a Claude name. The
-  mechanical tier is for sub-agents only, never for an implementer or a
-  reviewer.
-- **`judgment` tier (implementers, verifiers, reviewers)** — resolves to
-  `sonnet` @ MEDIUM effort on Claude. Not low. A reviewer on low effort is a
-  rubber stamp with extra steps, and rubber-stamped reviews are how a merge gate
-  that ran zero tests survived six sessions.
-- **`orchestration` tier (orchestrators/coordinators)** — resolves to `opus` @
-  low on Claude. Not selectable for sub-agents — set by the operator on the
-  agent's runtime-config.
+- **`mechanical` tier (role-neutral sub-agents)** — investigation,
+  grep-and-collect, file maps, lint runs, and mechanical tasks. Claude's
+  built-in role-neutral default is Sonnet 5.5 / low. Read configured overrides
+  from `runtime.role_models`; use another runtime's own `TierModels` values.
+- **`judgment` tier (implementers, researchers, verifiers, reviewers)** — use
+  the named-role defaults above: implementers use Haiku 5.5 / high, researchers
+  use Sonnet 5.5 / high, and verifiers/reviewers use Sonnet 5.5 / medium. Keep
+  reviewers at medium or higher.
+- **`orchestration` tier (coordinators, orchestrators, brainstormers)** — use
+  the named-role defaults above: coordinators and orchestrators use Opus 5.5 /
+  low; brainstormers use Opus 5.5 / medium. Operators configure orchestrator
+  defaults.
 - **`orchestration` tier is NOT your call to spawn.** Allowed only when (a) the
   operator explicitly asked for a deep review or prose review in this task, or
   (b) a skill you are running prescribes the orchestration tier for the specific
@@ -182,10 +185,11 @@ runtime, and that mapping lives in exactly two places:
 - **`runtime.role_models` in `.thrum/config.json`** — operator configuration for
   this project, which always outranks the preset's tier table.
 
-**If you are running under Claude**, use the Agent tiers table above
-(orchestrator/implementer/reviewer/sub-agent → orchestration/judgment/
-judgment/mechanical), plus brainstormer → `orchestration` and brainstormer's own
-subagents → `mechanical` (except reviewers, which are always `judgment`).
+**If you are running under Claude**, use the role-specific model and effort
+defaults in the Agent tiers table unless `runtime.role_models` overrides them.
+Researchers, implementers, verifiers, and reviewers use `judgment`; role-neutral
+children use `mechanical`. A brainstormer's children use `mechanical` unless
+they are reviewers, which use `judgment`.
 
 **If you are running under a different runtime, read your own tier's value from
 the two sources above** — never assume Claude's model names apply, and never
@@ -207,10 +211,10 @@ tier's tokens on a grep.
 Agent tiers table above. This applies recursively: an implementer spawning its
 own helpers pins them by THEIR role, not by copying its own tier down.
 
-The check before every spawn: what is this agent's ROLE? Reviewer or
-implementer? `judgment` tier. Pure investigation or mechanical work?
-`mechanical` tier. Then resolve that tier to your runtime's concrete
-model+effort. Never leave it unspecified.
+The check before every spawn: what is this agent's role? Implementer,
+researcher, verifier, or reviewer uses `judgment`; role-neutral investigation or
+mechanical work uses `mechanical`. Resolve its model and effort from the
+named-role defaults and runtime configuration. Never leave them unspecified.
 
 #### Never let an unresolved pin fall through
 
@@ -349,9 +353,9 @@ the model** (`resolveLaunchSpec` runs in `HandleLaunch`, never in create).
 and leave the CLI value empty at launch **by construction**.
 
 ⚠️ **And any FIX here must be verified with a pin the role default would NOT
-produce.** An implementer pinned to sonnet, with an implementer role-default of
-sonnet, comes up correct whether or not the pin landed — so "pin sonnet, confirm
-sonnet" passes whether or not the fix works.
+produce.** Pin an implementer to `claude-opus-5-5` / medium while its built-in
+default is `claude-haiku-5-5` / high; assert both values to prove the pin
+landed.
 
 ### Paste blocks for child prompts
 
@@ -387,8 +391,8 @@ activity.
   `git -C <wt> status --porcelain --untracked-files=all --ignored -- .thrum`.
 - Salvage anything found to a durable path (not /tmp), one subdirectory per
   worktree, filenames path-flattened.
-- Never glob `.thrum/context/*.md`; salvage the exact agent-name file only, and
-  assert no `project_state.md` landed in any salvage output.
+- Never glob `.thrum/context/*.md`; salvage exact named files only, and assert
+  no `project_state.md` landed in any salvage output.
 - Verify salvage by name set first, then `cmp` each file, with a negative
   control proving `cmp` detects a difference.
 - Kill the tmux session first (`thrum tmux kill <session>`), verify it is gone,

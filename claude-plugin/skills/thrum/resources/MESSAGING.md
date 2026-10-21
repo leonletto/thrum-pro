@@ -125,12 +125,13 @@ needed. The UI groups conversations by `thread_id`.
 - Git context (branch, uncommitted files)
 - Daemon health and sync state
 
-The **SessionStart** hook prompts you to run `/thrum:prime`. The **PreCompact**
-hook auto-saves context to a backup file.
+The **SessionStart** hook prompts you to run `/thrum:prime`. Before compacting, run
+`/thrum:compact` to write a restart snapshot.
 
 ### After Compaction
 
-Context auto-recovers via the PreCompact hook. The agent sees:
+The SessionStart hook re-injects the briefing, including the Resume Plan from your
+restart snapshot. The agent sees:
 
 1. Their identity and session state
 2. Any unread messages accumulated during compaction

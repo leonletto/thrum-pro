@@ -20,11 +20,6 @@
         "timeout": 15
       }
     ],
-    "preCompact": [
-      {
-        "type": "command",
-        "command": "${CURSOR_PLUGIN_ROOT}/scripts/pre-compact-save-context.sh || true"
-      }
-    ]
+    "preCompact": []
   }
 }

@@ -21,6 +21,8 @@
 # Environment overrides:
 #   THRUM_INSTALL_REF        Git ref to install (default: main)
 #   THRUM_INSTALL_REPO       Repo source (default: "leonletto/thrum-pro")
+#                            Plugin installs come from the public thrum-pro
+#                            marketplace, never from leonletto/thrum-pro.
 #
 # Idempotent: safe to run multiple times. Re-running pulls the latest revision
 # of the configured ref and re-stages the cache.

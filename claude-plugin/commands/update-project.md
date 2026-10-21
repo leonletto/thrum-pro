@@ -25,6 +25,15 @@ of the full session; (2) update-project runs only at session end, immediately
 before a restart — there is no "later work" this session to protect, so the
 usual token-saving justification for delegating does not apply.
 
+### Step 0: Owner and Tier Check
+
+1. If you are not the coordinator responsible for this repo's project state, stop. Only that coordinator runs this command.
+2. Detect the tier:
+   ```bash
+   thrum license status
+   ```
+3. Take the **licensed path** (see Licensed Path below) only when all three hold: the output has a line `license: active` exactly; it has a line starting `  tier:` whose value is `paid`, `comp`, `trial` or `enterprise`; and it has no `DEVICE DEACTIVATED` line. Any other output, or a non-zero exit, prints `license state unknown; using the free path` and takes the **free path** (Steps 1–6). The free path skips the memory step; the index line in `project_state.md`'s Recent Sessions is the only session record.
+
 ### Step 1: Compose Your Session Summary
 
 From YOUR context (what you already know), write a brief summary covering:
@@ -55,6 +64,29 @@ echo "=== READY ISSUES ===" && (bd ready -n 5 2>/dev/null || echo "(none)")
 ```
 
 (Replace `REPO_ROOT` with the absolute path to the project root.)
+
+### Licensed Path (after Step 2; replaces Steps 3–5, then Step 6)
+
+Live facts move to `thrum state`, work to `thrum queue`, and session history to `thrum memory`.
+
+1. **Live facts.** For each changed fact in Current State Summary, read its kind, then set it. Kinds: `deploy_state`, `topology`, `worktree`, `agent_pool`, `ruling`.
+   ```bash
+   thrum state list --kind <kind>
+   thrum state set --kind <kind> --scope <scope> --value '<json>'
+   ```
+2. **Work.** Reconcile your queue. Add each in-flight, blocked or pending item, then set its status. Drop only done bundles you do not keep for this session.
+   ```bash
+   thrum queue list
+   thrum queue add --title "<title>" --ref bead:<id>
+   thrum queue start <bundle-id>    # or: thrum queue block <bundle-id>, thrum queue done <bundle-id>
+   thrum queue drop <bundle-id>
+   ```
+3. **Session history.** Once, for the session being closed:
+   ```bash
+   thrum memory record-session --session-number <N> --title "Session <N> — <title>" --oneline "<headline>" --short "<2-4 sentences>" --full "<session body>"
+   ```
+4. **Pointer file.** Read `project_state.md`, then edit it to the source table, Phase, Durable rules and Stable references. Keep `## Recent Sessions`. Remove the live content of Current State Summary, Architecture Health and open-epic lists.
+5. **Verify.** Record `wc -l` and `wc -w` before and after, and confirm the `thrum state`, `thrum queue` and record-session writes are visible.
 
 ### Step 3: Read the Current File
 
@@ -139,35 +171,22 @@ updating.
 
 4. **Recent Sessions** — EVERY session, including the one you are closing
    right now, is exactly ONE LINE. No session ever gets a prose block.
-   - For the session being closed, emit a `session_summary` memory record:
-     ```
-     thrum memory create \
-       --kind session_summary \
-       --scope project \
-       --title "Session N — <title>" \
-       --oneline "<one-line summary>" \
-       --short "<short narrative (2-4 sentences)>" \
-       --full "<full session body>"
-     ```
-     Capture the returned memory ID (e.g. `thrum-mem-01HQXZ...`).
    - Append a **single index line** to the `## Recent Sessions` block in
      project_state.md — no body prose, ever:
      ```
-     - Session N (YYYY-MM-DD) — <what changed, ≤30 words> — [mem:<id>]
+     - Session N (YYYY-MM-DD) — <what changed, ≤30 words>
      ```
    - **The cap is on WORDS, not on newlines.** A 200-word run-on sentence
      crammed onto one physical line VIOLATES this rule just as much as a
      multi-line prose block does. Count words; keep the line ≤30 of them.
-   - The full body lives in the memory record and is retrieved on demand via
-     `thrum memory show <id>` or surfaced by the progressive-disclosure prime.
    - **What goes where** — the mechanical tell for sorting content: if a
      sentence contains "because", "I verified", "the mechanism was", "caught
      by", or "control fired", that sentence is DERIVATION, not state, and it
-     belongs in the memory record, never in project_state.md.
+     never goes in project_state.md.
      | Content | Destination |
      | --- | --- |
      | What changed | The one-line session index entry |
-     | How you concluded it / verified it / why an earlier claim was wrong / what it taught | `thrum memory`, never project_state.md |
+     | How you concluded it / verified it / why an earlier claim was wrong / what it taught | `## Recent Sessions` in project_state.md, index line only (no derivation) |
      | What's currently in flight, owed, blocked, or pending the owner | `## Current State Summary` (rule 2 above) |
 
    **NOTE:** the old `update-agent-state` / `update-state` skills (State.md

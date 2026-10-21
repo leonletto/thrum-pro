@@ -453,52 +453,14 @@ thrum overview --json
 ```bash
 thrum prime                                    # Gather full session context (AI-optimized)
 thrum prime --json
-thrum context show                             # Show saved agent context
-thrum context show --agent coordinator         # Show another agent's context
-thrum context show --raw                       # Raw output with file boundary markers
-thrum context show --no-preamble               # Exclude preamble from output
-thrum context load                             # Alias for context show
-thrum context save                             # Save context from stdin
-thrum context save --file path/to/context.md   # Save context from file
-thrum context save --agent other_agent
-thrum context clear                            # Clear saved context
-thrum context clear --agent coordinator
-thrum context sync                             # Sync context to a-sync branch
-thrum context sync --agent coordinator
-thrum context preamble                         # Show current preamble
-thrum context preamble --init                  # Create/reset to default preamble
-thrum context preamble --file path.md          # Set preamble from file
-thrum context preamble --agent coordinator
+thrum state set --kind <kind> --scope <scope> --value '<json>'   # Upsert your personal state
+thrum state list                               # List your state entries
+thrum state show <kind>:<scope>                # Full metadata for one entry
+thrum queue list                               # List committed-work bundles
+thrum queue show <id>                          # Show one bundle
 ```
 
-`context show` flags:
-
-```text
---agent string    Override agent name
---raw             Raw output with file boundary markers, no header
---no-preamble     Exclude preamble from output
-```
-
-`context save` flags:
-
-```text
---agent string   Override agent name
---file string    Read context from file (default: stdin)
-```
-
-`context preamble` flags:
-
-```text
---agent string   Override agent name
---file string    Set preamble from file
---init           Create or reset to default preamble
-```
-
-`context clear` / `context sync` flags:
-
-```text
---agent string   Override agent name
-```
+See the `using-thrum-state` and `using-the-queue` skills for when and how to use them.
 
 ---
 

@@ -589,8 +589,9 @@ thrum agent set-phase retired --agent <agent_name>
 #   (a) .thrum/restart/ and .thrum/context/ are GITIGNORED, so they appear as '!!',
 #       never '??' — a `grep '^??'` filters out exactly the class you are protecting.
 #   (b) scoping to `.thrum/agents` excludes .thrum/context/ and .thrum/restart/ outright.
-# The non-reconstructible one is .thrum/context/<agent>.md (pre-compact snapshot);
-# <agent>_preamble.md alongside it IS regenerable and safe to lose.
+# Salvage candidates: the restart snapshot under .thrum/agents/<agent>/sessions/ and the
+# legacy <agent>.md in .thrum/context/ (retiring injection does not archive existing data).
+# <agent>_preamble.md in .thrum/context/ IS regenerable and safe to lose.
 git -C <worktree-path> status --porcelain --untracked-files=all --ignored -- .thrum
 # Copy EACH file to its canonical redirect path, then cmp-verify byte-identical.
 # Compare each file individually: a porcelain line naming a DIRECTORY is not an

@@ -38,7 +38,7 @@ cursor-plugin/local-install.sh --target /path/to/project
 This deploys into `.cursor/` with:
 
 - **rules/** — `.mdc` files for sync worktree safety and session lifecycle
-- **hooks.json** — session start, shell guard, stop check, compact hooks
+- **hooks.json** — shell guard (two commands) and stop check (one command)
 - **mcp.json** — Thrum MCP server configuration
 - **skills/** — Thrum skills (generated at build time)
 - **commands/** — Thrum commands (generated at build time)
@@ -66,5 +66,5 @@ cursor-plugin/local-install.sh
 | `rules/thrum-safety.mdc`  | Blocks writes to internal sync worktree         |
 | `rules/thrum-session.mdc` | Session lifecycle reminders                     |
 | `hooks/hooks.json`        | Hook template (paths resolved at install)       |
-| `scripts/*.sh`            | Hook scripts (shell guard, stop check, compact) |
+| `scripts/*.sh`            | Hook scripts (3 registered in hooks.json)       |
 | `local-install.sh`        | Installer that deploys to `.cursor/`            |

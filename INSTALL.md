@@ -208,7 +208,17 @@ In Cursor Agent, open `/plugin list`, switch to **Marketplace**, search for
 `thrum`, open its details, and choose user or project scope. Verify that the
 plugin is marked installed.
 
-To update, remove the marketplace and add it again. Cursor pins the
+If the Claude Code Thrum plugin is also installed on the machine, Cursor
+Agent loads that copy (`/plugin list` shows "thrum (Claude Code)") and ignores
+the Cursor marketplace copy. Update it through Claude Code, then restart each
+running Cursor Agent session:
+
+```bash
+claude plugin marketplace update thrum
+claude plugin update thrum@thrum
+```
+
+Without the Claude Code plugin, remove the marketplace and add it again. Cursor pins the
 marketplace to the commit it fetched when it was added, and
 `agent plugin marketplace update thrum` re-indexes that same commit even when
 it reports success:

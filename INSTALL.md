@@ -213,9 +213,10 @@ agent plugin marketplace remove thrum
 agent plugin marketplace add https://github.com/leonletto/thrum-pro
 ```
 
-Confirm the fetched version, then open `/plugin` in Cursor Agent and install
-or enable `thrum` again (or start a new agent session). A running session keeps
-the version it loaded:
+Confirm the fetched version, then restart each running Cursor Agent session.
+A running session keeps the version it loaded, and has no command to reload
+plugins; project `.cursor/commands` and `.cursor/skills` are also read only at
+session start:
 
 ```bash
 MP=$(find ~/.cursor/plugins/marketplaces/github.com/leonletto/thrum-pro -mindepth 1 -maxdepth 1 -type d | head -1)

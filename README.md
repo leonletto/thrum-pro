@@ -146,7 +146,8 @@ agent
 In Cursor Agent, open `/plugin list`, switch to **Marketplace**, search for
 `thrum`, and install it at user or project scope. To update, remove and re-add
 the marketplace (`agent plugin marketplace update thrum` keeps the old commit),
-then reinstall from `/plugin` or start a new agent session:
+then restart each running agent session; a running session does not reload
+plugins:
 
 ```bash
 agent plugin marketplace remove thrum

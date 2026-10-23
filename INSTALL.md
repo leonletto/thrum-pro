@@ -209,16 +209,16 @@ In Cursor Agent, open `/plugin list`, switch to **Marketplace**, search for
 plugin is marked installed.
 
 If the Claude Code Thrum plugin is also installed on the machine, Cursor
-Agent loads that copy (`/plugin list` shows "thrum (Claude Code)") and ignores
-the Cursor marketplace copy. Update it through Claude Code, then restart each
-running Cursor Agent session:
+Agent loads that copy too (`/plugin list` shows "thrum (Claude Code)"), next to
+its own Cursor install. Update both, then restart each running Cursor Agent
+session. Update the Claude Code copy with:
 
 ```bash
 claude plugin marketplace update thrum
 claude plugin update thrum@thrum
 ```
 
-Without the Claude Code plugin, remove the marketplace and add it again. Cursor pins the
+Update Cursor's own install by removing the marketplace and adding it again. Cursor pins the
 marketplace to the commit it fetched when it was added, and
 `agent plugin marketplace update thrum` re-indexes that same commit even when
 it reports success:

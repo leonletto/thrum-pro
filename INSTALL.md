@@ -121,6 +121,16 @@ copilot plugin update thrum
 Verification: `copilot plugin list` must report `thrum`, and `/skills list` must
 include the Thrum skills.
 
+After updating, run `/skills reload` in each running Copilot session to load
+the updated skills and commands without restarting. Hook changes need a
+restart.
+
+Agents that Thrum launches on Copilot also load a small second plugin,
+`thrum-copilot`, from `~/.thrum/copilot-plugin` via `--plugin-dir`. Thrum copies
+it from the `thrum` binary at each agent launch, so it has no install or update
+step of its own; restarting the agent refreshes it. The `copilot-plugin/`
+directory in this repository is its source.
+
 Inside a Copilot CLI session, the same plugin-management actions are also
 available through:
 

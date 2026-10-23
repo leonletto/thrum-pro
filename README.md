@@ -29,6 +29,7 @@ Each supported runtime has its own plugin tree at the top level:
 | `cursor-plugin/` | Cursor |
 | `opencode-plugin/` | OpenCode |
 | `claude-plugin/` | GitHub Copilot CLI (shared marketplace payload) |
+| `copilot-plugin/` | GitHub Copilot CLI (`thrum-copilot`, loaded by Thrum at agent launch) |
 
 Muse Code discovers and installs Thrum from its marketplace; it has no separate
 `muse-plugin/` tree in this repository.
@@ -122,6 +123,16 @@ Refresh the marketplace before updating the installed plugin:
 copilot plugin marketplace update thrum
 copilot plugin update thrum
 ```
+
+After updating, run `/skills reload` in each running Copilot session to load
+the updated skills and commands without restarting. Hook changes need a
+restart.
+
+Agents that Thrum launches on Copilot also load a small second plugin,
+`thrum-copilot`, from `~/.thrum/copilot-plugin` via `--plugin-dir`. Thrum copies
+it from the `thrum` binary at each agent launch, so it has no install or update
+step of its own; restarting the agent refreshes it. The `copilot-plugin/`
+directory in this repository is its source.
 
 ### Cursor — install straight from GitHub
 

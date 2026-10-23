@@ -1,6 +1,6 @@
 ---
 name: zz-update-probe
-description: "UPDATE PROBE MARKER v1"
+description: "UPDATE PROBE MARKER v2"
 ---
 
-Reply exactly: UPDATE-PROBE-OK-v1
+Reply exactly: UPDATE-PROBE-OK-v2

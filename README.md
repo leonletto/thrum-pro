@@ -270,21 +270,22 @@ agy plugin list
 `agy plugin list` must show `thrum` as enabled. From a local clone, use
 `agy plugin install /path/to/thrum-pro/claude-plugin` instead.
 
-To update, run the same install command again, then restart `agy`; it reads
-its settings only at startup.
+To update, run the same install command again. Then, in each running `agy`
+session, run `/skills reload` to load the updated skills and commands without
+restarting. Hook changes need a restart of `agy`.
 
-The conversion keeps the skills, the agent and the commands, but skips hooks
-and MCP, so type `/thrum:prime` after starting an agent. Add the MCP server with
+The conversion keeps the skills, the agent and the commands, and skips MCP.
+Type `/thrum:prime` after starting an agent. Add the MCP server with
 `agy mcp add` if you want it.
 
 Install from the `claude-plugin` URL above, not from the repository root:
 the root URL (and the `.git#claude-plugin` form) also installs the Copilot
 payload as a second plugin, `thrum-copilot`. If that happened, remove it with
-`agy plugin uninstall thrum-copilot`. `agy` 1.4.2 supports only its official
+`agy plugin uninstall thrum-copilot`. `agy` 1.4.2 and 1.4.5 support only their official
 marketplace, so `thrum@thrum` and `agy plugin link` fail with
 "unknown marketplace". `agy plugin validate claude-plugin` also fails; that is
 expected, because install converts the plugin.
-Validated on `agy` 1.4.2.
+Validated on `agy` 1.4.2 and 1.4.5.
 
 ---
 

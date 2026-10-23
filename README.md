@@ -31,8 +31,8 @@ Each supported runtime has its own plugin tree at the top level:
 | `claude-plugin/` | GitHub Copilot CLI (shared marketplace payload) |
 | `copilot-plugin/` | GitHub Copilot CLI (`thrum-copilot`, loaded by Thrum at agent launch) |
 
-Muse Code discovers and installs Thrum from its marketplace; it has no separate
-`muse-plugin/` tree in this repository.
+Muse Code discovers and installs Thrum from its marketplace, using the
+`codex-plugin/` tree; it has no separate `muse-plugin/` tree in this repository.
 
 Every tree is plain text — skills (`SKILL.md`), slash commands, agent definitions,
 and hooks. No binaries. Pick the directory that matches your assistant and follow the
@@ -274,8 +274,8 @@ muse plugins approve thrum
 muse plugins list
 ```
 
-Restart running Muse agents afterwards; a running agent keeps the plugin
-version it loaded.
+Then run `/skills reload` in each running Muse session to load the updated
+skills without restarting. Hook changes still need a restart.
 
 An MCP config at `.muse/mcp.json` is optional (advanced use); basic operation primes
 through the `SessionStart` hook without it.

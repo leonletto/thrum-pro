@@ -149,8 +149,8 @@ available through:
 
 ## Muse Code
 
-Muse installs Thrum from its native marketplace; no separate `muse-plugin/`
-directory is needed:
+Muse installs Thrum from its native marketplace, using the `codex-plugin/`
+tree of this repository; no separate `muse-plugin/` directory is needed:
 
 ```bash
 muse plugins marketplace add leonletto leonletto/thrum-pro
@@ -184,8 +184,9 @@ muse plugins list
 ```
 
 `muse plugins list` must show the new version. Run the commands while no Muse
-session is in the middle of a turn, then restart running Muse agents; a running
-agent keeps the plugin version it loaded.
+session is in the middle of a turn. Then run `/skills reload` in each running
+Muse session to load the updated skills without restarting. Hook changes still
+need a restart (after `muse plugins approve thrum`).
 
 ## Cursor
 

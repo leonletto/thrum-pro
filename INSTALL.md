@@ -89,6 +89,14 @@ codex plugin add thrum@thrum-marketplace
 Verification: `codex plugin list` must report `thrum@thrum-marketplace` as
 `installed, enabled`.
 
+Restart running Codex agents after a plugin update; a running session does not
+load the new version, and `/skills reload` does not refresh plugin skills.
+Codex refreshes a Git-sourced marketplace and rebuilds its plugin cache at
+every launch, so a restart alone picks up a published update. On relaunch,
+Codex may also offer to update itself, and after the plugin's hooks change it
+asks you to review them ("Hooks need review"); agents launched by Thrum skip
+that prompt with `--dangerously-bypass-hook-trust`.
+
 To install the Codex skills into `~/.agents/skills` as well (used by some
 other runtimes' agents, not required for Codex itself):
 

@@ -218,7 +218,7 @@ claude plugin marketplace update thrum
 claude plugin update thrum@thrum
 ```
 
-Without the Claude Code plugin (this route is not yet verified), remove the marketplace and add it again. Cursor pins the
+Without the Claude Code plugin, remove the marketplace and add it again. Cursor pins the
 marketplace to the commit it fetched when it was added, and
 `agent plugin marketplace update thrum` re-indexes that same commit even when
 it reports success:
@@ -228,7 +228,9 @@ agent plugin marketplace remove thrum
 agent plugin marketplace add https://github.com/leonletto/thrum-pro
 ```
 
-Confirm the fetched version, then restart each running Cursor Agent session.
+Re-adding the marketplace does not reinstall the plugin. Confirm the fetched
+version, then in Cursor Agent open `/plugin list`, switch to **Marketplace**,
+open `thrum` and choose **Install for you**, and start a new agent session.
 A running session keeps the version it loaded, and has no command to reload
 plugins; project `.cursor/commands` and `.cursor/skills` are also read only at
 session start:

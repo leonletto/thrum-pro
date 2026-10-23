@@ -160,9 +160,10 @@ claude plugin marketplace update thrum
 claude plugin update thrum@thrum
 ```
 
-Without the Claude Code plugin (this route is not yet verified), remove and re-add the marketplace
-(`agent plugin marketplace update thrum` keeps the old commit), then restart
-each running agent session:
+Without the Claude Code plugin, remove and re-add the marketplace
+(`agent plugin marketplace update thrum` keeps the old commit), install `thrum`
+again from `/plugin list` → **Marketplace** (re-adding does not reinstall it),
+then start a new agent session:
 
 ```bash
 agent plugin marketplace remove thrum

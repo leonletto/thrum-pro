@@ -104,6 +104,12 @@ other runtimes' agents, not required for Codex itself):
 ./codex-plugin/plugins/thrum/scripts/install-skills.sh
 ```
 
+The script copies the skills into `~/.agents/skills` by default (`--dest`
+chooses another directory). It skips skills that already exist; `--force`
+deletes each existing target before copying. Do not install them into
+`~/.codex/skills` alongside the Codex plugin: Codex then lists every Thrum
+skill twice in its skill picker.
+
 ## GitHub Copilot CLI
 
 ```bash

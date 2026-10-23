@@ -88,6 +88,10 @@ Codex may also offer to update itself, and after the plugin's hooks change it
 asks you to review them ("Hooks need review"); agents launched by Thrum skip
 that prompt with `--dangerously-bypass-hook-trust`.
 
+New or updated skills are still available to a running agent before the
+restart: asked to use a skill by name, the agent reads the updated skill file.
+The skill picker (`$`) lists them only after a restart.
+
 If Codex is logged in with a ChatGPT account, Thrum's default Codex model
 (`gpt-6-luna`) is rejected on every turn with HTTP 400 "not supported when
 using Codex with a ChatGPT account" (seen with codex-cli 0.163.0). Pin a model

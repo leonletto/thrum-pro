@@ -97,6 +97,10 @@ Codex may also offer to update itself, and after the plugin's hooks change it
 asks you to review them ("Hooks need review"); agents launched by Thrum skip
 that prompt with `--dangerously-bypass-hook-trust`.
 
+New or updated skills are still available to a running agent before the
+restart: asked to use a skill by name, the agent reads the updated skill file.
+The skill picker (`$`) lists them only after a restart.
+
 To install the Codex skills into `~/.agents/skills` as well (used by some
 other runtimes' agents, not required for Codex itself):
 

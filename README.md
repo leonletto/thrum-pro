@@ -160,7 +160,7 @@ claude plugin marketplace update thrum
 claude plugin update thrum@thrum
 ```
 
-Without the Claude Code plugin, remove and re-add the marketplace
+Without the Claude Code plugin (this route is not yet verified), remove and re-add the marketplace
 (`agent plugin marketplace update thrum` keeps the old commit), then restart
 each running agent session:
 

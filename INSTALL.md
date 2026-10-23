@@ -218,7 +218,7 @@ claude plugin marketplace update thrum
 claude plugin update thrum@thrum
 ```
 
-Without the Claude Code plugin, remove the marketplace and add it again. Cursor pins the
+Without the Claude Code plugin (this route is not yet verified), remove the marketplace and add it again. Cursor pins the
 marketplace to the commit it fetched when it was added, and
 `agent plugin marketplace update thrum` re-indexes that same commit even when
 it reports success:

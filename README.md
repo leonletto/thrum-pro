@@ -59,12 +59,15 @@ claude plugin install thrum@thrum
 ```
 
 **Updating has two steps** — refresh the marketplace, then update the installed
-plugin and restart Claude Code:
+plugin:
 
 ```bash
 claude plugin marketplace update thrum
 claude plugin update thrum@thrum
 ```
+
+Then run `/reload-plugins` in each running Claude Code session to load the new
+version, or restart Claude Code.
 
 ### Codex — install straight from GitHub
 

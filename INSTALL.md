@@ -26,7 +26,8 @@ claude plugin marketplace update thrum
 claude plugin update thrum@thrum
 ```
 
-Restart Claude Code after updating the plugin.
+After updating, run `/reload-plugins` in each running Claude Code session to
+load the new version, or restart Claude Code.
 
 Offline / local-path alternative (no GitHub access needed — points at this
 extracted bundle instead of cloning `leonletto/thrum-pro`):

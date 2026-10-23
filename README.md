@@ -177,9 +177,12 @@ opencode plugin opencode-thrum-pro
 
 Use `opencode plugin opencode-thrum-pro --global` for the global configuration.
 That command does not update an existing install (OpenCode keeps its cached
-copy); see [INSTALL.md](INSTALL.md#opencode) for the update step.
-To configure it manually, add the package to `opencode.json` (or the global
-`~/.config/opencode/opencode.jsonc`).
+copy); see [INSTALL.md](INSTALL.md#opencode) for the update step. A running
+OpenCode session does not reload plugins or commands, so restart it after an
+update. To configure it manually, add the package to `opencode.json` or
+`opencode.jsonc`, in the project or in `~/.config/opencode/`; when both files
+exist in one directory, OpenCode reads the plugin list from `opencode.jsonc`.
+Validated on OpenCode 1.18.35.
 
 The plugin provides the skills, commands, and hooks. To use Thrum's coordination
 tooling (messaging, memory, state) you also need to wire the `thrum` MCP server,
@@ -211,7 +214,7 @@ npm run build
 ```
 
 Then reference it as a local `file:` plugin in your project's `opencode.json`
-(or global `~/.config/opencode/opencode.json`):
+(or the global one in `~/.config/opencode/`):
 
 ```json
 {

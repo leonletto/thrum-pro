@@ -294,8 +294,10 @@ muse plugins list
 Then run `/skills reload` in each running Muse session to load the updated
 skills without restarting. Hook changes still need a restart.
 
-An MCP config at `.muse/mcp.json` is optional (advanced use); basic operation primes
-through the `SessionStart` hook without it.
+Agents that Thrum launches on Muse are primed automatically: Thrum types
+`/thrum-prime` into the new session. If you start Muse yourself, type
+`/thrum-prime` after it starts. An MCP config at `.muse/mcp.json` is optional
+(advanced use); basic operation works without it.
 
 ### Antigravity — install the Claude Code plugin
 

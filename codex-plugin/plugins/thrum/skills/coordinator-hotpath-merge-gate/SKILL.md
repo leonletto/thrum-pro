@@ -18,6 +18,21 @@ description:
 
 ## Coordinator: Hot-Path Merge Gate
 
+### Before you start this gate — queue it, take it in order
+
+- **Queue every gate request on arrival** with
+  `thrum queue add --title "gate <branch>@<short sha>"`, and reply to the
+  requester with the bundle ID. A request that lives only in a message is lost
+  at your next compaction. Without a Pro licence (`not entitled` /
+  `requires a license`), skip this write and track it in the message thread
+  instead.
+- **Reconcile your queue before starting a gate** (`thrum queue list`) and take
+  the oldest pending item in the coordinator's order. Only an explicit "jumps
+  the queue" reorders it.
+- **A gate stopped part-way keeps a note** of what ran and what did not
+  (`thrum queue note <id> --stdin`), for example "norace PASS, race NOT RUN",
+  and stays `in_progress`.
+
 ### Before you start this gate — restart if you cannot finish it
 
 **Finish the gate you are in. Never restart mid-gate.** A finding that exists
@@ -112,9 +127,9 @@ candidate is landed or rejected, its output is deleted).
 
 Mandatory checklist handed to the GATE RUNNER (and to any sub-agent it spawns in
 turn) at dispatch time. Each rule below currently lives only as prose warnings
-scattered through the hotpath-gate efficacy log and gets re-learned per session
-— hand this list to the sub-agent verbatim at dispatch time instead of relying
-on it rediscovering these the hard way:
+scattered through older gate records and gets re-learned per session — hand this
+list to the sub-agent verbatim at dispatch time instead of relying on it
+rediscovering these the hard way:
 
 1. Read code via `git show <target-sha>:<path>`, NEVER the working tree — tree
    state != the SHA under review.
@@ -612,55 +627,17 @@ affects, and report `CLEAN-WITH-GATE-FIXES` listing each fix instead of bouncing
 it to the owner. When unsure which bucket a finding falls in, ask the
 coordinator with the exact diff — don't bounce reflexively.
 
-### Efficacy tracking (v1 acceptance requirement)
+### Unmeasured findings
 
-After every gate run, record the outcome in the hotpath-gate efficacy log
-(created lazily on first run). This is a durable, committed, grep-queryable log
-that measures v1's real-world efficacy so we can iterate to v2 with data.
+A gate finding with no failing test or reproduction can never block. Label it
+UNMEASURED, state the likely cost, and name the test that would prove it. The
+coordinator forwards it only if the fix is clearly worth the cost, never as a
+'real risk', and the owner can decline it.
 
-**Format (structured header):** a structured header line, with essay content
-moved to an indented notes block underneath it:
+### Post-verdict record
 
-```
-- YYYY-MM-DD | lens=<hpN,phN,...> | bead=<id> | merged=<sha> | gate=<hotpath|philosophy|both> | outcome=<OUTCOME>
-  notes: branch=<branch>, lenses_run=10, findings=B:N I:N M:N, FALSE_POSITIVE=<0|N>. <brief prose>
-```
-
-`lens=<hpN,phN,...>` names the specific lens numbers that were load-bearing for
-the outcome (not just "10"), each prefixed by its gate — `hp<n>` for a
-hotpath-gate.json lens, `ph<n>` for a philosophy.md anti-pattern.
-`FALSE_POSITIVE=0` is recorded explicitly even on a clean/uneventful run ("no
-findings overturned on pushback this run") so the zero is a measurement, not an
-absence.
-
-**Coverage mandate:** a row is required for EVERY trigger-dir merge — not just
-gates the coordinator itself runs. This includes SKIPPED-with-evidence rows and
-orchestrator-run merges; the log measures gate COVERAGE, not just
-coordinator-run outcomes. Do not fabricate a per-merge outcome you cannot verify
-— if a past merge is missing a row and the outcome can't be reconstructed,
-record a single honest coverage-gap note instead of inventing rows.
-
-**Outcomes:**
-
-| Outcome                 | Meaning                                                                                                                                    |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `CLEAN`                 | Gate ran, zero findings, merge proceeded                                                                                                   |
-| `REAL_DEFECT`           | Gate caught a genuine hot-path/perf anti-pattern                                                                                           |
-| `FALSE_POSITIVE`        | Gate flagged something correct — record which lens and why                                                                                 |
-| `SLIPPED`               | A wedge occurred AFTER merge that the gate did not catch                                                                                   |
-| `SKIPPED_WITH_EVIDENCE` | Gate deliberately skipped (no trigger dirs), evidence cited                                                                                |
-| `CLEAN-WITH-GATE-FIXES` | Gate found only mechanical bookkeeping gaps, fixed them itself as a GATE-AUTHORED commit, re-ran only the affected checks, merge proceeded |
-
-**Retrospective reclassification:** When triaging a new wedge or incident, grep
-the hotpath-gate efficacy log for the merged branch/date. If the gate previously
-logged `CLEAN` for that branch, append a follow-up line referencing the original
-entry:
-`- YYYY-MM-DD | branch=<branch> | RECLASSIFIED: CLEAN->SLIPPED | notes=<what the gate missed + which lens should have caught it>`.
-This closes the feedback loop — a `CLEAN` that later becomes `SLIPPED` is the
-most valuable data point for v2 lens improvement.
-
-Review the log quarterly (or after any `SLIPPED` outcome) to identify config
-gaps and lens improvements for the next version.
+The only post-verdict record is the one line in dev-docs/gate-log.md (gate
+output is deleted after the verdict). No efficacy-log row is required.
 
 ### Reference
 
@@ -674,8 +651,7 @@ gaps and lens improvements for the next version.
   (runs in parallel)
 - `.thrum/philosophy.md` — canonical source for general anti-patterns (cross-
   referenced by Lenses 1–2, 6–7 where they overlap)
-- the hotpath-gate efficacy log — running efficacy log (created lazily on first
-  gate run, appended after each run)
+- `dev-docs/gate-log.md` — the one-line-per-verdict gate log
 
 <!-- THRUM-GATE: stage=skill next=review -->
 <!-- THRUM-REVIEW: stage=skill verdict=Ready:Yes cycle=2 -->

@@ -295,6 +295,8 @@ thrum queue add --title "<epic-id>: <short what>" --ref bead:<epic-bead>  # prin
 thrum queue start <epic-bundle>                      # in_progress = you are actively driving this epic NOW
 ```
 
+Without a Pro licence (`not entitled` / `requires a license`), skip this write and track it in the message thread instead.
+
 ### Step 2: Set own status
 
 ```bash
@@ -715,8 +717,9 @@ thrum tmux status
 If an agent's session is dead or stuck (no message received and pane idle for
 two consecutive checks):
 
-1. Attempt restart: `thrum tmux restart <name>`
-2. If restart fails → escalate to human
+1. Attempt restart: `thrum tmux restart <name>` (it returns once the daemon
+   accepts the call; check the pane and daemon log afterward)
+2. If the agent does not come back → escalate to human
 
 ### Agent session dies
 
@@ -724,8 +727,8 @@ two consecutive checks):
 thrum tmux restart <name>
 ```
 
-If restart fails after one retry, escalate to human with the session name and
-error details.
+If the agent does not come back after one retry, escalate to human with the
+session name and the daemon-log error (the command itself returns on acceptance).
 
 ### Review loop — 2-round hard cap
 

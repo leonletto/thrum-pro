@@ -1,4 +1,5 @@
 ---
+name: team
 description: Show active team members
 ---
 

@@ -1,4 +1,5 @@
 ---
+name: inbox
 description: Check message inbox
 argument-hint: '[--unread]'
 ---

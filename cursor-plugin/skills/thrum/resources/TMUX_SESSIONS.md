@@ -104,7 +104,9 @@ resume fallback instead:
 - **Self-initiated:** Run `/thrum:restart` — saves snapshot, notifies
   coordinator
 - **Coordinator-initiated:** `thrum tmux restart <name>` — saves and restores a
-  Thrum snapshot. `--force` skips the graceful save prompt and snapshot flow.
+  Thrum snapshot. It returns as soon as the daemon accepts the call; the
+  snapshot request, kill and relaunch then run in the background, and a failure
+  is in the daemon log, not in the command's output. `--force` skips the graceful save prompt and snapshot flow.
 - **Vendor-session recovery:** `thrum tmux restart <name> --resume` — skips the
   Thrum snapshot phase and resumes the same pinned runtime's vendor session.
   This is a fallback for a broken login/session, not a cross-runtime transfer.

@@ -1,4 +1,5 @@
 ---
+name: restart-extended
 description:
   Save a comprehensive 16-section restart snapshot and prepare for session
   restart. Use for designer/architect-grade handoffs needing wire contracts,

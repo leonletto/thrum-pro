@@ -90,6 +90,9 @@ Three distinct fields, do not conflate them:
 | `thrum queue item start/block/done <bundle-id> <item-id>`            | Item-level status (start/done clear the item's block_reason)                                                                                                                                                                                              |
 | `thrum queue item update <bundle-id> <item-id> [flags]`              | Partial item update: `--title`, `--assigned-by`, `--ref` (repeatable, replaces existing refs), `--priority` - at least one required                                                                                                                       |
 
+Without a Pro licence (`not entitled` / `requires a license`), skip this write
+and track it in the message thread instead.
+
 Optional: `--ref <type>:<value>` (repeatable), `--priority N` (higher sorts
 first), and `--from-message` (special case, below). `add` / `item add` require
 at least one of `--title` or `--from-message`; explicit `--title` wins over
@@ -151,6 +154,9 @@ thrum send --to @impl_foo --stdin <<'EOF'      # actually route it
 Assigned you <bundle>: <what + refs>. Add it with: thrum queue add --from-message <this msg id>
 EOF
 ```
+
+Without a Pro licence (`not entitled` / `requires a license`), skip this write
+and track it in the message thread instead.
 
 **See what an agent has on its plate:**
 

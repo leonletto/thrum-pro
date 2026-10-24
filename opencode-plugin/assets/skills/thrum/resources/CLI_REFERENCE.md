@@ -292,7 +292,7 @@ thrum team --compact                            # One line per agent with intent
 thrum team --phase stale                       # Exact stale triage queue
 thrum team --include-inactive                  # Add stale and retired rows
 thrum team --offline                           # Add ordinary offline rows
-thrum team --all                               # Preserve the whole-fleet roster
+thrum team --all                               # Every agent in this daemon's database (no other daemons contacted)
 thrum team --json
 ```
 

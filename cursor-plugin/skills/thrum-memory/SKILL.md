@@ -49,6 +49,8 @@ thrum memory create --kind arch_decision \
   --tag substrate,sync
 ```
 
+Without a Pro licence (`not entitled` / `requires a license`), skip this write and track it in the message thread instead.
+
 See `memory-write-discipline` for prose-into-a-command conventions.
 
 Search by tag + kind, default limit 10:
@@ -72,6 +74,7 @@ thrum memory edit <id> --add-tag v0.11 --rm-tag draft
 ```
 
 Link an edge. `memory create`, `edit` and `link` need a license (memory.substrate); reads, `delete`, `purge` and `unlink` do not.
+Without a Pro licence (`not entitled` / `requires a license`), skip this write and track it in the message thread instead.
 
 ```bash
 thrum memory link <new-id> supersedes <old-id>

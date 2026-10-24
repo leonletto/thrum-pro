@@ -60,8 +60,18 @@ HOOK_INPUT=$(cat 2>/dev/null || true)
 # Keeping the RPC count at one preserves session-start latency.
 WHOAMI_JSON=""
 AGENT_ID=""
+# A licence refusal (not accepted, no TTY) prints one stable line on stderr,
+# "Error: thrum: EULA not accepted: ...", and exits non-zero. Keep stderr so the
+# hook can pass that line into the briefing instead of failing silently.
+EULA_ERR=$(mktemp 2>/dev/null) || EULA_ERR=/dev/null
+WHOAMI_JSON=$(thrum whoami --json 2>"$EULA_ERR" || true)
+EULA_LINE=$(grep -m 1 'thrum: EULA not accepted' "$EULA_ERR" 2>/dev/null || true)
+if [ "$EULA_ERR" != /dev/null ]; then rm -f "$EULA_ERR"; fi
+if [ -n "$EULA_LINE" ]; then
+  echo "$EULA_LINE"
+  exit 0
+fi
 if command -v jq >/dev/null 2>&1; then
-  WHOAMI_JSON=$(thrum whoami --json 2>/dev/null || true)
   AGENT_ID=$(printf '%s' "$WHOAMI_JSON" \
     | jq -r 'select(.agent_id != null) | .agent_id // empty' 2>/dev/null \
     || true)
@@ -274,7 +284,7 @@ RESTART_PREAMBLE=""
 if [ -z "$SPLIT_FIRST_LINE" ] && grep -q '^# Previous Session Context' <<<"$PRIME_OUTPUT"; then  # here-string: a pipe + grep -q SIGPIPEs printf under pipefail on big output
   append_to RESTART_PREAMBLE '# 🛑 ACTION REQUIRED — you left yourself a Resume Plan'$'\n'
   append_to RESTART_PREAMBLE $'\n'
-  append_to RESTART_PREAMBLE 'Before anything else, go to the **`# Previous Session Context`** section below, read its **`## Resume Plan`** (or its final next-actions section) in full, and execute the numbered steps in order. If the briefing was truncated or persisted to a file, first read the whole file with your file-reading tool, every page in order, do not jump to the Resume Plan, and name one fact from it before acting.'
+  append_to RESTART_PREAMBLE 'Before anything else, go to the **`# Previous Session Context`** section below, read its **`## Resume Plan`** (or its final next-actions section) in full, and execute the numbered steps in order. If the briefing was truncated or persisted to a file, first read the whole file with your file-reading tool, every page in order (if there is no file, run `thrum prime --to-file` (if --to-file is an unknown flag, run plain `thrum prime` once and read its output fully) ONCE and read that file; never repeat the prime command), do not jump to the Resume Plan, and name one fact from it before acting.'
   if [ "$LIGHT_MODE" -eq 1 ]; then
     append_to RESTART_PREAMBLE " In light mode your snapshot is also at \`${SNAPSHOT_SHOWN:-.thrum/restart/${AGENT_ID}.md}\` (archived under \`.thrum/agents/${AGENT_ID}/sessions/\` once a prime has run); Read it first if the section is truncated or missing."
   fi
@@ -298,7 +308,7 @@ else
   append_to BRIEFING 'The complete `thrum prime` output is included below. Read it in full.'$'\n'
 fi
 append_to BRIEFING $'\n'
-append_to BRIEFING 'Beyond the session-start queue and state reconcile and the inbox check, spawn additional commands only if the inbox section shows unread messages that need processing.'$'\n'
+append_to BRIEFING 'During this priming turn, beyond the queue/state reconcile and inbox check, run extra commands only for unread messages that need processing. This does not limit work you are already authorized to do; resume it after priming.'$'\n'
 append_to BRIEFING $'\n---\n\n'
 append_to BRIEFING "$PRIME_OUTPUT"$'\n'
 

@@ -1,4 +1,5 @@
 ---
+name: wait
 description: Block until a message arrives
 ---
 

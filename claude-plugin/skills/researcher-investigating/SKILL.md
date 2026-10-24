@@ -9,7 +9,7 @@ description: "Use when investigating, exploring code, working on a research task
 
 Lift this query into a bundle (`thrum queue add --from-message <msg-id>`),
 then `thrum queue start <bundle-id>`; drop/close finished bundles. Full
-lifecycle: `using-the-queue`.
+lifecycle: `using-the-queue`. Without a Pro licence (`not entitled` / `requires a license`), skip this write and track it in the message thread instead.
 
 ## Use Explore sub-agents for breadth-first searches
 

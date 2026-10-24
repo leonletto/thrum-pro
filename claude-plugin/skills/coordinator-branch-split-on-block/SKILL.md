@@ -145,8 +145,8 @@ early forces a cold restart mid-fix-cycle.
 
 ## Gate that closes it
 
-Both halves merged, both efficacy rows recorded (one row per merged branch,
-not one row for the original bundled branch), the not-ancestor invariant's
+Both halves merged, both gate-log lines recorded (one line per merged branch,
+not one line for the original bundled branch), the not-ancestor invariant's
 PASS result is part of the merge report the merge-king relied on (not
 asserted after the fact).
 

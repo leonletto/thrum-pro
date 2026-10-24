@@ -205,7 +205,7 @@ skill) and your committed work (`thrum queue` — see the `using-the-queue`
 skill) BEFORE composing your snapshot. This is distinct from the restart
 recovery above (compaction keeps your daemon binding and live session
 intact, unlike a restart) but the same durable stores are what a
-post-compact render reads back.
+post-compact render reads back. Without a Pro licence (`not entitled` / `requires a license`), skip this write and track it in the message thread instead.
 
 ## Keep the pipeline flowing (stalled-handoff detection)
 

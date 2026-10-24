@@ -1,0 +1,4 @@
+interface:
+  display_name: "Memory To Thrum Pointer"
+  short_description: "Use when MEMORY.md is near or over its read limit, or when adding a new memory entry. Moves an entry's full text into a thrum memory record and shrinks its index line to a trigger plus the thrum memory ID, with a byte-for-byte check."
+  default_prompt: "Use when MEMORY.md is near or over its read limit, or when adding a new memory entry. Moves an entry's full text into a thrum memory record and shrinks its index line to a trigger plus the thrum memory ID, with a byte-for-byte check."

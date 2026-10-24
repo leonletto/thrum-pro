@@ -1,4 +1,5 @@
 ---
+name: reply
 description: Reply to a message
 argument-hint: '[msg-id --stdin]'
 ---

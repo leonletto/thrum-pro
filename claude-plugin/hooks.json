@@ -1,0 +1,18 @@
+{
+  "thrum": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "./scripts/agy-session-start.sh",
+        "timeout": 15
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "./scripts/agy-stop-inbox.sh",
+        "timeout": 15
+      }
+    ]
+  }
+}

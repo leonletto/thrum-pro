@@ -107,6 +107,13 @@ manufactures a half-migrated store.
 > macOS; use `service.restart_command` otherwise. Never wrap either in
 > `timeout`.
 
+### 4a. EULA gate — before the binary swap
+
+EULA gate (0.11+): before swapping the binary, record acceptance for the box
+user by running the new build once with `THRUM_ACCEPT_EULA=<bundled version>`.
+Confirm that `~/.thrum/license/eula-acceptance-<version>-*.json` exists and that
+a plain `thrum inbox` works. Skipping this breaks every agent's CLI on the box.
+
 ### 5. Install from the delivered artifact (never rebuild on the node)
 
 Install from the identical bundle the orchestrator built, delivered to

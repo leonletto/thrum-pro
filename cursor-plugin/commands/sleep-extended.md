@@ -1,4 +1,5 @@
 ---
+name: sleep-extended
 description:
   Park this agent for operator-initiated wake with a comprehensive 16-section
   snapshot (does NOT signal coordinator) then thrum-tmux-kills own session. Use

@@ -158,7 +158,7 @@ RESTART_PREAMBLE=""
 if [ -z "$SPLIT_FIRST_LINE" ] && grep -q '^# Previous Session Context' <<<"$PRIME_OUTPUT"; then
   append_to RESTART_PREAMBLE '# 🛑 ACTION REQUIRED — you left yourself a Resume Plan'$'\n'
   append_to RESTART_PREAMBLE $'\n'
-  append_to RESTART_PREAMBLE 'Before anything else, go to the **`# Previous Session Context`** section below, read its **`## Resume Plan`** (or its final next-actions section) in full, and execute the numbered steps in order. If the briefing was truncated or persisted to a file, first read the whole file with your file-reading tool, every page in order, do not jump to the Resume Plan, and name one fact from it before acting.'
+  append_to RESTART_PREAMBLE 'Before anything else, go to the **`# Previous Session Context`** section below, read its **`## Resume Plan`** (or its final next-actions section) in full, and execute the numbered steps in order. If the briefing was truncated or persisted to a file, first read the whole file with your file-reading tool, every page in order (if there is no file, run `thrum prime --to-file` (if --to-file is an unknown flag, run plain `thrum prime` once and read its output fully) ONCE and read that file; never repeat the prime command), do not jump to the Resume Plan, and name one fact from it before acting.'
   append_to RESTART_PREAMBLE $'\n'
   append_to RESTART_PREAMBLE $'\n'
   append_to RESTART_PREAMBLE '> ⚠️ **If this briefing was persisted to a `tool-results/*.txt` file instead of delivered inline, read it with the `Read` tool (use `offset`/`limit` to page through it) — NOT with `sed`, `grep`, `head`, `tail`, or `cat` via Bash.**'$'\n'
@@ -175,7 +175,7 @@ else
   append_to BRIEFING 'The complete `thrum prime` output is included below. Read it in full.'$'\n'
 fi
 append_to BRIEFING $'\n'
-append_to BRIEFING 'Beyond the session-start queue and state reconcile and the inbox check, spawn additional commands only if the inbox section shows unread messages that need processing.'$'\n'
+append_to BRIEFING 'During this priming turn, beyond the queue/state reconcile and inbox check, run extra commands only for unread messages that need processing. This does not limit work you are already authorized to do; resume it after priming.'$'\n'
 append_to BRIEFING $'\n---\n\n'
 append_to BRIEFING "$PRIME_OUTPUT"$'\n'
 

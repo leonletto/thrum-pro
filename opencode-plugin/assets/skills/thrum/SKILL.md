@@ -12,6 +12,9 @@ Run `thrum prime` for full session context (auto-injected by the SessionStart
 hook; also fires on post-compact resume). PreCompact is not registered — use
 `/thrum:compact` to save a snapshot before deliberately compacting.
 
+If the prime output was truncated, run `thrum prime --to-file` (if --to-file is an unknown flag, run plain `thrum prime` once and read its output fully)
+ONCE and read that file page by page; never re-run `thrum prime` to page through it.
+
 ## Quick Command Reference
 
 ### Messaging

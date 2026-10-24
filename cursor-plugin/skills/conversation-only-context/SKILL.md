@@ -16,9 +16,11 @@ persistent subagent that writes its result to a file.
 ## Wake procedure
 
 0. Caller binding decays to anonymous across a restart. Before the first mutating
-   thrum command, re-warm it: `thrum prime >/private/tmp/rw.txt 2>&1` — output to
-   a file, **not** back into context.
-1. Read the **full** prime briefing with the Read tool, every page, in order. Name
+   thrum command, re-warm it: `thrum prime --to-file` — it writes the briefing to
+   a new file under the worktree's `.thrum/var` and prints only that path, **not**
+   the briefing back into context.
+1. Read the **full** prime briefing from the path step 0 printed, with the Read
+   tool, every page, in order. Name
    one load-bearing fact from the **middle** of it before taking any action.
 2. Execute the resume plan from the newest restart snapshot.
 3. Reconcile `thrum queue list` against `thrum state show personal_state:current`.

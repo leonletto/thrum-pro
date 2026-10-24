@@ -1,4 +1,5 @@
 ---
+name: compact
 description: "Stage and verify a standard snapshot, settle owned background tasks, then compact this tmux session in place. Use for context relief when you want to keep the current session."
 ---
 
@@ -47,7 +48,7 @@ If `tmux_session` is empty: ABORT before composing. Exit code 1.
 skill) and your committed work (`thrum queue` — see the `using-the-queue`
 skill) BEFORE composing your snapshot below — these survive compaction
 independently of the prose continuation file and are what a post-compact
-render reads back.
+render reads back. Without a Pro licence (`not entitled` / `requires a license`), skip this write and track it in the message thread instead.
 
 Invoke the /thrum:snapshot-protocol skill and follow it, starting with its
 Step 1 (resolve your worktree ONLY via `thrum agent worktree --authoritative` —

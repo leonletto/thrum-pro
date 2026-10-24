@@ -281,6 +281,16 @@ fi
 # gives the cwd authority and uses THRUM_HOME only when no .thrum exists above the
 # cwd. So the two agree for a redirected worktree; they differ only when a stale
 # THRUM_HOME points at another project than the cwd (a named residual).
+# Background-listener capability: a runtime with no background listener sets
+# THRUM_BACKGROUND_LISTENER=0 (its preset has an empty listener_spawn_template,
+# so prime emits no listener section). The PID check is then skipped, so the
+# runtime is never told to start a listener it cannot run as a background
+# process. Unset means the listener is expected (the Claude default).
+if [ "${THRUM_BACKGROUND_LISTENER:-1}" = 0 ]; then
+  write_idle
+  exit 0
+fi
+
 PID_VAR="$(resolve_thrum_dir "${THRUM_HOME:-$PROJECT_DIR}")/var"
 PID_FILE="$PID_VAR/${AGENT_ID}-listener.pid"
 

@@ -349,13 +349,13 @@ After restart, IF you saved a snapshot within the graceful window, it moves to
 `.thrum/agents/<your-agent-id>/sessions/` and stays there as a persistent log
 entry. If the graceful save window elapsed before you saved (e.g. you were
 mid-task and missed the interrupt), the daemon writes NO snapshot and records a
-`.timeout-marker` sibling file instead — `thrum tmux restart` reports this via
-`snapshot_outcome: timeout` (CLI shows a 🔴 warning) rather than silently
-looking like success. Do not infer success from an empty `.thrum/restart/`
-directory alone — an empty source directory is consistent with either a genuine
-successful archive OR a bug that resolved to the wrong destination, silently
-aliased another agent's archive, or wrote truncated content. Browse the archive
-with:
+`.timeout-marker` sibling file instead. `thrum tmux restart` returns as soon as
+the daemon accepts the call, so it no longer reports this; the outcome is in the
+daemon log and the `.timeout-marker` file. Do not infer success from an empty
+`.thrum/restart/` directory alone — an empty source directory is consistent with
+either a genuine successful archive OR a bug that resolved to the wrong
+destination, silently aliased another agent's archive, or wrote truncated
+content. Browse the archive with:
 
 ```bash
 thrum agent sessions list                    # default: this agent

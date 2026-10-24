@@ -89,7 +89,8 @@ mis-named; confirm by message before assigning. `assign` appends to
 `assigned_to` with no duplicate check, so this pre-dispatch read is the only
 guard against double-loading a busy agent. Record the handoff on your own queue
 with `thrum queue assign <bundle> <target>`, then send the real dispatch via
-`thrum send`.
+`thrum send`. Without a Pro licence (`not entitled` / `requires a license`),
+skip this write and track it in the message thread instead.
 
 One bundle per epic/branch handed out — keep it reconciled as the work moves
 (`start` → review → merge-gate → torn down), per `using-the-queue`. You RECORD

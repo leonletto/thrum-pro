@@ -209,9 +209,16 @@ merge target before merging.
 4. Launch a new gate agent only if the persistent set is genuinely unavailable —
    never merely because an old candidate-specific session is stale.
 
+**Combine, don't gate one branch at a time.** Each gate box builds ONE combined merge tree from
+its queued items: related branches together, small ones folded in with the large, merged onto current trunk one
+after another with a clean merge-tree check at each step. It runs the required lanes once on that tree. The
+load test likewise takes one combined candidate per run. A branch that conflicts or fails is named and dropped
+from the set; it goes back to its owner, and the rest proceed. Stacked branches always travel together. The gate
+reports conflicts to you and never resolves them.
+
 Record the dispatch on your own queue (`thrum queue assign <bundle>
 <gate-runner>`) per `coordinator-dispatching-work`'s queue step before
-sending the gate dispatch.
+sending the gate dispatch. Without a Pro licence (`not entitled` / `requires a license`), skip this write and track it in the message thread instead.
 
 🔴 **WHERE THE LONG / tmux-SENSITIVE LANES RUN — a DEDICATED NON-FLEET gate box, never
 a populated one.** The integration lane and the rpc race suite create FIXED-NAME tmux
@@ -244,6 +251,11 @@ for; it never changes who runs it. Only run a gate yourself when **no** gate-rol
 agent exists — and then say so explicitly in the merge record, so the gap is
 visible rather than invisible.
 
+A gate finding with no failing test or reproduction can never block. Label it UNMEASURED, state the
+likely cost, and name the test that would prove it. The coordinator forwards it only if the fix is
+clearly worth the cost, never as a 'real risk', and the owner can decline it. Same principle as the
+OVERBUILD CHECK (§0a): do not let an unproven worry become a cost to the owner.
+
 ### What the dispatch must contain
 
 The gate answers the question you ask it. Four required sections:
@@ -260,7 +272,7 @@ The gate answers the question you ask it. Four required sections:
    reading and unsafe for executing. The rpc suite creates FIXED-NAME tmux
    fixtures on the SHARED FLEET SOCKET; the resulting `duplicate session` failure
    is indistinguishable from a genuine branch regression.
-4. **Diff each gate's proposed efficacy line against its own report body** before
+4. **Diff each gate's proposed gate-log line against its own report body** before
    it lands. One contradicted itself precisely in the half a busy runner pastes
    unread.
 
@@ -408,13 +420,8 @@ agreeing (`rev-parse origin/<branch>` and `ls-remote`). **Assert the branch TIP*
    or evidence, and delete the gate's output once you confirm the candidate landed or was
    rejected (owner ruling 2026-10-17). The line must be able to carry a `CLEAN-WITH-GATE-FIXES`
    outcome, and when one applies it cites the `GATE-AUTHORED` commit SHA.
-2. **The efficacy row**, in the hotpath-gate efficacy log — required for
-   **every** trigger-dir merge, including `SKIPPED_WITH_EVIDENCE` rows and
-   orchestrator-run merges. The log measures gate **coverage**, not just outcomes.
-   Record `FALSE_POSITIVE=0` explicitly on a clean run so the zero is a
-   measurement rather than an absence. Same rule applies here: an
-   `outcome=CLEAN-WITH-GATE-FIXES` row cites the `GATE-AUTHORED` commit SHA when
-   one exists.
+2. **No efficacy row.** The only post-verdict record is the one line in
+   dev-docs/gate-log.md (gate output is deleted after the verdict).
 3. **Commit accumulated agent state** under `.thrum/agents/` along with the merge.
    Uncommitted agent state exists in exactly one working tree, and it IS the
    agent's memory across restarts. **Never `git add -f`.**
@@ -465,7 +472,7 @@ hides staleness.
 - Walking the Pass-3 lenses yourself when a gate-role agent exists.
 - Treating dual review as the gate.
 - Carrying a prior verdict onto a new SHA.
-- An efficacy row that contradicts its own report body.
+- A gate-log line that contradicts its own report body.
 - Reading `--is-ancestor <merge-base> <tip>` as a check.
 - A zero from a trigger-dir query, accepted without a control.
 - `go test … | tail`, or `$?` read after any pipe.

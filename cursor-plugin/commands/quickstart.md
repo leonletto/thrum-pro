@@ -1,4 +1,5 @@
 ---
+name: quickstart
 description: Register agent and start session
 argument-hint: '[--role R --module M --intent "..."]'
 ---

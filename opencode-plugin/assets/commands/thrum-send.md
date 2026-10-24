@@ -1,4 +1,5 @@
 ---
+name: send
 description: Send a message to an agent
 ---
 

@@ -70,15 +70,18 @@ result.
 
 ### Quick Reference
 
-| Command                                                   | Effect                                          |
-| --------------------------------------------------------- | ----------------------------------------------- |
-| `thrum state set --kind <k> --scope <s> --value '<json>'` | Upsert (create or overwrite)                    |
-| `thrum state get <kind>:<scope>`                          | Read one entry                                  |
-| `thrum state list [--kind <k>] [--agent <id>]`            | List entries                                    |
-| `thrum state show <kind>:<scope>`                         | Full metadata for one entry                     |
-| `thrum state delete <kind>:<scope>`                       | Remove outright (fleet: tombstones)             |
-| `thrum state describe <kind>`                             | Dump a declared kind's field shape + threshold  |
-| `thrum state history <kind>:<scope>`                      | Append-only write history (recovers LWW losers) |
+| Command                                          | Effect                                          |
+| ------------------------------------------------ | ----------------------------------------------- |
+| `thrum state set --kind <k> --scope <s> --stdin` | Upsert; value from --stdin or --value-file      |
+| `thrum state get <kind>:<scope>`                 | Read one entry                                  |
+| `thrum state list [--kind <k>] [--agent <id>]`   | List entries                                    |
+| `thrum state show <kind>:<scope>`                | Full metadata for one entry                     |
+| `thrum state delete <kind>:<scope>`              | Remove outright (fleet: tombstones)             |
+| `thrum state describe <kind>`                    | Dump a declared kind's field shape + threshold  |
+| `thrum state history <kind>:<scope>`             | Append-only write history (recovers LWW losers) |
+
+Without a Pro licence (`not entitled` / `requires a license`), skip this write
+and track it in the message thread instead.
 
 `--method by_effect` when you measured it directly; `--method asserted` when
 you're stating it without a live check; a write relayed from a message is forced

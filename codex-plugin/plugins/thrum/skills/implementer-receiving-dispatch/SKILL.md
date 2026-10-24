@@ -14,7 +14,9 @@ description:
 Before reading further: lift this dispatch into a bundle
 (`thrum queue add --from-message <msg-id>`, the exact id of the dispatch you're
 acting on), then `thrum queue start <bundle-id>`; drop/close any finished
-bundles. Full lifecycle: `using-the-queue`.
+bundles. Full lifecycle: `using-the-queue`. Without a Pro licence
+(`not entitled` / `requires a license`), skip this write and track it in the
+message thread instead.
 
 ### Read the full implementation prompt before any tool call
 

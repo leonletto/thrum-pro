@@ -188,7 +188,11 @@ rule 1 — never the working tree). For each `### N. <title>` entry, in order:
 4. Record an inapplicable entry as walked-and-N/A with a one-line reason —
    never a silent skip.
 
-Cite an anti-pattern finding as `ph<N>` (matching the efficacy-log `lens=`
+A gate finding with no failing test or reproduction can never block. Label it UNMEASURED, state the
+likely cost, and name the test that would prove it. The coordinator forwards it only if the fix is
+clearly worth the cost, never as a 'real risk', and the owner can decline it.
+
+Cite an anti-pattern finding as `ph<N>` (matching the gate-log `lens=`
 token); cite a meta-check finding (below) as `ph-metaA` / `ph-metaB` /
 `ph-metaC`.
 

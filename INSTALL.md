@@ -276,8 +276,10 @@ session, run `/skills reload` to load the updated skills and commands without
 restarting. Hook changes need a restart of `agy`.
 
 The conversion keeps the skills, the agent and the commands, and skips MCP.
-Type `/thrum:prime` after starting an agent. Add the MCP server with
-`agy mcp add` if you want it.
+Agents that Thrum launches on `agy` are primed automatically: Thrum types
+`/thrum:prime` into the new session. If you start `agy` yourself, type
+`/thrum:prime` after it starts. Add the MCP server with `agy mcp add` if you
+want it.
 
 Install from the `claude-plugin` URL above, not from the repository root:
 the root URL (and the `.git#claude-plugin` form) also installs the Copilot

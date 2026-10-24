@@ -250,7 +250,7 @@ Muse has its own plugin system and marketplace — it does **not** use the Claud
 marketplace. It installs the same Thrum plugin through Muse-native commands, so there
 is no separate Muse plugin to build.
 
-Prerequisites: the `muse` binary (validated on `1.4.0-R4161.1`, `1.4.2-R4684.1`, `1.4.6-R6000.1` and `1.4.11`), a
+Prerequisites: the `muse` binary (tested with Muse 1.4.x, most recently `1.4.12-R6909.1`; Muse updates itself), a
 Muse account, and the `thrum` binary on your `PATH`. Run these as the same OS user
 that runs your agents.
 
@@ -315,8 +315,10 @@ session, run `/skills reload` to load the updated skills and commands without
 restarting. Hook changes need a restart of `agy`.
 
 The conversion keeps the skills, the agent and the commands, and skips MCP.
-Type `/thrum:prime` after starting an agent. Add the MCP server with
-`agy mcp add` if you want it.
+Agents that Thrum launches on `agy` are primed automatically: Thrum types
+`/thrum:prime` into the new session. If you start `agy` yourself, type
+`/thrum:prime` after it starts. Add the MCP server with `agy mcp add` if you
+want it.
 
 Install from the `claude-plugin` URL above, not from the repository root:
 the root URL (and the `.git#claude-plugin` form) also installs the Copilot
@@ -325,7 +327,7 @@ payload as a second plugin, `thrum-copilot`. If that happened, remove it with
 marketplace, so `thrum@thrum` and `agy plugin link` fail with
 "unknown marketplace". `agy plugin validate claude-plugin` also fails; that is
 expected, because install converts the plugin.
-Validated on `agy` 1.4.2 and 1.4.5.
+Tested with `agy` 1.4.x, most recently 1.4.6.
 
 ---
 

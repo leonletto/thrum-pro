@@ -5,67 +5,94 @@ description: "Use when deploying a build to a single node, migrating or not — 
 
 # Coordinator: Deploying a Build to a Single Node — migrating or not
 
-> This runbook covers EVERY deploy to a single node, migrating or not. Most sections apply to every deploy; only migration-weight and store-corruption specifics are bump-only.
+> This runbook covers EVERY deploy to a single node, migrating or not. Most sections apply to every deploy; only
+> migration-weight and store-corruption specifics are bump-only.
 
 ## 0. Pull-current first (ff-only)
 
-The absolute first action before anything else: fetch the control-plane repository and fast-forward to the orchestrator's pin.
+The absolute first action before anything else: fetch the control-plane repository and fast-forward to the
+orchestrator's pin.
 
-- Read the project's deployment adapter inside `.thrum/config.json` (`fleet.deployment`; reference at the deployment-adapter reference) to obtain `preflight.pull_command` and `preflight.pin_command`.
-- Run `preflight.pull_command` (must be ff-only; if not fast-forwardable, STOP and surface — never blind-merge in the shared tree).
+- Read the project's deployment adapter inside `.thrum/config.json` (`fleet.deployment`; reference at the
+  deployment-adapter reference) to obtain `preflight.pull_command` and `preflight.pin_command`.
+- Run `preflight.pull_command` (must be ff-only; if not fast-forwardable, STOP and surface — never blind-merge in the
+  shared tree).
 - Verify the delivered artifact actually CONTAINS the fix at the pinned SHA (adapter `artifact.commit_file` sidecar).
 
-This ensures the node's coordinator reasons from a checkout that is actually current before evaluating backup, install, or migration.
+This ensures the node's coordinator reasons from a checkout that is actually current before evaluating backup, install,
+or migration.
 
 > Example — Thrum project: pull via `git fetch origin && git merge --ff-only origin/<branch>` before any backup or install.
 
 ## 1. Who executes — resolve the node's local coordinator (via adapter identity)
 
-The node's own coordinator drives the deploy locally on its own host. Never drive a node's build/install/restart from another host.
+The node's own coordinator drives the deploy locally on its own host. Never drive a node's build/install/restart from
+another host.
 
-- Resolve WHO via `topology.identity_resolution` (adapter `fleet.deployment.thrum.topology.identity_resolution` or `fleet.deployment.products.<id>.topology`) — a `daemon_id` join plus hostname and absence of `.thrum/redirect`, never by agent name or worktree name.
+- Resolve WHO via `topology.identity_resolution` (adapter `fleet.deployment.thrum.topology.identity_resolution` or
+  `fleet.deployment.products.<id>.topology`) — a `daemon_id` join plus hostname and absence of `.thrum/redirect`, never
+  by agent name or worktree name.
 - When connected-repo daemons share a host, respect the adapter-defined restart order within that host.
 
 If the target node has no working coordinator, state why explicitly before using any fallback.
 
 ## 2. Back up before touching anything (via adapter backup command + sizing formula)
 
-- Run the project's backup command (`fleet.deployment.thrum.backup.command` or `fleet.deployment.products.<id>.backup.command`) and verify per `backup.verify`.
-- Size BEFORE you run it on a bloated node: apply the adapter's `backup.sizing_formula` (`free_at_completion = free_now - zip(stale current/) + size(stale current/) - size(live lane)`) — the stale `current/` is removed before the fresh export, so peak is not double-count. Retention runs last and does not bound the peak.
+- Run the project's backup command (`fleet.deployment.thrum.backup.command` or
+  `fleet.deployment.products.<id>.backup.command`) and verify per `backup.verify`.
+- Size BEFORE you run it on a bloated node: apply the adapter's `backup.sizing_formula`
+  (`free_at_completion = free_now - zip(stale current/) + size(stale current/) - size(live lane)`) — the stale
+  `current/` is removed before the fresh export, so peak is not double-count. Retention runs last and does not bound the
+  peak.
 - On failure, roll back via `backup.restore_command`; never delete the store.
 
-> Example — Thrum project: backup via `thrum backup`, sized per the formula above, verified with `sqlite3 ?mode=ro&immutable=1` read.
+> Example — Thrum project: backup via `thrum backup`, sized per the formula above, verified with
+> `sqlite3 ?mode=ro&immutable=1` read.
 
 ## 3. Storage access — through the engine or control-plane CLI, never file-bypass
 
-Access the state store only through the engine or the control-plane CLI in read-only mode. Never bypass the storage engine's file ownership.
+Access the state store only through the engine or the control-plane CLI in read-only mode. Never bypass the storage
+engine's file ownership.
 
 - Via: `storage_access.via` (e.g., CLI or `?mode=ro`).
 - Forbidden: `storage_access.forbidden` (e.g., hand-copy of live `-wal`/`-shm`, concurrent `.backup` on live store).
-- A bare read-write open can fire a checkpoint that truncates the write log out from under live readers → sustained corruption. Always use `?mode=ro` where applicable.
+- A bare read-write open can fire a checkpoint that truncates the write log out from under live readers → sustained
+  corruption. Always use `?mode=ro` where applicable.
 
 If the project has no WAL/SHM, this section is N/A — skip and note.
 
 ## 4. Never wrap service start/restart in a blind timeout
 
-🔴 **On macOS, use `service.mac_restart_command`, not `service.restart_command`.** (Example — Thrum adapter: `service.mac_restart_command` preserves Local Network (TCC) permission.) A daemon restarted from a terminal or agent pane gets its Local Network (TCC) permission attributed to that terminal and is silently denied LAN peer dials (`no route to host`): peers go dark while the node itself looks healthy, and `PPID 1` does NOT prove it was re-parented correctly. Check the node's OS before choosing the command. After a mac restart, verify the peers on the LAN reconnect, not just the version.
+🔴 **On macOS, use `service.mac_restart_command`, not `service.restart_command`.** (Example — Thrum adapter:
+`service.mac_restart_command` preserves Local Network (TCC) permission.) A daemon restarted from a terminal or agent
+pane gets its Local Network (TCC) permission attributed to that terminal and is silently denied LAN peer dials
+(`no route to host`): peers go dark while the node itself looks healthy, and `PPID 1` does NOT prove it was re-parented
+correctly. Check the node's OS before choosing the command. After a mac restart, verify the peers on the LAN reconnect,
+not just the version.
 
-Run the project's service restart command (`fleet.deployment.thrum.service.restart_command`, or `service.mac_restart_command` on macOS, or product equivalent) without a blind timeout wrapper. A timeout that kills a migrating restart mid-migration manufactures a half-migrated store.
+Run the project's service restart command (`fleet.deployment.thrum.service.restart_command`, or
+`service.mac_restart_command` on macOS, or product equivalent) without a blind timeout wrapper. A timeout that kills a
+migrating restart mid-migration manufactures a half-migrated store.
 
 - Adapter flag `service.never_timeout` is true.
-- Signal-window rules are adapter data: `migration.signal_rules` (`SIGQUIT` fatal-always, `SIGUSR1` fatal-before-socket). Respect them — do not send fatal signals in the forbidden window.
+- Signal-window rules are adapter data: `migration.signal_rules` (`SIGQUIT` fatal-always, `SIGUSR1`
+  fatal-before-socket). Respect them — do not send fatal signals in the forbidden window.
 
-> Example — Thrum adapter: use the configured `service.mac_restart_command` on macOS; use `service.restart_command` otherwise. Never wrap either in `timeout`.
+> Example — Thrum adapter: use the configured `service.mac_restart_command` on macOS; use `service.restart_command`
+> otherwise. Never wrap either in `timeout`.
 
 ## 4a. EULA gate — before the binary swap
 
-EULA gate (0.11+): before swapping the binary, record acceptance for the box user by running the new build once with `THRUM_ACCEPT_EULA=<bundled version>`. Confirm that `~/.thrum/license/eula-acceptance-<version>-*.json` exists and that a plain `thrum inbox` works. Skipping this breaks every agent's CLI on the box.
+EULA gate (0.11+): before swapping the binary, record acceptance for the box user by running the new build once with
+`THRUM_ACCEPT_EULA=<bundled version>`. Confirm that `~/.thrum/license/eula-acceptance-<version>-*.json` exists and that
+a plain `thrum inbox` works. Skipping this breaks every agent's CLI on the box.
 
 ## 5. Install from the delivered artifact (never rebuild on the node)
 
 Install from the identical bundle the orchestrator built, delivered to `artifact.distribution.drop_path`.
 
-- Verify BEFORE unpack that the delivered bundle's version/checksum/commit sidecar equals the orchestrator's pin (adapter `artifact.checksum`, `artifact.version_file`, `artifact.commit_file`).
+- Verify BEFORE unpack that the delivered bundle's version/checksum/commit sidecar equals the orchestrator's pin
+  (adapter `artifact.checksum`, `artifact.version_file`, `artifact.commit_file`).
 - Run `install.command` (from adapter). The node does not compile, sign, or rebuild — it installs.
 - Collect BEFORE readings (current version, state counters, checkpoint counts, health probes) before the install.
 
@@ -83,8 +110,10 @@ Read version/state from the running service, not from the filesystem checkout.
 Migration is performed by restarting the service after install; the service's own boot migration does the schema/data move.
 
 - Calibrate weight via `migration.weight_calibration` (heavy bulk-export vs light add-column) — do not assume a fixed duration.
-- Known signatures that require a cold-restart recovery: `migration.sigbus_signatures` (e.g., WAL-index recover signatures) and `migration.on_sigbus`.
-- Observe that the restarted service reports the new version/state and that health probes have converged (adapter `health.probes`, `health.convergence_wait`).
+- Known signatures that require a cold-restart recovery: `migration.sigbus_signatures` (e.g., WAL-index recover
+  signatures) and `migration.on_sigbus`.
+- Observe that the restarted service reports the new version/state and that health probes have converged (adapter
+  `health.probes`, `health.convergence_wait`).
 
 ## 8. Verify post-migration (liveness, health probes, checkpoint counts, agent liveness)
 
@@ -117,7 +146,8 @@ Do not hand-edit generated marketplace manifests.
 
 ## 8c. Reconcile registry/phase after restart
 
-Re-verify the daemon registry and agent phases after restart (adapter `health.probes` includes phase reconciliation). Confirm the pinned version is durable across a clean cold-boot probe where applicable.
+Re-verify the daemon registry and agent phases after restart (adapter `health.probes` includes phase reconciliation).
+Confirm the pinned version is durable across a clean cold-boot probe where applicable.
 
 ## Red flags — STOP
 

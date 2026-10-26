@@ -198,11 +198,9 @@ For each `*-brainstorm` worktree that looks relevant, inspect:
 | Idle + domain-relevant researcher found | **REUSE** — send the Phase 2 briefing to the existing agent in its current worktree. Skip the rest of Phase 1. |
 | No idle relevant researcher             | Fall through → proceed with "Pick the base branch" below.                                                      |
 
-When reusing, have the agent itself run `thrum session set-intent "<new one-line
-topic>"` so `thrum team` output stays accurate (there is no command to set
-ANOTHER agent's intent — `set-intent` acts on the caller), then send the Phase 2
-briefing as normal. The existing
-worktree and branch carry over; the agent is already primed.
+When reusing, have the agent itself run `thrum session set-intent "<new one-line topic>"` so `thrum team` output stays
+accurate (there is no command to set ANOTHER agent's intent — `set-intent` acts on the caller), then send the Phase 2
+briefing as normal. The existing worktree and branch carry over; the agent is already primed.
 
 **Scope of reuse:** adjacent topics in the same domain (e.g., a researcher who
 handled scheduler-persistence brainstorm is a good candidate for a
@@ -460,13 +458,10 @@ expensive footguns hide.
 
 ## Phase 6 — Researcher writes the plan (with dual-review gate)
 
-Once the brainstorm is LOCKED (and any companion design spec is LOCKED), the
-researcher writes the implementation plan doc directly, converting the
-brainstorm + spec into concrete steps. (First, the soft pre-flight grep:
-`grep -F` the brainstorm for its `THRUM-REVIEW: stage=brainstorm
-verdict=Ready:Yes` (or `OVERRIDE`) stamp — absent → STOP and finish the
-brainstorm review.) The plan feeds `project-setup` — there is no other
-downstream path.
+Once the brainstorm is LOCKED (and any companion design spec is LOCKED), the researcher writes the implementation plan
+doc directly, converting the brainstorm + spec into concrete steps. (First, the soft pre-flight grep: `grep -F` the
+brainstorm for its `THRUM-REVIEW: stage=brainstorm verdict=Ready:Yes` (or `OVERRIDE`) stamp — absent → STOP and finish
+the brainstorm review.) The plan feeds `project-setup` — there is no other downstream path.
 
 **The plan doc gets the SAME dual-review treatment as the brainstorm.** This
 review step is mandatory: there is no internal reviewer upstream of it, so

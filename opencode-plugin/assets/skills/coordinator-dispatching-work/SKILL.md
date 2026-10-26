@@ -68,19 +68,19 @@ optimization.
 
 ## Subagent model selection
 
-> **Model tiers:** pass an explicit `model:` on every dispatch; choose model and effort per the `choosing-subagent-models` skill (read `runtime.role_models` at the moment of use). Never let a sub-agent inherit your own model.
+> **Model tiers:** pass an explicit `model:` on every dispatch; choose model and effort per the
+> `choosing-subagent-models` skill (read `runtime.role_models` at the moment of use). Never let a sub-agent inherit your
+> own model.
 
 ## Check the target's queue before you dispatch (R3)
 
-Before dispatching, read the target's load two ways: its queue AND its pane. `thrum
-queue list --agent <target>` (a well-run orchestrator keeps its queue current) plus a
-quick `thrum tmux capture <target>` to see what it is mid-task on (message it to confirm
-if its state is unclear). An empty result does NOT
-mean free — it also shows for an agent that keeps no queue or that you mis-named;
-confirm by message before assigning. `assign` appends to `assigned_to` with no
-duplicate check, so this pre-dispatch read is the only guard against double-loading a
-busy agent. Record the handoff on your own queue with `thrum queue assign <bundle>
-<target>`, then send the real dispatch via `thrum send`. Without a Pro licence (`not entitled` / `requires a license`), skip this write and track it in the message thread instead.
+Before dispatching, read the target's load two ways: its queue AND its pane. `thrum queue list --agent <target>` (a
+well-run orchestrator keeps its queue current) plus a quick `thrum tmux capture <target>` to see what it is mid-task on
+(message it to confirm if its state is unclear). An empty result does NOT mean free — it also shows for an agent that
+keeps no queue or that you mis-named; confirm by message before assigning. `assign` appends to `assigned_to` with no
+duplicate check, so this pre-dispatch read is the only guard against double-loading a busy agent. Record the handoff on
+your own queue with `thrum queue assign <bundle> <target>`, then send the real dispatch via `thrum send`. Without a Pro
+licence (`not entitled` / `requires a license`), skip this write and track it in the message thread instead.
 
 One bundle per epic/branch handed out — keep it reconciled as the work moves
 (`start` → review → merge-gate → torn down), per `using-the-queue`. You RECORD at

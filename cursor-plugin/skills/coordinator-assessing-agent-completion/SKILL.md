@@ -200,10 +200,9 @@ PLAIN (no `--force`), then `thrum agent delete`:
    mistake it for protecting the ignored-file class. (Not a pipe — a pipe returns the last
    command's rc, not `git`'s.)
 
-Then REAP the agent row with `thrum agent delete <agent>` once the worktree is gone and no
-process is live: orphan rows must be reaped, not left. Never use `thrum agent cleanup
---force` (it can flag live fleet agents). A refused reap on a dead, worktree-less agent is a
-bug: report it, do not route around it.
+Then REAP the agent row with `thrum agent delete <agent>` once the worktree is gone and no process is live: orphan rows
+must be reaped, not left. Never use `thrum agent cleanup --force` (it can flag live fleet agents). A refused reap on a
+dead, worktree-less agent is a bug: report it, do not route around it.
 
 ⚠️ **After a large reap you may see a `DeadAgentSweeper` skip alert + elevated write-RPC
 latency — do NOT assume the reap caused it.** This box carries a standing single-writer
@@ -281,9 +280,8 @@ agent · gopls PID · RSS-MB.
   stale local copy of shared files** (e.g. `project_state.md`) — the physical
   worktree copy is NOT canonical; never treat it as the source of truth or copy it
   upward.
-- **Never use shell-specific builtins in a reap loop without checking the shell** —
-  `mapfile`/`readarray` are bash-only and silently fail in zsh (`command not
-  found`), so the salvage you thought ran did not. Use portable `while read` and
+- **Never use shell-specific builtins in a reap loop without checking the shell** — `mapfile`/`readarray` are bash-only
+  and silently fail in zsh (`command not found`), so the salvage you thought ran did not. Use portable `while read` and
   verify each salvaged file actually landed.
 - **`rm -rf` raises a confirmation modal that blocks the PARENT pane invisibly** —
   use `rm -r` for scratch cleanup (identical deletion, no modal). Never `rm -rf`.

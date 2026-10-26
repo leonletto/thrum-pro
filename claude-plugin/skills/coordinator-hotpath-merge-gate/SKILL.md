@@ -133,21 +133,17 @@ rediscovering these the hard way:
    race runs on trunk in batches before any deploy, which is what catches
    cross-test races. A focused `--run` race on `./internal/daemon/rpc` is not
    a monolithic run (item 7 is about the unfiltered package).
-7. **`internal/daemon/rpc` must NEVER be run monolithically at gate time, in
-   either lane** — a bare package-level `go test [-race] ./internal/daemon/rpc`
-   starves and hits the configured `-timeout` wall in both the race and
-   non-race lane. The gate's OUTPUT must show the sharded runner actually
-   executed for RPC (`race-shard` / `package-shard --mode norace`, or
-   the project's sharded test runner (race or norace lane) on `./internal/daemon/rpc`, or `make gate`
-   which shards both lanes automatically) — not just that some RPC test ran.
-   A bound-timeout with ZERO test failures is a FALSE RED, not a finding:
-   distinguish it from a genuine hang/deadlock via
-   `go run ./cmd/testgate classify-timeout --log <file> --shard-config <file>
-   --shard <name> --pkg-dir <package dir>` (shard configs are hash-placed, so
-   `--pkg-dir` is required) (fails closed — only BOUND-TIMEOUT exits 0; HANG and
-   UNCLASSIFIED both exit nonzero) before reporting it as a regression.
-   If a gate's own command line invokes the bare package path for RPC, that is a gate defect, not a passing lane.
-   A HANG or UNCLASSIFIED verdict from `classify-timeout` requires human review.
+7. **`internal/daemon/rpc` must NEVER be run monolithically at gate time, in either lane** — a bare package-level
+   `go test [-race] ./internal/daemon/rpc` starves and hits the configured `-timeout` wall in both the race and non-race
+   lane. The gate's OUTPUT must show the sharded runner actually executed for RPC (`race-shard` /
+   `package-shard --mode norace`, or the project's sharded test runner (race or norace lane) on `./internal/daemon/rpc`,
+   or `make gate` which shards both lanes automatically) — not just that some RPC test ran. A bound-timeout with ZERO
+   test failures is a FALSE RED, not a finding: distinguish it from a genuine hang/deadlock via
+   `go run ./cmd/testgate classify-timeout --log <file> --shard-config <file> --shard <name> --pkg-dir <package dir>`
+   (shard configs are hash-placed, so `--pkg-dir` is required) (fails closed — only BOUND-TIMEOUT exits 0; HANG and
+   UNCLASSIFIED both exit nonzero) before reporting it as a regression. If a gate's own command line invokes the bare
+   package path for RPC, that is a gate defect, not a passing lane. A HANG or UNCLASSIFIED verdict from
+   `classify-timeout` requires human review.
 8. Build+test the MERGED-tree result as a SEPARATE condition — neither gate
    currently runs a build of the actual post-merge tree; a clean pre-merge
    build/test does not prove the merged result compiles or passes.
@@ -164,15 +160,12 @@ rediscovering these the hard way:
     be created.
 11. Your report reaches the coordinator ONLY as your final returned text.
     Side-channel output is discarded. Put the whole verdict in the return value.
-12. **NEVER run `git stash`, `git checkout`, `git reset`, or any working-tree
-    mutation in the SHARED repo.** Do read-only inspection there (`git show
-    <sha>:<path>`, `git log`, `git diff`) and do every build/test in a throwaway
-    detached worktree. `git stash` is a SINGLE SHARED STACK across every
-    worktree of a repo, so "cleaning up after myself" can strand or clobber
-    another agent's live work; and the shared repo is POPULATED — live agents
-    hold uncommitted `State.md` they are actively re-authoring.
-    If you believe you must mutate the shared tree, STOP and report instead —
-    that is always a finding, never a step.
+12. **NEVER run `git stash`, `git checkout`, `git reset`, or any working-tree mutation in the SHARED repo.** Do
+    read-only inspection there (`git show <sha>:<path>`, `git log`, `git diff`) and do every build/test in a throwaway
+    detached worktree. `git stash` is a SINGLE SHARED STACK across every worktree of a repo, so "cleaning up after
+    myself" can strand or clobber another agent's live work; and the shared repo is POPULATED — live agents hold
+    uncommitted `State.md` they are actively re-authoring. If you believe you must mutate the shared tree, STOP and
+    report instead — that is always a finding, never a step.
 13. **TEAR DOWN YOUR THROWAWAY WORKTREE WHEN THE GATE ENDS — after two checks,
     in this order.** A required final step, not cleanup etiquette. Each
     abandoned worktree pins its HEAD commit against `gc` and adds a

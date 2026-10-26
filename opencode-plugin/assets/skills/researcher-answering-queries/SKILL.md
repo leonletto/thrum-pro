@@ -9,7 +9,8 @@ description: "Use when another agent has asked you a research question, when fie
 
 Lift this query into a bundle (`thrum queue add --from-message <msg-id>`),
 then `thrum queue start <bundle-id>`; drop/close finished bundles. Full
-lifecycle: `using-the-queue`. Without a Pro licence (`not entitled` / `requires a license`), skip this write and track it in the message thread instead.
+lifecycle: `using-the-queue`. Without a Pro licence (`not entitled` / `requires a license`), skip this write and track
+it in the message thread instead.
 
 ## Lookup order: index → thrum memory → staleness check → respond
 
@@ -23,11 +24,9 @@ the cached entry and the new answer.
 
 1. **Index check.** Read `.thrum/context/research.md`. Does any Tracked Topic
    line look relevant? Note the `research-<slug>` tag handles.
-2. **Content fetch.** For each candidate slug, escalate zoom per the shared
-   3-step read pattern (`thrum-memory`): `thrum memory search --tag
-   research-<slug>` returns the matching entry IDs; triage with
-   `thrum memory show <id> --zoom short` before fetching the full body with
-   `thrum memory show <id> --zoom full`.
+2. **Content fetch.** For each candidate slug, escalate zoom per the shared 3-step read pattern (`thrum-memory`):
+   `thrum memory search --tag research-<slug>` returns the matching entry IDs; triage with
+   `thrum memory show <id> --zoom short` before fetching the full body with `thrum memory show <id> --zoom full`.
 3. **Staleness check.** Use the protocol in the Memory section of your role preamble:
    `git diff --name-only <stamp-sha> HEAD` filtered by the entry's cited paths.
    If empty, the entry stands. If any cited path appears, re-verify (re-read the

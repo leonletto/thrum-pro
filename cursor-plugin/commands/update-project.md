@@ -30,10 +30,16 @@ usual token-saving justification for delegating does not apply.
 
 1. If you are not the coordinator responsible for this repo's project state, stop. Only that coordinator runs this command.
 2. Detect the tier:
+
    ```bash
    thrum license status
    ```
-3. Take the **licensed path** (see Licensed Path below) only when all three hold: the output has a line `license: active` exactly; it has a line starting `  tier:` whose value is `paid`, `comp`, `trial` or `enterprise`; and it has no `DEVICE DEACTIVATED` line. Any other output, or a non-zero exit, prints `license state unknown; using the free path` and takes the **free path** (Steps 1–6). The free path skips the memory step; the index line in `project_state.md`'s Recent Sessions is the only session record.
+
+3. Take the **licensed path** (see Licensed Path below) only when all three hold: the output has a line
+   `license: active` exactly; it has a line starting `  tier:` whose value is `paid`, `comp`, `trial` or `enterprise`;
+   and it has no `DEVICE DEACTIVATED` line. Any other output, or a non-zero exit, prints
+   `license state unknown; using the free path` and takes the **free path** (Steps 1–6). The free path skips the memory
+   step; the index line in `project_state.md`'s Recent Sessions is the only session record.
 
 ### Step 1: Compose Your Session Summary
 
@@ -70,24 +76,35 @@ echo "=== READY ISSUES ===" && (bd ready -n 5 2>/dev/null || echo "(none)")
 
 Live facts move to `thrum state`, work to `thrum queue`, and session history to `thrum memory`.
 
-1. **Live facts.** For each changed fact in Current State Summary, read its kind, then set it. Kinds: `deploy_state`, `topology`, `worktree`, `agent_pool`, `ruling`.
+1. **Live facts.** For each changed fact in Current State Summary, read its kind, then set it. Kinds: `deploy_state`,
+   `topology`, `worktree`, `agent_pool`, `ruling`.
+
    ```bash
    thrum state list --kind <kind>
    thrum state set --kind <kind> --scope <scope> --value '<json>'
    ```
-2. **Work.** Reconcile your queue. Add each in-flight, blocked or pending item, then set its status. Drop only done bundles you do not keep for this session.
+
+2. **Work.** Reconcile your queue. Add each in-flight, blocked or pending item, then set its status. Drop only done
+   bundles you do not keep for this session.
+
    ```bash
    thrum queue list
    thrum queue add --title "<title>" --ref bead:<id>
    thrum queue start <bundle-id>    # or: thrum queue block <bundle-id>, thrum queue done <bundle-id>
    thrum queue drop <bundle-id>
    ```
+
 3. **Session history.** Once, for the session being closed:
+
    ```bash
    thrum memory record-session --session-number <N> --title "Session <N> — <title>" --oneline "<headline>" --short "<2-4 sentences>" --full "<session body>"
    ```
-4. **Pointer file.** Read `project_state.md`, then edit it to the source table, Phase, Durable rules and Stable references. Keep `## Recent Sessions`. Remove the live content of Current State Summary, Architecture Health and open-epic lists.
-5. **Verify.** Record `wc -l` and `wc -w` before and after, and confirm the `thrum state`, `thrum queue` and record-session writes are visible.
+
+4. **Pointer file.** Read `project_state.md`, then edit it to the source table, Phase, Durable rules and Stable
+   references. Keep `## Recent Sessions`. Remove the live content of Current State Summary, Architecture Health and
+   open-epic lists.
+5. **Verify.** Record `wc -l` and `wc -w` before and after, and confirm the `thrum state`, `thrum queue` and
+   record-session writes are visible.
 
 ### Step 3: Read the Current File
 
@@ -109,9 +126,8 @@ Dispatch one **read-only**, background sub-agent per section, each scoped to
 exactly one section and returning only a verified-stale delete-list plus an
 unsure-list (unsure ⇒ keep, never delete on a guess):
 
-1. `## Current State Summary` — for each cited SHA, `git merge-base
-   --is-ancestor <sha> origin/<merge_target>`; for each cited bead, `bd show
-   <id>`.
+1. `## Current State Summary` — for each cited SHA, `git merge-base --is-ancestor <sha> origin/<merge_target>`; for each
+   cited bead, `bd show <id>`.
 2. `## Open Epics / Active Work` — `bd show` each bead ID; rows whose bead is
    CLOSED are stale.
 
@@ -120,12 +136,10 @@ rows into the section edits in Step 4. Fan-out keeps this fast without
 sacrificing thoroughness — a single-threaded pass over independent
 sections is the slow path, not the safe one.
 
-**Deploy state, fleet topology, worktree layout, agent pool, and standing
-rulings are NOT maintained here anymore** — they live in `thrum state`
-(`--kind deploy_state|topology|worktree|agent_pool|ruling`), a cheap `thrum
-state set` upsert done at the moment a fact changes, not part of this
-end-of-session ritual. Staleness for those kinds is read-time (`as_of` +
-per-kind threshold), not something this command curates.
+**Deploy state, fleet topology, worktree layout, agent pool, and standing rulings are NOT maintained here anymore** —
+they live in `thrum state` (`--kind deploy_state|topology|worktree|agent_pool|ruling`), a cheap `thrum state set` upsert
+done at the moment a fact changes, not part of this end-of-session ritual. Staleness for those kinds is read-time
+(`as_of` + per-kind threshold), not something this command curates.
 
 ### Step 4: Edit the File In-Place, Yourself
 
@@ -174,9 +188,11 @@ updating.
    right now, is exactly ONE LINE. No session ever gets a prose block.
    - Append a **single index line** to the `## Recent Sessions` block in
      project_state.md — no body prose, ever:
-     ```
+
+     ```text
      - Session N (YYYY-MM-DD) — <what changed, ≤30 words>
      ```
+
    - **The cap is on WORDS, not on newlines.** A 200-word run-on sentence
      crammed onto one physical line VIOLATES this rule just as much as a
      multi-line prose block does. Count words; keep the line ≤30 of them.

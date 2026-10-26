@@ -216,9 +216,9 @@ load test likewise takes one combined candidate per run. A branch that conflicts
 from the set; it goes back to its owner, and the rest proceed. Stacked branches always travel together. The gate
 reports conflicts to you and never resolves them.
 
-Record the dispatch on your own queue (`thrum queue assign <bundle>
-<gate-runner>`) per `coordinator-dispatching-work`'s queue step before
-sending the gate dispatch. Without a Pro licence (`not entitled` / `requires a license`), skip this write and track it in the message thread instead.
+Record the dispatch on your own queue (`thrum queue assign <bundle> <gate-runner>`) per `coordinator-dispatching-work`'s
+queue step before sending the gate dispatch. Without a Pro licence (`not entitled` / `requires a license`), skip this
+write and track it in the message thread instead.
 
 🔴 **WHERE THE LONG / tmux-SENSITIVE LANES RUN — a DEDICATED NON-FLEET gate box, never
 a populated one.** The integration lane and the rpc race suite create FIXED-NAME tmux
@@ -318,30 +318,23 @@ executed half is **scoped to the change**:
   what the tripwire actually *enforces* — any design or behavior judgment call —
   stays a finding, never a self-administered fix. Keep this distinction sharp;
   it is the highest-risk edit in this whole sequence.
-- 🔴 **The CLASS-firing governance gates, on the merged tree — they are BLIND to
-  changed-package scoping, exactly like the `//go:embed` asset in §5.**
-  `TestFixtureDriftGuard_NoUnlistedSchemaMirrors` (`internal/schema`) and
-  `TestEveryMirrorWriterIsSanctioned` (`tests/gate`) fire on a CLASS — a hand-rolled
-  `CREATE TABLE` for a real production table name, or a new durablelane / mirror
-  writer — so a diff adds the violation **without touching `internal/schema` or
-  `tests/gate`**, and the changed-package `-race` never runs them. Cheap trigger, run
-  it every merge: `git diff <base> <tip> | grep -iE 'CREATE TABLE|ALTER TABLE|durablelane|MirrorWriter|sanctionedMirrorWriters'`
+- 🔴 **The CLASS-firing governance gates, on the merged tree — they are BLIND to changed-package scoping, exactly like
+  the `//go:embed` asset in §5.** `TestFixtureDriftGuard_NoUnlistedSchemaMirrors` (`internal/schema`) and
+  `TestEveryMirrorWriterIsSanctioned` (`tests/gate`) fire on a CLASS — a hand-rolled `CREATE TABLE` for a real
+  production table name, or a new durablelane / mirror writer — so a diff adds the violation **without touching
+  `internal/schema` or `tests/gate`**, and the changed-package `-race` never runs them. Cheap trigger, run it every
+  merge: `git diff <base> <tip> | grep -iE 'CREATE TABLE|ALTER TABLE|durablelane|MirrorWriter|sanctionedMirrorWriters'`
   — ANY hit ⇒ also run `go test ./internal/schema/ -run TestFixtureDriftGuard` and
-  `go test ./tests/gate/ -run TestEveryMirrorWriterIsSanctioned` on the MERGED tree.
-  Measured previously: kgi7t (`TestEveryMirrorWriterIsSanctioned`) and xo58f
-  (`TestFixtureDriftGuard`) BOTH escaped per-merge Pass-3 this way and surfaced only
-  in the daily gate as trunk-reds. The changed-package rule below is necessary, not
-  sufficient — a class gate is a property of the TREE, not the neighbourhood.
-  🔴 **Also always-run, same class-gate reasoning:**
-  `TestNoMainStateDBWriteOwnerBypasses` (`internal/testgate`; corpus 5.1
-  owner-bypass-check) — a scanner ratchet over every raw main-State-DB write
-  site, blind to changed-package scoping the same way. Measured previously:
-  a merged branch introduced a raw `r.db.ExecContext` outside
-  `safedb.WriteCoordinator` in a durable-lane cold-boot restore step; the
-  ratchet went 213→214 and gate_thrum's Pass-3 on that merge was CLEAN because
-  this test was not yet in the always-run set. Run it on the
-  MERGED tree every merge: `go test ./internal/testgate/... -run
-  TestNoMainStateDBWriteOwnerBypasses`.
+  `go test ./tests/gate/ -run TestEveryMirrorWriterIsSanctioned` on the MERGED tree. Measured previously: kgi7t
+  (`TestEveryMirrorWriterIsSanctioned`) and xo58f (`TestFixtureDriftGuard`) BOTH escaped per-merge Pass-3 this way and
+  surfaced only in the daily gate as trunk-reds. The changed-package rule below is necessary, not sufficient — a class
+  gate is a property of the TREE, not the neighbourhood. 🔴 **Also always-run, same class-gate reasoning:**
+  `TestNoMainStateDBWriteOwnerBypasses` (`internal/testgate`; corpus 5.1 owner-bypass-check) — a scanner ratchet over
+  every raw main-State-DB write site, blind to changed-package scoping the same way. Measured previously: a merged
+  branch introduced a raw `r.db.ExecContext` outside `safedb.WriteCoordinator` in a durable-lane cold-boot restore step;
+  the ratchet went 213→214 and gate_thrum's Pass-3 on that merge was CLEAN because this test was not yet in the
+  always-run set. Run it on the MERGED tree every merge:
+  `go test ./internal/testgate/... -run TestNoMainStateDBWriteOwnerBypasses`.
 
 **Establish branch-attributable vs pre-existing from the full-race `-race`
 result** — a regression adds failures the packages touched by the diff did not
@@ -425,14 +418,12 @@ agreeing (`rev-parse origin/<branch>` and `ls-remote`). **Assert the branch TIP*
 3. **Commit accumulated agent state** under `.thrum/agents/` along with the merge.
    Uncommitted agent state exists in exactly one working tree, and it IS the
    agent's memory across restarts. **Never `git add -f`.**
-4. **Delete the merged branch AND drop its queue bundle — one ritual, at merge
-   time**, after the push is verified. `feature/*` and `fix/*` are one-shot —
-   delete freely. **`agent/*`, `salvage/*`, the documentation deployment branch and `release/*` are
-   ongoing or archival — do NOT delete.** Then, in the same turn: `thrum queue
-   done <bundle>` + `thrum queue drop <bundle>` for the bundle that tracked this
-   branch, and `bd close <id>` any beads this merge closed. A merge is not
-   complete until the branch ref AND its queue bundle are both gone — the same
-   act that lands the code retires its tracking.
+4. **Delete the merged branch AND drop its queue bundle — one ritual, at merge time**, after the push is verified.
+   `feature/*` and `fix/*` are one-shot — delete freely. **`agent/*`, `salvage/*`, the documentation deployment branch
+   and `release/*` are ongoing or archival — do NOT delete.** Then, in the same turn: `thrum queue done <bundle>` +
+   `thrum queue drop <bundle>` for the bundle that tracked this branch, and `bd close <id>` any beads this merge closed.
+   A merge is not complete until the branch ref AND its queue bundle are both gone — the same act that lands the code
+   retires its tracking.
 
 ## 7a. BEFORE YOU ACCEPT A VERDICT — CONFIRM THE RUNNER TORE ITS OWN THINGS DOWN
 
@@ -450,7 +441,10 @@ those nine had no registered agent, so a registry-based enumeration returns a
 confident answer that omits most of the population. **Enumerate sessions, not
 agents.**
 
-🔴 **AND WATCH FOR `--force` IN THE TEARDOWN REPORT. `git worktree remove` REFUSES at rc=128 on untracked files — THE REFUSAL IS THE PROTECTION, NOT THE ENUMERATION.** A clean enumeration therefore *invites* the flag that removes it. **Any `--force` must arrive as an OVERRIDE with a justification, never as a pass**, and a clean guard result is not a justification.
+🔴 **AND WATCH FOR `--force` IN THE TEARDOWN REPORT. `git worktree remove` REFUSES at rc=128 on untracked files — THE
+REFUSAL IS THE PROTECTION, NOT THE ENUMERATION.** A clean enumeration therefore *invites* the flag that removes it.
+**Any `--force` must arrive as an OVERRIDE with a justification, never as a pass**, and a clean guard result is not a
+justification.
 
 **A verdict is not complete until its runtime is gone.** Accept the finding, then
 ask: which worktrees, which agents, which sessions, and what does the count read

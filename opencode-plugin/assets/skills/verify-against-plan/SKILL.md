@@ -37,9 +37,8 @@ stays the authoritative anchor; the design is a second source of requirements.
 Omit it and the skill behaves exactly as before (plan only). When supplied, the
 skill also runs the **Design-doc pass** below.
 
-Pass it when the plan implements all or part of a design: `design=<absolute path
-to the design spec>`. A path that is missing, empty or unreadable is a
-pre-flight bail (check 1b), never a silent skip.
+Pass it when the plan implements all or part of a design: `design=<absolute path to the design spec>`. A path that is
+missing, empty or unreadable is a pre-flight bail (check 1b), never a silent skip.
 
 ### Context-inferred defaults
 
@@ -124,12 +123,10 @@ clear error — do not proceed with partial inputs.
      without running any diff. Report explicitly: "stamp present but no cited
      files to diff — cannot confirm currency." This is NOT reported as
      VERIFIED-CURRENT.
-   - **Stamp found and cited files present:** run `git diff
-     <sha>..origin/<merge_target> -- <files from the File Structure table>`
-     (resolve `<merge_target>` through its remote-tracking ref, never a bare
-     local branch name — a local branch of the same name can be stale or
-     absent on the reader's machine), scoped only to the files the plan cites
-     (never a full-repo diff). Two sub-outcomes:
+   - **Stamp found and cited files present:** run
+     `git diff <sha>..origin/<merge_target> -- <files from the File Structure table>` (resolve `<merge_target>` through
+     its remote-tracking ref, never a bare local branch name — a local branch of the same name can be stale or absent on
+     the reader's machine), scoped only to the files the plan cites (never a full-repo diff). Two sub-outcomes:
      - **VERIFIED-CURRENT** — empty diff: report as a FALSIFIABLE NULL: "plan's
        cited files verified CURRENT as of `<merge_target>` — zero drift." (State
        a positive confirmed fact, not "no evidence of problems" — that

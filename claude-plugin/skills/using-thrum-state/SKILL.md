@@ -133,9 +133,8 @@ thrum state list
 # update anything stale; nothing auto-loads, so do this every session
 ```
 
-**Responding to a freshness-sweep ping:** re-verify the named row by
-effect, then `thrum state set` with the fresh value and `--method
-by_effect`. Never "correct" a row you have not personally re-measured.
+**Responding to a freshness-sweep ping:** re-verify the named row by effect, then `thrum state set` with the fresh value
+and `--method by_effect`. Never "correct" a row you have not personally re-measured.
 
 ## Consolidating your agent-harness memories into state (durable overflow)
 
@@ -154,15 +153,12 @@ uncapped, queryable durable store, so it is the right overflow home.
    instrument traps, habits that must interrupt a confident wrong answer) STAY
    in the auto-loaded index. SLOWER-if-absent (things you would just look up
    once you know the topic exists) are demotable.
-2. **Demote by MOVING, never by shortening.** Relocate each demotable entry
-   **verbatim** into a thrum state entry (e.g. `thrum state set --kind
-   reference --scope <agent>_discipline_index`) and/or your runtime's secondary
-   lookup file. Leave a short **bidirectional pointer**: the auto-loaded index
-   keeps a one-line pointer to the state entry; the state entry names the topic
-   file the full detail lives in. **Never merge two entries, summarise to save
-   bytes, or delete** — summarising discards the SCOPE that makes an entry true,
-   which is the whole failure this guards against. The per-topic detail files
-   are never touched.
+2. **Demote by MOVING, never by shortening.** Relocate each demotable entry **verbatim** into a thrum state entry (e.g.
+   `thrum state set --kind reference --scope <agent>_discipline_index`) and/or your runtime's secondary lookup file.
+   Leave a short **bidirectional pointer**: the auto-loaded index keeps a one-line pointer to the state entry; the state
+   entry names the topic file the full detail lives in. **Never merge two entries, summarise to save bytes, or delete**
+   — summarising discards the SCOPE that makes an entry true, which is the whole failure this guards against. The
+   per-topic detail files are never touched.
 3. **Reduction comes only from relocation.** Prove conservation:
    `entries_removed_from_index == entries_added_to_state` (set equality, not
    just count). Target comfortably under the load cap; do not chase a smaller

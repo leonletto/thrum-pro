@@ -57,9 +57,8 @@ Every dispatch carries: an explicit `name:`, an explicit `model:`, an output fil
 path, a ≤15-20 line reply cap, and the pasted CONSTRAINTS block. Launch
 independent subagents **in one message** so they run in parallel.
 
-Pin `model:` on every spawn. Pass `effort` only where the mechanism exposes it —
-Workflow `agent()` opts, agent-definition frontmatter, `thrum tmux launch
---effort`. **The Agent tool does not take `effort`.**
+Pin `model:` on every spawn. Pass `effort` only where the mechanism exposes it — Workflow `agent()` opts,
+agent-definition frontmatter, `thrum tmux launch --effort`. **The Agent tool does not take `effort`.**
 
 ```python
 Agent(subagent_type="general-purpose",

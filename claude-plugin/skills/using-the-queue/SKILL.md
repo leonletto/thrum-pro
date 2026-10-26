@@ -173,13 +173,11 @@ merged/closed state, nothing more.
 mutation differently. This is an intentional two-shape convention chosen per
 domain, not an inconsistency - do not "fix" one to match the other.
 
-**`queue.update` / `queue.item.update`**: wrapped by `RejectIdentityKeysHandler`,
-which returns a typed `*queue.ErrImmutableField` error (`queue: cannot modify
-immutable field %q`) if a raw identity key (`id`, `agent_id`, `created_at` for
-bundles; `id`, `created_at` for items) appears in the wire payload at all -
-checked BEFORE decode, fail-closed. Note: `QueueUpdateRequest`/
-`QueueItemUpdateRequest` have no JSON fields for these identity keys anyway,
-so this wrapper is defense-in-depth, not load-bearing on its own.
+**`queue.update` / `queue.item.update`**: wrapped by `RejectIdentityKeysHandler`, which returns a typed
+`*queue.ErrImmutableField` error (`queue: cannot modify immutable field %q`) if a raw identity key (`id`, `agent_id`,
+`created_at` for bundles; `id`, `created_at` for items) appears in the wire payload at all - checked BEFORE decode,
+fail-closed. Note: `QueueUpdateRequest`/ `QueueItemUpdateRequest` have no JSON fields for these identity keys anyway, so
+this wrapper is defense-in-depth, not load-bearing on its own.
 
 **`state.set`**: no reject path at all, and that is by design, per field:
 - **Kind/Scope** are the addressing key - a different `(Kind,Scope)` pair
@@ -232,12 +230,10 @@ preference, not built here - out of scope per the project's security model.
 - **Leaving done bundles to pile up.** `done` never removes anything - the
   bundle stays, and only `drop` deletes it. Drop each bundle the turn its work
   lands; a queue full of undropped done bundles is the primary rot mode.
-- **Reaching for a `remove`/item-`drop` verb.** Removal (of a bundle and every
-  item inside it) happens only at the bundle level via `drop` - there is no
-  finer-grained delete. Renaming/re-titling is NOT in this category: `queue
-  update --title` and `queue item update --title` are the supported post-create
-  edit path for a bundle's or item's title (and other fields - stage, refs,
-  priority, assigned-by).
+- **Reaching for a `remove`/item-`drop` verb.** Removal (of a bundle and every item inside it) happens only at the
+  bundle level via `drop` - there is no finer-grained delete. Renaming/re-titling is NOT in this category:
+  `queue update --title` and `queue item update --title` are the supported post-create edit path for a bundle's or
+  item's title (and other fields - stage, refs, priority, assigned-by).
 - **Trying to edit another agent's queue.** Impossible by design - you only
   write your own. Cross-agent work is messaging plus the recipient's own `add`.
 - **Treating the queue as durable/shared history.** It is local, private, and

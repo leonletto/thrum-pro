@@ -38,9 +38,11 @@ usual token-saving justification for delegating does not apply.
 1. If you are not the coordinator responsible for this repo's project state,
    stop. Only that coordinator runs this command.
 2. Detect the tier:
+
    ```bash
    thrum license status
    ```
+
 3. Take the **licensed path** (see Licensed Path below) only when all three
    hold: the output has a line `license: active` exactly; it has a line starting
    `  tier:` whose value is `paid`, `comp`, `trial` or `enterprise`; and it has
@@ -88,22 +90,28 @@ Live facts move to `thrum state`, work to `thrum queue`, and session history to
 1. **Live facts.** For each changed fact in Current State Summary, read its
    kind, then set it. Kinds: `deploy_state`, `topology`, `worktree`,
    `agent_pool`, `ruling`.
+
    ```bash
    thrum state list --kind <kind>
    thrum state set --kind <kind> --scope <scope> --value '<json>'
    ```
+
 2. **Work.** Reconcile your queue. Add each in-flight, blocked or pending item,
    then set its status. Drop only done bundles you do not keep for this session.
+
    ```bash
    thrum queue list
    thrum queue add --title "<title>" --ref bead:<id>
    thrum queue start <bundle-id>    # or: thrum queue block <bundle-id>, thrum queue done <bundle-id>
    thrum queue drop <bundle-id>
    ```
+
 3. **Session history.** Once, for the session being closed:
+
    ```bash
    thrum memory record-session --session-number <N> --title "Session <N> — <title>" --oneline "<headline>" --short "<2-4 sentences>" --full "<session body>"
    ```
+
 4. **Pointer file.** Read `project_state.md`, then edit it to the source table,
    Phase, Durable rules and Stable references. Keep `## Recent Sessions`. Remove
    the live content of Current State Summary, Architecture Health and open-epic
@@ -194,9 +202,11 @@ updating.
    now, is exactly ONE LINE. No session ever gets a prose block.
    - Append a **single index line** to the `## Recent Sessions` block in
      project_state.md — no body prose, ever:
-     ```
+
+     ```text
      - Session N (YYYY-MM-DD) — <what changed, ≤30 words>
      ```
+
    - **The cap is on WORDS, not on newlines.** A 200-word run-on sentence
      crammed onto one physical line VIOLATES this rule just as much as a
      multi-line prose block does. Count words; keep the line ≤30 of them.

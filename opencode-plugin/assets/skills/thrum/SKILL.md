@@ -12,7 +12,8 @@ Run `thrum prime` for full session context (auto-injected by the SessionStart
 hook; also fires on post-compact resume). PreCompact is not registered — use
 `/thrum:compact` to save a snapshot before deliberately compacting.
 
-If the prime output was truncated, run `thrum prime --to-file` (if --to-file is an unknown flag, run plain `thrum prime` once and read its output fully)
+If the prime output was truncated, run `thrum prime --to-file` (if --to-file is an unknown flag, run plain `thrum prime`
+once and read its output fully)
 ONCE and read that file page by page; never re-run `thrum prime` to page through it.
 
 ## Quick Command Reference
@@ -159,7 +160,8 @@ It calls `thrum wait` (blocking) and returns when messages arrive. See
   post-compact resume)
 - PreCompact is NOT registered — run `/thrum:compact` to save a restart
   snapshot deliberately before compacting
-- **After compaction:** resume from the Resume Plan in the injected `# Previous Session Context`; check your personal state with `thrum state list` and your committed work with `thrum queue list`
+- **After compaction:** resume from the Resume Plan in the injected `# Previous Session Context`; check your personal
+  state with `thrum state list` and your committed work with `thrum queue list`
 - Agent identity persists across sessions; read it with `thrum whoami`, never by opening the file
 
 ## Resources

@@ -25,11 +25,9 @@ Run this gate when:
 - Multiple plans exist but share no seam — genuinely disjoint programs. Verify
   disjointness explicitly (see "List the seams before writing" below) before
   skipping; "looks disjoint" is not the same as "verified disjoint."
-- This is the sibling-brainstorm **coherence pass** (`coordinator-running-
-  brainstorm-cycles` Phase 5) — that pass runs earlier, over brainstorms, for
-  contradiction/vocabulary drift. This gate runs later, over LOCKED plans,
-  specifically for seam composition. Run both when both apply; they are not
-  substitutes for each other.
+- This is the sibling-brainstorm **coherence pass** (`coordinator-running- brainstorm-cycles` Phase 5) — that pass runs
+  earlier, over brainstorms, for contradiction/vocabulary drift. This gate runs later, over LOCKED plans, specifically
+  for seam composition. Run both when both apply; they are not substitutes for each other.
 
 ## Why this is a separate gate, not folded into the plan dual-review
 

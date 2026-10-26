@@ -104,7 +104,7 @@ thread:
 
 Render one unified list across every roster member, oldest-first:
 
-```
+```text
 [#] <topic> (<box>) · <question + options A/B/C> · waiting <age>
 ```
 
@@ -150,11 +150,9 @@ You **cannot** launch a brainstormer remotely — `thrum tmux create`/`launch`
 is local-socket-only by design, and you run on the coordinator's home box
 while brainstormers run on other boxes. To start a new brainstorm on topic X:
 
-1. **Message the target box's coordinator** to run the Phase-1 spawn from
-   `coordinator-running-brainstorm-cycles` — worktree creation, `thrum tmux
-   create`/`launch`, and briefing the new brainstormer with `steward: @<you>`
-   plus the `brainstorm-queue-aware` skill so it knows to route its
-   questions to you instead of the human.
+1. **Message the target box's coordinator** to run the Phase-1 spawn from `coordinator-running-brainstorm-cycles` —
+   worktree creation, `thrum tmux create`/`launch`, and briefing the new brainstormer with `steward: @<you>` plus the
+   `brainstorm-queue-aware` skill so it knows to route its questions to you instead of the human.
 2. **Add the new brainstormer to your own `watch_params.roster`** once it's
    launched — you are the only writer of your own params file.
 3. **Pick a lightly-loaded box other than your own home box.** Check
@@ -205,16 +203,15 @@ skill) and your committed work (`thrum queue` — see the `using-the-queue`
 skill) BEFORE composing your snapshot. This is distinct from the restart
 recovery above (compaction keeps your daemon binding and live session
 intact, unlike a restart) but the same durable stores are what a
-post-compact render reads back. Without a Pro licence (`not entitled` / `requires a license`), skip this write and track it in the message thread instead.
+post-compact render reads back. Without a Pro licence (`not entitled` / `requires a license`), skip this write and track
+it in the message thread instead.
 
 ## Keep the pipeline flowing (stalled-handoff detection)
 
-Beyond the owner-facing queue, track when a roster brainstormer is
-**waiting on another agent** mid-thread — e.g. it handed something to a
-reviewer or a coordinator and is now blocked on their response. A
-brainstormer following convention pushes a `WAITING [topic]: sent <thing>
-to @<agent>` message when it hands off; your pane backstop confirms it is
-genuinely idle-waiting rather than still working.
+Beyond the owner-facing queue, track when a roster brainstormer is **waiting on another agent** mid-thread — e.g. it
+handed something to a reviewer or a coordinator and is now blocked on their response. A brainstormer following
+convention pushes a `WAITING [topic]: sent <thing> to @<agent>` message when it hands off; your pane backstop confirms
+it is genuinely idle-waiting rather than still working.
 
 After a **long** threshold — default ~3 hours, deliberately far longer than
 the owner-queue nudge threshold above, since this is a different kind of

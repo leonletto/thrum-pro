@@ -89,15 +89,13 @@ dispatch time — hand this list verbatim:
    fast-forward check) — git silently deduplicates content-identical commits
    on both sides of a rebase, so a tree that "builds clean" can still be
    carrying dupes instead of the real content.
-6. Run full-package `-race`, not targeted `-run` — a targeted race run
-   misses cross-test races that only a full-package run surfaces.
-   **Exception: `internal/daemon/rpc` must NEVER be run monolithically** — a
-   bare `go test [-race] ./internal/daemon/rpc` cannot finish inside any
-   gate-length timeout. Run it through the sharded runner (`race-shard`,
-   the project's sharded race test runner on `./internal/daemon/rpc`, or `make gate`) and confirm
-   the gate's output shows it executed. A bound-timeout with ZERO test failures
-   is a false red: classify it with `go run ./cmd/testgate classify-timeout
-   --log <file> --shard-config <file> --shard <name> --pkg-dir <package dir>` (only BOUND-TIMEOUT exits
+6. Run full-package `-race`, not targeted `-run` — a targeted race run misses cross-test races that only a full-package
+   run surfaces. **Exception: `internal/daemon/rpc` must NEVER be run monolithically** — a bare
+   `go test [-race] ./internal/daemon/rpc` cannot finish inside any gate-length timeout. Run it through the sharded
+   runner (`race-shard`, the project's sharded race test runner on `./internal/daemon/rpc`, or `make gate`) and confirm
+   the gate's output shows it executed. A bound-timeout with ZERO test failures is a false red: classify it with
+   `go run ./cmd/testgate classify-timeout --log <file> --shard-config <file> --shard <name> --pkg-dir <package dir>`
+   (only BOUND-TIMEOUT exits
    0) before reporting a regression. See item 7 of `coordinator-hotpath-merge-gate`.
 7. Build+test the MERGED-tree result as a SEPARATE condition — neither gate
    currently runs a build of the actual post-merge tree; a clean pre-merge
@@ -133,19 +131,14 @@ dispatch time — hand this list verbatim:
    be created.
 10. Your report reaches the coordinator ONLY as your final returned text.
     Side-channel output is discarded. Put the whole verdict in the return value.
-11. **NEVER run `git stash`, `git checkout`, `git reset`, or any working-tree
-    mutation in the SHARED repo.** Do read-only inspection there (`git show
-    <sha>:<path>`, `git log`, `git diff`) and do every build/test in a throwaway
-    detached worktree. Two reasons, both proven in production:
-    (a) **`git stash` is a SINGLE SHARED STACK across every worktree of a repo.**
-    A stash taken in one worktree is visible and poppable from all of them, so
-    "cleaning up after myself" can strand or clobber another agent's live work.
-    (b) The shared repo is POPULATED — live agents hold UNCOMMITTED working-tree
-    state there (State.md files they are actively re-authoring). A checkout or
-    stash silently reverts EVERY agent's uncommitted work, not just the file you
-    were looking at.
-    If you believe you must mutate the shared tree, STOP and report instead —
-    that is always a finding, never a step.
+11. **NEVER run `git stash`, `git checkout`, `git reset`, or any working-tree mutation in the SHARED repo.** Do
+    read-only inspection there (`git show <sha>:<path>`, `git log`, `git diff`) and do every build/test in a throwaway
+    detached worktree. Two reasons, both proven in production: (a) **`git stash` is a SINGLE SHARED STACK across every
+    worktree of a repo.** A stash taken in one worktree is visible and poppable from all of them, so "cleaning up after
+    myself" can strand or clobber another agent's live work. (b) The shared repo is POPULATED — live agents hold
+    UNCOMMITTED working-tree state there (State.md files they are actively re-authoring). A checkout or stash silently
+    reverts EVERY agent's uncommitted work, not just the file you were looking at. If you believe you must mutate the
+    shared tree, STOP and report instead — that is always a finding, never a step.
 12. **TEAR DOWN YOUR THROWAWAY WORKTREE WHEN THE GATE ENDS — after two checks,
     in this order.** A required final step, not cleanup etiquette. Each
     abandoned worktree pins its HEAD commit against `gc` and adds a

@@ -9,7 +9,8 @@ description: "Use when investigating, exploring code, working on a research task
 
 Lift this query into a bundle (`thrum queue add --from-message <msg-id>`),
 then `thrum queue start <bundle-id>`; drop/close finished bundles. Full
-lifecycle: `using-the-queue`. Without a Pro licence (`not entitled` / `requires a license`), skip this write and track it in the message thread instead.
+lifecycle: `using-the-queue`. Without a Pro licence (`not entitled` / `requires a license`), skip this write and track
+it in the message thread instead.
 
 ## Use Explore sub-agents for breadth-first searches
 
@@ -24,7 +25,9 @@ specific symbol, or a specific question. Get a focused report back. For research
 across N > 6 items, invoke `efficient-multi-agent-research` instead of bespoke
 dispatch — it handles partition + parallelization + consolidation.
 
-> **Model tiers:** pass an explicit `model:` on every dispatch; choose model and effort per the `choosing-subagent-models` skill (read `runtime.role_models` at the moment of use). Never let a sub-agent inherit your own model.
+> **Model tiers:** pass an explicit `model:` on every dispatch; choose model and effort per the
+> `choosing-subagent-models` skill (read `runtime.role_models` at the moment of use). Never let a sub-agent inherit your
+> own model.
 
 ### Prefer `efficient-multi-agent-research` for multi-part research
 
@@ -93,7 +96,8 @@ thrum memory create --kind research_note --scope role \
 `--full` here is multi-line prose — compose via heredoc or a captured
 variable, never double-quoted inline like this; see the heredoc-or-file rule in your role preamble.
 
-Then add one line to `.thrum/context/research.md` under Tracked Topics (note: `thrum queue` now supersedes free-text Open Questions tracking):
+Then add one line to `.thrum/context/research.md` under Tracked Topics (note: `thrum queue` now supersedes free-text
+Open Questions tracking):
 
 ```markdown
 - `<slug>` — <one-line description, ≤ 80 chars>

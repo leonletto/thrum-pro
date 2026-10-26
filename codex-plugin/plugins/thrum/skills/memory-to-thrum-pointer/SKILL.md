@@ -27,7 +27,7 @@ So each entry has three parts:
 
 Index line format, under ~140 characters:
 
-```
+```text
 - 🔴 <trigger: when this applies> → `thrum-mem-<ID>`
 ```
 

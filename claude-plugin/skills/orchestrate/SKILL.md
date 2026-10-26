@@ -198,18 +198,14 @@ thrum tmux launch <name> --runtime <runtime> --model <from runtime.role_models, 
 If `runtime.role_models` has no entry for the role, never ask the user for a model or effort. Launch without
 `--model` and `--effort` so the runtime's own default applies.
 
-> **Implementer lifecycle:** All implementers are ephemeral+stateless (no agent
-> folder). At NORMAL epic completion AND at a tier-swap, retire the agent with
-> `thrum agent set-phase retired --agent <name>` — this RETAINS the registry row
-> (phase=retired) so the agent stays visible in the Retired tab + auditable.
-> ⚠️ **"Folderless" refers to the registry, NOT the worktree: a
-> worktree still carries UNTRACKED `.thrum/` state that must be salvaged before
-> any teardown (see Step 5) — enumerate the WHOLE `.thrum` pathspec,
-> not just `.thrum/agents/`; the preamble sits in `.thrum/context/`.**
-> `thrum agent delete` is operator-only (gated to the coordinator) and is NOT an
-> orchestrator tool — never use it for teardown or for a swap; `set-phase
-> retired` is the orchestrator's retirement command for both. The worktree holds
-> the durable work either way.
+> **Implementer lifecycle:** All implementers are ephemeral+stateless (no agent folder). At NORMAL epic completion AND
+> at a tier-swap, retire the agent with `thrum agent set-phase retired --agent <name>` — this RETAINS the registry row
+> (phase=retired) so the agent stays visible in the Retired tab + auditable. ⚠️ **"Folderless" refers to the registry,
+> NOT the worktree: a worktree still carries UNTRACKED `.thrum/` state that must be salvaged before any teardown (see
+> Step 5) — enumerate the WHOLE `.thrum` pathspec, not just `.thrum/agents/`; the preamble sits in `.thrum/context/`.**
+> `thrum agent delete` is operator-only (gated to the coordinator) and is NOT an orchestrator tool — never use it for
+> teardown or for a swap; `set-phase retired` is the orchestrator's retirement command for both. The worktree holds the
+> durable work either way.
 
 ### Step 3: Verify alive
 
@@ -455,12 +451,11 @@ Spawn a sub-agent to check for conflicts:
   sufficient evidence.
 - The implementer performs the merge-forward before sending MERGE-READY; the
   orchestrator verifies it happened before compiling the merge report.
-- "Current tip" means origin's tip AFTER a `git fetch` — a local base-branch
-  ref can be stale. Fetch first, merge `origin/<base>` forward into the
-  branch, and confirm the base is an ancestor (e.g. `git merge-base
-  --is-ancestor origin/<base> HEAD`) before reporting merged forward. Rebase
-  is banned here, not just discouraged: a stale-local-ref rebase silently
-  reverts everything landed since the last fetch, and a merge-forward cannot.
+- "Current tip" means origin's tip AFTER a `git fetch` — a local base-branch ref can be stale. Fetch first, merge
+  `origin/<base>` forward into the branch, and confirm the base is an ancestor (e.g.
+  `git merge-base --is-ancestor origin/<base> HEAD`) before reporting merged forward. Rebase is banned here, not just
+  discouraged: a stale-local-ref rebase silently reverts everything landed since the last fetch, and a merge-forward
+  cannot.
 
 ### Step 2: Prepare merge report
 
@@ -545,11 +540,10 @@ EOF
 
 ### Step 5: Cleanup
 
-**Close the tracking bundle as part of retirement.** The implementer's branch is
-merged and pushed (Step 4D), so YOUR tracking bundle for it is completed — `thrum
-queue done <bundle>` then `thrum queue drop <bundle>` in the same pass that retires
-the agent. A retired agent with a live bundle is completed-but-open rot. (The
-implementer's OWN queue dies with the agent; this is your tracking bundle.)
+**Close the tracking bundle as part of retirement.** The implementer's branch is merged and pushed (Step 4D), so YOUR
+tracking bundle for it is completed — `thrum queue done <bundle>` then `thrum queue drop <bundle>` in the same pass that
+retires the agent. A retired agent with a live bundle is completed-but-open rot. (The implementer's OWN queue dies with
+the agent; this is your tracking bundle.)
 
 After merge completes, **remove each implementer's worktree now — do not
 leave it for a later coordinator audit.** Once an agent has exited, its
@@ -766,10 +760,9 @@ alone and expect the reviewer to infer the split — it will infer the wrong hal
 > behavior. Run the tests; do not merely read them. Report what you actually
 > observed, and state plainly if you did not run something."
 
-**Pin the ref, and make the reviewer prove which one it read.** `isolation:
-"worktree"` cuts from the DEFAULT branch, NOT from the branch under review. A
-reviewer dispatched without an explicit ref will happily review the wrong code
-and report a confident verdict about it.
+**Pin the ref, and make the reviewer prove which one it read.** `isolation: "worktree"` cuts from the DEFAULT branch,
+NOT from the branch under review. A reviewer dispatched without an explicit ref will happily review the wrong code and
+report a confident verdict about it.
 
 - Pin the exact SHA in the dispatch prompt: "Review commit `<sha>`. First run
   `git fetch origin`, then read the tree READ-ONLY at that SHA —

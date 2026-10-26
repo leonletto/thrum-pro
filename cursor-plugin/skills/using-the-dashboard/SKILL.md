@@ -56,26 +56,22 @@ Semantics that matter to you as an author:
   and the answer lands as a thrum MESSAGE (payload type `dashboard.answer`,
   carrying `question_id`, the option `pick`, optional `text`). You read
   answers with `thrum dashboard results`.
-- **Action-pick `status`** is `open` or `resolved`, set with `thrum dashboard
-  update`, which takes the whole widget. `dashboard show` prints a pick as
-  `RESOLVED` when its status is `resolved` and it has no answer, and as
-  `ANSWERED (<pick>)` whenever an answer exists, whatever the status. `status`
-  also drives `dashboard results --unanswered`, which leaves out answers whose
-  pick is `resolved`. A card's `status` shows after its title, for example
-  `(resolved)`.
+- **Action-pick `status`** is `open` or `resolved`, set with `thrum dashboard update`, which takes the whole widget.
+  `dashboard show` prints a pick as `RESOLVED` when its status is `resolved` and it has no answer, and as
+  `ANSWERED (<pick>)` whenever an answer exists, whatever the status. `status` also drives
+  `dashboard results --unanswered`, which leaves out answers whose pick is `resolved`. A card's `status` shows after its
+  title, for example `(resolved)`.
 - **User deletes are SILENT.** If a widget you posted disappears, the user
   dismissed it — you are NOT nudged. Notice it on your next `show`; do not
   repost it reflexively (the user saw it and removed it on purpose).
 - **No dashboard yet is not an error.** `dashboard.get`/`dashboard.show`
   succeed with `found: false` and an empty envelope when nothing has been
   posted for you yet — do not treat that as a failure to recover from.
-- **Concurrent writes are guarded by `expected_rev`, not merged.** If you pass
-  `expected_rev` and it no longer matches the board's current `rev`, the write
-  is rejected with `dashboard changed (rev %d, you expected %d) — re-read with
-  dashboard show and resubmit`. Fix: re-fetch the current document and
-  resubmit with the fresh `rev`. Omitting `expected_rev` skips the check
-  entirely (last-writer-wins) — fine for your own solo edits, risky if
-  something else writes the same board.
+- **Concurrent writes are guarded by `expected_rev`, not merged.** If you pass `expected_rev` and it no longer matches
+  the board's current `rev`, the write is rejected with
+  `dashboard changed (rev %d, you expected %d) — re-read with dashboard show and resubmit`. Fix: re-fetch the current
+  document and resubmit with the fresh `rev`. Omitting `expected_rev` skips the check entirely (last-writer-wins) — fine
+  for your own solo edits, risky if something else writes the same board.
 
 ## CLI surface (runnable now, against a `thrum` binary built after `108511a0`)
 

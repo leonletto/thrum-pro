@@ -7,10 +7,10 @@ description: "Use when receiving a new task from the coordinator, starting imple
 
 ## Reconcile your queue first
 
-Before reading further: lift this dispatch into a bundle (`thrum queue add
---from-message <msg-id>`, the exact id of the dispatch you're acting on),
-then `thrum queue start <bundle-id>`; drop/close any finished bundles. Full
-lifecycle: `using-the-queue`. Without a Pro licence (`not entitled` / `requires a license`), skip this write and track it in the message thread instead.
+Before reading further: lift this dispatch into a bundle (`thrum queue add --from-message <msg-id>`, the exact id of the
+dispatch you're acting on), then `thrum queue start <bundle-id>`; drop/close any finished bundles. Full lifecycle:
+`using-the-queue`. Without a Pro licence (`not entitled` / `requires a license`), skip this write and track it in the
+message thread instead.
 
 ## Read the full implementation prompt before any tool call
 
@@ -103,11 +103,9 @@ the Memory section of your role preamble — it references the
 
 ## Pattern D self-write — set `agent_status=working` on dispatch ACK
 
-Immediately after sending the dispatch ACK, run `thrum agent set-status
-working`. This is the Pattern D self-write that makes
-`agent_status` carry signal across the fleet; the coordinator context monitoring
-sweep uses it to flag agents that go tmux-quiet despite claiming `working`
-(STUCK-WORKING classification).
+Immediately after sending the dispatch ACK, run `thrum agent set-status working`. This is the Pattern D self-write that
+makes `agent_status` carry signal across the fleet; the coordinator context monitoring sweep uses it to flag agents that
+go tmux-quiet despite claiming `working` (STUCK-WORKING classification).
 
 ```bash
 # Step 1: ACK the dispatch within 2 minutes

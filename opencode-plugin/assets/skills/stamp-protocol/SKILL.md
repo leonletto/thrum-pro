@@ -72,14 +72,11 @@ git cat-file -e <sha>
 # or: git rev-parse --verify <sha>^{commit}
 ```
 
-If this fails, STOP and report — do NOT emit a stamp citing an unresolvable SHA.
-This is the same failure class as the null/empty check above (a stamp the
-reader cannot trust), catching a different way to get there: `git rev-parse
-HEAD` itself can't produce a bad SHA, but a stamp isn't always freshly derived
-this way — it can be hand-typed, copied from a stale source, or otherwise
-introduced without running the command above. Treat this resolve-check as a
-mandatory guard regardless of how the SHA was obtained, not an optional sanity
-check.
+If this fails, STOP and report — do NOT emit a stamp citing an unresolvable SHA. This is the same failure class as the
+null/empty check above (a stamp the reader cannot trust), catching a different way to get there: `git rev-parse HEAD`
+itself can't produce a bad SHA, but a stamp isn't always freshly derived this way — it can be hand-typed, copied from a
+stale source, or otherwise introduced without running the command above. Treat this resolve-check as a mandatory guard
+regardless of how the SHA was obtained, not an optional sanity check.
 
 ## Format conventions
 

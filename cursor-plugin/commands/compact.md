@@ -35,7 +35,8 @@ If `tmux_session` is empty: ABORT before composing. Exit code 1.
 skill) and your committed work (`thrum queue` — see the `using-the-queue`
 skill) BEFORE composing your snapshot below — these survive compaction
 independently of the prose continuation file and are what a post-compact
-render reads back. Without a Pro licence (`not entitled` / `requires a license`), skip this write and track it in the message thread instead.
+render reads back. Without a Pro licence (`not entitled` / `requires a license`), skip this write and track it in the
+message thread instead.
 
 Invoke the /thrum:snapshot-protocol skill and follow it, starting with its
 Step 1 (resolve your worktree ONLY via `thrum agent worktree --authoritative` —
@@ -56,7 +57,8 @@ survives even if post-compact orientation fails, so it is read-first and
 self-contained:
 
 > 🔴 ON RESUME — you were COMPACTED, not restarted. Daemon binding is intact
-> (background loops and cron schedules survived). Resume LEAN: this file is delivered inline in the injected briefing (read it FIRST). Expect a
+> (background loops and cron schedules survived). Resume LEAN: this file is delivered inline in the injected briefing
+> (read it FIRST). Expect a
 > `thrum prime --light` briefing already auto-injected by the SessionStart
 > hook; only run `thrum:prime-agent` if it did NOT appear. Do NOT manually run
 > full `thrum prime`. Then continue from §16.
@@ -95,7 +97,8 @@ echo "SNAPSHOT_NONCE=${NONCE}"
 ```
 
 Write to EXACTLY the printed `SNAPSHOT_PATH` (not a path you re-derive), and make
-sure the file contains the marker below (as its final line), with the printed `SNAPSHOT_NONCE` — verify searches the whole file for it:
+sure the file contains the marker below (as its final line), with the printed `SNAPSHOT_NONCE` — verify searches the
+whole file for it:
 
 ```text
 <!-- snapshot-nonce: <SNAPSHOT_NONCE> -->
@@ -345,9 +348,11 @@ of that is needed here. Resume LEAN, in this order:
    `.thrum/agents/${AGENT}/sessions/`), so the original path is normally GONE
    by the time you look — that is by design, not loss. Only if no briefing
    appeared (daemon unreachable), read the NEWEST `*-restart.md` in that
-   `sessions/` directory, e.g. `ls -1t "$(cat "${REPO}/.thrum/redirect" 2>/dev/null || echo "${REPO}/.thrum")"/agents/${AGENT}/sessions/*-restart.md | head -1`
+   `sessions/` directory, e.g.
+   `ls -1t "$(cat "${REPO}/.thrum/redirect" 2>/dev/null || echo "${REPO}/.thrum")"/agents/${AGENT}/sessions/*-restart.md | head -1`
    (fall back to `${REPO}/.thrum/restart/${AGENT}.md` only if it still
-   exists; use the Read tool, not Bash sed/cat, on `~/.claude` paths) and run `thrum:prime-agent` manually as the fallback. Never manually
+   exists; use the Read tool, not Bash sed/cat, on `~/.claude` paths) and run `thrum:prime-agent` manually as the
+   fallback. Never manually
    run full `thrum prime` when the briefing is present.
 2. **A resume prompt starts your first turn.** Step 4 queued a "Compaction
    complete - please continue" prompt on the daemon right behind `/summarize`; it

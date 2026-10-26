@@ -37,17 +37,13 @@ every agent in your `roster`:
    using the idle criteria in "Declared-intent reminders" below. Never
    interrupt an active turn.
 
-   Get the target runtime from that member's `runtime` field in
-   `thrum team --json`; do not guess. Send its verified compact command (`/compact` for Claude,
-   Codex, and OpenCode; `/summarize` for Cursor; no command for runtimes
-   without a verified equivalent) with one `thrum tmux send <session>
-   "<command>"` call. That call settles and withholds Enter if a dialog
-   appears; never send a separate Enter. Exit 3 (Enter withheld) or 4
-   (verdict unknown) requires a fresh capture before any retry. If a
-   cross-peer send fails (for example, `can_send_keys` is unavailable),
-   escalate to your `parent` instead of retrying or switching transports.
-   Never resend while the command is queued or already visible in the pane.
-   After sending, report one line to your `parent`.
+   Get the target runtime from that member's `runtime` field in `thrum team --json`; do not guess. Send its verified
+   compact command (`/compact` for Claude, Codex, and OpenCode; `/summarize` for Cursor; no command for runtimes without
+   a verified equivalent) with one `thrum tmux send <session> "<command>"` call. That call settles and withholds Enter
+   if a dialog appears; never send a separate Enter. Exit 3 (Enter withheld) or 4 (verdict unknown) requires a fresh
+   capture before any retry. If a cross-peer send fails (for example, `can_send_keys` is unavailable), escalate to your
+   `parent` instead of retrying or switching transports. Never resend while the command is queued or already visible in
+   the pane. After sending, report one line to your `parent`.
 3. **All of it is judgment.** Read pane, judge (unblock / warn-on-ctx /
    escalate), act or escalate. Every cycle, every roster member.
 4. **Catch declared-but-unexecuted intent.** If a roster member's last

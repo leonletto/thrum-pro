@@ -99,21 +99,16 @@ drop nor relabel a line, and `WARN: batch not complete` stays a warning.
 matched; an empty matched line counts as a match and is announced as
 `[matched N empty line(s)]`.
 
-The whole message, including its label and framing, never exceeds the daemon's
-configured message-body limit. Matched lines are sent whole while they fit both
-budgets: the in-memory retention budget (each line costs its bytes plus a small
-fixed overhead, so a line close to the limit, or many short lines, can be cut
-or omitted earlier than their plain total would suggest) and the final rendered
-message including its label. Lines that do not fit are replaced by `[N more
-matched lines omitted]`, and a first line that does not fit is cut and
-marked. The limit is never below 1024 bytes (the configuration floor), enough for
-the framing and an omission marker with ordinary job names; when variable
-framing such as a very long job name does not fit, the monitor sends a bounded
-summary that starts with `+N omitted` instead of the lines. A run keeps only a bounded prefix of its lines in memory (at most
-the delivery limit, or 1 MiB when the limit is disabled, counting a small fixed
-overhead per line) but
-counts every match, so the omitted count is exact and an `ERROR:`/`WARN:` line
-past the retained prefix still sets the label.
+The whole message, including its label and framing, never exceeds the daemon's configured message-body limit. Matched
+lines are sent whole while they fit both budgets: the in-memory retention budget (each line costs its bytes plus a small
+fixed overhead, so a line close to the limit, or many short lines, can be cut or omitted earlier than their plain total
+would suggest) and the final rendered message including its label. Lines that do not fit are replaced by
+`[N more matched lines omitted]`, and a first line that does not fit is cut and marked. The limit is never below 1024
+bytes (the configuration floor), enough for the framing and an omission marker with ordinary job names; when variable
+framing such as a very long job name does not fit, the monitor sends a bounded summary that starts with `+N omitted`
+instead of the lines. A run keeps only a bounded prefix of its lines in memory (at most the delivery limit, or 1 MiB
+when the limit is disabled, counting a small fixed overhead per line) but counts every match, so the omitted count is
+exact and an `ERROR:`/`WARN:` line past the retained prefix still sets the label.
 
 | Continuous job (no `--schedule`)                                | Delivered as                                  |
 | --------------------------------------------------------------- | --------------------------------------------- |
@@ -312,16 +307,14 @@ Confirm the body carries the prefix, the wording and no unexpected `[FAIL]`
 or `[WARN]` label. Delete the monitor when done; never alter a monitor another
 agent owns.
 
-A pane prompt sends nothing to the inbox when it works. Verify it by running
-the script once by hand and seeing the prompt in the pane, then by `thrum
-monitor show` reporting exit 0 after the first tick.
+A pane prompt sends nothing to the inbox when it works. Verify it by running the script once by hand and seeing the
+prompt in the pane, then by `thrum monitor show` reporting exit 0 after the first tick.
 
 ## Troubleshooting
 
-- Nothing arrived: `thrum monitor show` for state and last exit, `thrum
-  monitor logs` for recorded matches. No recorded match means the regex did not
-  match, or (continuous job) the line was completion-classified and suppressed;
-  run the command by hand and compare its output with the regex.
+- Nothing arrived: `thrum monitor show` for state and last exit, `thrum monitor logs` for recorded matches. No recorded
+  match means the regex did not match, or (continuous job) the line was completion-classified and suppressed; run the
+  command by hand and compare its output with the regex.
 - Message labeled `[FAIL]` unexpectedly: the job exited non-zero, the line starts
   with `ERROR:`/`FATAL:`/`FAIL:`, or (continuous job) the line contains a fail or
   error substring.

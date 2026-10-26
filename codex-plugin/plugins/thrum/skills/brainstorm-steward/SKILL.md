@@ -108,7 +108,7 @@ Two channels feed your queue, because either alone can silently drop a thread:
 
 Render one unified list across every roster member, oldest-first:
 
-```
+```text
 [#] <topic> (<box>) · <question + options A/B/C> · waiting <age>
 ```
 

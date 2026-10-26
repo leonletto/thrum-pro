@@ -56,12 +56,9 @@ read-only scoping) are in "Core Pattern" below.
 
    Specify exact table columns and consistent formatting in every prompt.
 
-   **Every prompt MUST scope the read-only restriction around its own output
-   file, in the same breath:** `READ-ONLY EVERYWHERE EXCEPT YOUR OUTPUT FILE —
-   do not modify source, tests, config, git state, or the issue tracker; you
-   MUST write exactly <topic-dir>/findings_N.md, and that write is
-   expected and authorized.` Omitting the exception is the most common cause of
-   a fan-out that returns nothing — see Common Mistakes.
+   **Every prompt MUST scope the read-only restriction around its own output file, in the same breath:**
+   `READ-ONLY EVERYWHERE EXCEPT YOUR OUTPUT FILE — do not modify source, tests, config, git state, or the issue tracker; you MUST write exactly <topic-dir>/findings_N.md, and that write is expected and authorized.`
+   Omitting the exception is the most common cause of a fan-out that returns nothing — see Common Mistakes.
 
 3. **Wait** for all background agents to complete.
 

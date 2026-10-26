@@ -131,13 +131,31 @@ bounded_preflight() {
   local work_dir="$1" output_file="$2" available cli_pid watchdog_pid cli_rc
   shift 2
   available=$((15 - SECONDS - 1))
-  ((available >= 2)) || return 124
+  if ((available < 2)); then
+    # Fail open (exit 0, no verdict); stderr on exit 0 is diagnostic only.
+    echo "thrum stop-check: budget (15s) exhausted before preflight; no verdict emitted (fail-open)" >&2
+    return 124
+  fi
+  # The caller's EXIT trap deletes the shared preflight output file. A freshly
+  # forked child that receives TERM before it has reset its traps runs that
+  # inherited trap, and the watchdog is sent TERM right after the CLI finishes,
+  # so the file could vanish before the caller read it. Take the trap out of the
+  # process before forking and put it back once both children are reaped; each
+  # child also starts with `trap - EXIT`.
+  local saved_exit_trap
+  # Read the trap back through the (about to be overwritten) output file rather
+  # than a command substitution, whose subshell does not show it on bash 3.2.
+  trap -p EXIT >"$output_file"
+  saved_exit_trap=$(<"$output_file")
+  trap - EXIT
   (
+    trap - EXIT
     cd "$work_dir" || exit 1
     exec "$@"
   ) >"$output_file" 2>/dev/null &
   cli_pid=$!
   (
+    trap - EXIT
     sleeper_pid=
     trap '[[ -z "$sleeper_pid" ]] || kill "$sleeper_pid" 2>/dev/null || true; exit 0' TERM INT
     sleep "$((available - 2))" &
@@ -154,6 +172,7 @@ bounded_preflight() {
   wait "$cli_pid" 2>/dev/null || cli_rc=$?
   kill -TERM "$watchdog_pid" 2>/dev/null || true
   wait "$watchdog_pid" 2>/dev/null || true
+  if [ -n "$saved_exit_trap" ]; then eval "$saved_exit_trap"; fi
   return "$cli_rc"
 }
 

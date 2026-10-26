@@ -148,7 +148,9 @@ agent
 ```
 
 In Cursor Agent, open `/plugin`, switch to **Marketplace**, search for
-`thrum`, and install it at user or project scope.
+`thrum`, and install it at user or project scope. The
+**Installed** tab has no install action; if you land there, press Esc, then the
+Right arrow, to reach **Marketplace**.
 
 If the Claude Code Thrum plugin is also installed on the machine, Cursor Agent
 loads that copy too (`/plugin` shows "thrum (Claude Code)"), next to its

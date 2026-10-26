@@ -116,6 +116,6 @@ prefix, blinding the evaluation harness.
 
 Load the /thrum:project-rules-protocol skill and follow it.
 
-Capture new rules mid-session via the `implementer-maintaining-memory` skill —
-it references the `memory-write-discipline` common for the canonical
+Capture new rules mid-session via the Memory section of your role preamble —
+it references the `thrum-memory` skill for the canonical
 `thrum memory create` shape.

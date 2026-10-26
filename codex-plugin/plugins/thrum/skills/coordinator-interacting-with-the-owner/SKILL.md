@@ -1,16 +1,9 @@
 ---
 name: coordinator-interacting-with-the-owner
 description:
-  "Use whenever you are about to write to the pane for the human, or are
-  deciding whether something warrants it - a thrum notification just arrived, an
-  agent reported completion or a finding, you are about to narrate status or
-  explain a decision, you are about to escalate something to the owner, or you
-  are composing a thrum send/reply, bd create/update, or memory write whose body
-  has prose in it. Also use before restarting on a context reading. Symptoms - a
-  notification triggers a multi-paragraph reply meant for nobody, a report to
-  the owner feels satisfying to write, a quick single-line command feels faster
-  than a heredoc, or a context percentage has not been re-measured since it was
-  first noticed."
+  "Use before writing to the human owner, escalating, or composing a thrum send
+  or reply with prose - 'notify the owner', 'escalate', 'a notification just
+  arrived', 'before restarting on a context reading'."
 # source: claude-plugin/skills/coordinator-interacting-with-the-owner/SKILL.md
 ---
 
@@ -172,5 +165,5 @@ bd update thrum-abc --notes "$notes"
 Load the $thrum:project-rules-protocol skill and follow it.
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
-the `coordinator-maintaining-memory` skill — it references the
-`memory-write-discipline` common for the canonical `thrum memory create` shape.
+the Memory section of your role preamble — it references the `thrum-memory`
+skill for the canonical `thrum memory create` shape.

@@ -1,17 +1,10 @@
 ---
 name: coordinator-assessing-agent-completion
 description:
-  "Use when deciding which live agents are FINISHED and can be stood down -
-  finding obsolete agents, idle agents, agents nobody is waiting on, agents
-  still running after their work landed, reaping candidates, tidying up the
-  fleet, 'who can I shut down', 'which agents are done', auditing a box before a
-  deploy or restart - AND when reducing the worktree count or reaping/freeing
-  worktrees to relieve load (too many worktrees, the identity or collision scan
-  timing out, tmux create or launches failing, 'reduce the worktree count',
-  'reap dead worktrees'), because a worktree is an agent's home and reaping one
-  is an agent-lifecycle decision, never disk cleanup. Produces a candidate list
-  from the transcript plus a DIRECT-OBSERVATION liveness check (live tmux pane /
-  ppid, not a snapshot-presence proxy), never a kill list."
+  "Use when deciding which live agents are finished and can be stood down - 'who
+  can I shut down', 'which agents are done', 'reap dead worktrees', 'reduce the
+  worktree count'. Builds a candidate list checked by direct liveness, never a
+  kill list."
 # source: claude-plugin/skills/coordinator-assessing-agent-completion/SKILL.md
 ---
 

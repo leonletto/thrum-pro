@@ -100,7 +100,7 @@ Then add one line to `.thrum/context/research.md` under Tracked Topics (note: `t
 ```
 
 The full index format and staleness-check protocol live in
-`researcher-maintaining-memory`.
+the Memory section of your role preamble.
 
 ## Never implement findings — return them to the requester
 
@@ -123,8 +123,8 @@ gaps — you surface them, the implementer ships them.
 Load the /thrum:project-rules-protocol skill and follow it.
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
-the `researcher-maintaining-memory` skill — it references the
-`memory-write-discipline` common for the canonical `thrum memory create` shape.
+the Memory section of your role preamble — it references the
+`thrum-memory` skill for the canonical `thrum memory create` shape.
 
 ## Pattern D self-write — set `agent_status=working` on dispatch ACK
 

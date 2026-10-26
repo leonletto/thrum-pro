@@ -639,6 +639,6 @@ don't rebind the agent name to a different topic in place.
 Load the /thrum:project-rules-protocol skill and follow it.
 
 If you accumulate a new rule mid-session about brainstorm orchestration, capture
-it via the `coordinator-maintaining-memory` skill — it references the
-`memory-write-discipline` common for the canonical `thrum memory create` shape.
+it via the Memory section of your role preamble — it references the
+`thrum-memory` skill for the canonical `thrum memory create` shape.
 Use a `brainstorm-<slug>` tag to keep brainstorm-orchestration rules grouped.

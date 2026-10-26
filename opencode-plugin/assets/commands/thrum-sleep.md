@@ -1,32 +1,13 @@
 ---
 name: thrum-sleep
-description:
-  Park this agent for operator-initiated wake. Saves a standard 11-section
-  snapshot (does NOT signal coordinator) then thrum-tmux-kills own session. Use
-  when the operator is shutting down (e.g. computer restart) and the agent
-  should resume from snapshot on next boot.
+description: "Park this agent for operator-initiated wake with a comprehensive 16-section snapshot (does NOT signal coordinator) then thrum-tmux-kills own session. Use for designer/architect-grade work where wake may be cold and must recover wire contracts, capability matrix, and design rationale."
 ---
 
-# Sleep — Park Until Operator Wake
+# Sleep (16-section snapshot)
 
-Compose a standard 11-section prose continuation, write it directly to your
+Compose a comprehensive 16-section prose continuation, write it directly to your
 restart file, then end session cleanly and kill own tmux session. The agent goes
-to sleep until the operator wakes it later via
-`thrum tmux create <session-name>`. Unlike `/thrum:restart`, sleep does NOT
-signal the coordinator and does NOT wait for an external mover — it terminates
-its own tmux session.
-
-## When to Use
-
-- The operator is shutting down the machine (e.g. computer restart) and wants
-  this agent's work durably parked.
-- The operator wants to free a tmux session slot but resume this agent's work
-  later.
-- You (the agent) decide independently that further progress requires the
-  operator's attention later, not the coordinator's now.
-
-For routine context-exhaustion / rate-limit restarts where the coordinator
-should bring you back in-place, use `/thrum:restart` instead.
+to sleep until the operator wakes it later. Termination semantics are unchanged by the snapshot grade.
 
 ## Steps
 
@@ -59,7 +40,7 @@ fi
 ```
 
 If `tmux_session` is empty: ABORT before writing any snapshot. No status change,
-no session end. Exit code 1. The skill is the wrong tool for non-tmux agents.
+no session end. Exit code 1.
 
 ### 2. Read the shared snapshot-composition partial
 
@@ -67,13 +48,13 @@ Invoke the /thrum:snapshot-protocol skill and follow it.
 
 Apply its Step 2 (compose your continuation) per the structure guidance.
 
-**Use the STANDARD 11-section structure.** For comprehensive
-designer/architect-grade snapshots, use `/thrum:sleep-extended` instead.
+**Use the 16-section structure.** The structure block is `§1.` through
+`§16.` with per-section guidance documented in the partial.
 
-**Note on §1 framing:** For sleep snapshots, the Big Picture section frames as
-"where work stands at park time" rather than "what shipped" — the agent is
-parking, not completing. Composition discipline (1–3 sentences, specific,
-load-bearing-first) is identical to restart.
+**Note on §3 framing:** For sleep snapshots, §3 frames as "where work stands at
+park time" rather than "what shipped" — the agent is parking, not completing.
+Composition discipline (1–3 sentences, specific, load-bearing-first) is
+identical to restart.
 
 ### 3. Write the continuation
 
@@ -99,7 +80,11 @@ own local `agents/`, `context/`, `identities/`, and `restart/`.
 **What THIS step is still for:** anything OTHER than the restart snapshot that
 you need to survive a worktree teardown while parked — reports / findings you
 authored, important uncommitted artifacts, and anything your resume plan
-references. Copy those to the MAIN REPO PATH, resolved explicitly:
+references. This matters for the 16-section snapshot: you are parking wire
+contracts, a capability matrix, and design rationale that are expensive to
+reconstruct and exist nowhere else — but that content lives IN the snapshot
+itself, which Step 6 already relocates; use this step for anything ELSE.
+Copy those to the MAIN REPO PATH, resolved explicitly:
 
 ```bash
 # Resolve the main repo's .thrum from the redirect FILE (do not assume a path).
@@ -126,9 +111,8 @@ thrum agent set-status idle
 to `sleeping` — a real, distinct phase, not folded into `idle`. This step
 only covers the lighter-weight status field.
 
-If `thrum agent set-status` returns an error (e.g. rate-limited), continue to
-Step 6 — the snapshot on disk is the load-bearing artifact, not the status
-field. The operator can set status post-wake.
+If `thrum agent set-status` returns an error, continue to Step 6 — the snapshot
+on disk is the load-bearing artifact.
 
 ### 6. Sleep the agent (relocate snapshot, teardown, phase transition)
 
@@ -166,53 +150,40 @@ ceremony exists to close.
 
 ## How wake works
 
-On runtime start, `thrum prime` auto-injects the snapshot at
-`.thrum/restart/<your-agent-id>.md` — same mechanism used by restart. Resume
-from §9 (Numbered resume plan).
+On runtime start, `thrum prime` auto-injects the snapshot — same mechanism as
+restart. Resume from §16 immediate-next-actions.
 
-**Two wake paths, and they are NOT interchangeable — pick by WHO is waking you.**
+**Two wake paths, NOT interchangeable — pick by WHO is waking you.**
 
-**A. THE OPERATOR (a human, at a terminal):** `thrum tmux start` from the agent's
-own working directory. That is create + launch + prime + attach in one, and it is
-the simplest path.
+**A. THE OPERATOR (a human at a terminal):** `thrum tmux start` from the agent's
+own working directory — create + launch + prime + attach in one.
 
-**B. ANOTHER AGENT (e.g. a coordinator waking a parked agent):** the operator path
-will FAIL for you, by design. Running `thrum tmux start` from someone else's
-worktree fires the `cross_worktree` identity guard (`pid_mismatch`) — that guard
-exists to stop one agent assuming another's identity, and it is working correctly
-when it blocks you. Use this instead, in order:
+**B. ANOTHER AGENT (e.g. a coordinator):** path A will FAIL for you by design —
+running it from someone else's worktree fires the `cross_worktree` identity guard
+(`pid_mismatch`), which exists to stop one agent assuming another's identity and
+is working correctly when it blocks you. Instead:
 
 ```bash
-# 1. PROVE THE STALE PID IS DEAD — by DIRECT OBSERVATION, never from the DB.
-ps -p <identity-pid> -o pid=,lstart=,comm=          # must return NOTHING
+# 1. PROVE THE STALE PID IS DEAD — DIRECT OBSERVATION, never from the DB.
+ps -p <identity-pid> -o pid=,lstart=,comm=                     # must return NOTHING
 tmux list-panes -a -F '#{pane_pid}' | grep -w <identity-pid>   # must return NOTHING
-# If either shows life, STOP. The agent is not parked; do not force anything.
+# If either shows life: STOP. Not parked. Do not force.
 
 # 2. SALVAGE FIRST if the snapshot is not already in the main repo — it is
-#    worktree-local until wake (see Step 4 above). Forcing is safe; losing is not.
+#    worktree-local until wake (see Step 4). Forcing is safe; losing is not.
 
-# 3. Create, replacing the stale identity. The quickstart flags are REQUIRED —
-#    without --name/--role/--module this fails with "quickstart flags required".
+# 3. Create, replacing the stale identity. Quickstart flags are REQUIRED.
 thrum tmux create <name> --cwd <worktree> \
   --name <agent-id> --role <role> --module <module> \
   --model <model> --effort <effort> --force
 
-# 4. Launch the runtime; it re-binds the identity on start.
+# 4. Launch; the runtime re-binds the identity on start.
 thrum tmux launch <name>
 ```
 
-`--force` replaces the STALE IDENTITY FILE (you will see
-`tmux.create.identity-replaced`). It does **not** touch the snapshot — that is why
-step 1 (prove dead) and step 2 (salvage) come first. Forcing against a LIVE agent
-would evict a working agent from its own identity.
+`--force` replaces the STALE IDENTITY FILE (`tmux.create.identity-replaced`); it
+does NOT touch the snapshot — which is why prove-dead and salvage come first.
+Forcing against a LIVE agent would evict a working agent from its own identity.
 
 The snapshot file moves to `.thrum/agents/<your-agent-id>/sessions/` archive on
-wake (same as restart). Worst-case fallback: previous Claude session may be
-resumable via Claude Code's native session-continuation mechanism.
-
-## Programmatic use (operator shutdown scripts)
-
-The underlying mechanic — write snapshot + set status idle + `thrum agent sleep`
-(relocate + teardown + phase transition) — can be invoked from an operator's
-shutdown script directly via the bash commands above (without going through
-the skill).
+wake (same as restart).

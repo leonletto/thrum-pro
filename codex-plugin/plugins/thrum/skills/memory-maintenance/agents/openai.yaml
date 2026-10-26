@@ -1,4 +1,4 @@
 interface:
   display_name: "Memory: Maintenance"
-  short_description: "Use when an agent needs to update, delete, supersede, or audit an existing memory entry — e.g., after verification, when a finding becomes stale, or when a rule needs amendment. Loads the edit/delete/history protocol + when to retire vs amend."
-  default_prompt: "Use when an agent needs to update, delete, supersede, or audit an existing memory entry — e.g., after verification, when a finding becomes stale, or when a rule needs amendment. Loads the edit/delete/history protocol + when to retire vs amend."
+  short_description: "Use when an agent needs to update, delete, supersede or audit an existing memory entry, or manage its edges, comments and hierarchy - after verification, when a finding goes stale, when a rule needs amendment, recovering a soft-deleted memory, or reading change history. Covers edit vs supersede, the unlink-supersede footgun and the hard-delete gate."
+  default_prompt: "Use when an agent needs to update, delete, supersede or audit an existing memory entry, or manage its edges, comments and hierarchy - after verification, when a finding goes stale, when a rule needs amendment, recovering a soft-deleted memory, or reading change history. Covers edit vs supersede, the unlink-supersede footgun and the hard-delete gate."

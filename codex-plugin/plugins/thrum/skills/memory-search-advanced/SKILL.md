@@ -127,8 +127,8 @@ warning, not a zoom-divergence detector):
 - Re-run with a longer query phrasing.
 - Add `--kind <X>` to narrow before semantic re-rank.
 - Inspect the full body manually, following the shared 3-step read pattern
-  (`memory-read-discipline`): triage with `thrum memory show <id> --zoom short`
-  first, then fetch with `thrum memory show <id> --zoom full` once confirmed.
+  (`thrum-memory`): triage with `thrum memory show <id> --zoom short` first,
+  then fetch with `thrum memory show <id> --zoom full` once confirmed.
 
 Mitigations weighed and deferred (don't reach for them yet): weighted
 combination, cross-encoder re-rank, per-kind length normalization. v1 ships

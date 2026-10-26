@@ -30,15 +30,15 @@ the cached entry and the new answer.
 1. **Index check.** Read `.thrum/context/research.md`. Does any Tracked Topic
    line look relevant? Note the `research-<slug>` tag handles.
 2. **Content fetch.** For each candidate slug, escalate zoom per the shared
-   3-step read pattern (`memory-read-discipline`):
+   3-step read pattern (`thrum-memory`):
    `thrum memory search --tag research-<slug>` returns the matching entry IDs;
    triage with `thrum memory show <id> --zoom short` before fetching the full
    body with `thrum memory show <id> --zoom full`.
-3. **Staleness check.** Use the protocol from `researcher-maintaining-memory`:
-   `git diff --name-only <stamp-sha> HEAD` filtered by the entry's cited paths.
-   If empty, the entry stands. If any cited path appears, re-verify (re-read the
-   cited code, refresh the footer with `Verified: <today> @ <new-sha>`) before
-   responding.
+3. **Staleness check.** Use the protocol in the Memory section of your role
+   preamble: `git diff --name-only <stamp-sha> HEAD` filtered by the entry's
+   cited paths. If empty, the entry stands. If any cited path appears, re-verify
+   (re-read the cited code, refresh the footer with
+   `Verified: <today> @ <new-sha>`) before responding.
 4. **Respond.** With the certainty level from the section below.
 
 If the index has no relevant entry, the query is fresh-investigation territory —
@@ -84,8 +84,8 @@ where inlining is genuinely cheaper than the round-trip.
 Load the $thrum:project-rules-protocol skill and follow it.
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
-the `researcher-maintaining-memory` skill — it references the
-`memory-write-discipline` common for the canonical `thrum memory create` shape.
+the Memory section of your role preamble — it references the `thrum-memory`
+skill for the canonical `thrum memory create` shape.
 
 ### Pattern D self-write — set `agent_status=idle` on response/DONE
 

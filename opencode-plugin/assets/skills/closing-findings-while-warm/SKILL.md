@@ -97,7 +97,7 @@ tool that can prove it, not by trusting the sentence that claims it.
 Load the /thrum:project-rules-protocol skill and follow it.
 
 If you accumulate a new rule mid-session (the user corrects you), capture it
-via the `implementer-maintaining-memory` skill (or `coordinator-maintaining-
+via the Memory section of your role preamble (or `coordinator-maintaining-
 memory` if you're operating in a manager tier) — it references the
-`memory-write-discipline` common for the canonical `thrum memory create`
+`thrum-memory` skill for the canonical `thrum memory create`
 shape.

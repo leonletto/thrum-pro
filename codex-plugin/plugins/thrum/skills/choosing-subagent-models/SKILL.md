@@ -1,16 +1,9 @@
 ---
 name: choosing-subagent-models
 description:
-  "Use when about to launch, spawn, or dispatch a subagent, sub-agent, or
-  parallel agent - including the Agent/Task tool, an Explore agent, fanning out
-  research, or any time you choose a model for a subagent. ALSO fires on every
-  REVIEW dispatch - dispatching a reviewer, a code review, a code-quality
-  review, a spec-compliance review, a dual review, a verify-against-plan or
-  verify-against-source pass, or a merge-gate sub-agent. Reviewer dispatch is
-  the HIGHEST-STAKES judgment-tier spawn and is the one most often done from
-  memory. Enforces role-based model TIERING (mechanical, judgment,
-  orchestration) resolved to a concrete model+effort for whichever runtime you
-  are actually running under, and cheap parallel fan-out."
+  "Use before launching a subagent, an Agent or Task call, or an Explore agent,
+  and on every review dispatch - code review, dual review, merge-gate reviewer.
+  Picks the model and effort tier for the runtime you are running under."
 # source: claude-plugin/skills/choosing-subagent-models/SKILL.md
 ---
 

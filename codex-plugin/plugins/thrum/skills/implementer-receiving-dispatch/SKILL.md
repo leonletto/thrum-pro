@@ -104,8 +104,8 @@ related files.
 Load the $thrum:project-rules-protocol skill and follow it.
 
 If you accumulate a new rule mid-session (the user corrects you), capture it via
-the `implementer-maintaining-memory` skill — it references the
-`memory-write-discipline` common for the canonical `thrum memory create` shape.
+the Memory section of your role preamble — it references the `thrum-memory`
+skill for the canonical `thrum memory create` shape.
 
 ### Pattern D self-write — set `agent_status=working` on dispatch ACK
 

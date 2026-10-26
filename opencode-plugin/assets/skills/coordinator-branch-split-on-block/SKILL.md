@@ -162,6 +162,6 @@ asserted after the fact).
 Load the /thrum:project-rules-protocol skill and follow it.
 
 If you accumulate a new rule mid-session about branch-splitting, capture it
-via the `coordinator-maintaining-memory` skill — it references the
-`memory-write-discipline` common for the canonical `thrum memory create`
+via the Memory section of your role preamble — it references the
+`thrum-memory` skill for the canonical `thrum memory create`
 shape.

@@ -1,4 +1,4 @@
 interface:
   display_name: "Thrum Compact"
-  short_description: "Stage and verify a standard snapshot, settle owned background tasks, then compact this tmux session in place. Use for context relief when you want to keep the current session."
+  short_description: "Stage and verify a comprehensive snapshot, settle owned background tasks, then compact this tmux session in place. Use for designer or architect work needing wire contracts, a capability matrix, and design rationale."
   default_prompt: "Run the thrum compact workflow and summarize the result."

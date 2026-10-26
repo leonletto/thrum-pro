@@ -1,15 +1,10 @@
 ---
 name: coordinator-plan-reconcile-gate
 description:
-  "Use when N parallel plans (one researcher per program of a shared idea) are
-  all LOCKED and about to feed project-setup, and the plans cross-talk at shared
-  seams — an anchor contract produced by one plan and consumed by another, a
-  shared struct field, a shared predicate. Verifies the plans COMPOSE
-  (consistent seams, no double-build, no gap) before any bead or worktree
-  exists. This is the multi-plan reconcile gate — the step that makes parallel
-  plan-writing pay off instead of producing N colliding plans. It uses Fable,
-  the single standing exception to the never-select-Fable rule — see Step 2 for
-  the cited scope of that exception."
+  "Use when parallel plans for one shared idea are all locked and about to feed
+  project-setup, to check they compose at shared seams before any bead or
+  worktree exists. Uses Fable, the one standing exception to the
+  never-select-Fable rule."
 # source: claude-plugin/skills/coordinator-plan-reconcile-gate/SKILL.md
 ---
 
@@ -201,5 +196,5 @@ implementer doesn't re-litigate them.
 Load the $thrum:project-rules-protocol skill and follow it.
 
 If you accumulate a new rule mid-session about multi-plan reconciliation,
-capture it via the `coordinator-maintaining-memory` skill — it references the
-`memory-write-discipline` common for the canonical `thrum memory create` shape.
+capture it via the Memory section of your role preamble — it references the
+`thrum-memory` skill for the canonical `thrum memory create` shape.

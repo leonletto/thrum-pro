@@ -1,11 +1,11 @@
 ---
 name: using-thrum-state
-description: "Use when reading or writing thrum state - checking your own agent-local current state at session start, updating your status/next-actions, reading a fleet fact like deploy state or topology before acting on it, citing a SHA or box fact in a decision, deciding whether a fleet row is fresh enough to trust, or responding to a freshness-sweep ping. Also use before writing any fleet row - deploy state, topology, worktree, agent pool, or a standing ruling - to confirm you are writing from a by-effect measurement, not a guess. Triggers on - citing a fleet fact, deploying, restarting a daemon, migrating schema, reconciling state at session start, receiving a stale-row ping."
+description: "Use when reading or writing thrum state - your session-start state, next actions, a fleet fact like deploy state or topology, or a stale-row freshness ping. Confirm each row is measured, not guessed, before you write it."
 ---
 
 # Using Thrum State
 
-> **Before writing or editing any memory or state entry, use the `memory-current-rule` skill:** a memory states only the CURRENT rule (exceptions allowed), never a timeline of rulings, corrections or reversals, and every touch re-examines the whole memory.
+> **Before writing or editing any memory or state entry, apply "A memory states the current rule" in the `thrum-memory` skill:** a memory states only the CURRENT rule (exceptions allowed), never a timeline of rulings, corrections or reversals, and every touch re-examines the whole memory.
 
 ## Overview
 

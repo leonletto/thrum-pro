@@ -197,7 +197,7 @@ authoritative.
 
 ## Persist state + queue before compacting
 
-Before running `/thrum:compact` or `/thrum:compact-extended`, first persist
+Before running `/thrum:compact` or `/thrum:compact`, first persist
 your load-bearing context to the durable store — it survives compaction;
 your conversation context does not. Update your personal state
 (`thrum state set --kind personal_state ...` — see the `using-thrum-state`

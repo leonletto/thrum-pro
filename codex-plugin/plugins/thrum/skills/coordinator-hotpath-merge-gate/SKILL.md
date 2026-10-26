@@ -1,18 +1,10 @@
 ---
 name: coordinator-hotpath-merge-gate
 description:
-  "Use when ABOUT TO START a hot-path Pass-3 gate - a gate has been dispatched
-  to you, you are picking up a queued gate, you are the Gate Runner beginning a
-  gate, you are about to walk hot-path lenses - and when a coordinator is about
-  to run git merge after dual review came back clean. Loads the gate-runner
-  restart rule (restart at ~50 percent, at a seam BETWEEN gates) plus the
-  hot-path and perf lenses read from .thrum/hotpath-gate.json. Trigger-scoped
-  lenses skip on a mechanical zero-match against the configured trigger
-  directories, paired with a firing positive control, for branches touching RPC
-  handlers, projection writers, storage openers, sync code, peer dial paths, or
-  daemon boot paths - not CLI helpers, tests-only, docs, or website. Any lens
-  flagged always_run in the config runs on EVERY commit regardless of directory,
-  including the master-giant-process batch-decomposition lens."
+  "Use when a hot-path Pass-3 gate is dispatched to you or you are its Gate
+  Runner, or before a coordinator runs git merge after a clean dual review.
+  Loads the gate-runner restart rule and the hot-path lenses from the hotpath
+  gate config."
 # source: claude-plugin/skills/coordinator-hotpath-merge-gate/SKILL.md
 ---
 

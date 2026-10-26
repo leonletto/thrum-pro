@@ -81,7 +81,7 @@ If the session will exceed ~30 minutes, or coordination with other agents is
 needed, defer to `thrum prime`.
 
 **Exception: post-`/thrum:compact` resume — MANUAL FALLBACK ONLY.** After
-`/thrum:compact` or `/thrum:compact-extended`, the SessionStart hook now
+`/thrum:compact` or `/thrum:compact`, the SessionStart hook now
 auto-injects a zero-turn light briefing (`thrum prime --light`) directly into
 context on a healthy daemon — no turn spent reading a file or running a skill.
 This skill is the correct choice here only as a **fallback**, when that

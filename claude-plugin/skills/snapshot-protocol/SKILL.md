@@ -3,11 +3,7 @@ name: snapshot-protocol
 description: "Use when composing a restart snapshot or continuation - snapshot structure, worktree resolution, write rules."
 ---
 
-
 # Snapshot Composition Protocol
-Note: plain `/thrum:restart` carries its own inline snapshot template rather
-than consuming this skill.
-
 This is the canonical source-of-truth for snapshot composition discipline.
 Invoke this skill to compose a snapshot, then take the variant-specific
 terminal action.
@@ -107,66 +103,17 @@ Write for a competent stranger in your role — someone who has the runtime
 briefing (`thrum prime`, role preamble, project state) but none of this
 session's conversation context. Refer to the previous session in third person.
 
-### Choose your structure
+### Structure (16 sections)
 
-The variant skill that invoked this skill tells you which structure to use:
+Every variant uses this structure.
 
-- **`/thrum:sleep`** → use the STANDARD 11-section structure below.
-- **`/thrum:restart-extended` and `/thrum:sleep-extended`** → use the EXTENDED
-  16-section structure below.
-
-The standard structure is the working compact format. The extended structure is
-fundamentally different: a comprehensive technical reference (wire contracts,
-capability matrix, anticipated Q&A, design rationale) appropriate for
-designer/architect-grade handoffs where the next session may be cold and must
-recover the full design grammar from this artifact alone.
-
-### Standard structure (11 sections)
-
-Use these numbered sections (write each as prose or table — your call — but the
-numbered structure itself should be present):
-
-1. **Big picture** — what shipped this session (REQUIRED FIRST, written above
-   per the §1 mandate).
-2. **Where every artifact stands** — branches, specs, plans, in-flight PRs,
-   partially-landed work. Concrete tips / paths / commit SHAs.
-3. **Players + contributions** — who's working on what, who's standing down,
-   what each agent's latest state is.
-4. **Decisions made this session** — with the context that drove each. Just
-   listing the decision loses the reasoning future-you needs to judge edge
-   cases.
-5. **Questions awaiting repo owner input** — anything queued for the project
-   owner's call before work can proceed. Name the question concretely.
-6. **Outstanding work you owe** — commitments still open on your side (pushes,
-   merges, dispatches, doc-patches).
-7. **Patterns that worked / burned us** — short reflective section: what to keep
-   doing, what to stop. Two sub-sections is enough.
-8. **File paths future-you will reopen** — concrete paths the next session will
-   need. Group by purpose (in-flight / queued / reference).
-9. **Numbered resume plan** — concrete first-N-steps the next session should
-   take, in order. Step 1 must be actionable from a cold start.
-10. **Honest unknowns — verify post-restart, do NOT fabricate** — list facts you
-    suspect changed during the session OR were never confirmed in the first
-    place. Future-you must NOT carry these forward as truth until they're
-    verified.
-11. **End-of-continuation note** — one short paragraph reflecting on the session
-    itself.
-
-Skip a section only when it genuinely doesn't apply — an honest "N/A: no
-decisions this session" beats fabrication. The numbered structure itself should
-always be present so future-you can scan for what's covered and what isn't.
-
-### Extended structure (16 sections)
-
-Numbered `§1.` through `§16.`. The §-prefix is intentional — extended snapshots
-use a visually distinct convention from standard to signal grade difference.
-Each section names a concern; write as prose, a table, or omit with an explicit
+Numbered `§1.` through `§16.`. Each section names a concern; write as prose, a table, or omit with an explicit
 "N/A: <reason>" rather than skipping silently.
 
 ```text
 §1.  Header block — author / date / restart reason / restart-you mandate / context-percent at write time
 §2.  Identity — agent_id / worktree path / branch / role / coordinator name / cut-point commit SHA
-§3.  Big picture — what shipped this session  [REQUIRED FIRST PROSE — mirrors standard §1]
+§3.  Big picture — what shipped this session  [REQUIRED FIRST PROSE]
 §4.  Mission state — where this work currently sits in its pipeline
 §5.  Locked design decisions — operator-LOCKs, design-fork resolutions, with rationale
 §6.  Open L-questions parked for the operator — or "NONE: <reason>" with explicit note
@@ -194,7 +141,7 @@ Each section names a concern; write as prose, a table, or omit with an explicit
   session accomplished. Specific: artifacts, decisions, cycles closed. Becomes
   the session-archive log entry. Write this BEFORE anything else (composing §3
   forces you to identify what was load-bearing, which shapes what you write
-  below). **Sleep variant:** for `/thrum:sleep` and `/thrum:sleep-extended`, §3
+  below). **Sleep variant:** for `/thrum:sleep`, §3
   frames as "where work stands at park time" rather than "what shipped" — the
   agent is parking, not completing. Composition discipline (1–3 sentences,
   specific, load-bearing-first) is identical.
@@ -241,14 +188,6 @@ Each section names a concern; write as prose, a table, or omit with an explicit
 - **§16 Restart-you's immediate next actions.** Numbered. Step 1 actionable from
   cold start.
 
-**Visual-drift note:** Extended template adopts `§N.` prefix convention
-intentionally distinct from standard's `N. **Header**`
-numbered-list-with-bold-lead. The divergence signals grade difference (standard
-= compact, extended = comprehensive). Do NOT align them; the two surfaces stay
-visually distinct on purpose. **Fallback** (Tier 2): if any runtime strips `§`
-characters during rendering or commit-message embedding, the variant skill MAY
-substitute bold-numbered (`**1.**`, `**2.**`, …) matching standard.
-
 ## Step 3 — Write the continuation directly to your restart file
 
 Use your Write tool to save the composed continuation to:
@@ -261,11 +200,9 @@ ${REPO}/.thrum/restart/${AGENT}.md
 comes from `thrum tmux restart` or `thrum tmux create`). No bash heredoc or
 `cat <<EOF` redirection is needed — write the file directly.
 
-Variants that have a verify step (`/thrum:compact`, `/thrum:compact-extended`,
-`/thrum:restart`, `/thrum:restart-extended`) mint a `SNAPSHOT_PATH` and
+Variants that have a verify step (`/thrum:compact`, `/thrum:restart`) mint a `SNAPSHOT_PATH` and
 `SNAPSHOT_NONCE` in their own Step 3 PREP block: write to exactly that path, end
 the file with `<!-- snapshot-nonce: <nonce> -->`, and record both for the verify
 block. The sleep variants have no verify block and need no nonce.
 
-After writing, return control to your variant skill (`/thrum:restart-extended`,
-`/thrum:sleep`, or `/thrum:sleep-extended`) for the terminal action.
+After writing, return control to your variant skill (`/thrum:restart` or `/thrum:sleep`) for the terminal action.

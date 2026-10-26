@@ -80,8 +80,9 @@ codex plugin add thrum@thrum-marketplace
 Update with `codex plugin marketplace upgrade thrum-marketplace`, then repeat
 the `codex plugin add` command.
 
-Restart running Codex agents after a plugin update; a running session does not
-load the new version, and `/skills reload` does not refresh plugin skills.
+Restart running Codex sessions right after upgrading; until you do, their hooks
+fail. A running session does not load the new version, and `/skills reload`
+does not refresh plugin skills.
 Codex refreshes a Git-sourced marketplace and rebuilds its plugin cache at
 every launch, so a restart alone picks up a published update. On relaunch,
 Codex may also offer to update itself, and after the plugin's hooks change it

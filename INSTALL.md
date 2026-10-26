@@ -154,7 +154,12 @@ available through:
 ## Muse Code
 
 Muse installs Thrum from its native marketplace, using the `codex-plugin/`
-tree of this repository; no separate `muse-plugin/` directory is needed:
+tree of this repository; no separate `muse-plugin/` directory is needed.
+
+On a fresh Muse profile, run `muse login` first. Run the `muse plugins`
+commands from an interactive terminal: the first one asks you to trust the
+workspace, and from a non-interactive shell it fails with "workspace trust ...
+undecided and no interactive terminal".
 
 ```bash
 muse plugins marketplace add leonletto leonletto/thrum-pro
@@ -165,14 +170,17 @@ If a `muse plugins` command reports `plugins are not available in this build`,
 your Muse build ships plugins behind an experimental flag. Set
 `MUSE_EXPERIMENTAL_PLUGINS=1` in the environment that runs Muse, then retry.
 
-Approve Thrum's current runtime capabilities, then verify the installation:
+Install enables the skills at once but leaves every hook waiting for review
+(`review_needed`). Approve the hooks, then verify the installation; approved
+hooks show `trusted_enabled`:
 
 ```bash
 muse plugins approve thrum
 muse plugins inspect thrum --json
 ```
 
-Run the approval command again after every plugin update.
+Run the approval command again after every plugin update: hooks that an
+update adds arrive waiting for review again.
 
 To update the installed plugin, refresh the marketplace, then remove the
 plugin and install it again. Do not rely on `muse plugins update thrum`: on

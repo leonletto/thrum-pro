@@ -250,11 +250,21 @@ Muse has its own plugin system and marketplace — it does **not** use the Claud
 marketplace. It installs the same Thrum plugin through Muse-native commands, so there
 is no separate Muse plugin to build.
 
-Prerequisites: the `muse` binary (tested with Muse 1.4.x, most recently `1.4.12-R6909.1`; Muse updates itself), a
+Prerequisites: the `muse` binary (tested with Muse 1.4.x, most recently 1.4.13; Muse updates itself), a
 Muse account, and the `thrum` binary on your `PATH`. Run these as the same OS user
 that runs your agents.
 
-1. Add the marketplace and install the plugin:
+1. On a fresh Muse profile, log in first:
+
+   ```bash
+   muse login
+   ```
+
+2. Add the marketplace and install the plugin. Run the `muse plugins` commands
+   from an interactive terminal: the first one asks you to trust the workspace,
+   and from a non-interactive shell it fails with "workspace trust ... undecided
+   and no interactive terminal". No `muse plugins` subcommand accepts
+   `--trust-workspace`.
 
    ```bash
    muse plugins marketplace add leonletto leonletto/thrum-pro
@@ -264,17 +274,19 @@ that runs your agents.
    If a `muse plugins` command reports `plugins are not available in this build`,
    set `MUSE_EXPERIMENTAL_PLUGINS=1` in the environment that runs Muse, then retry.
 
-2. Approve Thrum's current runtime capabilities. This plugin-level form covers every
-   hook, including hooks introduced by a future plugin update:
+3. Approve the hooks. Install enables the skills at once but leaves every hook
+   waiting for review (`review_needed`), so the hooks do not run until you
+   approve them. This approves all of Thrum's hooks:
 
    ```bash
    muse plugins approve thrum
    ```
 
-   Run the command again after every Thrum plugin update. Use
-   `muse plugins inspect thrum --json` to review the current capability status.
+   Run the command again after every Thrum plugin update: hooks that an update
+   adds arrive waiting for review again. Verify with
+   `muse plugins inspect thrum --json`; approved hooks show `trusted_enabled`.
 
-3. On first run, Muse asks *"Do you trust the files in this folder?"* — priming is
+4. On first run, Muse asks *"Do you trust the files in this folder?"* — priming is
    blocked until you dismiss it. Muse launches Thrum worktrees with
    `--disable-sandbox --trust-workspace`.
 

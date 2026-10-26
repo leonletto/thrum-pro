@@ -63,6 +63,14 @@ GOTCHAS
   - Quote the whole remote command once, locally. "$VAR" inside double quotes expands on YOUR machine; use single quotes.
   - After exit 124 the host is "watched": every other command returns 125 until you use --resume, --abort or --kill.
   - --kill closes the ssh session only. Remote processes started in it (e.g. a tmux session) keep running.
+  - Each TMUX_SSH_DIR gets its OWN local tmux session, named ts_<host>_<8 hex of a hash of the canonical dir> on socket
+    tmux-ssh; the dir is recorded in the tmux option @tmux_ssh_dir (tmux >= 2.9 required; older tmux is refused).
+    EVERY verb that touches a session (attach, status, read, send, resume, run/ensure, kill, abort) REFUSES (exit 125,
+    nothing changed or cleared) on a session recorded for another dir. A pre-upgrade session named plain ts_<host> is
+    adopted only by a dir whose saved state names it; if more than one dir has adopted it (@tmux_ssh_dirs), kill, abort
+    and the typing verbs refuse for ALL of them (status/read/attach still work): confirm which dir owns the running
+    command, then kill it by hand (tmux -L tmux-ssh kill-session -t =NAME) or let it end. A dir with no session of its
+    own can still clear its own stale watch/input guard with --kill/--abort.
   - A dropped ssh loses any command running in it. Run long work under "tmux new -d" or nohup and re-run after a drop.
   - A host that reports THIS machine's own hostname is refused (125); clear it with --kill.
   - A live session keeps the TMUX_SSH_OPTS it started with; a different non-empty TMUX_SSH_OPTS only warns; run --kill first to apply it.
@@ -80,7 +88,7 @@ EXIT CODES
                typing call is refused until --kill; --read, --status and --resume still work.
 
 ENVIRONMENT
-  TMUX_SSH_DIR          where session state lives (default ~/.thrum/tmux-ssh)
+  TMUX_SSH_DIR          where session state lives (default ~/.thrum/tmux-ssh); also fixes the tmux session name (see GOTCHAS)
   TMUX_SSH_OPTS         extra ssh options (e.g. '-i ~/.ssh/key -o IdentitiesOnly=yes'); chars [A-Za-z0-9 _./=:,@~+%-] only
   TMUX_SSH_EXPECT_HOST  default for --expect-host
   TMUX_SSH_PROBE_TIMEOUT seconds the `ssh -G` host-key probe may run before it is killed (default 5; anything but an integer 1-999999 means 5)
@@ -349,7 +357,9 @@ SSH_OPTS_STARTED="${TMUX_SSH_OPTS:-}"   # what write_ref records; becomes the re
 SSH_OPTS_UNKNOWN=""
 check_ssh_opts() {
   [ -f "$REF_FILE" ] && has_session || return 0
-  local want rec; want=$(echo ${TMUX_SSH_OPTS:-})
+  local want rec
+  # shellcheck disable=SC2086
+  want=$(echo ${TMUX_SSH_OPTS:-})
   if ! grep -q '^ssh_opts=' "$REF_FILE" 2>/dev/null; then
     SSH_OPTS_UNKNOWN=1
     [ -z "$want" ] || log "WARNING: this session predates ssh option recording, so the ssh options it runs with are unknown and may not be your TMUX_SSH_OPTS; to apply them run: $SCRIPT_NAME $HOST --kill"
@@ -357,6 +367,7 @@ check_ssh_opts() {
   fi
   rec=$(grep '^ssh_opts=' "$REF_FILE" | head -1 | cut -d= -f2-)
   SSH_OPTS_STARTED="$rec"
+  # shellcheck disable=SC2086
   [ -z "$want" ] || [ "$(echo $rec)" = "$want" ] && return 0
   log "WARNING: the session for $HOST was started with different ssh options ('${rec:-<none>}', not your '$want'); those stay in force. To apply your TMUX_SSH_OPTS run: $SCRIPT_NAME $HOST --kill"
   return 0
@@ -530,7 +541,7 @@ handle_expects() {
 # tmux-ssh silently: it is bounded by TMUX_SSH_PROBE_TIMEOUT seconds (integer 1-999999, default 5; anything else, including more than 6 digits, means 5)
 # and killed as a whole process group, so a hung Match exec child does not outlive it. SIGINT/SIGTERM clean it up too.
 opts_name_host_key_checking() {   # 0 iff a TMUX_SSH_OPTS option token sets StrictHostKeyChecking (-o NAME=V, -oNAME=V)
-  local t prev= lt
+  local t prev='' lt
   for t in ${TMUX_SSH_OPTS:-}; do
     lt=$(printf %s "$t" | tr '[:upper:]' '[:lower:]')
     case "$lt" in
@@ -587,7 +598,8 @@ establish() {
   ssh_argv
   if ! has_session; then
     tmux -L "$SOCKET" new-session -d -s "$SESSION" -x 220 -y 50 "${SSH_ARGV[@]}" \; \
-      set-option -t "$PTGT" remain-on-exit on >/dev/null 2>&1 || die "tmux new-session failed" 1
+      set-option -t "$PTGT" remain-on-exit on \; \
+      set-option -t "$PTGT" @tmux_ssh_dir "$OWNER_DIR" >/dev/null 2>&1 || die "tmux new-session failed" 1
   elif ! pane_is_ssh; then
     # dead ssh pane, or a legacy session whose pane is a local shell: replace the pane's process outright (-k)
     tmux -L "$SOCKET" set-option -t "$PTGT" remain-on-exit on >/dev/null 2>&1
@@ -884,6 +896,65 @@ no_server_proof() {
     *"no server running"*|*"error connecting to "*"(No such file or directory)"*|*"error connecting to "*"(Connection refused)"*) return 0 ;;
   esac
   return 1
+}
+
+# ---- session ownership ------------------------------------------------------
+# tmux >= 2.9 is required for user options (@tmux_ssh_dir / @tmux_ssh_dirs); require_tmux_options fails clearly below that.
+# Hashed sessions: new-session records @tmux_ssh_dir=<canonical REF_DIR>; a session is FOREIGN when that option names
+# another dir (every verb refuses it).
+# Legacy sessions (the unhashed pre-upgrade name ts_<host>, no option): a driver ADOPTS one only when its OWN ref names it.
+# Refs live per TMUX_SSH_DIR, so one dir cannot enumerate another dir's refs; ownership is therefore recorded on the
+# tmux side. adopt_legacy appends the adopting dir to @tmux_ssh_dirs (newline-separated list of every adopting dir) and
+# sets @tmux_ssh_dir only when it is still unset. If the list ever holds more than one distinct dir, the session is
+# AMBIGUOUS (two drivers both think it is theirs): every dir REFUSES kill/abort and the typing verbs, with nothing
+# changed; read-only status/read/attach keep working so the operator can confirm who owns the running command. The
+# first adopter cannot know a sibling exists until the sibling touches the session once (any verb records it).
+# A dir whose ref does not name the legacy session never resolves to it (it uses its own hashed name), so a stranger's
+# legacy session is simply never touched by it and needs no refusal.
+# OWNER_REC / OWNER_TARGET / OWNER_AMBIG describe the foreign session for the refusal message.
+OWNER_REC=""; OWNER_TARGET=""; OWNER_AMBIG=0
+require_tmux_options() { # die unless tmux is >= 2.9 (a development build such as master/next-X is accepted)
+  local v maj min
+  v=$(tmux -V 2>/dev/null) || die "cannot run tmux -V; tmux >= 2.9 is required (session ownership uses @options)" 1
+  case "$v" in tmux*) ;; *) die "unrecognised tmux -V output '$v'; tmux >= 2.9 is required (session ownership uses @options)" 1 ;; esac
+  maj=$(printf '%s' "$v" | sed -n 's/^tmux[^0-9]*\([0-9][0-9]*\)\.[0-9].*/\1/p')
+  min=$(printf '%s' "$v" | sed -n 's/^tmux[^0-9]*[0-9][0-9]*\.\([0-9][0-9]*\).*/\1/p')
+  [ -n "$maj" ] || return 0
+  if [ "$maj" -lt 2 ] || { [ "$maj" -eq 2 ] && [ "${min:-0}" -lt 9 ]; }; then
+    die "tmux >= 2.9 is required (session ownership is recorded in @options); found '$v'. Upgrade tmux. Nothing was changed." 1
+  fi
+}
+adopt_legacy() { # record this dir as an adopter of the legacy session (idempotent); fail closed if it cannot be recorded
+  local cur rec
+  cur=$(tmux -L "$SOCKET" show-options -qv -t "$PTGT" @tmux_ssh_dirs 2>/dev/null)
+  case $'\n'"$cur"$'\n' in *$'\n'"$OWNER_DIR"$'\n'*) ;; *)
+    tmux -L "$SOCKET" set-option -t "$PTGT" @tmux_ssh_dirs "${cur:+$cur$'\n'}$OWNER_DIR" >/dev/null 2>&1 \
+      || die "cannot record ownership of legacy session $SESSION; nothing was changed" 125 ;;
+  esac
+  rec=$(tmux -L "$SOCKET" show-options -qv -t "$PTGT" @tmux_ssh_dir 2>/dev/null)
+  [ -n "$rec" ] || tmux -L "$SOCKET" set-option -t "$PTGT" @tmux_ssh_dir "$OWNER_DIR" >/dev/null 2>&1 || true
+}
+session_owner_check() { # 0 = ours or absent; 1 = foreign (sets OWNER_REC, OWNER_TARGET, OWNER_AMBIG)
+  has_session || return 0
+  local rec dirs n
+  OWNER_TARGET="$SESSION"
+  if [ "$SESSION" = "$LEGACY_SESSION" ]; then   # only when this dir's ref names it (see adopt above)
+    adopt_legacy
+    dirs=$(tmux -L "$SOCKET" show-options -qv -t "$PTGT" @tmux_ssh_dirs 2>/dev/null)
+    n=$(printf '%s\n' "$dirs" | grep -c .)
+    if [ "$n" -gt 1 ]; then
+      OWNER_AMBIG=1; OWNER_REC=$(printf '%s' "$dirs" | tr '\n' ' ' | sed 's/ $//; s/ /, /g'); return 1
+    fi
+  fi
+  rec=$(tmux -L "$SOCKET" show-options -qv -t "$PTGT" @tmux_ssh_dir 2>/dev/null)
+  if [ -n "$rec" ]; then [ "$rec" = "$OWNER_DIR" ] && return 0; OWNER_REC="$rec"; return 1; fi
+  return 0   # no option: a hashed name is specific to this dir; a legacy name is only resolved for a dir whose ref names it
+}
+refuse_foreign() { # <verb>; never clears ref/watch/guard
+  if [ "$OWNER_AMBIG" = 1 ]; then
+    die "REFUSED ($1): legacy tmux session $OWNER_TARGET on socket $SOCKET is claimed by more than one TMUX_SSH_DIR ($OWNER_REC); this caller's is $OWNER_DIR. It cannot be decided which driver's command is running in it. Nothing was changed and no saved state was cleared. To proceed: confirm which dir owns the running command (--read / --status still work), then kill that tmux session by hand (tmux -L $SOCKET kill-session -t =$OWNER_TARGET) or let the command end; after that each dir gets its own session." 125
+  fi
+  die "REFUSED ($1): tmux session $OWNER_TARGET on socket $SOCKET is owned by another driver. This caller's TMUX_SSH_DIR is $OWNER_DIR; the session's recorded dir is $OWNER_REC. Nothing was changed and no saved state was cleared. To proceed legitimately, run this from the owning TMUX_SSH_DIR, or kill that tmux session by hand: tmux -L $SOCKET kill-session -t =$OWNER_TARGET" 125
 }
 
 cmd_kill() { # caller holds the host lock. Custody (ref, watch, guard) is cleared ONLY after the exact session was
@@ -1199,22 +1270,55 @@ if [ "$have_command" = true ]; then
 fi
 
 SANITIZED=$(sanitize "$HOST")
-SESSION="ts_${SANITIZED}"
+# SESSION NAME = ts_<sanitized-host>_<8 hex of a hash of the CANONICAL state dir>. Every driver shares the one tmux
+# server (-L tmux-ssh), so a name derived from the host alone made two drivers with different TMUX_SSH_DIR share (and
+# --kill) one session. Canonical dir: REF_DIR is created first if missing (so a not-yet-existing dir and the same dir
+# later hash identically), then resolved with `( CDPATH= cd -- DIR && pwd -P )` (physical path: symlinks, trailing slashes and `..`
+# all collapse; portable, no realpath needed). mkdir/cd/hash failure is fatal (fail closed, before any tmux call).
+mkdir -p -- "$REF_DIR" || die "cannot create TMUX_SSH_DIR '$REF_DIR'; no tmux call was made" 2
+# CDPATH is cleared and `--` used: a relative name would otherwise resolve via CDPATH and cd would print the target.
+OWNER_DIR=$( CDPATH='' cd -- "$REF_DIR" && pwd -P ) || OWNER_DIR=""
+[ -n "$OWNER_DIR" ] || die "cannot canonicalise TMUX_SSH_DIR '$REF_DIR'; no tmux call was made" 2
+dir_hash8() { # 8 hex chars of a hash of $1 (sha256sum, else shasum -a 256, else cksum); empty on any failure
+  local h
+  if command -v sha256sum >/dev/null 2>&1; then h=$(printf '%s' "$1" | sha256sum | cut -c1-8)
+  elif command -v shasum >/dev/null 2>&1; then h=$(printf '%s' "$1" | shasum -a 256 | cut -c1-8)
+  else h=$(printf '%08x' "$(printf '%s' "$1" | cksum | cut -d' ' -f1)"); fi
+  case "$h" in [0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]) printf '%s' "$h" ;; esac
+}
+DIR_HASH=$(dir_hash8 "$OWNER_DIR")
+[ -n "$DIR_HASH" ] || die "cannot hash TMUX_SSH_DIR '$OWNER_DIR' (no working sha256sum/shasum/cksum); no tmux call was made" 2
+LEGACY_SESSION="ts_${SANITIZED}"        # pre-upgrade name (no dir component, no ownership option)
+HASHED_SESSION="ts_${SANITIZED}_${DIR_HASH}"
+SESSION="$HASHED_SESSION"
+REF_FILE="$REF_DIR/${SANITIZED}.session"
+# Legacy adopt: a ref in THIS dir that records the legacy name, for a legacy session that still exists, keeps that name
+# until it is killed (a drop-in upgrade must not strand an in-flight session). New sessions always get the hashed name.
+ref_session_name() { [ -f "$REF_FILE" ] && grep '^session=' "$REF_FILE" 2>/dev/null | head -1 | cut -d= -f2- || true; }
+require_tmux_options   # first tmux call; fails clearly on tmux < 2.9
+if [ "$(ref_session_name)" = "$LEGACY_SESSION" ] && tmux -L "$SOCKET" has-session -t "=${LEGACY_SESSION}" >/dev/null 2>&1; then
+  SESSION="$LEGACY_SESSION"
+fi
 # Exact targets: a bare -t NAME also matches a unique PREFIX (tmux target-session rules), so ts_host could select
 # ts_host_extra. "=NAME" restricts to the exact session; "=NAME:" is the same for window/pane targets.
 STGT="=${SESSION}"
 PTGT="=${SESSION}:"
-REF_FILE="$REF_DIR/${SANITIZED}.session"
 WATCH_FILE="$REF_DIR/${SANITIZED}.watch"
 GUARD_FILE="$REF_DIR/${SANITIZED}.input-guard"
 LOCK_DIR="$REF_DIR/${SANITIZED}.lock"
 EXPECTED_HOSTNAME=""
 
+# Every mode that touches the session (attach/status/read/send/resume/ensure/run) refuses a foreign one up front;
+# kill and abort do the same below, under the lock. An AMBIGUOUS legacy session still allows the read-only modes.
+case "$MODE" in kill|abort) ;; *)
+  if ! session_owner_check; then
+    case "$MODE:$OWNER_AMBIG" in attach:1|status:1|read:1) ;; *) refuse_foreign "$MODE" ;; esac
+  fi ;; esac
 case "$MODE" in
   attach)  cmd_attach ;;                         # exec's away; no lock needed
-  kill)    mkdir -p "$REF_DIR"; acquire_lock "$LOCK_DIR"; cmd_kill; exit $? ;;   # local teardown, under the host lock
+  kill)    mkdir -p "$REF_DIR"; acquire_lock "$LOCK_DIR"; session_owner_check || refuse_foreign --kill; cmd_kill; exit $? ;;   # local teardown, under the host lock
   status)  mkdir -p "$REF_DIR"; cmd_status; exit $? ;;   # observer: no lock, so it works while a long command holds the host (state files are written atomically)
-  abort)   mkdir -p "$REF_DIR"; acquire_lock "$LOCK_DIR"; cmd_abort; exit $? ;;
+  abort)   mkdir -p "$REF_DIR"; acquire_lock "$LOCK_DIR"; session_owner_check || refuse_foreign --abort; cmd_abort; exit $? ;;
   resume)  mkdir -p "$REF_DIR"; acquire_lock "$LOCK_DIR"; cmd_resume; exit $? ;;
   send)    mkdir -p "$REF_DIR"; acquire_lock "$LOCK_DIR"; refuse_if_guarded; cmd_send;  exit $? ;;
   read)    mkdir -p "$REF_DIR"; cmd_read;  exit $? ;;   # read-only capture: no lock, so a long watcher can be observed

@@ -68,6 +68,25 @@ Bash syntax. For long or complex content, transfer a script using `scp` or
   and wait up to 30 seconds by default. `--read` and `--status` observe without
   that lock. Coordinate drivers across machines or different `TMUX_SSH_DIR`
   values; these do not provide a global lock.
+- **One local tmux session per `TMUX_SSH_DIR`.** The session is named
+  `ts_<host>_<8 hex of a hash of the canonical TMUX_SSH_DIR>` on tmux socket
+  `tmux-ssh`, so drivers with different state dirs never share, reuse, or kill
+  each other's session. The session records its dir in the tmux option
+  `@tmux_ssh_dir` (tmux >= 2.9 is required for these options; older tmux is
+  refused with a clear error before any session is touched). Every verb that
+  touches a session (`--attach`, `--status`, `--read`, `--send`, `--resume`,
+  run/ensure, `--kill`, `--abort`) refuses with exit 125 and changes nothing on
+  a session recorded for another dir; the message names both dirs. A dir with
+  no session of its own is never refused for clearing its own stale watch or
+  input guard with `--kill`/`--abort`. A pre-upgrade session named plain
+  `ts_<host>` is adopted only by a dir whose saved state names it; each adopter
+  is recorded in `@tmux_ssh_dirs`, and if more than one dir has adopted it the
+  session is ambiguous: `--kill`, `--abort` and the typing verbs refuse for all
+  of them (`--status`, `--read`, `--attach` still work). Confirm which dir owns
+  the running command, then kill that tmux session by hand
+  (`tmux -L tmux-ssh kill-session -t =NAME`) or let the command end. The first
+  adopter cannot see a sibling that has not yet touched the session. Run from the
+  owning `TMUX_SSH_DIR`, or kill by hand as above.
 - **Resume observation, never resubmit a queued or visible command.** Code 124
   ends the wait; the command may still be running or waiting for input. Use
   `--read`, then `--resume`, which retains the watch and never sends the command

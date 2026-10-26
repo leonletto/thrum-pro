@@ -148,11 +148,11 @@ agent plugin marketplace add --git-ref main https://github.com/leonletto/thrum-p
 agent
 ```
 
-In Cursor Agent, open `/plugin list`, switch to **Marketplace**, search for
+In Cursor Agent, open `/plugin`, switch to **Marketplace**, search for
 `thrum`, and install it at user or project scope.
 
 If the Claude Code Thrum plugin is also installed on the machine, Cursor Agent
-loads that copy too (`/plugin list` shows "thrum (Claude Code)"), next to its
+loads that copy too (`/plugin` shows "thrum (Claude Code)"), next to its
 own Cursor install. Update both, then restart each running Cursor Agent
 session; a running session does not reload plugins. Update the Claude Code
 copy with:
@@ -164,7 +164,7 @@ claude plugin update thrum@thrum
 
 Update Cursor's own install (the only one on a Cursor-only machine): remove and re-add the marketplace
 (`agent plugin marketplace update thrum` keeps the old commit), install `thrum`
-again from `/plugin list` → **Marketplace** (re-adding does not reinstall it),
+again from `/plugin` → **Marketplace** (re-adding does not reinstall it),
 then start a new agent session:
 
 ```bash

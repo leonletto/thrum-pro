@@ -83,6 +83,10 @@ ENVIRONMENT
   TMUX_SSH_DIR          where session state lives (default ~/.thrum/tmux-ssh)
   TMUX_SSH_OPTS         extra ssh options (e.g. '-i ~/.ssh/key -o IdentitiesOnly=yes'); chars [A-Za-z0-9 _./=:,@~+%-] only
   TMUX_SSH_EXPECT_HOST  default for --expect-host
+  TMUX_SSH_PROBE_TIMEOUT seconds the `ssh -G` host-key probe may run before it is killed (default 5; anything but an integer 1-999999 means 5)
+  Host keys: tmux-ssh adds -o StrictHostKeyChecking=accept-new only when TMUX_SSH_OPTS sets no StrictHostKeyChecking and
+                        `ssh -G HOST` reports ssh's built-in default (ask); a value you set, in TMUX_SSH_OPTS or ssh_config, always wins; a failed or timed-out probe adds nothing.
+                        Residual: an explicit `StrictHostKeyChecking ask` in ssh_config looks like the default and gets accept-new.
 TSSH_HELP_EOF
 }
 
@@ -159,7 +163,14 @@ release_lock() {
   rm -f "$LOCK_HELD/pid" 2>/dev/null; rmdir "$LOCK_HELD" 2>/dev/null
   LOCK_HELD=""
 }
-trap release_lock EXIT
+PROBE_PID=""; PROBE_WD=""; PROBE_OUT=""
+probe_cleanup() {   # kill the probe's and watchdog's whole process groups (ssh + any Match exec children) and drop the temp file
+  [ -z "$PROBE_PID" ] || kill -- "-$PROBE_PID" 2>/dev/null
+  [ -z "$PROBE_WD" ] || kill -- "-$PROBE_WD" 2>/dev/null
+  [ -z "$PROBE_OUT" ] || rm -f "$PROBE_OUT"
+  PROBE_PID=""; PROBE_WD=""; PROBE_OUT=""
+}
+trap 'probe_cleanup; release_lock' EXIT
 
 # ---- reference file --------------------------------------------------------
 read_ref() {
@@ -507,14 +518,62 @@ handle_expects() {
   done
 }
 
-# ssh command line for the pane; caller TMUX_SSH_OPTS go first (ssh: first -o wins).
-ssh_cmd_line() {
-  local o="${TMUX_SSH_OPTS:-}"
-  echo "ssh ${o:+$o }-o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o LogLevel=ERROR -- $HOST"
+# Prints "-o StrictHostKeyChecking=accept-new " (trailing space) only when the user said nothing about host-key checking.
+# A command-line -o outranks ssh_config, so injecting accept-new would silently downgrade a user's `yes` set in their
+# config or TMUX_SSH_OPTS. Supply it only when TMUX_SSH_OPTS names no StrictHostKeyChecking option AND `ssh -G` (the
+# effective config, config files and TMUX_SSH_OPTS included) reports ssh's built-in default `ask`. Fails safe: if `ssh -G`
+# errors, times out or prints no stricthostkeychecking line, nothing is supplied and ssh's own default applies.
+# Known residual: an explicit `StrictHostKeyChecking ask` in ssh_config is indistinguishable from the built-in default
+# in `ssh -G` output, so it also receives accept-new (an explicit ask in TMUX_SSH_OPTS is honoured).
+# Cost: `ssh -G` evaluates Match exec clauses, so each (re)connect runs them one extra time. The probe has no tty
+# (</dev/null). It runs before the pane exists, outside --connect-timeout, so a hanging Match exec must not block
+# tmux-ssh silently: it is bounded by TMUX_SSH_PROBE_TIMEOUT seconds (integer 1-999999, default 5; anything else, including more than 6 digits, means 5)
+# and killed as a whole process group, so a hung Match exec child does not outlive it. SIGINT/SIGTERM clean it up too.
+opts_name_host_key_checking() {   # 0 iff a TMUX_SSH_OPTS option token sets StrictHostKeyChecking (-o NAME=V, -oNAME=V)
+  local t prev= lt
+  for t in ${TMUX_SSH_OPTS:-}; do
+    lt=$(printf %s "$t" | tr '[:upper:]' '[:lower:]')
+    case "$lt" in
+      -ostricthostkeychecking*) return 0 ;;
+      stricthostkeychecking*) [ "$prev" = -o ] && return 0 ;;
+    esac
+    prev=$lt
+  done
+  return 1
+}
+probe_effective_ssh_config() {   # ssh -G for $HOST with the caller's options, stdin closed; its whole process group dies after the bound
+  local limit="${TMUX_SSH_PROBE_TIMEOUT:-5}"
+  HK_EFF=""   # read by host_key_default under set -u: set on EVERY path, including the mktemp failure below (nothing supplied)
+  case "$limit" in   # a positive integer of at most 6 digits (<= 999999), else the default; zeros stripped TEXTUALLY so nothing wraps in arithmetic
+    ''|*[!0-9]*) limit=5 ;;
+    *) limit=${limit#"${limit%%[!0]*}"}; case ${#limit} in 0|[7-9]|[1-9][0-9]*) limit=5 ;; esac ;;
+  esac
+  PROBE_OUT=$(mktemp "${TMPDIR:-/tmp}/tmux-ssh-probe.XXXXXX") || { PROBE_OUT=""; return 1; }
+  # probe_cleanup must stay reachable on every path after set -m (it is also the EXIT trap); a child that ignores SIGTERM could survive the group kill (not handled).
+  set -m   # job control: each background job below gets its own process group (pgid == pid), so kill -- -PID reaches its children
+  ssh -G ${TMUX_SSH_OPTS:+$TMUX_SSH_OPTS} -- "$HOST" </dev/null >"$PROBE_OUT" 2>/dev/null & PROBE_PID=$!
+  ( sleep "$limit"; kill -- "-$PROBE_PID" 2>/dev/null ) >/dev/null 2>&1 & PROBE_WD=$!
+  if wait "$PROBE_PID" 2>/dev/null; then HK_EFF=$(awk 'tolower($1)=="stricthostkeychecking"{print tolower($2); exit}' "$PROBE_OUT"); fi
+  set +m
+  probe_cleanup
+  return 0
+}
+# Sets HK_DEFAULT (not echoed: it must run in the main shell, never a $(...) subshell, so SIGINT/SIGTERM reach probe_cleanup).
+host_key_default() {
+  HK_DEFAULT=""
+  opts_name_host_key_checking && return 0
+  probe_effective_ssh_config
+  [ "$HK_EFF" = ask ] && HK_DEFAULT='-o StrictHostKeyChecking=accept-new '
+  return 0
+}
+# ssh command line for the pane, in SSH_CMD_LINE; caller TMUX_SSH_OPTS go first (ssh: first -o wins).
+build_ssh_cmd_line() {
+  local o="${TMUX_SSH_OPTS:-}"; host_key_default
+  SSH_CMD_LINE="ssh ${o:+$o }${HK_DEFAULT}-o ConnectTimeout=10 -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o LogLevel=ERROR -- $HOST"
 }
 # the same command as an argv array (SSH_ARGV), so tmux execs ssh DIRECTLY: no $SHELL -c in between. Splitting on
 # spaces is exact: TMUX_SSH_OPTS and HOST are validated to a charset with no quotes or glob characters.
-ssh_argv() { read -r -a SSH_ARGV <<< "$(ssh_cmd_line)"; }
+ssh_argv() { build_ssh_cmd_line; read -r -a SSH_ARGV <<< "$SSH_CMD_LINE"; }
 
 # ---- establish or reconnect the ssh session --------------------------------
 establish() {

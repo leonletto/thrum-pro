@@ -1,5 +1,5 @@
 ---
-name: prime
+name: thrum-prime
 description: Load AI-optimized session context
 ---
 

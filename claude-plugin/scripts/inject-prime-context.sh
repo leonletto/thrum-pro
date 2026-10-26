@@ -139,7 +139,7 @@ if [ "$HOOK_SOURCE" = "compact" ] && [ -n "$AGENT_WORKTREE" ]; then
     if stat -f %m . >/dev/null 2>&1; then
       MTIME=$(stat -f %m "$SNAPSHOT" 2>/dev/null)
     else
-      MTIME=$(stat -c %Y "$SNAPSHOT" 2>/dev/null)
+      MTIME=$(stat -c %Y "$SNAPSHOT" 2>/dev/null) # portable-ok: else-branch of the stat -f dialect probe; GNU only
     fi
     NOW=$(date +%s)
     AGE=$(( NOW - ${MTIME:-0} ))

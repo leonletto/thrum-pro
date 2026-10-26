@@ -200,6 +200,10 @@ thrum tmux launch <name> --runtime <runtime> --model <from runtime.role_models, 
   --effort <from runtime.role_models, per choosing-subagent-models>
 ```
 
+If `runtime.role_models` has no entry for the role, never ask the user for a
+model or effort. Launch without `--model` and `--effort` so the runtime's own
+default applies.
+
 > **Implementer lifecycle:** All implementers are ephemeral+stateless (no agent
 > folder). At NORMAL epic completion AND at a tier-swap, retire the agent with
 > `thrum agent set-phase retired --agent <name>` — this RETAINS the registry row

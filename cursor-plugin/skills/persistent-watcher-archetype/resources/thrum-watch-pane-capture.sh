@@ -113,7 +113,13 @@ log() {
 # wedging every future cycle forever.
 if ! mkdir "${LOCK_DIR}" 2>/dev/null; then
   if [ -d "${LOCK_DIR}" ]; then
-    LOCK_AGE=$(( $(date +%s) - $(stat -f %m "${LOCK_DIR}" 2>/dev/null || echo 0) ))
+    # Pick the stat dialect by behavior (busybox rejects --version but accepts -c); GNU `stat -f` means --file-system.
+    if stat -c %Y / >/dev/null 2>&1; then # portable-ok: this IS the behavior probe; failure selects the BSD branch
+      LOCK_MTIME=$(stat -c %Y "${LOCK_DIR}" 2>/dev/null || echo 0) # portable-ok: GNU branch of the stat -c behavior probe
+    else
+      LOCK_MTIME=$(stat -f %m "${LOCK_DIR}" 2>/dev/null || echo 0)
+    fi
+    LOCK_AGE=$(( $(date +%s) - LOCK_MTIME ))
     if [ "${LOCK_AGE}" -gt 600 ]; then
       log "WARN: stale lock dir (${LOCK_AGE}s old) -- reclaiming"
       rm -r -- "${LOCK_DIR}"

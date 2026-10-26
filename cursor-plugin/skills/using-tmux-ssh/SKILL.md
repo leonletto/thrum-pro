@@ -102,6 +102,17 @@ TMUX_SSH_EXPECT_HOST='<remote-os-hostname>' \
 "$TMUX_SSH" user@<lease-address> 'uname -a'
 ```
 
+Host-key checking: `tmux-ssh` adds `-o StrictHostKeyChecking=accept-new` only
+when `TMUX_SSH_OPTS` names no `StrictHostKeyChecking` option and `ssh -G <host>`
+reports SSH's built-in default (`ask`). A value you set in `TMUX_SSH_OPTS` or in
+`~/.ssh/config` (`yes`, `no`, `accept-new`) always wins, so a host alias with
+`StrictHostKeyChecking yes` stays strict. If the `ssh -G` probe fails or times
+out, nothing is added and SSH's own default applies. The probe is killed after
+`TMUX_SSH_PROBE_TIMEOUT` seconds (default 5; a non-integer or `0` means 5).
+Residual: an explicit `StrictHostKeyChecking ask` in `~/.ssh/config` looks
+identical to the built-in default in `ssh -G` output, so it also gets
+`accept-new`; put `-o StrictHostKeyChecking=ask` in `TMUX_SSH_OPTS` to keep it.
+
 Options precede built-in defaults, so SSH's first `-o` wins. Allowed characters
 are letters, digits, spaces, and `- _ . / = : , @ ~ + %`; paths cannot contain
 spaces. A live session retains its original options: deliberately close it

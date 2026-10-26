@@ -121,12 +121,12 @@ the `implementer-maintaining-memory` skill — it references the
 
 ### Pattern D self-write — set `agent_status=idle` on DONE handoff
 
-When reporting DONE to the coordinator, write `agent_status="idle"` to your
-local identity file. This closes the `working→idle` transition opened by the ACK
-template's `set-status working` (sibling skill
-`implementer-receiving-dispatch`). The sweep script reads this field to
-distinguish "agent finished cleanly" from "agent stuck claiming to work"; the
-coordinator context monitoring sweep uses it as one signal in its tier ladder.
+When reporting DONE to the coordinator, run `thrum agent set-status idle`. This
+closes the `working→idle` transition opened by the ACK template's
+`set-status working` (sibling skill `implementer-receiving-dispatch`). The sweep
+script reads this field to distinguish "agent finished cleanly" from "agent
+stuck claiming to work"; the coordinator context monitoring sweep uses it as one
+signal in its tier ladder.
 
 ```bash
 # Step 1: Report DONE to coordinator
@@ -134,7 +134,7 @@ thrum send --to @your_coordinator --stdin <<'EOF'
 DONE: <task-id>. <one-line summary>. Commits: <SHA1>, <SHA2>.
 EOF
 
-# Step 2: Mark yourself idle (RPC-preferred; falls back to a local identity-file write if the daemon is unreachable)
+# Step 2: Mark yourself idle
 thrum agent set-status idle
 ```
 

@@ -219,6 +219,9 @@ if [ -z "$AGENT_ID" ]; then
   IDENTITY_TMUX_SESSION=$(jq -r '.tmux_session // empty' "$PREFLIGHT_OUTPUT" 2>/dev/null || true)
 fi
 
+# Unread messages younger than this many seconds do not queue a stop nudge.
+FRESH_UNREAD_SECS=300
+
 # Phase 2: Check unread messages scoped to this agent
 if command -v jq >/dev/null 2>&1; then
   if [ -z "${PREFLIGHT_OUTPUT:-}" ]; then
@@ -243,7 +246,20 @@ if command -v jq >/dev/null 2>&1; then
         thrum whoami --field tmux_session 2>/dev/null || true)
     fi
     if [ -n "$TMUX_SESSION" ]; then
-      bash "${SCRIPT_DIR}/stop-nudge-pane.sh" "$AGENT_ID" "$MSG_COUNT" "$PROJECT_DIR" "$TMUX_SESSION"
+      # The daemon's per-message pane notification has already prompted the
+      # agent to read a fresh message, so queue the stop nudge only when at
+      # least one unread message is older than FRESH_UNREAD_SECS. A message list
+      # that is missing, unparseable or paginated (has_more) counts as stale.
+      STALE_UNREAD=$(jq -r --argjson now "$(date +%s)" --argjson age "$FRESH_UNREAD_SECS" '
+        if (.messages | type) == "array" and .has_more != true then
+          [.messages[] | select(.is_read != true)
+           | (try (.created_at | sub("\\.[0-9]+"; "") | fromdateiso8601) catch 0) as $t
+           | select(($now - $t) >= $age)] | length
+        else 1 end' "$PREFLIGHT_OUTPUT" 2>/dev/null || echo 1)
+      case "$STALE_UNREAD" in ''|*[!0-9]*) STALE_UNREAD=1 ;; esac
+      if [ "$STALE_UNREAD" -gt 0 ]; then
+        bash "${SCRIPT_DIR}/stop-nudge-pane.sh" "$AGENT_ID" "$MSG_COUNT" "$PROJECT_DIR" "$TMUX_SESSION"
+      fi
       write_idle
       exit 0
     fi

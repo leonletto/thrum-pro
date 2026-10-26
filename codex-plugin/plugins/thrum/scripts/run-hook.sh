@@ -17,6 +17,7 @@ case "${adapter}:${operation}" in
   codex:block-sync-worktree-cd) legacy_script=block-sync-worktree-cd.sh; blocking=1 ;;
   codex:block-tls-key-exfil) legacy_script=block-tls-key-exfil.sh; blocking=1 ;;
   codex:stop-check-messages) legacy_script=stop-check-messages.sh ;;
+  codex:memory-pointer) legacy_script=memory-pointer.sh ;;
   *)
     printf 'Thrum Codex hook: unsupported adapter/operation %s/%s\n' "$adapter" "$operation" >&2
     exit 1
@@ -108,6 +109,11 @@ if [[ $gateway_status -eq 1 ]]; then
   esac
   if [[ "$gateway_error" == *"Thrum hook gateway rejected "* && "$gateway_error" == *'unsupported hook ABI "'* ]]; then
     run_legacy "installed Thrum does not support ABI ${abi}"
+  fi
+  # An older binary that predates this operation rejects it by name; the
+  # bundled handler is the same script, so run it instead of failing every tool call.
+  if [[ "$gateway_error" == *"Thrum hook gateway rejected "* && "$gateway_error" == *"unsupported ${adapter} hook operation \""* ]]; then
+    run_legacy "installed Thrum does not support operation ${operation}"
   fi
 fi
 

@@ -198,7 +198,8 @@ restart of your session. Use its absolute path in the monitor command.
 AGENT="<your-agent>"
 PROMPT="Check how implementation of <plan> is going. If the blockers have not moved since the last check, notify the coordinator or the orchestrators working on it."
 
-timeout 30 thrum tmux send "$AGENT" "$PROMPT" >/dev/null 2>&1
+T=$(command -v timeout || command -v gtimeout)
+if [ -n "$T" ]; then "$T" 30 thrum tmux send "$AGENT" "$PROMPT" >/dev/null 2>&1; else thrum tmux send "$AGENT" "$PROMPT" >/dev/null 2>&1; fi
 rc=$?
 case "$rc" in
   0) exit 0 ;;

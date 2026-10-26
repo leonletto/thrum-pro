@@ -1,5 +1,5 @@
 ---
-name: compact-extended
+name: thrum-compact-extended
 description: "Stage and verify a comprehensive snapshot, settle owned background tasks, then compact this tmux session in place. Use for designer or architect work needing wire contracts, a capability matrix, and design rationale."
 ---
 
@@ -180,7 +180,7 @@ if stat -f %m . >/dev/null 2>&1; then
   )
 else
   MTIME=$(
-    stat -c %Y "$SNAPSHOT" 2>/dev/null
+    stat -c %Y "$SNAPSHOT" 2>/dev/null # portable-ok: else-branch of the stat -f dialect probe; GNU only
   )
 fi
 NOW=$(date +%s)

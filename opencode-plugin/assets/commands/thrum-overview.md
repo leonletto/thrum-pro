@@ -1,5 +1,5 @@
 ---
-name: overview
+name: thrum-overview
 description: Combines identity, team, inbox, and sync status
 ---
 

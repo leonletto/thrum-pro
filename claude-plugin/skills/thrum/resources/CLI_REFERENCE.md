@@ -152,7 +152,7 @@ Flags:
 
 ```text
 -a, --all           Show all messages (disable auto-filtering)
---unread            Only unread messages (does not mark as read — safe to peek)
+--unread            Only unread messages
 --mentions          Only messages mentioning me
 --from string       Filter to messages from a specific sender (use @agent or agent)
 --scope string      Filter by scope (format: type:value)
@@ -254,7 +254,7 @@ Flags:
 --name string            Human-readable agent name (defaults to role_hash)
 --display string         Display name for the agent
 --intent string          Initial work intent description
---runtime string         Runtime preset: claude, codex, cursor, opencode, auggie, cli-only
+--runtime string         Runtime preset: claude, codex, opencode, cursor, copilot, antigravity, muse, shell
 --preamble-file string   Custom preamble file to compose with default preamble
 --no-init                Skip runtime config generation, just register agent
 --force                  Force runtime config reinitialization; project instruction files are preserved
@@ -506,7 +506,7 @@ thrum init --skills --runtime cursor           # Install skill to Cursor's skill
 Flags:
 
 ```text
---runtime string        Generate runtime-specific configs: claude|codex|cursor|opencode|cli-only|all
+--runtime string        Generate runtime-specific configs: claude|codex|cursor|antigravity|copilot|muse|opencode|cli-only|all
 --skills                Install thrum skill only (no MCP config, no startup script)
 --stealth               Use .git/info/exclude instead of .gitignore (zero footprint)
 --force                 Force reinitialization. On a TTY this re-runs the wizard with existing values pre-seeded.
@@ -692,8 +692,7 @@ thrum runtime show claude --json
 thrum runtime set-default <name>               # Set the default runtime preset
 ```
 
-Supported runtimes: `claude`, `codex`, `cursor`, `opencode`, `auggie`,
-`cli-only`
+Supported runtimes: `claude`, `codex`, `opencode`, `cursor`, `copilot`, `antigravity`, `muse`, `shell`
 
 ---
 
@@ -828,7 +827,7 @@ restart failure leaves the original session alive.
 --role string      Agent role (required unless --no-agent)
 --module string    Agent module (required unless --no-agent)
 --intent string    Initial work intent description
---runtime string   Runtime preset: claude, codex, cursor, opencode, auggie
+--runtime string   Runtime preset: claude, codex, opencode, cursor, copilot, antigravity, muse, shell
 --no-agent         Skip agent registration (create session only)
 --force            Re-register even if agent exists; kill and recreate an existing session
 ```
@@ -887,7 +886,7 @@ thrum worktree list                                  # List worktrees with agent
 --role string         Agent role
 --module string       Agent module
 --intent string       Initial work intent description
---runtime string      Runtime preset: claude, codex, cursor, opencode, auggie
+--runtime string      Runtime preset: claude, codex, opencode, cursor, copilot, antigravity, muse, shell
 ```
 
 `worktree teardown` flags:

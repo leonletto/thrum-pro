@@ -491,7 +491,7 @@ quote_shell() {
 }
 
 resolve_capture_target() {
-  local agent="$1" team_json host worktree
+  local agent="$1" team_json host worktree tmux_session
   # Scoped member read: this fallback runs per failed pane, so `team
   # --all` would repeatedly pull the entire fleet and fan out under an
   # outage. The scoped form carries the same member fields we need below.
@@ -516,20 +516,29 @@ for member in data.get("team", {}).get("members", []):
         print(member.get("worktree") or "")
         break
 ' "$agent")"
-  # Thrum session IDs (ses_...) are not tmux targets. Persistent panes use
-  # both conventions in the fleet: some use the agent ID, while others use
-  # the worktree basename. Return both and let the remote tmux server
-  # choose the first existing session; this remains useful while daemon
-  # routing is circuit-open and `thrum tmux status` cannot resolve a
-  # canonical name.
-  [ -n "$host" ] && [ -n "$agent" ] || return 1
-  printf '%s|%s|%s\n' "$host" "$agent" "${worktree##*/}"
+  tmux_session="$(printf '%s' "$team_json" | python3 -c '
+import json,sys
+agent=sys.argv[1]
+data=json.load(sys.stdin)
+for member in data.get("team", {}).get("members", []):
+    if member.get("agent_id") == agent:
+        print(member.get("tmux_session") or "")
+        break
+' "$agent")"
+  if [ -z "$host" ]; then
+    printf 'capture route unavailable for %s: team hostname missing\n' "$agent" >&2
+    return 1
+  fi
+  [ -n "$agent" ] || return 1
+  # Preserve the declared tmux session. Agent/worktree guesses are only
+  # compatibility candidates when the scoped member has no session name.
+  printf '%s|%s|%s|%s\n' "$host" "$agent" "${worktree##*/}" "$tmux_session"
 }
 
 ssh_capture_pane() {
   local agent="$1" declared_host="${2-}" declared_session="${3-}"
-  local host agent_session worktree_session worktree_normalized
-  local agent_quoted worktree_quoted normalized_quoted remote_cmd
+  local host agent_session worktree_session worktree_normalized tmux_session
+  local agent_quoted worktree_quoted normalized_quoted capture_quoted capture_target remote_cmd
   local target
   if [ -n "$declared_host" ] || [ -n "$declared_session" ]; then
     [ -n "$declared_host" ] && [ -n "$declared_session" ] || return 1
@@ -542,11 +551,17 @@ ssh_capture_pane() {
   if ! target="$(resolve_capture_target "$agent")"; then
     return 1
   fi
-  host="${target%%|*}"
-  target="${target#*|}"
-  agent_session="${target%%|*}"
-  worktree_session="${target#*|}"
+  IFS='|' read -r host agent_session worktree_session tmux_session <<< "$target"
   [ -n "$host" ] && [ -n "$agent_session" ] || return 1
+  if [ -n "$tmux_session" ]; then
+    agent_quoted="$(quote_shell "=${tmux_session%%:*}")"
+    capture_target="=$tmux_session"
+    [[ "$tmux_session" == *:* ]] || capture_target="${capture_target}:"
+    capture_quoted="$(quote_shell "$capture_target")"
+    remote_cmd="tmux has-session -t ${agent_quoted} 2>/dev/null || exit 1; tmux capture-pane -p -J -t ${capture_quoted} -S -30"
+    ssh -n -o BatchMode=yes -o ConnectTimeout=5 -o ServerAliveInterval=5 -o ServerAliveCountMax=1 "$host" "$remote_cmd" 2>&1
+    return $?
+  fi
   # Worktree basenames can contain dots while tmux launch normalizes them
   # to hyphens (for example my.thrum.team -> my-thrum-team). Try both
   # forms.

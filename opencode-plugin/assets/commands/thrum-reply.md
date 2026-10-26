@@ -1,5 +1,5 @@
 ---
-name: reply
+name: thrum-reply
 description: Reply to a message
 ---
 

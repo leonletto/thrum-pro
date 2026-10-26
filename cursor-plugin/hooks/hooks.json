@@ -13,6 +13,13 @@
         "timeout": 5
       }
     ],
+    "postToolUse": [
+      {
+        "type": "command",
+        "command": "${CURSOR_PLUGIN_ROOT}/scripts/memory-pointer.sh --out cursor",
+        "timeout": 5
+      }
+    ],
     "stop": [
       {
         "type": "command",

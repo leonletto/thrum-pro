@@ -157,7 +157,7 @@ if stat -f %m . >/dev/null 2>&1; then
   )
 else
   MTIME=$(
-    stat -c %Y "$SNAPSHOT" 2>/dev/null
+    stat -c %Y "$SNAPSHOT" 2>/dev/null # portable-ok: else-branch of the stat -f dialect probe; GNU only
   )
 fi
 AGE=$(( NOW - ${MTIME:-0} ))

@@ -1,5 +1,5 @@
 ---
-name: wait
+name: thrum-wait
 description: Block until a message arrives
 ---
 

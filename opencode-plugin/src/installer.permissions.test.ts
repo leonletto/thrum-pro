@@ -125,7 +125,7 @@ test("positive controls: the canonical family entry renders allow entries, bare 
     "thrum queue",
     "thrum monitor",
     "thrum daemon",
-    "thrum status",
+    "thrum agent status",
   ]
   for (const cmd of representative) {
     assert.ok(

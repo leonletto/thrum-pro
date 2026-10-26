@@ -56,9 +56,9 @@ idiom:
 
 ```bash
 # Go
-grep -rl 'func Handle\|func.*Handler\|http\.Handle\|rpc\.' --include='*.go'
+grep -rlE 'func Handle|func.*Handler|http\.Handle|rpc\.' --include='*.go'
 # Python
-grep -rl '@app\.\(route\|get\|post\|put\|delete\|patch\)\|@router\.' --include='*.py'
+grep -rlE '@app\.(route|get|post|put|delete|patch)|@router\.' --include='*.py'
 # JS/TS
 grep -rlE "app\.(get|post|put|delete|patch)\(|router\.(get|post|put|delete|patch)\(" --include='*.ts' --include='*.js'
 ```
@@ -112,10 +112,10 @@ patterns and dropped-context params) come from a Go-only detection pass
 independent of the class library, scoped to `trigger_directories`:
 
 ```bash
-grep -rn 'go func\|go bootstage\.Run' --include='*.go'
-grep -rn 'bootstage\.Run\|OnReady\|SetOnReady\|DependsOn\|Await(' --include='*.go'
-grep -rn 'CompactAll\|MergeGroup\|filepath\.Walk\|os\.ReadDir\|io\.Copy' --include='*.go'
-grep -rn 'ctx\.Done()\|ctx\.Err()\|r\.Beat(\|context\.WithoutCancel' --include='*.go'
+grep -rnE 'go func|go bootstage\.Run' --include='*.go'
+grep -rnE 'bootstage\.Run|OnReady|SetOnReady|DependsOn|Await\(' --include='*.go'
+grep -rnE 'CompactAll|MergeGroup|filepath\.Walk|os\.ReadDir|io\.Copy' --include='*.go'
+grep -rnE 'ctx\.Done\(\)|ctx\.Err\(\)|r\.Beat\(|context\.WithoutCancel' --include='*.go'
 grep -rn '_ context\.Context' --include='*.go'
 ```
 

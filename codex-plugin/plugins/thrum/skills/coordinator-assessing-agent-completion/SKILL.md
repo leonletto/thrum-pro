@@ -247,7 +247,7 @@ chase the reap as the lever** — pacing/batching large reaps is mild hygiene at
 best (it trims run-length and a little pressure), a restart is transient relief
 only, and the durable fix is **writer-decontention**, owned by the daemon-perf
 agent. Symptom to recognize (reads and `daemon status` stay ~0.5s while
-`status --self` climbs — writes slow, not reads): hand it to the daemon-perf
+`agent status` climbs — writes slow, not reads): hand it to the daemon-perf
 owner, don't re-diagnose the internals yourself.
 
 **Before running any batched destructive loop, run it on ONE item and verify the

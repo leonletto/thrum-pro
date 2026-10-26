@@ -7,6 +7,30 @@
         "timeout": 15
       }
     ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./hooks/memory-pointer/hook.sh --out mark",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreInvocation": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./hooks/memory-pointer/hook.sh --out emit",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "type": "command",

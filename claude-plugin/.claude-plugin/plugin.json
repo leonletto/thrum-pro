@@ -1,7 +1,7 @@
 {
   "name": "thrum",
   "description": "Git-backed messaging for AI agent coordination across sessions, worktrees, and machines.",
-  "version": "0.11.0-dev.1.288",
+  "version": "0.11.0-dev.1.311",
   "author": {
     "name": "Leon Letto",
     "url": "https://github.com/leonletto"
@@ -62,6 +62,18 @@
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/stop-check-messages.sh",
             "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/memory-pointer/hook.sh",
+            "timeout": 5
           }
         ]
       }

@@ -1,5 +1,5 @@
 ---
-name: update-project
+name: thrum-update-project
 description: Update project state with session summary and mechanical state
 ---
 

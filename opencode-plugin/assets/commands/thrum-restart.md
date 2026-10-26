@@ -1,5 +1,5 @@
 ---
-name: restart
+name: thrum-restart
 description:
   Save a conversation snapshot and prepare for session restart. Use when you
   need a fresh session due to context exhaustion, rate limits, or stuck state.
@@ -220,7 +220,7 @@ if stat -f %m . >/dev/null 2>&1; then
   )
 else
   MTIME=$(
-    stat -c %Y "$SNAPSHOT" 2>/dev/null
+    stat -c %Y "$SNAPSHOT" 2>/dev/null # portable-ok: else-branch of the stat -f dialect probe; GNU only
   )
 fi
 AGE=$(( NOW - ${MTIME:-0} ))

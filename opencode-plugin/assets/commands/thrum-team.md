@@ -1,5 +1,5 @@
 ---
-name: team
+name: thrum-team
 description: Show active team members
 ---
 

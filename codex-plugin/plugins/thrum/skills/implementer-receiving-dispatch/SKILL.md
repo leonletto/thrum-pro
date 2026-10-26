@@ -109,8 +109,8 @@ the `implementer-maintaining-memory` skill — it references the
 
 ### Pattern D self-write — set `agent_status=working` on dispatch ACK
 
-Immediately after sending the dispatch ACK, write `agent_status="working"` to
-your local identity file. This is the Pattern D self-write that makes
+Immediately after sending the dispatch ACK, run
+`thrum agent set-status working`. This is the Pattern D self-write that makes
 `agent_status` carry signal across the fleet; the coordinator context monitoring
 sweep uses it to flag agents that go tmux-quiet despite claiming `working`
 (STUCK-WORKING classification).
@@ -121,10 +121,11 @@ thrum reply <MSG_ID> --stdin <<'EOF'
 Received. Starting <scope>. ETA <rough>.
 EOF
 
-# Step 2: Mark yourself working (RPC-preferred; falls back to a local identity-file write if the daemon is unreachable)
+# Step 2: Mark yourself working
 thrum agent set-status working
 ```
 
-The local-write path updates your own identity file only — coord overrides
-remote agents via `--agent <name>`. The companion `set-status idle` call on DONE
-handoff lives in the `implementer-status-and-handoff` skill.
+`set-status` changes only your own status — coord overrides remote agents via
+`--agent <name>`. Never open or edit `.thrum/identities/*.json`; the daemon
+manages it. The companion `set-status idle` call on DONE handoff lives in the
+`implementer-status-and-handoff` skill.

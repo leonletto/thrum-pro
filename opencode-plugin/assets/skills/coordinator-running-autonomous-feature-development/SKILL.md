@@ -110,6 +110,9 @@ The reason, in one line: orchestrators own the implementer lifecycle and the
 your own model. Your lane is dispatch-decision + gate + merge. Full dispatch mechanics
 live in **`coordinator-dispatching-work`**.
 
+If `runtime.role_models` has no entry for the role, never ask the user for a model or effort. Launch without
+`--model` and `--effort` so the runtime's own default applies.
+
 **Recovery:** if an implementer was ever stood up directly, **tear it down
 before handing to the orchestrator.** Do not let the orchestrator adopt a
 coordinator-spawned implementer — it may carry the wrong model.

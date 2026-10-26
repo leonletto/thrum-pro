@@ -8,12 +8,11 @@
    `.git/thrum-sync/`)
 3. **Receive** — `thrum inbox` or `thrum wait` (blocking)
 4. **Verify sent state** — `thrum sent` or `thrum message get <msg-id>`
-5. **Read** — Auto-marked read when displayed via `thrum inbox`; use
-   `thrum inbox --unread` to peek without marking. Explicit: `thrum message
-   read <id> [<id>...]`, or `thrum message read --all` (DRY RUN — lists
-   candidates, marks nothing) then `--apply` (marks the shown/seen ones) or
-   `--force` (marks ALL unread, seen or not; needs a fresh `--all` dry run
-   first).
+5. **Read** — `thrum inbox` shows messages and never marks them read;
+   `thrum message read <id> [<id>...]` marks them, or `thrum message read
+   --all` (DRY RUN — lists candidates, marks nothing) then `--apply` (marks
+   the shown/seen ones) or `--force` (marks ALL unread, seen or not; needs a
+   fresh `--all` dry run first).
 6. **Search — do not page through the inbox to find old messages.** The
    default page is 10, newest-first, so stale unread sorts LAST exactly when
    it has waited longest. Use `thrum message search "<term>"` (full-text,
@@ -140,8 +139,8 @@ restart snapshot. The agent sees:
 
 ### Identity Persistence
 
-Agent identities are stored in `.thrum/identities/<name>.json` and persist
-across sessions. Registration via `thrum quickstart` is idempotent —
+Agent identities persist across sessions; the daemon manages them (read yours
+with `thrum whoami`, never by opening the file). Registration via `thrum quickstart` is idempotent —
 re-registering with the same name updates the existing identity.
 
 For multi-worktree setups, see [WORKTREES.md](WORKTREES.md) for identity setup.

@@ -1,13 +1,13 @@
 ---
-name: inbox
+name: thrum-inbox
 description: Check message inbox
 ---
 
-List messages in your inbox. Messages are auto-marked as read when displayed.
+List messages in your inbox. `thrum inbox` shows messages; `thrum message read` marks them read.
 
 ```bash
-thrum inbox                  # All recent messages (auto-marks as read)
-thrum inbox --unread         # Unread only (does not mark as read)
+thrum inbox                  # All recent messages
+thrum inbox --unread         # Unread only
 thrum inbox --json           # Machine-readable
 thrum sent --unread          # Check sent items with unread recipients
 thrum message read --all --force  # Mark ALL unread as read (run `read --all` alone first — dry run)

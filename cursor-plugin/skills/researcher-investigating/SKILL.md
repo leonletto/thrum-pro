@@ -128,8 +128,8 @@ the `researcher-maintaining-memory` skill — it references the
 
 ## Pattern D self-write — set `agent_status=working` on dispatch ACK
 
-Immediately after sending the dispatch ACK for a research request, write
-`agent_status="working"` to your local identity file. This is the same Pattern D
+Immediately after sending the dispatch ACK for a research request, run
+`thrum agent set-status working`. This is the same Pattern D
 self-write used by the implementer's dispatch-ACK protocol (sibling skill
 `implementer-receiving-dispatch`).
 

@@ -2,6 +2,7 @@ import type { Plugin, PluginModule } from "@opencode-ai/plugin"
 import { installAssets, installPermissions } from "./installer.js"
 import { shellEnvHook } from "./hooks/shell-env.js"
 import { blockSyncCdHook } from "./hooks/block-sync-cd.js"
+import { memoryPointerHook } from "./hooks/memory-pointer.js"
 
 const TOOL_MAPPING = `
 ## Thrum Plugin — Tool Mapping for OpenCode
@@ -42,6 +43,7 @@ const server: Plugin = async (ctx) => {
   return {
     "shell.env": shellEnvHook(ctx),
     "tool.execute.before": blockSyncCdHook(),
+    "tool.execute.after": memoryPointerHook(),
     "experimental.chat.system.transform": async (
       _input: { sessionID?: string; model?: unknown },
       output: { system: string[] },

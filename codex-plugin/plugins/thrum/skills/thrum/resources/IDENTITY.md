@@ -21,8 +21,9 @@ This registers the agent, starts a session, and sets the work intent.
 
 ## Identity Storage
 
-Identities persist in `.thrum/identities/<name>.json`. Registration is
-idempotent — re-registering with the same name updates the existing identity.
+Identities persist across sessions and are daemon-managed; read yours with
+`thrum whoami`, never by opening the file. Registration is idempotent —
+re-registering with the same name updates the existing identity.
 
 ## Multi-Worktree Identity
 

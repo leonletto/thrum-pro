@@ -90,9 +90,9 @@ the `researcher-maintaining-memory` skill — it references the
 ### Pattern D self-write — set `agent_status=idle` on response/DONE
 
 When reporting a research finding back to the requester (or closing a DONE on a
-research task), write `agent_status="idle"` to your local identity file. This
-closes the `working→idle` transition opened by the ACK protocol in the sibling
-skill `researcher-investigating`.
+research task), run `thrum agent set-status idle`. This closes the
+`working→idle` transition opened by the ACK protocol in the sibling skill
+`researcher-investigating`.
 
 ```bash
 # Step 1: Report finding back to requester

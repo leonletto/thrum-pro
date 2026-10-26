@@ -1,5 +1,5 @@
 ---
-name: quickstart
+name: thrum-quickstart
 description: Register agent and start session
 ---
 

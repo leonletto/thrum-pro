@@ -220,7 +220,6 @@ rendered files from saved answers without asking any questions.
 | Detected             | Template Customization                                   |
 | -------------------- | -------------------------------------------------------- |
 | Claude Code runtime  | Add Task tool + sub-agent guidance to Efficiency section |
-| Augment runtime      | Add Augment-specific tool guidance to Efficiency section |
 | Beads installed      | Add `bd` commands to Task Tracking, disable TodoWrite    |
 | Thrum MCP server     | Add MCP tool references, CLI fallback for sub-agents     |
 | Claude plugin skills | List installed skills with usage guidance                |

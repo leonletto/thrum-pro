@@ -22,8 +22,8 @@ ONCE and read that file page by page; never re-run `thrum prime` to page through
 thrum send --to @name --body-file msg.md           # Direct message (body from file)
 thrum send --to @name1 --to @name2 --body-file msg.md   # Multiple explicit recipients (repeatable --to)
 thrum reply <msg-id> --body-file reply.md          # Reply (same audience; NO --to — recipient comes from the message)
-thrum inbox                              List messages (auto-marks displayed as read)
-thrum inbox --unread                     Unread only (does not mark as read)
+thrum inbox                              List messages (never marks them read)
+thrum inbox --unread                     Unread only (never marks them read)
 thrum message search "<term>"            Full-text search — use instead of paging; stale unread sorts last
 thrum sent                               List messages you sent
 thrum sent --unread                      Sent messages with unread recipients
@@ -159,7 +159,7 @@ It calls `thrum wait` (blocking) and returns when messages arrive. See
 - PreCompact is NOT registered — run `/thrum:compact` to save a restart
   snapshot deliberately before compacting
 - **After compaction:** resume from the Resume Plan in the injected `# Previous Session Context`; check your personal state with `thrum state list` and your committed work with `thrum queue list`
-- Agent identity persists in `.thrum/identities/`
+- Agent identity persists across sessions; read it with `thrum whoami`, never by opening the file
 
 ## Resources
 

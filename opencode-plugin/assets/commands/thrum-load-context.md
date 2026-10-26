@@ -1,5 +1,5 @@
 ---
-name: load-context
+name: thrum-load-context
 description:
   Restore your session after compaction or session restart by running thrum prime
 ---

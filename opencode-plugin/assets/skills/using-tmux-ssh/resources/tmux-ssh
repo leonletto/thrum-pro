@@ -73,7 +73,7 @@ GOTCHAS
     own can still clear its own stale watch/input guard with --kill/--abort.
   - A dropped ssh loses any command running in it. Run long work under "tmux new -d" or nohup and re-run after a drop.
   - A host that reports THIS machine's own hostname is refused (125); clear it with --kill.
-  - A live session keeps the TMUX_SSH_OPTS it started with; a different non-empty TMUX_SSH_OPTS only warns; run --kill first to apply it.
+  - A live session keeps the ssh target and TMUX_SSH_OPTS it started with; a different target or non-empty TMUX_SSH_OPTS is REFUSED (exit 125, names the session and the differing fields, kills nothing); run --kill first to apply it.
   - --expect that never matched is reported as a warning after the command finishes.
 
 EXIT CODES
@@ -351,25 +351,61 @@ write_ref() {
   mv -f "$tmp" "$REF_FILE"
 }
 
-# A live session keeps the TMUX_SSH_OPTS it was started with, so a caller whose non-empty TMUX_SSH_OPTS differ gets
-# a warning (the run continues; --kill applies the new ones). A legacy ref with no ssh_opts= line is "unknown": warn only, and never record a guess for it.
+# A live session keeps the ssh target and TMUX_SSH_OPTS it was created with (both recorded in the session file). A caller whose
+# target or non-empty TMUX_SSH_OPTS DIFFER is REFUSED (exit 125): it must not silently ride another lease's ssh login, and the old
+# session is never killed here; run --kill first to apply new options. An empty TMUX_SSH_OPTS expresses no preference and adopts.
+# A legacy ref with no ssh_opts= line is "unknown": warn only, and never record a guess for it.
 SSH_OPTS_STARTED="${TMUX_SSH_OPTS:-}"   # what write_ref records; becomes the recorded value while the session lives
 SSH_OPTS_UNKNOWN=""
+opt_value() { # <opts> <flag> : value following the flag (last wins), "" if absent
+  local v="" t prev=""
+  # shellcheck disable=SC2086
+  for t in $1; do
+    if [ "$prev" = "$2" ]; then v="$t"; fi
+    prev="$t"
+  done
+  printf '%s' "$v"
+}
+opt_oset() { # <opts> : the -o options, sorted, one per line
+  local t prev=""
+  # shellcheck disable=SC2086
+  for t in $1; do
+    if [ "$prev" = "-o" ]; then printf '%s\n' "$t"; fi
+    prev="$t"
+  done | LC_ALL=C sort
+}
+opts_diff_fields() { # <recorded> <wanted> : human-readable list of the differing fields
+  local f out="" r w
+  for f in "-i:identity file" "-p:port" "-J:jump host" "-F:ssh config file" "-l:login user"; do
+    r=$(opt_value "$1" "${f%%:*}"); w=$(opt_value "$2" "${f%%:*}")
+    if [ "$r" != "$w" ]; then out="$out; ${f#*:} (recorded '${r:-<none>}', requested '${w:-<none>}')"; fi
+  done
+  r=$(opt_oset "$1"); w=$(opt_oset "$2")
+  if [ "$r" != "$w" ]; then out="$out; -o options (recorded '$(echo $r)', requested '$(echo $w)')"; fi
+  printf '%s' "${out#; }"
+}
 check_ssh_opts() {
   [ -f "$REF_FILE" ] && has_session || return 0
-  local want rec
+  local want rec rec_target f diff=""
   # shellcheck disable=SC2086
   want=$(echo ${TMUX_SSH_OPTS:-})
+  rec_target=$(grep '^ssh_target=' "$REF_FILE" 2>/dev/null | head -1 | cut -d= -f2- || true)
+  if [ -n "$rec_target" ] && [ "$rec_target" != "$HOST" ]; then diff="target (recorded '$rec_target', requested '$HOST')"; fi
   if ! grep -q '^ssh_opts=' "$REF_FILE" 2>/dev/null; then
     SSH_OPTS_UNKNOWN=1
     [ -z "$want" ] || log "WARNING: this session predates ssh option recording, so the ssh options it runs with are unknown and may not be your TMUX_SSH_OPTS; to apply them run: $SCRIPT_NAME $HOST --kill"
-    return 0
+  else
+    rec=$(grep '^ssh_opts=' "$REF_FILE" | head -1 | cut -d= -f2-)
+    SSH_OPTS_STARTED="$rec"
+    # shellcheck disable=SC2086
+    if [ -n "$want" ] && [ "$(echo $rec)" != "$want" ]; then
+      rec=$(echo $rec)
+      f=$(opts_diff_fields "$rec" "$want")
+      [ -n "$f" ] || f="ssh options (recorded '${rec:-<none>}', requested '$want'; same options in a different order)"
+      if [ -n "$diff" ]; then diff="$diff; $f"; else diff="$f"; fi
+    fi
   fi
-  rec=$(grep '^ssh_opts=' "$REF_FILE" | head -1 | cut -d= -f2-)
-  SSH_OPTS_STARTED="$rec"
-  # shellcheck disable=SC2086
-  [ -z "$want" ] || [ "$(echo $rec)" = "$want" ] && return 0
-  log "WARNING: the session for $HOST was started with different ssh options ('${rec:-<none>}', not your '$want'); those stay in force. To apply your TMUX_SSH_OPTS run: $SCRIPT_NAME $HOST --kill"
+  [ -z "$diff" ] || die "REFUSED: tmux session $SESSION for $HOST was created with different ssh options than this caller's; differing: $diff. Nothing was changed and the existing session was NOT killed. To use these options, run: $SCRIPT_NAME $HOST --kill (then retry), or use a separate TMUX_SSH_DIR." 125
   return 0
 }
 

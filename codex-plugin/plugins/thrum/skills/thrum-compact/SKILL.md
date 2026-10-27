@@ -151,9 +151,10 @@ block.
 Before Step 4, settle owned background tasks. In Claude Code, inspect the
 running-task list, wait for active sub-agents, list Monitors with
 `thrum monitor list`, stop your own Monitors, and stop or wait for background
-shells. In other runtimes, use only existing task controls; skip this check if
-none exist. Send only when none remain; if one cannot be settled, report and
-hold without sending.
+shells. Load the `using-monitors` skill before you list or stop monitors. In
+other runtimes, use only existing task controls; skip this check if none exist.
+Send only when none remain; if one cannot be settled, report and hold without
+sending.
 
 ```bash
 SNAPSHOT="<PASTE SNAPSHOT_PATH FROM STEP 3>"

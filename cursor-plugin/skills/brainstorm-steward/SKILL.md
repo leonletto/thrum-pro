@@ -1,6 +1,6 @@
 ---
 name: brainstorm-steward
-description: "Use when running as the Brainstorm Steward — a persistent watcher on the coordinator's home box that manages a roster of remote brainstormers, multiplexes their NEED questions into one pane queue for the owner, routes ANSWERs back, and delegates launch and dual-review approval to coordinators (the brainstormer runs its own project-setup after approval). Never decides content."
+description: "Use when running as the Brainstorm Steward - a persistent watcher that manages a roster of brainstormers (often on other machines), multiplexes their NEED questions into one pane queue for the owner, routes ANSWERs back, and delegates launch and dual-review approval to coordinators (the brainstormer runs its own project-setup after approval). Never decides content."
 ---
 
 # Brainstorm Steward
@@ -27,11 +27,12 @@ tree rule (a roster member that is a coordinator escalates to the human, not
 to that coordinator). Everything below is additive — the brainstorm-specific
 duties layered on top of that base.
 
-Your roster is entirely remote (other boxes), so the base skill's remote
-modal-unblock note applies to every roster member by default — cross-peer
-send-keys is refused by design, so you cannot `thrum tmux send` into a
-roster member's pane yourself; route the unblock to that box's local
-coordinator instead.
+A roster member on another machine is unblocked through the daemon where the peer
+grants `can_send_keys`; if that is refused, route the unblock to that machine's coordinator.
+Only if that fails and there is a problem to flag or unblock (a blocked prompt, or a fault an agent
+must be told about), the last fallback is an SSH send (see `persistent-watcher-archetype`). Cross-machine
+pane access through the daemon needs the machine that owns the pane to be on Pro. Sending a NEED to the owner's
+inbox is covered by the `steward` skill.
 
 ## Available skills (situational — you MUST invoke when triggered)
 
@@ -62,7 +63,7 @@ launch time (see "Launch delegation" below — you tell the launching
 coordinator to brief it with `steward: @<you>`).
 
 Your `parent` is whatever `watch_params.json`'s `parent` field names —
-typically the fleet's main coordinator.
+typically the main coordinator.
 
 ## Detection (hybrid, "never forget")
 
@@ -71,8 +72,7 @@ thread:
 
 - **Push — inbox scan.** Each cycle, read your inbox (`thrum inbox`) for
   messages from a roster brainstormer whose first line matches
-  `NEED [<topic>]:` (the convention from
-  the NEED/ANSWER convention spec in the project's design docs). Read
+  `NEED [<topic>]:` (the `brainstorm-queue-aware` skill defines the convention). Read
   the topic, question, and options straight from the prose — there is no
   structured payload to parse; you are a judgment agent reading a message
   the way you'd read any message. The sender identity tells you which
@@ -99,6 +99,7 @@ thread:
   exact `thrum monitor start` registration — **`--notify-on-success` is
   mandatory there too**, for the identical reason: a `--schedule`d job
   delivers nothing on `--match` alone.
+  Load the `using-monitors` skill before you arm, edit or stop a monitor.
 
 ## The queue (your pane console)
 
@@ -119,22 +120,13 @@ convention doc) via `thrum reply <need-message-id> --stdin` addressed to the
 original NEED message, in the owner's own words. Once relayed, drop the item
 from your queue and surface the next.
 
-## Dashboard board (rehearsal-only today — see gate below)
+## Dashboard board (optional, Pro)
 
-<!-- DASHBOARD-SHIP-GATE: the paragraph below is AWARENESS-safe now, but the
-     USE-mandate (publish the NEED queue as a dashboard board) activates only
-     when the web UI Dashboard tab (E3) AND the answer round-trip (E4) are
-     actually DEPLOYED, not merely landed on trunk — per `using-the-dashboard`'s
-     honesty table, publishing today is still a no-op for the human on any box
-     running a pre-E3/pre-E4 binary. Re-check that table before flipping this
-     to a mandate. -->
 Your pane console above is the mechanism today. `using-the-dashboard`
 documents an owner-facing board surface for the SAME NEED-multiplexing this
-skill already does — invoke it (with `coordinator-dashboard-human-loop`,
-since a steward is launched coordinator-shaped and inherits that skill too)
-to check what is actually usable before treating a board as a second channel
-for your queue. Until the honesty table's E3+E4 rows read DEPLOYED, keep
-routing owner Q&A through the pane console, not a board.
+skill already does. Dashboard writes are Pro: on a Free install they are refused
+with an error containing `not entitled`, so keep routing owner Q&A through the pane
+console and your message thread.
 
 ## Idle nudge
 
@@ -146,20 +138,17 @@ recreates the exact interruption-multiplexing problem you exist to prevent.
 
 ## Launch delegation
 
-You **cannot** launch a brainstormer remotely — `thrum tmux create`/`launch`
-is local-socket-only by design, and you run on the coordinator's home box
-while brainstormers run on other boxes. To start a new brainstorm on topic X:
+You **cannot** launch a brainstormer on another machine: `thrum tmux create`/`launch` is
+local-socket-only by design. To start a new brainstorm on topic X:
 
 1. **Message the target box's coordinator** to run the Phase-1 spawn from `coordinator-running-brainstorm-cycles` —
    worktree creation, `thrum tmux create`/`launch`, and briefing the new brainstormer with `steward: @<you>` plus the
    `brainstorm-queue-aware` skill so it knows to route its questions to you instead of the human.
 2. **Add the new brainstormer to your own `watch_params.roster`** once it's
    launched — you are the only writer of your own params file.
-3. **Pick a lightly-loaded box other than your own home box.** Check
-   `thrum team`/status for load, and **never pick the coordinator's own
-   home box** — the entire point of routing brainstorm compute off it is
-   defeated by launching one there. If the owner names a specific box
-   explicitly, honor that instead.
+3. **Pick a lightly-loaded machine.** Check `thrum team`/status for load, and prefer a machine other
+   than the one the coordinator and owner work on, so brainstorm compute stays off it. If the owner
+   names a specific machine explicitly, honor that instead.
 
 ## Finish handoff
 
@@ -203,8 +192,9 @@ skill) and your committed work (`thrum queue` — see the `using-the-queue`
 skill) BEFORE composing your snapshot. This is distinct from the restart
 recovery above (compaction keeps your daemon binding and live session
 intact, unlike a restart) but the same durable stores are what a
-post-compact render reads back. Without a Pro licence (`not entitled` / `requires a license`), skip this write and track
-it in the message thread instead.
+post-compact render reads back. Without a Pro licence (a write refused with `not entitled`), skip this write
+and keep one pinned summary message in your own inbox thread (the queue, open items, resume facts) instead,
+updating it by replying to it.
 
 ## Keep the pipeline flowing (stalled-handoff detection)
 
@@ -237,12 +227,9 @@ ruling (too noisy: a Steward peering into every coordinator's pane to audit
 its queue does not scale and is not the job). Clear the tracked WAITING
 state as soon as the brainstormer advances past it.
 
-## Reuse note
+## Starting config
 
-The brainstorm-steward watch-params template in the project's design docs is the canonical
-starting config for a new Brainstorm Steward — it uses the schema documented
-in the watch-params schema spec unchanged, with an
-empty `roster` to be populated as brainstormers are launched under it. Its
-`parent` field ships pre-filled with this fleet's own escalation target —
-when copying the template to a different fleet or box, replace that value
-with the new fleet's actual coordinator (see "Your `parent` is..." above).
+A new Brainstorm Steward starts from a `watch_params.json` with the brainstormers it
+manages in `roster` (an empty roster is a startup fault). The schema is in
+`persistent-watcher-archetype/resources/watch-params-schema.md`. Set `parent` to the
+coordinator that should receive your escalations.

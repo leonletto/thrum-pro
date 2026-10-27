@@ -1,6 +1,6 @@
 ---
 name: using-monitors
-description: "Use when scheduling a reminder, watching a log, or running a periodic check that must reach an agent - thrum monitor start, cron --schedule, --match, --notify-on-success, --debounce, recurring nudge, plan follow-up reminder, remind me to check on my plan, check whether blockers have moved, prompt my pane on a schedule, monitor script that runs thrum tmux send, edit the script not the monitor, change a reminder without recreating the monitor, script check with exit codes, why a monitor message did not arrive, how to verify a monitor delivered."
+description: "USING thrum monitor to schedule reminders, periodic script checks and pane nudges; use when asked to set up a monitor or verify one delivered"
 ---
 
 # Thrum Monitors - Reminders, Pane Prompts And Script Checks

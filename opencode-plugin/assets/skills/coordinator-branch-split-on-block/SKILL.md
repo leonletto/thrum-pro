@@ -1,13 +1,13 @@
 ---
 name: coordinator-branch-split-on-block
-description: "Use when a Pass-3 merge gate (hotpath, philosophy) or dual review BLOCKS on ONE concern of a branch that bundles multiple independent concerns, while the other concern(s) are clean - on a live multi-writer shared branch. Walks the split-land-recut sequence - separate the blocked concern from the clean one(s), land the clean half first, re-cut the blocked half onto the now-moved base, and verify the dropped commits are NOT ancestors of the re-cut tip before re-gating and merging."
+description: "Use when a merge gate (hotpath, philosophy) or dual review BLOCKS on ONE concern of a branch that bundles multiple independent concerns, while the other concern(s) are clean - on a live multi-writer shared branch. Walks the split-land-recut sequence - separate the blocked concern from the clean one(s), land the clean half first, re-cut the blocked half onto the now-moved base, and verify the dropped commits are NOT ancestors of the re-cut tip before re-gating and merging."
 ---
 
 # Coordinator: Branch-Split When One Concern Blocks a Multi-Concern Branch
 
 ## When to use
 
-- A Pass-3 dual merge-gate (`coordinator-hotpath-merge-gate` or
+- A merge gate (`coordinator-hotpath-merge-gate` or
   `coordinator-philosophy-merge-gate`) — or dual review — **BLOCKS on one
   identifiable concern** of a branch, while the branch also carries one or
   more genuinely independent, unrelated concerns that are clean.
@@ -153,7 +153,7 @@ asserted after the fact).
 ## See also
 
 - `coordinator-hotpath-merge-gate` / `coordinator-philosophy-merge-gate` —
-  the Pass-3 gates whose BLOCK verdict triggers this play.
+  the merge gates whose BLOCK verdict triggers this play.
 - `coordinator-running-review-cycles` — the dual-review cycle that may also
   originate a scoped BLOCK this play applies to.
 

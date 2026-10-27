@@ -75,7 +75,10 @@
 # resource, thrum-watch-pane-capture.sh, which IS deployed under
 # `.thrum/agents/<you>/`). Because of that different deployment shape,
 # SCRIPT_DIR here is `<worktree>/.thrum-watch`, so WORKTREE_ROOT is
-# `dirname(SCRIPT_DIR)` — one level up, not three. Register with:
+# `dirname(SCRIPT_DIR)` — one level up, not three.
+#
+# Load the `thrum:using-monitors` skill before you register this monitor.
+# Register with:
 #   thrum monitor start --name roster-watch-<you> \
 #     --match "^(roster capture ready:|ROSTER INCIDENT:)" --to @<you> --notify-on-success \
 #     --schedule '*/10 * * * *' -- <worktree>/.thrum-watch/roster-watch.sh

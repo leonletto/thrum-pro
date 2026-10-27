@@ -1,0 +1,4 @@
+interface:
+  display_name: "Steward"
+  short_description: "Use when running as a Steward - a persistent watcher that carries questions between several projects' coordinators (and brainstormers) and the project owner, sends them to the owner's inbox, and carries the owner's answers back with project and sender context. Never decides content."
+  default_prompt: "Use when running as a Steward - a persistent watcher that carries questions between several projects' coordinators (and brainstormers) and the project owner, sends them to the owner's inbox, and carries the owner's answers back with project and sender context. Never decides content."

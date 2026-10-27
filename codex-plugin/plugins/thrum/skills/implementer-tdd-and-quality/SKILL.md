@@ -15,19 +15,19 @@ or any other content from that skill. Layer this content on top of those
 universals: the rules below capture project-specific Go conventions and
 quality-gate practice.
 
-### Race detector is mandatory
+### Run the race or concurrency check your project configures
 
-**Why:** Thrum's daemon has significant concurrent state (goroutines for
-WebSocket, Unix socket, sync, telegram bridge, peer transport). Race conditions
-that pass bare `go test` fail under `-race` — sometimes with silent data
-corruption that takes hours to track down later. The Makefile's `make test`
-includes `-race` by default for exactly this reason.
+**Why:** Code with significant concurrent state (goroutines, threads, async
+tasks) can pass a plain test run and still fail under the language's race or
+concurrency checker, sometimes with silent data corruption that takes hours to
+track down later.
 
-**How to apply:** Always run `go test -race ./...` (or scope to specific
-packages with `-race`). Never report tests passing without having run with
-`-race`. For a specific package:
-`go test ./internal/daemon/... -race -count=1 -timeout=120s`. For everything:
-`make test`.
+**How to apply:** Read `.thrum/gate-config.json` (the `per_landing` entries of
+kind `race`, or the commands your project documents) and run the race or
+concurrency check it names on the packages you touched. Never report tests
+passing without having run it, when your project has one. If your project has
+none, say so in your report. (Go example:
+`go test -race ./internal/<pkg>/... -count=1`.)
 
 ### Scope test runs to packages you touched
 
@@ -36,10 +36,12 @@ wasteful — most packages weren't touched and their tests will pass identically
 every iteration. Scoping speeds the inner loop without sacrificing correctness;
 the full tree gets one final run before reporting done.
 
-**How to apply:** During the inner fix-test loop, run only the affected
-packages: `go test -race ./internal/<pkg>/... -run <TestName>`. Once the scoped
-tests pass and you're ready to report done, run `make test` once to confirm
-nothing else broke.
+**How to apply:** During the inner fix-test loop, run only the affected packages
+with a test selector (Go example:
+`go test -race ./internal/<pkg>/... -run <TestName>`). Once the scoped tests
+pass and you're ready to report done, run the whole-lane test command from
+`.thrum/gate-config.json` (`per_landing`, or `full_fallback` when selection
+cannot run) once to confirm nothing else broke.
 
 ### Use `t.TempDir()` for filesystem fixtures — never hardcoded paths
 
@@ -56,16 +58,20 @@ in the temp dir: `cmd := exec.Command("git", "init", t.TempDir())`. For fixtures
 comparing paths, capture the temp dir into a variable and reference it in
 expected values — never hardcode.
 
-### Avoid `go vet ./...` regressions before reporting
+### Run the static checks before reporting
 
-**Why:** `go vet` catches a class of bugs that compile but are wrong:
-unreachable code, suspicious type conversions, malformed printf args. Lint-clean
-code that fails `vet` will get caught in CI or by review; running `vet` locally
-catches it pre-commit when the fix is one line.
+**Why:** Static analysis (a vet pass, a type check, a linter) catches a class of
+bugs that compile but are wrong: unreachable code, suspicious conversions,
+malformed format arguments. Code that fails the checks gets caught in CI or by
+review; running them locally catches it pre-commit when the fix is one line.
 
-**How to apply:** Before reporting done, run `go vet ./...` and `make lint`.
-Both should pass clean. If a `vet` finding looks like a false positive, prefer a
-small annotation or refactor to silencing the warning.
+**How to apply:** Before reporting done, run the lint and static-check commands
+from `.thrum/gate-config.json` (`per_landing` kinds `lint`, plus
+`structural_checks`), or the commands your project documents. All should pass
+clean. Run a check in its read-only form, never a fix mode that rewrites tracked
+files (the `write_capable_targets` there). If a finding looks like a false
+positive, prefer a small annotation or refactor to silencing the warning. (Go
+example: `go vet ./...`.)
 
 ### Two-stage self-review before pinging the coordinator
 

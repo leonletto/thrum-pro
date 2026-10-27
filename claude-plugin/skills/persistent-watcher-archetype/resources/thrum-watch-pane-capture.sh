@@ -37,8 +37,9 @@
 #
 # SETUP (per watcher/steward instance — see the skill's SKILL.md for the
 # full recipe): copy BOTH this script and thrum-capture-fallback.sh from
-# the skill's resources/ into your own `.thrum/agents/<you>/`, then
-# register `thrum monitor start` against that absolute copy path.
+# the skill's resources/ into your own `.thrum/agents/<you>/`.
+# Load the `thrum:using-monitors` skill before you register the monitor.
+# Then register `thrum monitor start` against that absolute copy path.
 # `CLAUDE_PLUGIN_ROOT` is a Claude-Code-hook-only env var, NOT present in
 # `thrum monitor`'s scheduled-process environment, so the script cannot
 # locate itself inside the plugin tree at run time — it must be copied
@@ -52,6 +53,8 @@
 #
 # USAGE:
 #   thrum-watch-pane-capture.sh
+#
+# Load the `thrum:using-monitors` skill before you register this monitor.
 #
 # THRUM MONITOR EXAMPLE (see SKILL.md for the full, current recipe —
 # --notify-on-success is MANDATORY: a --schedule'd job delivers NOTHING on
@@ -158,10 +161,19 @@ fi
 # arrays -- parallel indexed arrays instead). Test with `/bin/bash
 # thrum-watch-pane-capture.sh`, not just `bash ...` or `./...`, or this
 # class of bug only surfaces on the live scheduled run.
+# A roster entry is an agent name, or an object {"agent_id","hostname",
+# "tmux_session"} for an agent on another machine. Parallel arrays keep the
+# bash-3.2 constraint above: ROSTER holds the names, ROSTER_HOST and
+# ROSTER_TMUX hold the object fields ("" for a plain name).
 ROSTER=()
-while IFS= read -r line; do
-  [ -n "${line}" ] && ROSTER+=("${line}")
-done < <(jq -r '.roster[]?' "${PARAMS_FILE}")
+ROSTER_HOST=()
+ROSTER_TMUX=()
+while IFS='|' read -r r_name r_host r_tmux; do
+  [ -n "${r_name}" ] || continue
+  ROSTER+=("${r_name}")
+  ROSTER_HOST+=("${r_host}")
+  ROSTER_TMUX+=("${r_tmux}")
+done < <(jq -r '.roster[]? | if type == "object" then [(.agent_id // ""), (.hostname // ""), (.tmux_session // "")] else [., "", ""] end | join("|")' "${PARAMS_FILE}")
 
 if [ "${#ROSTER[@]}" -eq 0 ]; then
   log "NOOP: roster is empty in watch_params.json"
@@ -243,10 +255,21 @@ RESOLVED_SSH_REPO=()
 RESOLVED_COUNT=0
 
 resolve_roster_targets() {
-  local agent pool_json box i matched row_found
+  local agent pool_json box i matched row_found ridx
+  ridx=-1
   for agent in "${ROSTER[@]}"; do
+    ridx=$((ridx + 1))
     matched=0
     row_found=0
+    # A roster object names its own box: that hostname is the SSH
+    # destination, so no thrum state rows are needed (and none is written).
+    if [ -n "${ROSTER_HOST[$ridx]}" ]; then
+      RESOLVED_SSH_TARGET+=("${ROSTER_HOST[$ridx]}")
+      RESOLVED_SSH_USER+=("")
+      RESOLVED_SSH_REPO+=("")
+      RESOLVED_COUNT=$((RESOLVED_COUNT + 1))
+      continue
+    fi
     if pool_json="$(thrum state get "agent_pool:${agent}" --json 2>>"${LOG_FILE}")"; then
       box="$(printf '%s' "${pool_json}" | jq -r '.entry.value.box // empty')"
       if [ -n "${box}" ]; then
@@ -308,7 +331,7 @@ fi
 capture_agent() {
   local agent="$1" out_file="$2" idx="$3"
   bash "${FALLBACK_SCRIPT}" capture "${agent}" \
-    "${RESOLVED_SSH_TARGET[$idx]}" "${RESOLVED_SSH_USER[$idx]}" "${RESOLVED_SSH_REPO[$idx]}" \
+    "${RESOLVED_SSH_TARGET[$idx]}" "${RESOLVED_SSH_USER[$idx]}" "${RESOLVED_SSH_REPO[$idx]}" "${ROSTER_TMUX[$idx]}" \
     >"${out_file}" 2>&1
 }
 

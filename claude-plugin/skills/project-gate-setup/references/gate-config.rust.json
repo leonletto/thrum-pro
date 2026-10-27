@@ -1,0 +1,20 @@
+{
+  "languages_detected": ["rust"],
+  "build_merged_tree": "git fetch origin <branch> <target>; merge origin/<branch> into a scratch worktree cut from the target tip fetched at gate start; cargo build --all-targets",
+  "per_landing": [
+    {"name": "build", "cmd": "cargo build --all-targets", "kind": "build"},
+    {"name": "clippy", "cmd": "cargo clippy --all-targets -- -D warnings", "kind": "lint"},
+    {"name": "tests", "cmd": "cargo test", "kind": "test"}
+  ],
+  "full_fallback": "cargo test",
+  "focused_vs_full": "A name-filter run only localizes a failure. The verdict rests on the whole cargo test run.",
+  "zero_match_check": "cargo test <filter> -- --list must list the intended tests; cargo test no_such_test_at_all -- --list must list none",
+  "structural_checks": [
+    {"name": "formatting", "cmd": "cargo fmt --check", "why": "non-zero means unformatted files"}
+  ],
+  "generated_files": [],
+  "baselines": [],
+  "write_capable_targets": ["cargo fmt", "cargo clippy --fix"],
+  "verdict_log": "docs/gate-log.md",
+  "retention_paths": []
+}

@@ -173,47 +173,40 @@ The procedure, every time, no shortcuts:
       RPC isn't reaching correctly: `tmux send-keys -t <session> <key>`, then
       `tmux capture-pane -t <session> -p` to verify directly, bypassing the
       daemon layer.
-   c. **SSH to the member's own box**, for a remote member or whenever (a)
-      fails with a proxy-failure signature
-      (`rpcrouter: caller-peer lacks required capability`, `peer unreachable`, `circuit open, dial skipped`)
-      — use the shipped pair of scripts, don't hand-roll the SSH call:
-      `resources/thrum-watch-pane-capture.sh`'s `build_topology_table` /
-      `resolve_roster_targets` resolves the target's SSH destination from
-      `thrum state get agent_pool:<agent>` (`.entry.value.box`) joined
-      against `thrum state show topology:<scope>` (`.entry.value.hostname`
-      / `.entry.value.ssh.target` / `.entry.value.ssh.user` /
-      `.entry.value.repo_path`), then hands those already-resolved values to
+   c. **Remote member, step (a) refused** (`rpcrouter: caller-peer lacks required capability`, `peer unreachable`,
+      `circuit open, dial skipped`, or a Pro refusal): do not go straight to SSH. Re-capture (read-only; SSH capture
+      is allowed, see "SSH fallback") and escalate to your `parent`, asking that machine's coordinator to clear the
+      modal.
+   d. **SSH send, the last fallback.** Only when the normal routes have failed (the grant is refused and the
+      coordinator route did not work or is not available) AND there is a problem to flag or unblock: a prompt that
+      stays blocked, or a fault an agent must be told about (for example, typing "Your bridge is down. Please take a
+      look." into its pane). For keys, run this; it retries the identical `thrum tmux send --keys` in the target
+      agent's own checkout:
 
-      ```text
-      resources/thrum-capture-fallback.sh <capture|key> <agent> <ssh_target> <ssh_user> <repo_path> [keys...]
+      ```bash
+      resources/thrum-capture-fallback.sh key <agent> <ssh_target> <ssh_user> <repo_path> <key> [<key> ...]
       ```
 
-      which is the piece that actually runs
+      For a message, run this the same way:
 
-      ```text
-      ssh "<ssh_user>@<ssh_target>" "cd '<repo_path>' && thrum tmux send '<agent>' --keys <keys>"
+      ```bash
+      ssh <ssh_user>@<ssh_target> "cd '<repo_path>' && thrum tmux send '<agent>' '<message>'"
       ```
 
-      — `thrum-capture-fallback.sh` does no
-      resolution of its own, so calling it directly requires you (or the
-      caller) to already have those three values. A topology gap fails
-      closed (no SSH fallback attempted) rather than guessing a wrong
-      destination. There is no per-agent SSH field in the roster/agent Go
-      schema — the destination comes from this `thrum state` topology data.
-      (There IS a real `.thrum/ssh/config` on fleet boxes — the underlying
-      host-alias file, included via `~/.ssh/config`, that makes a bare
-      `ssh <box>` resolve at all — but it is not what these scripts read; they
-      read the resolved `ssh.target`/`ssh.user` values out of `thrum state`
-      instead.)
+      The same key rules apply (judge the command, never "don't ask again", never a bare
+      Enter); re-capture to verify, and tell your `parent` what you did and why. It is a fallback, never the first
+      route.
    If the modal still will not close after this ladder, or it is an
    UNRECOGNIZED block you cannot cancel, escalate to your `parent` per the
    rubric criteria (capped at three per condition) and include the fresh
    capture. An unrecognized modal you CAN cancel is cancelled (the explicit
    No digit), not escalated.
-- Cross-peer send-keys being capability-gated is a deliberate security
-  boundary (§ladder step a above), not a bug to route around by other means
-  without checking the failure signature first. A peer can always CAPTURE
-  another peer's panes read-only regardless of capability.
+
+- Cross-peer send-keys through the daemon is capability-gated (step a above); use the grant first, then the
+  coordinator (step c), and the SSH send (step d) only as the last fallback. Cross-peer capture is
+  gated too: it needs the `can_mirror_tmux` grant and the machine that owns
+  the pane on Pro. Where the daemon refuses a capture, SSH capture-only is the
+  read-only fallback.
 
 **Worked example** — the standard two-variant Claude Code tool-confirmation
 modal (the daemon's permission patterns, pattern `tool_confirmation`,
@@ -363,7 +356,7 @@ anti-pattern already rejected for the wake-loop itself.
   checks before nudging, not one — a single quiet interval routinely
   reflects legitimate heads-down work, and at
   `cadence_active` (2-5min) two checks still land in 4-10min, far inside
-  the sweep's ~30-60min effective cadence.
+  a typical 30-60min context-sweep cadence.
 - **The reminder itself:** a plain `thrum send`, not a modal, not an
   escalation. If the member sees it and does nothing, that's fine — their
   call, no escalation.
@@ -416,6 +409,8 @@ choice of plumbing.
 Register the loop as a `thrum monitor` instead — a daemon-scheduled job,
 independent of your session, that keeps running across your restarts.
 
+Load the `using-monitors` skill before you arm, edit or stop this monitor.
+
 **A ready-to-use script ships with this skill** —
 `resources/thrum-watch-pane-capture.sh` (paired with `resources/thrum-capture-fallback.sh`).
 It is generic and roster-driven: it reads your own
@@ -444,6 +439,8 @@ runtime-versioned path involved:
    `.thrum/agents/<you>/thrum-capture-fallback.sh`.
 3. `chmod +x .thrum/agents/<you>/thrum-watch-pane-capture.sh .thrum/agents/<you>/thrum-capture-fallback.sh`
 
+Load the `thrum:using-monitors` skill before you register this monitor.
+
 Then register the monitor against that absolute copy path —
 **`--notify-on-success` is MANDATORY, not optional decoration**: a
 `--schedule`d job delivers NOTHING on `--match` alone — this fails
@@ -463,9 +460,13 @@ thrum monitor start --name <you>-pane-watch \
 (The `RESOLUTION-FAIL` alternative in `--match` is the script's own
 fork-default signal — see "SSH fallback" below.)
 
+Load the `thrum:using-monitors` skill before you list or restart this monitor.
+
 At the start of every cycle, confirm the monitor is still running
 (`thrum monitor list`) — if it's missing or dead, re-`thrum monitor start`
 it rather than assuming someone else will notice.
+
+Load the `thrum:using-monitors` skill before you register the roster snapshot monitor.
 
 **Roster snapshot monitor:** copy `resources/roster-watch.sh`,
 `resources/capture_archive.py`, and `resources/jev_watcher_filter.py` into `<worktree>/.thrum-watch/`, then
@@ -476,6 +477,8 @@ against that copied `roster-watch.sh`. Keep the helper beside the script; the
 roster archive path must not depend on a plugin or research worktree path at
 run time. Captures and their archive land under `.thrum/agents/<you>/watch-captures/`
 (redirect-resolved), not beside the deployed script itself.
+
+Load the `thrum:using-monitors` skill before you register this monitor.
 
 Register roster-watch.sh's own monitor the same way, matching its actual
 output lines (`"roster capture ready:"` for a normal tick,
@@ -504,46 +507,61 @@ for that tick — no manifest filter, no decision directory, and
 blocking user-choice dialogs wake the watcher. Failed or uncertain decisions use
 the normal watcher path. Missing or false `use_jev` retains normal behavior.
 
+Load the `thrum:using-monitors` skill before you change this monitor.
+
 Keep --notify-on-success when changing use_jev. A compatible daemon
 suppresses the success confirmation only after a completed, confidently ordinary
 JEV tick; changing the boolean needs no monitor re-registration.
 
-### SSH fallback (resilience net, not the primary path)
+### SSH fallback (capture only; a resilience net, not the primary path)
 
-`thrum tmux capture <agent>` already reaches remote agents by name via the
-rpcrouter proxy — that is how fleet-wide watching works today for a healthy
-peer. `thrum-capture-fallback.sh` exists for when that proxy path is
-broken on the caller's side (known bug classes: a same-host
-dual-daemon caller-identity collision; a phantom-routing
-regression on a daemon build predating `EnsureProxies`). It is a strict
-FALLBACK, never primary and never SSH-first: `thrum-watch-pane-capture.sh`
-always tries the local proxy path first, and only retries via an SSH hop —
-using a per-agent SSH target resolved from `thrum state`
-(`agent_pool:<agent>` → box hostname → matched against `topology` →
-`ssh.target`/`ssh.user`/`repo_path`) — on the specific known proxy-failure
-error signature. Resolution fails CLOSED on any gap (missing box, no
-matching topology row, a placeholder `repo_path`) — that agent simply gets
-no SSH fallback for the run, it is not skipped from capture entirely, and
-local-only capture failures still show up in the report. If EVERY roster
-agent fails resolution in one run (likely a fleet-wide topology/agent_pool
-data gap, not routine per-agent degradation), the script flips its summary
-line to the `RESOLUTION-FAIL` marker so `--match` treats it as a real
-problem rather than a clean tick.
+`thrum tmux capture <agent>` reaches agents on other machines by name through the daemon's peer proxy, when the peer
+grants `can_mirror_tmux` and the machine that owns the pane is on Pro. When the daemon refuses or cannot reach the
+peer (`rpcrouter: caller-peer lacks required capability`, `peer unreachable`, `circuit open, dial skipped`, or a Pro
+refusal), fall back to a **read-only SSH capture**: `resources/roster-watch.sh` runs this straight to tmux:
 
-## Relationship to the deterministic context-monitoring sweep
+```bash
+ssh -n -o BatchMode=yes <host> "tmux capture-pane -p -J -t <session> -S -30"
+```
 
-You are NOT a replacement for the fleet's deterministic context-monitoring sweep
-(the `context-monitoring` `thrum monitor` job, `@every 30m`,
-self-gated to ~30-60min effective) — the two COEXIST. The sweep stays the fleet-wide, always-on,
-zero-incremental-cost tripwire covering every agent, including ones with no
-assigned watcher. You are the tighter-cadence, judgment-capable layer for
-your OWN roster specifically — duty #4 above (declared-intent) is exactly
-the kind of check the sweep cannot do reliably (it needs semantic,
-cross-cycle transcript judgment; the sweep's closest analog, its L9
-`waiting_on_coord` lens, is regex-based). Do not treat a quiet sweep as
-clearance to skip your own cycle, and do not treat your own coverage of a
-roster member as a reason to suppress the sweep's coverage of that same
-agent — they run independently.
+The host and tmux session come from the roster
+entry (`{"agent_id","hostname","tmux_session"}`, see `resources/watch-params-schema.md`) or from
+`thrum team @<agent> --offline --json`. It is a strict fallback, never primary and never SSH-first. It needs
+non-interactive SSH access (key-based) from your machine to the target machine, and `tmux` and `python3` where the
+script runs.
+
+SSH capture is read-only. Sending keys or a message by SSH is the last rung of the modal ladder (step d), after the
+daemon grant and that machine's coordinator, and only when there is a problem to flag or unblock. The older
+`thrum-capture-fallback.sh` path resolves its target from `thrum state` `agent_pool:`/`topology:` rows; creating those
+rows is a Pro write, so on a Free install prefer the roster-entry form above.
+
+## Starting a watcher or steward
+
+A coordinator starts one with the bundled script, not by hand:
+
+```bash
+resources/start-watcher.sh <name> --role watcher|steward --parent <agent> \
+  --roster <a,b,...|@file> --model <model> --effort <effort> \
+  [--cadence-active 5m] [--cadence-idle 10m] [--owner <user>]
+```
+
+It checks everything first and creates nothing if any check fails: a free name, a resolvable parent, a non-empty roster
+whose members all resolve, a cadence of at least one minute, a pinned model and effort, and an owner. The owner is
+`--owner`, else the first `@user:` entry of `permission_supervisors` in `.thrum/config.json`; with neither, the start
+stops. The script does not look at Telegram or email: the owner receives a normal message in their inbox, and the
+existing bridges forward it if they are linked. Then it runs
+`thrum worktree create`, writes `watch_params.json` from `resources/watch_params.template.json` (and re-reads it),
+`thrum tmux create` and `thrum tmux launch`, and `thrum monitor start`. A steward start also tells each roster member
+`steward: @<name>` once, with the `NEED [topic]:` convention.
+
+## Relationship to a fleet-wide context sweep
+
+If the project also runs a deterministic context-monitoring sweep (a scheduled `thrum monitor` job that checks every
+agent), you are NOT a replacement for it and it is not a replacement for you. The sweep is the always-on, low-cost
+tripwire over every agent, including ones with no assigned watcher. You are the tighter-cadence, judgment-capable layer
+for your OWN roster: duty #4 (declared intent) needs semantic, cross-cycle judgment that a scheduled check cannot do
+reliably. Do not treat a quiet sweep as clearance to skip your own cycle. With no sweep running, your cycle is the
+only coverage for your roster.
 
 ## Cadence
 

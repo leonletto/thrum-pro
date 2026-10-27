@@ -17,6 +17,11 @@ nuance**. It replaces the "agent runs a TUI" pattern — it is out-of-band from
 the messaging channel, so it never blocks messages and answers never scroll
 away.
 
+Dashboard writes (`dashboard set`, `dashboard answer`) are Pro. On a Free
+install a write is refused with an error containing `not entitled`: stop writing
+the board for the session and keep the question in the message thread instead.
+Reading and deleting stay free.
+
 This is the COMMONS skill: role-agnostic surface + discipline. Role overlays
 (`coordinator-dashboard-human-loop`, `brainstormer-dashboard-needs`) add the
 role-specific loop on top. When an overlay and this skill conflict, the overlay
@@ -182,7 +187,8 @@ not recompute the whole board inside one invocation.
   whatever environment it carries, so schedule the monitor as a reminder
   (`--schedule`, `--match`, `--notify-on-success`) and run the generator when
   the reminder arrives. The cron schedule is evaluated in the daemon's local
-  time zone, not UTC.
+  time zone, not UTC. Load the `using-monitors` skill before you arm that
+  reminder.
 
 ### The board is for the human reader, not an audit trail
 

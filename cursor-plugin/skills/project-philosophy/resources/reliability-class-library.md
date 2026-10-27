@@ -34,15 +34,32 @@ finding.
 
 **Per-language probes:**
 
-- Go: `grep -rn 'exec\.Command\|exec\.CommandContext\|os\.Open\|net\.Dial'
-  --include='*.go'`, excluding `*_test.go` and any package with
-  `driver`/`fault`/`vfs` in its path.
-- Python: `grep -rn 'subprocess\.\(run\|Popen\|call\)\|open(\|socket\.\(connect\|create_connection\)'
-  --include='*.py'`
-- JS/TS: `grep -rn 'child_process\.\(exec\|spawn\)\|fs\.\(readFile\|writeFile\)Sync\?\|net\.connect\|http\.request'
-  --include='*.ts' --include='*.js'`
-- Rust: `grep -rn 'std::process::Command\|std::fs::File::open\|TcpStream::connect'
-  --include='*.rs'`
+- Go:
+
+  ```bash
+  grep -rn 'exec\.Command\|exec\.CommandContext\|os\.Open\|net\.Dial' --include='*.go'
+  ```
+
+  excluding `*_test.go` and any package with `driver`/`fault`/`vfs` in its path.
+
+- Python:
+
+  ```bash
+  grep -rn 'subprocess\.\(run\|Popen\|call\)\|open(\|socket\.\(connect\|create_connection\)' --include='*.py'
+  ```
+
+- JS/TS:
+
+  ```bash
+  grep -rn 'child_process\.\(exec\|spawn\)\|fs\.\(readFile\|writeFile\)Sync\?\|net\.connect\|http\.request' --include='*.ts' --include='*.js'
+  ```
+
+- Rust:
+
+  ```bash
+  grep -rn 'std::process::Command\|std::fs::File::open\|TcpStream::connect' --include='*.rs'
+  ```
+
 - Fallback: search the language's canonical process-spawn and low-level
   file/socket primitives; a hit inside business logic rather than an
   adapter module is the finding.
@@ -72,9 +89,14 @@ spawn with no enclosing recover/catch in the same function is a finding.
   (spawns not immediately followed by a deferred recover)
 - Python: `grep -rn 'asyncio\.create_task\|Thread(target=' --include='*.py'`
   then check the target/coroutine body for a bare `try/except`
-- JS/TS: `grep -rn 'setTimeout\|setImmediate\|\.then(\|async function'
-  --include='*.ts' --include='*.js'` then check for an unhandled-rejection
-  or `.catch()` immediately at the call site
+- JS/TS:
+
+  ```bash
+  grep -rn 'setTimeout\|setImmediate\|\.then(\|async function' --include='*.ts' --include='*.js'
+  ```
+
+  then check for an unhandled-rejection or `.catch()` immediately at the call site
+
 - Rust: `grep -rn 'tokio::spawn\|std::thread::spawn' --include='*.rs'` then
   check for `catch_unwind` or a supervised-restart wrapper
 - Fallback: find the language's background-task/thread-spawn primitive; a
@@ -102,12 +124,24 @@ everything not in the list."
 
 **Per-language probes:**
 
-- Go: `grep -rn 'os\.RemoveAll\|DROP TABLE\|DELETE FROM.*WHERE.*NOT IN'
-  --include='*.go'`
-- Python: `grep -rn 'shutil\.rmtree\|os\.remove\|DELETE FROM.*NOT IN'
-  --include='*.py'`
-- JS/TS: `grep -rn 'fs\.rm\(Sync\)\?\|rimraf\|DELETE FROM.*NOT IN'
-  --include='*.ts' --include='*.js'`
+- Go:
+
+  ```bash
+  grep -rn 'os\.RemoveAll\|DROP TABLE\|DELETE FROM.*WHERE.*NOT IN' --include='*.go'
+  ```
+
+- Python:
+
+  ```bash
+  grep -rn 'shutil\.rmtree\|os\.remove\|DELETE FROM.*NOT IN' --include='*.py'
+  ```
+
+- JS/TS:
+
+  ```bash
+  grep -rn 'fs\.rm\(Sync\)\?\|rimraf\|DELETE FROM.*NOT IN' --include='*.ts' --include='*.js'
+  ```
+
 - Fallback: find the language's recursive-delete primitive and any
   "reconcile against canonical list" SQL/logic; check for an explicit
   empty-canonical guard.
@@ -168,16 +202,26 @@ request/dispatch path with no timeout/circuit breaker.
 
 **Per-language probes:**
 
-- Go: `grep -rn '\.Lock()\|\.RLock()' --include='*.go' -A10` then check
-  whether a network/exec/blocking call appears before the matching
-  `Unlock()`; separately `grep -rn 'context\.WithTimeout\|context\.WithDeadline'
-  --include='*.go'` to check whether peer/network calls on a dispatch path
-  have one
+- Go: `grep -rn '\.Lock()\|\.RLock()' --include='*.go' -A10` then check whether a network/exec/blocking call appears
+  before the matching `Unlock()`; separately
+
+  ```bash
+  grep -rn 'context\.WithTimeout\|context\.WithDeadline' --include='*.go'
+  ```
+
+  to check whether peer/network calls on a dispatch path have one
+
 - Python: `grep -rn 'with.*[Ll]ock' --include='*.py' -A10` for I/O inside
   the block; `grep -rn 'requests\.\(get\|post\)\|socket\.' --include='*.py'`
   for missing `timeout=`
-- JS/TS: `grep -rn 'await mutex\.\|\.acquire()' --include='*.ts'
-  --include='*.js' -A10` for I/O inside the held span
+- JS/TS:
+
+  ```bash
+  grep -rn 'await mutex\.\|\.acquire()' --include='*.ts' --include='*.js' -A10
+  ```
+
+  for I/O inside the held span
+
 - Fallback: find the language's lock-acquisition primitive; check whether
   I/O happens while held, and whether outbound calls on a hot path carry an
   explicit timeout.
@@ -205,9 +249,14 @@ failed (a deliberately broken fixture, an invented-symbol probe).
 
 **Per-language probes:**
 
-- Go: `grep -rln 'require\.NoError(t, err)$\|assert\.NoError(t, err)$'
-  --include='*_test.go'` (assertion-free tests: NoError with no
-  accompanying state/equality assertion)
+- Go:
+
+  ```bash
+  grep -rln 'require\.NoError(t, err)$\|assert\.NoError(t, err)$' --include='*_test.go'
+  ```
+
+  (assertion-free tests: NoError with no accompanying state/equality assertion)
+
 - Python: `grep -rn 'assert.*is None\|# no assert' --include='test_*.py'`
 - JS/TS: `grep -rn 'expect(.*\.not\.toThrow()' --include='*.test.ts'`
 - Fallback: find tests/checks whose only assertion is "no error raised,"
@@ -239,9 +288,20 @@ a freshly-created fixture.
 
 **Per-language probes:**
 
-- Go: `grep -rn 'CurrentVersion\|migrat\|wal_checkpoint\|journal_mode'
-  --include='*.go'`, then `grep -rln 'os\.Kill\|SIGKILL\|process\.Kill'
-  --include='*_test.go'` for mid-write kill tests
+- Go:
+
+  ```bash
+  grep -rn 'CurrentVersion\|migrat\|wal_checkpoint\|journal_mode' --include='*.go'
+  ```
+
+  then
+
+  ```bash
+  grep -rln 'os\.Kill\|SIGKILL\|process\.Kill' --include='*_test.go'
+  ```
+
+  for mid-write kill tests
+
 - Python: `grep -rn 'alembic\|migration' --include='*.py'`, then check test
   fixtures for a captured real DB snapshot vs. a freshly-created one
 - Node/TS: `grep -rn 'migrate\|knex\.' --include='*.ts'`, same fixture check
@@ -274,14 +334,23 @@ error/metric emission is a finding.
 
 **Per-language probes:**
 
-- Go: `grep -rn 'fallback\|FallBack\|if !exists\|default.*return'
-  --include='*.go'`
+- Go:
+
+  ```bash
+  grep -rn 'fallback\|FallBack\|if !exists\|default.*return' --include='*.go'
+  ```
+
 - Python: `grep -rn 'except:\s*pass\|\.get(\w+,\s*default_' --include='*.py'`
   (bare `except: pass` swallowing an error, or a `.get(k, default_creds)`
   shaped silent substitution)
-- JS/TS: `grep -rn 'catch\s*{\s*}\|??\s*default' --include='*.ts'
-  --include='*.js'` (an empty catch block, or a `??` fallback onto a
-  default-shaped value with no logging)
+- JS/TS:
+
+  ```bash
+  grep -rn 'catch\s*{\s*}\|??\s*default' --include='*.ts' --include='*.js'
+  ```
+
+  (an empty catch block, or a `??` fallback onto a default-shaped value with no logging)
+
 - Fallback: find lookup/dependency-load call sites; check whether the
   failure branch logs/surfaces the failure or silently substitutes a
   default.
@@ -312,10 +381,14 @@ statement).
 
 **Per-language probes:**
 
-- Go: `grep -rn 'INSERT OR REPLACE\|INSERT OR IGNORE' --include='*.go'` for
-  the unconditional write; cross-check against `grep -rn
-  'lww\.\|GuardSQL\|GuardTarget' --include='*.go'` for an adjacent guard —
-  a write-site hit with no guard hit nearby is the finding.
+- Go: `grep -rn 'INSERT OR REPLACE\|INSERT OR IGNORE' --include='*.go'` for the unconditional write; cross-check against
+
+  ```bash
+  grep -rn 'lww\.\|GuardSQL\|GuardTarget' --include='*.go'
+  ```
+
+  for an adjacent guard — a write-site hit with no guard hit nearby is the finding.
+
 - Python: `grep -rn 'ON CONFLICT DO UPDATE\|session\.merge(' --include='*.py'`
   with no accompanying version/timestamp comparison in the same
   transaction.
@@ -352,14 +425,29 @@ assumed read-only, and check whether any write or maintenance statement
 
 **Per-language probes:**
 
-- Go: `grep -rn 'OpenDB\|OpenReadDB\|sql\.Open\|sql\.OpenDB'
-  --include='*.go'` for the open call, cross-checked against `grep -rn
-  'wal_checkpoint\|PRAGMA\|checkpoint\|Checkpoint' --include='*.go'` in the
-  same file/package for a write/maintenance op reachable from a
-  read-labeled path.
-- Python: `grep -rn 'sqlite3\.connect\|open(.*[\'"]r[\'"]' --include='*.py'`
-  in a worker/script documented as read-only, cross-checked for `.execute(
-  ' *(INSERT|UPDATE|DELETE|VACUUM)` in the same module.
+- Go:
+
+  ```bash
+  grep -rn 'OpenDB\|OpenReadDB\|sql\.Open\|sql\.OpenDB' --include='*.go'
+  ```
+
+  for the open call, cross-checked against
+
+  ```bash
+  grep -rn 'wal_checkpoint\|PRAGMA\|checkpoint\|Checkpoint' --include='*.go'
+  ```
+
+  in the same file/package for a write/maintenance op reachable from a read-labeled path.
+
+- Python: `grep -rn 'sqlite3\.connect\|open(.*[\'"]r[\'"]' --include='*.py'` in a worker/script documented as read-only,
+  cross-checked for
+
+  ```bash
+  .execute( ' *(INSERT|UPDATE|DELETE|VACUUM)
+  ```
+
+  in the same module.
+
 - JS/TS: `grep -rn 'fs\.open\|db\.prepare' --include='*.ts' --include='*.js'`
   in a script/worker documented as read-only, cross-checked for a write
   call (`fs.write`, an `INSERT`/`UPDATE`/`DELETE`/`VACUUM` statement) in the
@@ -402,20 +490,39 @@ pattern for each category before searching for divergent call sites.
 
 **Per-language probes:**
 
-- Go: no single grep — per `project-hotpath-gate/SKILL.md` Step 8, identify
-  the repo's reference pattern per category (e.g. `grep -rn 'net\.Listen'
-  --include='*.go'` cross-checked for a following `Serve()`/`Accept()`
-  call; `grep -rn 'OpenReadDB\|sql\.Open' --include='*.go'` to find both
-  the canonical and legacy DB-open routes) and diff call sites against it.
-- Python: repo idiom probe — find the repo's own established retry
-  decorator (e.g. `grep -rn '@retry' --include='*.py'`), then `grep -rn
-  'while True:.*try:\|for _ in range(' --include='*.py'` for raw/ad hoc
-  retry loops that should have used the decorator instead.
-- JS/TS: apiClient vs. raw fetch — find the repo's established API-client
-  wrapper (e.g. `grep -rln 'class ApiClient\|export.*apiClient'
-  --include='*.ts'`), then `grep -rn 'fetch(\|axios\.' --include='*.ts'
-  --include='*.js'` for call sites bypassing it with a raw `fetch`/`axios`
-  call.
+- Go: no single grep — per `project-hotpath-gate/SKILL.md` Step 8, identify the repo's reference pattern per category
+  (e.g.
+
+  ```bash
+  grep -rn 'net\.Listen' --include='*.go'
+  ```
+
+  cross-checked for a following `Serve()`/`Accept()` call; `grep -rn 'OpenReadDB\|sql\.Open' --include='*.go'` to find
+  both the canonical and legacy DB-open routes) and diff call sites against it.
+
+- Python: repo idiom probe — find the repo's own established retry decorator (e.g.
+  `grep -rn '@retry' --include='*.py'`), then
+
+  ```bash
+  grep -rn 'while True:.*try:\|for _ in range(' --include='*.py'
+  ```
+
+  for raw/ad hoc retry loops that should have used the decorator instead.
+
+- JS/TS: apiClient vs. raw fetch — find the repo's established API-client wrapper (e.g.
+
+  ```bash
+  grep -rln 'class ApiClient\|export.*apiClient' --include='*.ts'
+  ```
+
+  ), then
+
+  ```bash
+  grep -rn 'fetch(\|axios\.' --include='*.ts' --include='*.js'
+  ```
+
+  for call sites bypassing it with a raw `fetch`/`axios` call.
+
 - Fallback: identify the repo's own reference implementation for a shared
   operation (the version most call sites use, or the one with a tripwire
   test); grep for call sites performing the same operation via a different
@@ -453,9 +560,15 @@ check or only a bare no-error check.
 - Go: `grep -rn 'require\.NoError\|assert\.NoError' --include='*_test.go'`
   scoped to hot-path test files, then check whether the same test function
   has any accompanying state/equality assertion.
-- Python: `grep -rln 'assert-free' 'test_*.py'` — a Python test file with
-  no `assert` beyond error-absence checks (e.g. no `assertEqual`/`assert
-  result ==`), scoped to hot-path-adjacent test modules.
+- Python: `grep -rln 'assert-free' 'test_*.py'` — a Python test file with no `assert` beyond error-absence checks (e.g.
+  no `assertEqual`/
+
+  ```bash
+  assert result ==
+  ```
+
+  ), scoped to hot-path-adjacent test modules.
+
 - JS/TS: `grep -rn 'expect(.*\.not\.toThrow()' --include='*.test.ts'` as
   the sole assertion in a hot-path-adjacent test.
 - Fallback: find tests covering hot-path handlers/lenses whose only
@@ -490,20 +603,36 @@ received the equivalent guard/fix.
 **Per-language probes:**
 
 - Go: `grep -rn 'func apply.*Tx' --include='*.go'` (projection writers),
-  `grep -rn 'vault\.\|Vault\|loadIdentity' --include='*.go'`
-  (vault/identity writers), `grep -rn 'net\.Listen\|net\.FileListener'
-  --include='*.go'` (listeners), `grep -rn
-  'schema\.OpenDB\|schema\.OpenReadDB\|sql\.Open' --include='*.go'` (DB
-  opens) — enumerate all hits per resource type and diff against which
-  ones received the fix.
-- Python: enumerate all writers across `*.py` — `grep -rn
-  '\.execute(\|\.commit(\|session\.add(' --include='*.py'` scoped to the
-  same resource/table the fix targeted, then check each hit for the
-  equivalent fix.
-- JS/TS: enumerate all save/write across `*.ts` — `grep -rn
-  '\.save(\|\.update(\|\.write(' --include='*.ts' --include='*.js'` scoped
-  to the same resource the fix targeted, then check each hit for the
-  equivalent fix.
+  `grep -rn 'vault\.\|Vault\|loadIdentity' --include='*.go'` (vault/identity writers),
+
+  ```bash
+  grep -rn 'net\.Listen\|net\.FileListener' --include='*.go'
+  ```
+
+  (listeners),
+
+  ```bash
+  grep -rn 'schema\.OpenDB\|schema\.OpenReadDB\|sql\.Open' --include='*.go'
+  ```
+
+  (DB opens) — enumerate all hits per resource type and diff against which ones received the fix.
+
+- Python: enumerate all writers across `*.py` —
+
+  ```bash
+  grep -rn '\.execute(\|\.commit(\|session\.add(' --include='*.py'
+  ```
+
+  scoped to the same resource/table the fix targeted, then check each hit for the equivalent fix.
+
+- JS/TS: enumerate all save/write across `*.ts` —
+
+  ```bash
+  grep -rn '\.save(\|\.update(\|\.write(' --include='*.ts' --include='*.js'
+  ```
+
+  scoped to the same resource the fix targeted, then check each hit for the equivalent fix.
+
 - Fallback: find the resource's canonical open/write primitive; enumerate
   every call site; check each one for the fix that was applied to the
   originally-reported site.
@@ -535,16 +664,28 @@ predicate (a function or well-defined phase set) or a weaker ad hoc proxy
 
 **Per-language probes:**
 
-- Go: `grep -rn 'ended_at IS NULL\|session.*not.*closed\|phase IS NULL'
-  --include='*.go'`
-- Python: N+1 ORM loop without `select_related`/`prefetch_related` — `grep
-  -rn 'for \w+ in \w+\.objects\.\(all\|filter\)(' --include='*.py'` with no
-  accompanying `select_related(`/`prefetch_related(` on the same
-  queryset.
-- JS/TS: N+1 for-loop issuing per-item queries — `grep -rn 'for\s*(.*of.*)\s*{'
-  --include='*.ts' --include='*.js' -A5` checked for an `await db.query(`
-  or equivalent per-row call inside the loop body instead of a single
-  batched query.
+- Go:
+
+  ```bash
+  grep -rn 'ended_at IS NULL\|session.*not.*closed\|phase IS NULL' --include='*.go'
+  ```
+
+- Python: N+1 ORM loop without `select_related`/`prefetch_related` —
+
+  ```bash
+  grep -rn 'for \w+ in \w+\.objects\.\(all\|filter\)(' --include='*.py'
+  ```
+
+  with no accompanying `select_related(`/`prefetch_related(` on the same queryset.
+
+- JS/TS: N+1 for-loop issuing per-item queries —
+
+  ```bash
+  grep -rn 'for\s*(.*of.*)\s*{' --include='*.ts' --include='*.js' -A5
+  ```
+
+  checked for an `await db.query(` or equivalent per-row call inside the loop body instead of a single batched query.
+
 - Fallback: find the candidate-selection query feeding a per-row-expensive
   loop; check whether its filter uses the repo's canonical liveness
   predicate or a weaker ad hoc proxy.
@@ -581,19 +722,43 @@ drift.
 
 **Per-language probes:**
 
-- Go: `grep -rn 'GenerateRepoID\|NormalizeGitURL\|stableRepoAccount\|sha256\.Sum'
-  --include='*.go'` for the primitive, cross-checked against `grep -rn
-  'SaveIdentityFile\|identities/.*\.json\|license\.\|GrantsOSS'
-  --include='*.go'` for a persisted/licensing consumer downstream.
-- Python: normalizer → disk/cache/DB key — `grep -rn 'def normalize_\|
-  hashlib\.sha256' --include='*.py'` for the primitive, cross-checked
-  against `grep -rn 'pickle\.dump\|redis\.set\|\.save(' --include='*.py'`
-  for a persisted consumer of its output.
-- JS/TS: hash → localStorage/DB key/JWT — `grep -rn
-  'crypto\.createHash\|normalize' --include='*.ts' --include='*.js'` for
-  the primitive, cross-checked against `grep -rn
-  'localStorage\.setItem\|jwt\.sign\|\.save(' --include='*.ts'
-  --include='*.js'` for a persisted consumer.
+- Go:
+
+  ```bash
+  grep -rn 'GenerateRepoID\|NormalizeGitURL\|stableRepoAccount\|sha256\.Sum' --include='*.go'
+  ```
+
+  for the primitive, cross-checked against
+
+  ```bash
+  grep -rn 'SaveIdentityFile\|identities/.*\.json\|license\.\|GrantsOSS' --include='*.go'
+  ```
+
+  for a persisted/licensing consumer downstream.
+
+- Python: normalizer → disk/cache/DB key —
+
+  ```bash
+  grep -rn 'def normalize_\| hashlib\.sha256' --include='*.py'
+  ```
+
+  for the primitive, cross-checked against `grep -rn 'pickle\.dump\|redis\.set\|\.save(' --include='*.py'` for a
+  persisted consumer of its output.
+
+- JS/TS: hash → localStorage/DB key/JWT —
+
+  ```bash
+  grep -rn 'crypto\.createHash\|normalize' --include='*.ts' --include='*.js'
+  ```
+
+  for the primitive, cross-checked against
+
+  ```bash
+  grep -rn 'localStorage\.setItem\|jwt\.sign\|\.save(' --include='*.ts' --include='*.js'
+  ```
+
+  for a persisted consumer.
+
 - Fallback: find normalizer/hash primitives; check whether their output
   feeds a persisted value or licensing comparison downstream, and whether
   a pinned-output test guards against accidental drift.

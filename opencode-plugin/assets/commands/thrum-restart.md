@@ -46,6 +46,27 @@ It carries the CRITICAL DISCIPLINE block and the 16-section structure with per-s
 **Use the 16-section structure.** The structure block is `§1.` through
 `§16.` with the per-section guidance documented in the partial.
 
+#### Big picture heading — REQUIRED FIRST SECTION (write this BEFORE anything else)
+
+Every restart snapshot MUST begin with a section using this exact heading:
+
+```text
+## 1. Big picture — what shipped this session
+```
+
+Followed by 1-3 sentences (a single paragraph or up to 3 short ones) summarizing
+what the session accomplished. Be specific: name the artifacts, the decisions,
+the cycles closed. End this block with a line containing only `---`, then write the
+16-section body from the partial. The session archive reads the Big picture up to
+the next `##` heading or `---` line, so without that line the `§` sections are
+swallowed into it.
+
+This section becomes YOUR OWN log entry, visible in `thrum agent sessions list`
+alongside the archives of every other session you've ever restarted from.
+Future-you (and other agents inspecting your history) skim it to decide which
+sessions are worth re-reading. Write it first, because composing it forces you to
+identify what was actually load-bearing about this session.
+
 ### 3. Write the continuation
 
 First run this PREP block (it mints the path and a per-run nonce):
@@ -244,6 +265,49 @@ the operator:
 
 ## After Restart: Session Archive
 
-After restart, your snapshot moves to `.thrum/agents/<your-agent-id>/sessions/`
-and stays there as a persistent log entry. The same archive mechanism applies; see `/thrum:restart` for archive browsing
-commands.
+After restart, IF you saved a snapshot within the graceful window, it moves to
+`.thrum/agents/<your-agent-id>/sessions/` and stays there as a persistent log
+entry. If the graceful save window elapsed before you saved (e.g. you were
+mid-task and missed the interrupt), the daemon writes NO snapshot and records
+a `.timeout-marker` sibling file instead. `thrum tmux restart` returns as soon
+as the daemon accepts the call, so it no longer reports this; the outcome is in
+the daemon log and the `.timeout-marker` file. Do not infer success from an empty `.thrum/restart/`
+directory alone — an empty source directory is consistent with either a
+genuine successful archive OR a bug that resolved to the wrong destination,
+silently aliased another agent's archive, or wrote truncated content. Browse
+the archive with:
+
+```bash
+thrum agent sessions list                    # default: this agent
+thrum agent sessions list --verbose          # full §1 bodies inline
+thrum agent sessions list --json             # NDJSON for scripts
+thrum agent sessions list --all              # every agent, grouped
+```
+
+**Verify the RESOLVED DESTINATION's identity, not just its existence.**
+Every archive already self-verifies: `sessionarchive.Archive` computes a
+SHA-256 checksum of the snapshot content it read *before* the move, then
+re-reads the file it just wrote at the destination and confirms the
+checksums match (`sessionarchive.VerifyArchivedIdentity` /
+`ChecksumContent` in the daemon's session-archive package) before
+reporting success. A destination that exists but doesn't hash-match its
+own pre-move content is treated as a hard failure of the archive call, not
+a warning. This is what actually proves "the file at
+`.thrum/agents/<id>/sessions/<ts>-restart.md` IS the artifact that was
+captured," as opposed to merely "a file with a plausible name is sitting
+there" — the latter is what `thrum agent sessions list`'s presence-only
+view alone would let you assume.
+
+Permissions are user-only (`0600` for each snapshot file, `0700` for the
+sessions folder). Operators on multi-user machines must copy explicitly to share
+archives with another account.
+
+Worktree-resident ephemeral agents archive into the worktree's own
+`.thrum/agents/<id>/sessions/` — so the archive vanishes when the worktree is
+removed. **By design.** If an ephemeral agent's history matters across the
+worktree teardown, export those snapshots manually before `git worktree remove`.
+
+The next session's `thrum prime` output includes a "Past Sessions" discovery
+hint summarizing the most recent archive's §1 — so future-you gets a one-line
+reminder of last session's headline without re-reading the full snapshot. That
+hint is why §1 above is required.

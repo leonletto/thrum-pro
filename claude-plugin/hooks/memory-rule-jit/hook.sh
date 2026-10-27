@@ -141,11 +141,13 @@ for i in $(seq 0 $((rule_count - 1))); do
 done
 
 # Emit soft rules as additional context (stdout, exit 0).
-for entry in "${matched_soft[@]}"; do
-    IFS=$'\x01' read -r rule_id title body <<< "$entry"
-    printf '%s\n' "$rule_id" >> "$dedup_file"
-    printf 'Agent Rule: %s\n\n%s\n\n' "$title" "$body"
-done
+if [ "${#matched_soft[@]}" -gt 0 ]; then
+    for entry in "${matched_soft[@]}"; do
+        IFS=$'\x01' read -r rule_id title body <<< "$entry"
+        printf '%s\n' "$rule_id" >> "$dedup_file"
+        printf 'Agent Rule: %s\n\n%s\n\n' "$title" "$body"
+    done
+fi
 
 # Emit first hard rule as ask (stderr, exit 2).
 # Only one hard rule per invocation — Claude Code routes the first

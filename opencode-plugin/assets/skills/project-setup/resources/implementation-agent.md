@@ -34,14 +34,16 @@ When filling this template to create an implementation prompt:
 - `{{EPIC_ID}}` — The beads epic ID to implement
 - `{{WORKTREE_PATH}}` — Absolute path to the working worktree
 - `{{BRANCH_NAME}}` — Git branch for this work (e.g., `feature/auth`)
-- `{{BASE_BRANCH}}` — The branch this work merges into. **Resolve it from the
-  project's actual merge target**
-  (`CONFIG=.thrum/config.json;
-  [ -f .thrum/redirect ] && CONFIG="$(cat .thrum/redirect)/config.json";
-  jq -r '.orchestration.merge_target' "$CONFIG"`
-  — a worktree's `.thrum/` holds only a `redirect` file, not its own
-  `config.json`); do not assume `main` and do not carry a branch name from
-  another document
+- `{{BASE_BRANCH}}` — The branch this work merges into.
+  **Resolve it from the project's actual merge target** by running this:
+
+  ```bash
+  CONFIG=.thrum/config.json; [ -f .thrum/redirect ] && CONFIG="$(cat .thrum/redirect)/config.json"; jq -r '.orchestration.merge_target' "$CONFIG"
+  ```
+
+  A worktree's `.thrum/` holds only a `redirect` file, not its own `config.json`. Do not assume `main` and do not
+  carry a branch name from another document
+
 - `{{DESIGN_DOC}}` — **Absolute path** to the design spec (if applicable)
 - `{{REFERENCE_CODE}}` — Paths to reference implementations (if any)
 - `{{QUALITY_COMMANDS}}` — Commands for test/lint, **scoped to packages this

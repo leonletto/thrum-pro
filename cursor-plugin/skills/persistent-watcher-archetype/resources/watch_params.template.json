@@ -1,0 +1,11 @@
+{
+  "watcher": "<name>",
+  "parent": "<parent>",
+  "model": "<model>",
+  "roster": [],
+  "cadence_active": "5m",
+  "cadence_idle": "10m",
+  "restart_ctx_pct": 50,
+  "override": null,
+  "pin_override": null
+}

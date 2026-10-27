@@ -6,9 +6,9 @@ description:
   approve or land or ship a branch, you are about to run git merge, or you are
   consolidating review findings before a merge. Loads the full merge sequence -
   dual review as a PRECONDITION not the gate, the mechanical merge-worthiness
-  pre-gate, DISPATCHING both Pass-3 gates to the Gate Runner rather than walking
+  pre-gate, DISPATCHING both merge gates to the Gate Runner rather than walking
   the lenses yourself, tripwire checks, gating the MERGED tree, the committed
-  verdict artifact, the efficacy row, and branch disposal."
+  verdict artifact, and branch disposal."
 # source: claude-plugin/skills/coordinator-merging-code/SKILL.md
 ---
 
@@ -210,7 +210,7 @@ WITHOUT the change and the tree WITH it.
 **Assert HEAD is attached** (`git symbolic-ref -q HEAD`) and that you are on the
 merge target before merging.
 
-### 3. PASS-3 GATES — DISPATCH BOTH TO THE GATE RUNNER
+### 3. THE MERGE GATES — DISPATCH BOTH TO THE GATE RUNNER
 
 1. Select from your team of established long-running gate agents.
 2. Choose an available pair for hot-path and philosophy.
@@ -310,20 +310,17 @@ mechanical-bookkeeping-fix commit uses — it is not a new permission grant.
 The §3 lens gates (hotpath + philosophy) are the judgement half. The per-merge
 executed half is **scoped to the change**:
 
-- Build the merged tree (`go build ./...`).
+- Build the merged tree with the `build_merged_tree` command in
+  `.thrum/gate-config.json`.
 - 🔴 **RULING:** the full sharded race suite — the project's sharded race test
-  runner over all packages (~15-20 min) — on the **merged tree**, every Pass-3
-  verdict. This replaces the prior "changed packages only (+ rpc shard sweep)"
-  race scoping below the ruling; a targeted `-run` is still never acceptable (a
-  targeted run misses cross-test races). Never on primary (the shared fleet
-  build box) — it is CPU-heavy; run it on the gate box.
-- The fast structural checks on the merged tree — `gate-ban-check`,
-  `gate-omitempty-check`, `gate-lockspan-check`, `gate-sourcetree-check`,
-  `gate-marker-diff`, `gate-stamp-protocol-check`, `gate-plugin-bundle-leaks`
-  (seconds each; they catch banned flags, `omitempty` drift, lock-span, shipped
-  code that needs a source-tree-only file, marker and stamp drift regardless of
-  the change; `gate-plugin-bundle-leaks` self-skips when no plugin path
-  changed).
+  runner over all packages (~15-20 min) — on the **merged tree**, every
+  merge-gate verdict. This replaces the prior "changed packages only (+ rpc
+  shard sweep)" race scoping below the ruling; a targeted `-run` is still never
+  acceptable (a targeted run misses cross-test races). Never on primary (the
+  shared fleet build box) — it is CPU-heavy; run it on the gate box.
+- The fast structural checks on the merged tree: every `structural_checks` entry
+  in `.thrum/gate-config.json` (seconds each; they catch drift that does not
+  depend on what the change touched).
 - The `merge-base --is-ancestor` fast-forward check (§6).
 - Any `*_tripwire_test.go` the change touches must stay green or the diff must
   state why its premise changed; a tripwire edited to accommodate the change is
@@ -334,47 +331,29 @@ executed half is **scoped to the change**:
   changes what the tripwire actually _enforces_ — any design or behavior
   judgment call — stays a finding, never a self-administered fix. Keep this
   distinction sharp; it is the highest-risk edit in this whole sequence.
-- 🔴 **The CLASS-firing governance gates, on the merged tree — they are BLIND to
-  changed-package scoping, exactly like the `//go:embed` asset in §5.**
-  `TestFixtureDriftGuard_NoUnlistedSchemaMirrors` (`internal/schema`) and
-  `TestEveryMirrorWriterIsSanctioned` (`tests/gate`) fire on a CLASS — a
-  hand-rolled `CREATE TABLE` for a real production table name, or a new
-  durablelane / mirror writer — so a diff adds the violation **without touching
-  `internal/schema` or `tests/gate`**, and the changed-package `-race` never
-  runs them. Cheap trigger, run it every merge:
-  `git diff <base> <tip> | grep -iE 'CREATE TABLE|ALTER TABLE|durablelane|MirrorWriter|sanctionedMirrorWriters'`
-  — ANY hit ⇒ also run `go test ./internal/schema/ -run TestFixtureDriftGuard`
-  and `go test ./tests/gate/ -run TestEveryMirrorWriterIsSanctioned` on the
-  MERGED tree. Measured previously: kgi7t (`TestEveryMirrorWriterIsSanctioned`)
-  and xo58f (`TestFixtureDriftGuard`) BOTH escaped per-merge Pass-3 this way and
-  surfaced only in the daily gate as trunk-reds. The changed-package rule below
-  is necessary, not sufficient — a class gate is a property of the TREE, not the
-  neighbourhood. 🔴 **Also always-run, same class-gate reasoning:**
-  `TestNoMainStateDBWriteOwnerBypasses` (`internal/testgate`; corpus 5.1
-  owner-bypass-check) — a scanner ratchet over every raw main-State-DB write
-  site, blind to changed-package scoping the same way. Measured previously: a
-  merged branch introduced a raw `r.db.ExecContext` outside
-  `safedb.WriteCoordinator` in a durable-lane cold-boot restore step; the
-  ratchet went 213→214 and gate_thrum's Pass-3 on that merge was CLEAN because
-  this test was not yet in the always-run set. Run it on the MERGED tree every
-  merge:
-  `go test ./internal/testgate/... -run TestNoMainStateDBWriteOwnerBypasses`.
+- 🔴 **Checks that fire on a CLASS of change run on the merged tree every
+  merge.** A check that fires on a pattern (a hand-rolled schema statement, a
+  new writer of a guarded resource) rather than on the package it lives in is
+  blind to changed-package scoping: the diff adds the violation without touching
+  the check's package, and it surfaces only in the periodic full gate as a red
+  trunk. Run every `structural_checks` entry and any class-firing test your
+  project's gate config or role rules name, on the MERGED tree, regardless of
+  which packages changed.
 
 **Establish branch-attributable vs pre-existing from the full-race `-race`
 result** — a regression adds failures the packages touched by the diff did not
 have before. Do not classify a scoped change by replaying the whole known-red
 suite.
 
-🔴 **Do NOT run the full all-lanes `make gate` for a merge.** The full suite —
-every package across lanes A/B/C/D, the integration lane,
-`gate-ci-mutation-check`, the UI lane, the full tripwire/boxstate reconciliation
-— is the **periodic full-gate cadence**, an agent run on the dedicated isolation
-box, and it is its own skill: **`coordinator-full-gate`**. A merge never
-triggers it, and its merge-base replay is not a per-merge step. Running it per
-merge is ~2h that on a common-mode- red trunk fails on the baseline every time.
-The RULING above widens only the **race lane** to full-sharded per merge — it
-does not pull the other lanes (integration, UI, mutation-check) into the
-per-merge path.
+🔴 **Do NOT run the project's full all-lanes gate for a merge.** The full suite
+— every package across every lane, the integration lane, the UI lane, mutation
+and reconciliation checks — is the **periodic full-gate cadence**, an agent run
+on the dedicated isolation box, and it is its own skill:
+**`coordinator-full-gate`**. A merge never triggers it, and its merge-base
+replay is not a per-merge step. Running it per merge is ~2h that on an
+already-red trunk fails on the baseline every time. The RULING above widens only
+the **race lane** to full-sharded per merge — it does not pull the other lanes
+(integration, UI, mutation-check) into the per-merge path.
 
 🔴 **Never kill a test run to stop a collision.** Killing skips Go's cleanup,
 which leaks fixed-name tmux fixtures onto the shared socket and breaks that
@@ -434,14 +413,16 @@ TIP** — ancestry proves a merge EXISTS, never WHAT landed.
 ### 7. AFTER THE MERGE — four things, none optional
 
 1. **The gate-log line.** The runner appends ONE line (date, gate, candidate
-   SHA, target SHA, verdict, one short reason) to `dev-docs/gate-log.md` and
-   commits it. That line is the only record a gate keeps: never commit per-gate
-   report directories, logs, archives or evidence, and delete the gate's output
-   once you confirm the candidate landed or was rejected (owner ruling
-   2026-10-17). The line must be able to carry a `CLEAN-WITH-GATE-FIXES`
-   outcome, and when one applies it cites the `GATE-AUTHORED` commit SHA.
-2. **No efficacy row.** The only post-verdict record is the one line in
-   dev-docs/gate-log.md (gate output is deleted after the verdict).
+   SHA, target SHA, verdict, one short reason) to the project's verdict log
+   (`verdict_log` in `.thrum/gate-config.json`) and commits it. That line is the
+   only record a gate keeps: never commit per-gate report directories, logs,
+   archives or evidence, and delete the gate's output once you confirm the
+   candidate landed or was rejected (owner ruling 2026-10-17). The line must be
+   able to carry a `CLEAN-WITH-GATE-FIXES` outcome, and when one applies it
+   cites the `GATE-AUTHORED` commit SHA.
+2. **One record only.** The only post-verdict record is the one line in the
+   project verdict log (`verdict_log` in `.thrum/gate-config.json`) (gate output
+   is deleted after the verdict).
 3. **Commit accumulated agent state** under `.thrum/agents/` along with the
    merge. Uncommitted agent state exists in exactly one working tree, and it IS
    the agent's memory across restarts. **Never `git add -f`.**
@@ -492,7 +473,7 @@ hides staleness.
 
 ### 9. Red flags — STOP
 
-- Walking the Pass-3 lenses yourself when a gate-role agent exists.
+- Walking the merge-gate lenses yourself when a gate-role agent exists.
 - Treating dual review as the gate.
 - Carrying a prior verdict onto a new SHA.
 - A gate-log line that contradicts its own report body.
@@ -512,7 +493,8 @@ hides staleness.
 - `coordinator-running-review-cycles` — the dual-review cycle feeding §1
 - `coordinator-branch-split-on-block` — when a gate blocks one concern of a
   bundled branch
-- `dev-docs/gate-log.md` — the one-line-per-gate record
+- the project verdict log (`verdict_log` in `.thrum/gate-config.json`) — the
+  one-line-per-gate record
 - `.thrum/hotpath-gate.json` · `.thrum/philosophy.md` — the configs; read these,
   not prose
 

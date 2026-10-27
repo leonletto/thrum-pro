@@ -1,4 +1,4 @@
 interface:
   display_name: "Coordinator: Hot-Path Merge Gate"
-  short_description: "Use when a hot-path Pass-3 gate is dispatched to you or you are its Gate Runner, or before a coordinator runs git merge after a clean dual review. Loads the gate-runner restart rule and the hot-path lenses from the hotpath gate config."
-  default_prompt: "Use when a hot-path Pass-3 gate is dispatched to you or you are its Gate Runner, or before a coordinator runs git merge after a clean dual review. Loads the gate-runner restart rule and the hot-path lenses from the hotpath gate config."
+  short_description: "Use when a hot-path merge gate is dispatched to you or you are its Gate Runner, or before a coordinator runs git merge after a clean dual review. Loads the gate-runner restart rule and the hot-path lenses from the hotpath gate config."
+  default_prompt: "Use when a hot-path merge gate is dispatched to you or you are its Gate Runner, or before a coordinator runs git merge after a clean dual review. Loads the gate-runner restart rule and the hot-path lenses from the hotpath gate config."

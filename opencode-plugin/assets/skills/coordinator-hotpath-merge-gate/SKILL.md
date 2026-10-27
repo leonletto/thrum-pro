@@ -1,6 +1,6 @@
 ---
 name: coordinator-hotpath-merge-gate
-description: "Use when a hot-path Pass-3 gate is dispatched to you or you are its Gate Runner, or before a coordinator runs git merge after a clean dual review. Loads the gate-runner restart rule and the hot-path lenses from the hotpath gate config."
+description: "Use when a hot-path merge gate is dispatched to you or you are its Gate Runner, or before a coordinator runs git merge after a clean dual review. Loads the gate-runner restart rule and the hot-path lenses from the hotpath gate config."
 ---
 
 # Coordinator: Hot-Path Merge Gate
@@ -131,19 +131,16 @@ rediscovering these the hard way:
    (the project's race runner on that package with a `--run` selector), only for a
    concurrency change. Never run a full-package race per landing: the full
    race runs on trunk in batches before any deploy, which is what catches
-   cross-test races. A focused `--run` race on `./internal/daemon/rpc` is not
+   cross-test races. A focused `--run` race on a package item 7 marks as too slow is not
    a monolithic run (item 7 is about the unfiltered package).
-7. **`internal/daemon/rpc` must NEVER be run monolithically at gate time, in either lane** — a bare package-level
-   `go test [-race] ./internal/daemon/rpc` starves and hits the configured `-timeout` wall in both the race and non-race
-   lane. The gate's OUTPUT must show the sharded runner actually executed for RPC (`race-shard` /
-   `package-shard --mode norace`, or the project's sharded test runner (race or norace lane) on `./internal/daemon/rpc`,
-   or `make gate` which shards both lanes automatically) — not just that some RPC test ran. A bound-timeout with ZERO
-   test failures is a FALSE RED, not a finding: distinguish it from a genuine hang/deadlock via
-   `go run ./cmd/testgate classify-timeout --log <file> --shard-config <file> --shard <name> --pkg-dir <package dir>`
-   (shard configs are hash-placed, so `--pkg-dir` is required) (fails closed — only BOUND-TIMEOUT exits 0; HANG and
-   UNCLASSIFIED both exit nonzero) before reporting it as a regression. If a gate's own command line invokes the bare
-   package path for RPC, that is a gate defect, not a passing lane. A HANG or UNCLASSIFIED verdict from
-   `classify-timeout` requires human review.
+7. **A package your project marks as too slow to run monolithically is never run monolithically at gate time, in
+   either lane.** If `.thrum/gate-config.json` or `.thrum/hotpath-gate.json` names a sharded runner or a timeout
+   classifier for such a package, the gate's OUTPUT must show that runner actually executed for it, not just that some
+   test in it ran. A bound-timeout with ZERO test failures is a FALSE RED, not a finding: distinguish it from a
+   genuine hang or deadlock with the project's timeout classifier before reporting it as a regression, and send an
+   unclassified result to human review. If the config names none, a timeout with no failing test is neither red nor
+   green: re-run that package on a wider bound and report it as a bound failure. If a gate's own command line invokes
+   a bare monolithic path for such a package, that is a gate defect, not a passing lane.
 8. Build+test the MERGED-tree result as a SEPARATE condition — neither gate
    currently runs a build of the actual post-merge tree; a clean pre-merge
    build/test does not prove the merged result compiles or passes.
@@ -473,7 +470,7 @@ circuit-breaker — **BLOCKING**. Peer call with timeout but no circuit-breaker 
 
 ## Test impact selection plan (per-merge gate)
 
-Owner ruling, verbatim: "default ON as soon as it lands, no side-by-side; safety net = daily full gate + RDP load/regression test before deploy".
+Owner ruling, verbatim: "default ON as soon as it lands, no side-by-side; safety net = daily full gate + a load/regression test before deploy".
 
 Run the per-merge test lanes through the repository's test-impact-selection plan wrapper (the gate role's documented
 command, taking `--base`, `--head` and `--lane`), not the bare full-lane runner. It runs the plan, prints the `TIS_PLAN` line, and passes `--producer-rc` to the runner. Quote the `TIS_PLAN` line in the
@@ -482,7 +479,7 @@ For a per-landing gate, a FULL RUN fallback means the full NON-race lane, never 
 
 ## Lens 11 — Census classification coverage (mandatory test, not a pattern check)
 
-**Why:** `go test ./...` never runs in Pass-3 — test impact selection
+**Why:** `go test ./...` never runs in the merge gates — test impact selection
 (the plan wrapper) is scoped to files the diff touches, and `internal/daemon/rpc/testcensus` is an ad
 hoc test target nothing routes to. A merge that adds a `state.NewState(...)`
 call site in an `internal/daemon/rpc/*_test.go` file (test-fixture setup, not a
@@ -551,7 +548,7 @@ git diff <merge-base>...<tip> -- <file> | grep -E '^\+.*NewState\('
 ## Cross-gate consolidation with the philosophy gate
 
 This gate runs **in parallel** with `coordinator-philosophy-merge-gate` (both
-are Pass 3, after dual review is clean, before `git merge`). The coordinator
+are the merge gates, after dual review is clean, before `git merge`). The coordinator
 runs both independently and consolidates findings from both into one numbered
 list.
 
@@ -603,7 +600,7 @@ clearly worth the cost, never as a 'real risk', and the owner can decline it.
 
 ## Post-verdict record
 
-The only post-verdict record is the one line in dev-docs/gate-log.md (gate output is deleted after the verdict). No efficacy-log row is required.
+The only post-verdict record is the one line in dev-docs/gate-log.md (gate output is deleted after the verdict).
 
 ## Reference
 

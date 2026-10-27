@@ -866,13 +866,13 @@ thrum config show --json
 ```bash
 thrum worktree create <name>                   # Create worktree with thrum/beads setup
 thrum worktree create <name> -b <branch>       # Specify branch name
-thrum worktree create <name> --base <ref>      # Override base ref (default: cwd HEAD)
-thrum worktree create <name> --detach          # Detached HEAD worktree
+thrum worktree create <name> --base <ref>      # Start from <ref> (alias --from; default: main repo HEAD or merge_target)
+thrum worktree create <name> --detach [--base <ref>]  # Detached HEAD worktree at <ref> (default: main repo HEAD); not with -b
 thrum worktree create <name> \
   --name <agent> --role <role> --module <mod>  # Create worktree + register agent
 thrum worktree setup <name>                    # Alias for worktree create
-thrum worktree teardown <name>                       # Retire agent + remove worktree, keep branch (does NOT delete the agent; reap with `thrum agent delete` after)
-thrum worktree teardown <name> --delete-branch       # Also delete the worktree's branch
+thrum worktree teardown <name|path>                   # Retire agent + remove worktree (salvage first), keep branch (does NOT delete the agent; reap with `thrum agent delete` after)
+thrum worktree teardown <name|path> --delete-branch  # Also delete the worktree's branch
 thrum worktree list                                  # List worktrees with agent info
 ```
 
@@ -880,8 +880,8 @@ thrum worktree list                                  # List worktrees with agent
 
 ```text
 --branch, -b string   Branch name (default: feature/<name>)
---base string         Base ref for the new branch (default: current HEAD of cwd)
---detach              Create detached HEAD worktree
+--base, --from string  Ref to start from: new branch base, or --detach checkout (default: main repo HEAD or merge_target)
+--detach              Create detached HEAD worktree at --base/--from; cannot be combined with -b
 --name string         Agent name (triggers quickstart when combined with --role + --module)
 --role string         Agent role
 --module string       Agent module
@@ -894,7 +894,12 @@ thrum worktree list                                  # List worktrees with agent
 ```text
 --delete-branch       Delete the worktree's branch after removing the worktree
                       (branch stays by default)
+--force-unsafe        Override the identity-hijack guard (may remove the main repo
+                      or another live agent's worktree; verify the target first)
 ```
+
+A `<name>` must match a registered worktree under the worktree root; a `<path>`
+(contains `/`) names any registered git worktree of this repo.
 
 When `--name`, `--role`, and `--module` are all provided, a tmux session is
 created with the worktree as cwd and quickstart runs inside the pane (PID
@@ -909,6 +914,8 @@ later.
 ---
 
 ## Monitor Jobs
+
+Load the `thrum:using-monitors` skill before you start, change or stop a monitor.
 
 Run a command, filter its output through a regex, and deliver matching lines as
 Thrum messages. Without `--schedule` the command runs continuously and restarts

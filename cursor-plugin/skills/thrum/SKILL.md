@@ -89,6 +89,8 @@ thrum tmux launch <session> [--runtime <r>]   Start runtime in session (REQUIRED
 
 ### Monitor Jobs
 
+Load the `thrum:using-monitors` skill before you start, change or stop a monitor.
+
 ```bash
 thrum monitor start --name <n> --match <re> --to @agent [--schedule "<cron>"] [--notify-on-success] -- <cmd> [args...]
 thrum monitor list [--all]           List monitor jobs (running; --all adds stopped)

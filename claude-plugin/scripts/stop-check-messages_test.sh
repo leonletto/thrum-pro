@@ -40,7 +40,7 @@ chmod +x "$BIN/claude" "$BIN/thrum"
 run_hook() {
   local version="$1" unread="$2" stdout="$3" stderr="$4" status=0
   printf '{"stop_hook_active":false}\n' |
-    env PATH="$BIN:$PATH" CLAUDE_PROJECT_DIR="$PROJECT" THRUM_HOME="$PROJECT" THRUM_AGENT_ID=stop-hook-test \
+    env PATH="$BIN:$PATH" CLAUDE_PROJECT_DIR="$PROJECT" THRUM_HOME="$PROJECT" THRUM_AGENT_ID=stop-hook-test TMUX="${MOCK_TMUX_ENV:-}" \
       MOCK_TMUX="${MOCK_TMUX:-}" MOCK_SEND_LOG="${MOCK_SEND_LOG:-}" MOCK_SEND_RC="${MOCK_SEND_RC:-0}" \
       MOCK_INBOX_N="${MOCK_INBOX_N:-}" MOCK_RECHECK_UNREAD="${MOCK_RECHECK_UNREAD:-}" MOCK_WAIT_RC="${MOCK_WAIT_RC:-0}" \
       MOCK_CLAUDE_VERSION="$version" MOCK_UNREAD="$unread" bash "$HOOK" >"$stdout" 2>"$stderr" || status=$?
@@ -137,5 +137,15 @@ done
 OUT="${TMP}/tmux0.stdout"; ERR="${TMP}/tmux0.stderr"; SENDLOG="${TMP}/tmux0.send"; : > "$SENDLOG"
 MOCK_TMUX=managed-session MOCK_SEND_LOG="$SENDLOG" run_hook '2.1.302 (Claude Code)' 0 "$OUT" "$ERR" || { echo "FAIL: tmux no-unread exit"; exit 1; }
 [[ ! -s "$SENDLOG" && ! -s "$OUT" ]] || { echo "FAIL: tmux agent with no unread nudged or blocked"; exit 1; }
+
+# Manually launched inside tmux: $TMUX is set but the identity has no
+# tmux_session. The hook must not demand a listener. Control: with $TMUX unset,
+# the same identity still gets the listener demand.
+OUT="${TMP}/tmux-env.stdout"; ERR="${TMP}/tmux-env.stderr"; status=0
+MOCK_TMUX_ENV="/tmp/tmux-probe,1,0" run_hook '2.1.302 (Claude Code)' 0 "$OUT" "$ERR" || status=$?
+[[ "$status" -eq 0 && ! -s "$OUT" ]] || { echo "FAIL: \$TMUX set without tmux_session still demanded a listener"; exit 1; }
+OUT="${TMP}/no-tmux-env.stdout"; ERR="${TMP}/no-tmux-env.stderr"; status=0
+run_hook '2.1.302 (Claude Code)' 0 "$OUT" "$ERR" || status=$?
+assert_feedback_shape "$OUT" 'Your background message listener is not running.' || { echo "FAIL: control without \$TMUX lost the listener demand"; exit 1; }
 
 echo "PASS: Stop feedback JSON shape and legacy-version fallback"

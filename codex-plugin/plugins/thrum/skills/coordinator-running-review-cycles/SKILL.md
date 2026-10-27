@@ -58,11 +58,11 @@ line- number or key refreshes, ledger totals/ceilings, per-entry waivers or
 citations recording a classification already established elsewhere — never a new
 safety judgment of your own — nosec baseline hashes, comment wording, stale test
 expectations that merely follow a landed change), do not route it to the
-implementer as a normal finding. Dual review runs BEFORE the Pass-3 gate, so at
+implementer as a normal finding. Dual review runs BEFORE the merge gate, so at
 this point there is no gate run yet to fix it: tag the finding as
 gate-deferred-bookkeeping in the consolidated list and carry it forward — the
 gate self-fixes it (a `GATE-AUTHORED` commit plus a narrow re-run of only the
-affected checks) when it runs Pass-3 on this branch. Reserve immediate
+affected checks) when it runs the merge gates on this branch. Reserve immediate
 implementer round-trips for real defects and design judgment calls.
 
 ### Verify reviewer claims against actual code before forwarding
@@ -156,7 +156,7 @@ AFTER they report DONE. They target different artifacts and both are needed.
 
 ### See also
 
-- `coordinator-branch-split-on-block` — when a Pass-3 gate or this skill's dual
+- `coordinator-branch-split-on-block` — when a merge gate or this skill's dual
   review BLOCKS on one concern of a branch that bundles multiple independent
   concerns, while the other concern(s) are clean.
 

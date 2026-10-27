@@ -249,7 +249,7 @@ On decline — do NOT write. Record the skipped proposal for future runs.
 ### Test impact selection plan (per-merge gate)
 
 Owner ruling, verbatim: "default ON as soon as it lands, no side-by-side; safety
-net = daily full gate + RDP load/regression test before deploy".
+net = daily full gate + a load/regression test before deploy".
 
 Run the per-merge test lanes through the repository's test-impact-selection plan
 wrapper (the gate role's documented command, taking `--base`, `--head` and

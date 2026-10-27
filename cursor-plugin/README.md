@@ -45,12 +45,20 @@ This deploys into `.cursor/` with:
 
 ## Updating
 
-Refresh the repository index, then reopen `/plugin list` to apply an available
-plugin update:
+1. Remove the marketplace and add it again:
 
-```bash
-agent plugin marketplace update thrum
-```
+   ```bash
+   agent plugin marketplace remove thrum
+   agent plugin marketplace add --git-ref main https://github.com/leonletto/thrum-pro.git
+   ```
+
+2. In Cursor Agent, open `/plugin`, go to **Marketplace**, select `thrum`, and choose **Install for you**.
+3. Start a new Cursor session.
+
+`agent plugin marketplace update thrum` is not enough: it re-indexes the same pinned commit, so the installed plugin
+stays old. Removing and adding the marketplace picks up the current one. This route is per the thrum-pro INSTALL.md and
+was measured by the runtime team on Cursor, not run here. The `remove` form mirrors the `add` form and is unverified.
+`/plugin list` opens with "list" as a search term, so use `/plugin` and go to Marketplace instead.
 
 For a local-clone installation, update the checkout and redeploy:
 

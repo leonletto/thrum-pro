@@ -1,0 +1,21 @@
+{
+  "languages_detected": ["go"],
+  "build_merged_tree": "git fetch origin <branch> <target>; merge origin/<branch> into a scratch worktree cut from the target tip fetched at gate start; go build ./...",
+  "per_landing": [
+    {"name": "build", "cmd": "go build ./...", "kind": "build"},
+    {"name": "vet", "cmd": "go vet ./...", "kind": "lint"},
+    {"name": "tests", "cmd": "go test ./...", "kind": "test"},
+    {"name": "race", "cmd": "go test -race ./...", "kind": "race"}
+  ],
+  "full_fallback": "go test ./...",
+  "focused_vs_full": "A -run selector only localizes a failure. The verdict rests on the whole-package run.",
+  "zero_match_check": "go test -list '<selector>' ./pkg must list the intended tests; go test -list '^TestNoSuchThingAtAll$' ./pkg must list none",
+  "structural_checks": [
+    {"name": "formatting", "cmd": "gofmt -l .", "why": "non-empty output means unformatted files"}
+  ],
+  "generated_files": [],
+  "baselines": [],
+  "write_capable_targets": ["gofmt -w", "golangci-lint run --fix", "go generate ./..."],
+  "verdict_log": "docs/gate-log.md",
+  "retention_paths": []
+}

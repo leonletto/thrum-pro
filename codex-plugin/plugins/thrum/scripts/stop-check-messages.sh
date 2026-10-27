@@ -290,6 +290,8 @@ fi
 # If tmux_session is set in the identity file, the agent was launched via tmux.
 # The session may have died, but if so the agent wouldn't be running this hook
 # either (it runs inside the tmux pane). So field presence is sufficient here.
+# $TMUX is checked too: a claude started by hand inside tmux has no tmux_session
+# but still runs in a pane, so it must not be told to start a listener.
 if [ "$IDENTITY_FROM_WHOAMI" = 1 ]; then
   TMUX_SESSION="$IDENTITY_TMUX_SESSION"
 else
@@ -305,7 +307,7 @@ else
   fi
   TMUX_SESSION=$(cat "$PREFLIGHT_OUTPUT")
 fi
-if [ -n "$TMUX_SESSION" ]; then
+if [ -n "$TMUX_SESSION" ] || [ -n "${TMUX:-}" ]; then
   write_idle
   exit 0
 fi

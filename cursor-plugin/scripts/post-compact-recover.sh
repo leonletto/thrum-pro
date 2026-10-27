@@ -244,7 +244,9 @@ fi
 # about whether the agent gets nudged.
 TMUX_SESSION=$(THRUM_AGENT_ID="$AGENT_ID" \
   thrum whoami --field tmux_session 2>/dev/null) || TMUX_SESSION=""
-if [ -n "$TMUX_SESSION" ]; then
+# $TMUX counts too: a claude started by hand inside tmux runs in a pane even
+# without a tmux_session identity field.
+if [ -n "$TMUX_SESSION" ] || [ -n "${TMUX:-}" ]; then
   exit 0
 fi
 

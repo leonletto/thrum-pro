@@ -117,24 +117,19 @@ Then STOP. Wait for the coordinator to fix and re-send.
 
 ## Phase 2 — Configure Execution
 
-### Step 1: Autonomy negotiation
+### Step 1: Autonomy cadence
 
-Read the default from config:
+Use the cadence set in the plan or dispatch (set at project-setup). If neither
+names one, read the default from config:
 
 ```bash
 cat .thrum/config.json | grep default_autonomy
 ```
 
-Present to the human:
+- `per_epic`: pause after each epic and check in with your parent
+- `end_only`: run all epics and send a final report before merge
 
-> "Autonomy level is `<default>`. Options:
->
-> - `per_epic`: I'll pause after each epic for your review and approval
-> - `end_only`: I'll run all epics and present a final report before merge
->
-> Proceed with `<default>`?"
-
-Wait for confirmation. If the human changes the level, use the new one.
+Do not ask at start.
 
 ### Step 2: Runtime selection
 
@@ -154,12 +149,10 @@ bd dep tree <epic-id>
 bd show <epic-id>  # for each epic
 ```
 
-Present the plan alongside autonomy/runtime (one configuration gate, not three):
+Report the plan summary to your parent, then proceed without waiting:
 
 > "Plan: N worktrees needed. Epics A+B parallel (no dependencies), Epic C after
-> both complete. Autonomy: `<level>`. Runtime: `<rt>`. Proceed?"
-
-Wait for confirmation.
+> both complete. Autonomy: `<level>`. Runtime: `<rt>`."
 
 ---
 
@@ -413,12 +406,12 @@ Phase 5):**
 When all agents in the batch complete and reviews pass:
 
 ```bash
-thrum send --to @<human> --stdin <<'EOF'
+thrum send --to @<parent> --stdin <<'EOF'
 Epic <id> complete. Summary: <changes>. Review: passed. Proceed to next?
 EOF
 ```
 
-Wait for approval before continuing.
+`<parent>` is the agent that dispatched you. Wait for its approval before continuing.
 
 ### Step 5: Advance to next batch
 
@@ -520,7 +513,16 @@ Agent(subagent_type="general-purpose", model="<per choosing-subagent-models>",
 
 After resolution, continue the merge loop.
 
-**D. Push and clean up:**
+**D. Check the final HEAD, then push and clean up:**
+
+After all epic merges and conflict edits, run the project's required gate, build
+and test commands on the final HEAD (the `per_landing` commands in
+`.thrum/gate-config.json`, or the project's documented test command if that file
+is absent). Record the SHA you checked and each command's outcome. Push only if
+every required check passed; a failed or incomplete check stops the push. If you
+edit anything after the check, re-run it on the resulting HEAD before pushing. A
+gate run that already covers this exact SHA and the same checks satisfies this.
+Keep the per-branch checks; this adds no new whole-tree gate.
 
 ```bash
 git push origin <merge-target>
@@ -694,7 +696,7 @@ reason — an open gate, a pending finding — that instruction wins.
 
 ```bash
 thrum agent set-status idle
-thrum send --to @<human> --stdin <<'EOF'
+thrum send --to @<parent> --stdin <<'EOF'
 Plan complete. Merged to <target>. All sessions cleaned up.
 EOF
 ```
@@ -796,12 +798,12 @@ If BLOCKING findings remain after round 2:
   with full review history. Non-convergence = under-specified plan; the
   coordinator resolves or escalates to the operator.
 
-### Human doesn't respond at review gate
+### Parent doesn't respond at review gate
 
 Wait. Send a reminder after 5 minutes:
 
 ```bash
-thrum send --to @<human> --stdin <<'EOF'
+thrum send --to @<parent> --stdin <<'EOF'
 Reminder: waiting for approval on <epic-id> review gate.
 EOF
 ```

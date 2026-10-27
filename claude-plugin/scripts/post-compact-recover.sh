@@ -257,10 +257,11 @@ fi
 # when an ordinary message arrives for it; it has no signal that a
 # compaction happened, which is exactly why the pane nudge block above
 # exists — this skip is solely about the listener-liveness check below, not
-# about whether the agent gets nudged.
+# about whether the agent gets nudged. $TMUX counts too: a claude started by
+# hand inside tmux runs in a pane even without a tmux_session identity field.
 TMUX_SESSION=$(THRUM_AGENT_ID="$AGENT_ID" \
   thrum whoami --field tmux_session 2>/dev/null) || TMUX_SESSION=""
-if [ -n "$TMUX_SESSION" ]; then
+if [ -n "$TMUX_SESSION" ] || [ -n "${TMUX:-}" ]; then
   exit 0
 fi
 

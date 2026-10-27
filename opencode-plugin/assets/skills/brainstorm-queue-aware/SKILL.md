@@ -32,7 +32,7 @@ answer," do this instead:
    clear question, plus 2-3 concrete options (A/B/C) so the Steward has
    something to decide between, not an open-ended essay prompt.
 2. Send it as a `NEED` to your steward, per the NEED/ANSWER convention
-   (the NEED/ANSWER convention spec in the project's design docs):
+   (first line `NEED [<topic>]:`; the steward replies with an `ANSWER`):
 
    ```bash
    thrum send --to @<steward> --stdin <<'EOF'

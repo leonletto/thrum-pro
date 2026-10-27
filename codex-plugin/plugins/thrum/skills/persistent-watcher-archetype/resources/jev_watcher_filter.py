@@ -462,7 +462,7 @@ def classify_remote(state: dict[str, Any], provider: str, api_key: str, timeout:
     }
     if provider == OPENROUTER_PROVIDER:
         headers.update({
-            "HTTP-Referer": "https://github.com/leonletto/thrum-pro.git",
+            "HTTP-Referer": "https://thrum.team",
             "X-Title": "roster-watch-filter",
         })
     last_error = None

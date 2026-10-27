@@ -1,6 +1,6 @@
 ---
 name: coordinator-philosophy-merge-gate
-description: "Use when ABOUT TO START a philosophy Pass-3 gate - a gate has been dispatched to you, you are picking up a queued gate, you are the Gate Runner beginning a gate - and when a coordinator is about to run git merge on any new feature or large bug fix after dual review came back clean. Loads the gate-runner restart rule (restart at ~50 percent, at a seam BETWEEN gates) plus the FULL .thrum/philosophy.md anti-pattern list and red-flags checklist, walked as a distinct pass rather than folded into the dual review. NEVER skipped except for a one-line config change, a typo, or a test-only diff."
+description: "Use when ABOUT TO START a philosophy merge gate - a gate has been dispatched to you, you are picking up a queued gate, you are the Gate Runner beginning a gate - and when a coordinator is about to run git merge on any new feature or large bug fix after dual review came back clean. Loads the gate-runner restart rule (restart at ~50 percent, at a seam BETWEEN gates) plus the FULL .thrum/philosophy.md anti-pattern list and red-flags checklist, walked as a distinct pass rather than folded into the dual review. NEVER skipped except for a one-line config change, a typo, or a test-only diff."
 ---
 
 # Coordinator: Philosophy Merge Gate
@@ -90,13 +90,10 @@ dispatch time — hand this list verbatim:
    on both sides of a rebase, so a tree that "builds clean" can still be
    carrying dupes instead of the real content.
 6. Run full-package `-race`, not targeted `-run` — a targeted race run misses cross-test races that only a full-package
-   run surfaces. **Exception: `internal/daemon/rpc` must NEVER be run monolithically** — a bare
-   `go test [-race] ./internal/daemon/rpc` cannot finish inside any gate-length timeout. Run it through the sharded
-   runner (`race-shard`, the project's sharded race test runner on `./internal/daemon/rpc`, or `make gate`) and confirm
-   the gate's output shows it executed. A bound-timeout with ZERO test failures is a false red: classify it with
-   `go run ./cmd/testgate classify-timeout --log <file> --shard-config <file> --shard <name> --pkg-dir <package dir>`
-   (only BOUND-TIMEOUT exits
-   0) before reporting a regression. See item 7 of `coordinator-hotpath-merge-gate`.
+   run surfaces. **Exception: a package your project marks as too slow to run monolithically** (see item 7 of
+   `coordinator-hotpath-merge-gate`) is run through the sharded runner or timeout classifier that `.thrum/gate-config.json`
+   names, and the gate's output must show it executed. A bound-timeout with ZERO test failures is a false red: classify
+   it before reporting a regression, and treat a hang or unclassified result as needing human review.
 7. Build+test the MERGED-tree result as a SEPARATE condition — neither gate
    currently runs a build of the actual post-merge tree; a clean pre-merge
    build/test does not prove the merged result compiles or passes.

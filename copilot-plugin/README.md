@@ -24,6 +24,26 @@ Copilot-runtime agent launches, and the runtime is pointed at it via
 directory, so the plugin always tracks the `thrum` binary that launched it —
 there is no separate update or uninstall flow to run.
 
+## Installing the Thrum skills and slash commands
+
+The tree above only delivers the memory pointer. The Thrum skills and the
+`/thrum:prime` slash command come from the Thrum plugin in the thrum-pro
+marketplace, which Copilot CLI installs under `~/.copilot/installed-plugins/`:
+
+```bash
+copilot plugin marketplace add leonletto/thrum-pro
+copilot plugin install thrum@thrum
+```
+
+Update with `copilot plugin marketplace update thrum` and then
+`copilot plugin update thrum`. Verify with `copilot plugin list`, which must
+report `thrum`, and `/skills list` inside Copilot, which must include the Thrum
+skills. A Copilot agent launched by `thrum` types `/thrum:prime`; without this
+plugin installed, Copilot answers "Unknown command".
+
+Verification status: these steps are taken from the thrum-pro install notes and
+have not been run against a live Copilot CLI. They are unverified.
+
 ## What it ships
 
 - `plugin.json` — the plugin manifest (`name`, `description`, `version`,

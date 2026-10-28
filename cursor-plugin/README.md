@@ -18,7 +18,7 @@ agent plugin marketplace add --git-ref main https://github.com/leonletto/thrum-p
 agent
 ```
 
-In Cursor Agent, open `/plugin list`, switch to **Marketplace**, search for
+In Cursor Agent, open `/plugin`, press Right to reach **Marketplace**, search for
 `thrum`, and install it at user or project scope.
 
 ### Local-clone fallback

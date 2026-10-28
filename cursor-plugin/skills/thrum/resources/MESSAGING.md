@@ -8,14 +8,15 @@
    `.git/thrum-sync/`)
 3. **Receive** — `thrum inbox` or `thrum wait` (blocking)
 4. **Verify sent state** — `thrum sent` or `thrum message get <msg-id>`
-5. **Read** — `thrum inbox` shows messages and never marks them read; `thrum message read <id> [<id>...]` marks them, or
+5. **Read** — `thrum inbox` shows messages and never marks them read; `thrum message read <id> [<id>...]` marks them.
+   To mark many at once, start with the dry run:
 
    ```bash
-   thrum message read --all
+   thrum message read --all   # DRY RUN: lists candidates, marks nothing
    ```
 
-   (DRY RUN — lists candidates, marks nothing) then `--apply` (marks the shown/seen ones) or `--force` (marks ALL
-   unread, seen or not; needs a fresh `--all` dry run first).
+   then `--apply` (marks the shown/seen ones) or `--force` (marks ALL unread, seen or not; needs a fresh `--all` dry
+   run first).
 
 6. **Search — do not page through the inbox to find old messages.** The
    default page is 10, newest-first, so stale unread sorts LAST exactly when

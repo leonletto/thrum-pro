@@ -149,6 +149,37 @@ Do not hand-edit generated marketplace manifests.
 Re-verify the daemon registry and agent phases after restart (adapter `health.probes` includes phase reconciliation).
 Confirm the pinned version is durable across a clean cold-boot probe where applicable.
 
+## 8d. Verify the GUI shows every agent (by effect)
+
+A build can decode `agent.list` fine on the daemon and still hide agents in the GUI (a strict UI decode once hid 485
+of 538 on a canary). Compare what the daemon lists with what the GUI renders, on the node:
+
+1. Expected numbers, run ON the node (python3 only, read-only, calls the daemon's own `agent.list` over its socket):
+   `python3 <skill>/resources/agent-count-expected.py` prints `rail_expected`, `fleet_expected` and
+   `records_lacking_proof`. Do not use `thrum team --all` as the baseline: it is `team.list`, a different set (stale
+   rows included).
+2. Rendered numbers. Needs Playwright plus a browser. The script tries Playwright's bundled Chromium, then the newest
+   installed `chromium-<rev>` under the Playwright browsers dir (`PLAYWRIGHT_BROWSERS_PATH`, else the per-user
+   `ms-playwright` cache; a Playwright upgrade can leave only other revisions), then an installed Google Chrome. It
+   prints the route used (`browser=...`) on stderr and never installs a browser, so a node near its disk guard is not
+   touched. `node <skill>/resources/agent-count-gui.mjs <ui-url>` (the `ui` line of `thrum daemon status`; the script
+   header says where Playwright must resolve) prints `rail` and `fleet`; it exits 3 with a message when no browser is
+   usable. Without a browser, open `<ui-url>` at 1280x720 and read by hand:
+   - rail: the heading `Agents (N)` above the left-rail list (`h3` in the agent list);
+   - Fleet: add the five badges `category-count-Working`, `-Standby`, `-EmptySession`, `-RuntimeExited`, `-Worktree`
+     (the Stale and Archived badges come from a separate query and are not part of the sum);
+   - notice: the box `incomplete-agents-notice`, if present.
+3. PASS = `rail == rail_expected` AND `fleet == fleet_expected`. The GUI must render ALL records, complete or not: a
+   record lacking its daemon or repo id is shown, not dropped. If the notice is present it is information only. Report
+   `records_lacking_proof` as an info line ("N records lack repo/daemon id"); it is not a failure and it will stay
+   above zero until every home daemon is upgraded.
+4. FAIL = either number is lower than expected (the hidden-fleet class), or the GUI shows 0 where the daemon lists
+   agents. Stop the roll and report both sets of numbers.
+
+Rules mirrored from `AgentList.tsx` and `FleetGrid.tsx` (rail: local-origin rows, no users, no retired rows,
+deduplicated by bare name; Fleet: every non-stale, non-archived record). If those components change the filter, update
+`agent-count-expected.py` and its test in the same change.
+
 ## Red flags — STOP
 
 - Pull not ff-only.
@@ -158,3 +189,5 @@ Confirm the pinned version is durable across a clean cold-boot probe where appli
 - Install rebuilt locally instead of from the delivered artifact.
 - Post-migration health not verified by observed effect.
 - Template re-render skipped when the build changed templates (`templates.order` violated).
+- GUI agent counts not compared with `agent.list` after the roll, or a lower rail or Fleet count accepted
+  (section 8d).

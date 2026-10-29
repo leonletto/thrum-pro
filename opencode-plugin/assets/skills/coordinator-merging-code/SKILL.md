@@ -204,6 +204,8 @@ merge target before merging.
 ## 3. THE MERGE GATES — DISPATCH BOTH TO THE GATE RUNNER
 
 1. Select from your team of established long-running gate agents.
+   **Spread the load:** if you have more than one gate runner, don't send everything to the same one. List them
+   (`thrum team --all`) and pick an idle one.
 2. Choose an available pair for hot-path and philosophy.
 3. Tell those agents where sensitive tests must execute.
 4. Launch a new gate agent only if the persistent set is genuinely unavailable —

@@ -359,9 +359,9 @@ Flags:
 ### agent cleanup
 
 ```bash
-thrum agent cleanup                            # Interactive cleanup of orphaned agents
-thrum agent cleanup --dry-run                  # List orphans without deleting
-thrum agent cleanup --force                    # Delete all orphans without prompting
+thrum agent cleanup <agent-id>...             # Interactive cleanup of the named orphaned agents (IDs required)
+thrum agent cleanup <agent-id>... --dry-run   # List the named orphans without deleting
+thrum agent cleanup <agent-id>... --force     # Delete the named orphans without prompting
 ```
 
 Flags:

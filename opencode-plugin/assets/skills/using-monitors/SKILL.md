@@ -173,6 +173,8 @@ orchestrators working on the plan if blockers have not moved.
 The monitor runs a script file. The script runs
 `thrum tmux send <your-agent> "<prompt>"`: the daemon types the text into the
 pane and submits it. The prompt text and all logic live in the script.
+The target runtime's composer may interpret @name as a file mention; use bare
+agent names in pane prose and thrum send --to for message addressing.
 
 Put the script at a stable path you own, outside tracked source, that survives a
 restart of your session. Use its absolute path in the monitor command.

@@ -80,6 +80,10 @@ optimization.
 
 ### Check the target's queue before you dispatch (R3)
 
+**Spread the load:** if you have more than one orchestrator or implementer,
+don't send every epic, bead or fix to the same one. List them
+(`thrum team --all`) and pick the least loaded.
+
 Before dispatching, read the target's load two ways: its queue AND its pane.
 `thrum queue list --agent <target>` (a well-run orchestrator keeps its queue
 current) plus a quick `thrum tmux capture <target>` to see what it is mid-task

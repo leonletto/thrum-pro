@@ -1,0 +1,49 @@
+# Thrum Pro
+
+> Plugins and skills that connect AI coding agents (Claude Code, Codex, Cursor, Copilot, Muse, Antigravity, OpenCode)
+> to Thrum, git-backed messaging and coordination for AI agents. This repository holds the plugins only; the `thrum`
+> binary is distributed separately.
+
+- Install and update steps for each runtime: https://github.com/leonletto/thrum-pro/blob/main/INSTALL.md
+- Overview and getting the binary: https://github.com/leonletto/thrum-pro/blob/main/README.md
+- Full command reference: `thrum --help` and `thrum <command> --help`
+
+## Reaching an agent on a daemon you are not paired with
+
+A message routes through a directly paired peer, never by pairing with the target daemon. The sending daemon resolves
+a recipient from its local agents and from the agents registered on its directly paired peers only.
+
+For an agent that lives on a daemon you are not paired with, run once on the SENDING daemon, per remote agent, naming
+the directly paired peer that knows the agent:
+
+    thrum peer configure <relay-peer-name> add-agent <agent-name>
+
+Then `thrum send --to @<agent-name>` routes through that peer. Do this on each side that needs to send.
+
+- Check pairing with `thrum peer list` (directly paired peers only).
+- Check delivery with `thrum message get <id>`, which shows `(delivered)` per recipient. A send that returned without
+  error is not proof of delivery.
+- Not the fix: pairing the two daemons with each other.
+- Not needed for delivery: `thrum peer relayed add` and `thrum peer relayed grant`, which govern what a daemon accepts
+  from a relayed origin. `thrum peer relayed add --via` takes daemon IDs, not peer names; `thrum peer relayed grant`
+  does not validate the capability key (the messaging key is `can_send_messages`).
+- After `add-agent`, the supervisor may report "Unresolved agent records" for the proxy rows: reconcile asks the relay,
+  which refuses with "owned by daemon X ... no second hop". A build with the reconcile owner pointer follows the named
+  owner once and the warning clears; older builds keep the warning. Do NOT delete those rows as the supervisor
+  suggests: deleting them removes the routing.
+
+`thrum tmux send <agent> [<text>] [--keys K1,K2,...]` uses the same peer routing, for local and remote sessions alike.
+
+Skill: `routing-messages-across-daemons`.
+
+## Account usage (quota-axi)
+
+Off by default. Setting `daemon.account_usage_quota_axi` to `true` in `.thrum/config.json` makes the daemon run the
+pinned `quota-axi` (0.1.68, found on the daemon's own PATH, never installed by the daemon) every 15 minutes and show
+used / remaining / reset time per account in `thrum team` (Accounts section).
+
+`daemon.account_usage_runtimes` picks which runtimes are read: by default claude, codex, cursor and copilot; muse,
+antigravity and opencode only when listed. Both keys are read at daemon start (`thrum daemon restart`). A daemon
+without a reading shows "Usage not enabled on daemon".
+
+Setup steps, per-runtime credentials and failure states: the `setting-up-account-usage` skill.

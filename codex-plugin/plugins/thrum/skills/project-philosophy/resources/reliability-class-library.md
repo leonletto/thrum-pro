@@ -37,7 +37,7 @@ finding.
 - Go:
 
   ```bash
-  grep -rn 'exec\.Command\|exec\.CommandContext\|os\.Open\|net\.Dial' --include='*.go'
+  grep -rnE 'exec\.Command|exec\.CommandContext|os\.Open|net\.Dial' --include='*.go'
   ```
 
   excluding `*_test.go` and any package with `driver`/`fault`/`vfs` in its path.
@@ -45,19 +45,19 @@ finding.
 - Python:
 
   ```bash
-  grep -rn 'subprocess\.\(run\|Popen\|call\)\|open(\|socket\.\(connect\|create_connection\)' --include='*.py'
+  grep -rnE 'subprocess\.(run|Popen|call)|open\(|socket\.(connect|create_connection)' --include='*.py'
   ```
 
 - JS/TS:
 
   ```bash
-  grep -rn 'child_process\.\(exec\|spawn\)\|fs\.\(readFile\|writeFile\)Sync\?\|net\.connect\|http\.request' --include='*.ts' --include='*.js'
+  grep -rnE 'child_process\.(exec|spawn)|fs\.(readFile|writeFile)Sync?|net\.connect|http\.request' --include='*.ts' --include='*.js'
   ```
 
 - Rust:
 
   ```bash
-  grep -rn 'std::process::Command\|std::fs::File::open\|TcpStream::connect' --include='*.rs'
+  grep -rnE 'std::process::Command|std::fs::File::open|TcpStream::connect' --include='*.rs'
   ```
 
 - Fallback: search the language's canonical process-spawn and low-level
@@ -92,7 +92,7 @@ no enclosing recover/catch in the same function is a finding.
 - JS/TS:
 
   ```bash
-  grep -rn 'setTimeout\|setImmediate\|\.then(\|async function' --include='*.ts' --include='*.js'
+  grep -rnE 'setTimeout|setImmediate|\.then\(|async function' --include='*.ts' --include='*.js'
   ```
 
   then check for an unhandled-rejection or `.catch()` immediately at the call
@@ -127,19 +127,19 @@ everything not in the list."
 - Go:
 
   ```bash
-  grep -rn 'os\.RemoveAll\|DROP TABLE\|DELETE FROM.*WHERE.*NOT IN' --include='*.go'
+  grep -rnE 'os\.RemoveAll|DROP TABLE|DELETE FROM.*WHERE.*NOT IN' --include='*.go'
   ```
 
 - Python:
 
   ```bash
-  grep -rn 'shutil\.rmtree\|os\.remove\|DELETE FROM.*NOT IN' --include='*.py'
+  grep -rnE 'shutil\.rmtree|os\.remove|DELETE FROM.*NOT IN' --include='*.py'
   ```
 
 - JS/TS:
 
   ```bash
-  grep -rn 'fs\.rm\(Sync\)\?\|rimraf\|DELETE FROM.*NOT IN' --include='*.ts' --include='*.js'
+  grep -rnE 'fs\.rm(Sync)?|rimraf|DELETE FROM.*NOT IN' --include='*.ts' --include='*.js'
   ```
 
 - Fallback: find the language's recursive-delete primitive and any "reconcile
@@ -207,7 +207,7 @@ no timeout/circuit breaker.
   separately
 
   ```bash
-  grep -rn 'context\.WithTimeout\|context\.WithDeadline' --include='*.go'
+  grep -rnE 'context\.WithTimeout|context\.WithDeadline' --include='*.go'
   ```
 
   to check whether peer/network calls on a dispatch path have one
@@ -218,7 +218,7 @@ no timeout/circuit breaker.
 - JS/TS:
 
   ```bash
-  grep -rn 'await mutex\.\|\.acquire()' --include='*.ts' --include='*.js' -A10
+  grep -rnE 'await mutex\.|\.acquire\(\)' --include='*.ts' --include='*.js' -A10
   ```
 
   for I/O inside the held span
@@ -253,7 +253,7 @@ deliberately broken fixture, an invented-symbol probe).
 - Go:
 
   ```bash
-  grep -rln 'require\.NoError(t, err)$\|assert\.NoError(t, err)$' --include='*_test.go'
+  grep -rlnE 'require\.NoError\(t, err\)$|assert\.NoError\(t, err\)$' --include='*_test.go'
   ```
 
   (assertion-free tests: NoError with no accompanying state/equality assertion)
@@ -292,13 +292,13 @@ fixture.
 - Go:
 
   ```bash
-  grep -rn 'CurrentVersion\|migrat\|wal_checkpoint\|journal_mode' --include='*.go'
+  grep -rnE 'CurrentVersion|migrat|wal_checkpoint|journal_mode' --include='*.go'
   ```
 
   then
 
   ```bash
-  grep -rln 'os\.Kill\|SIGKILL\|process\.Kill' --include='*_test.go'
+  grep -rlnE 'os\.Kill|SIGKILL|process\.Kill' --include='*_test.go'
   ```
 
   for mid-write kill tests
@@ -335,7 +335,7 @@ finding.
 - Go:
 
   ```bash
-  grep -rn 'fallback\|FallBack\|if !exists\|default.*return' --include='*.go'
+  grep -rnE 'fallback|FallBack|if !exists|default.*return' --include='*.go'
   ```
 
 - Python: `grep -rn 'except:\s*pass\|\.get(\w+,\s*default_' --include='*.py'`
@@ -344,7 +344,7 @@ finding.
 - JS/TS:
 
   ```bash
-  grep -rn 'catch\s*{\s*}\|??\s*default' --include='*.ts' --include='*.js'
+  grep -rnE 'catch\s*\{\s*\}|\?\?\s*default' --include='*.ts' --include='*.js'
   ```
 
   (an empty catch block, or a `??` fallback onto a default-shaped value with no
@@ -381,7 +381,7 @@ statement).
   unconditional write; cross-check against
 
   ```bash
-  grep -rn 'lww\.\|GuardSQL\|GuardTarget' --include='*.go'
+  grep -rnE 'lww\.|GuardSQL|GuardTarget' --include='*.go'
   ```
 
   for an adjacent guard — a write-site hit with no guard hit nearby is the
@@ -422,13 +422,13 @@ assumed read-only, and check whether any write or maintenance statement
 - Go:
 
   ```bash
-  grep -rn 'OpenDB\|OpenReadDB\|sql\.Open\|sql\.OpenDB' --include='*.go'
+  grep -rnE 'OpenDB|OpenReadDB|sql\.Open|sql\.OpenDB' --include='*.go'
   ```
 
   for the open call, cross-checked against
 
   ```bash
-  grep -rn 'wal_checkpoint\|PRAGMA\|checkpoint\|Checkpoint' --include='*.go'
+  grep -rnE 'wal_checkpoint|PRAGMA|checkpoint|Checkpoint' --include='*.go'
   ```
 
   in the same file/package for a write/maintenance op reachable from a
@@ -497,7 +497,7 @@ divergent call sites.
   (e.g. `grep -rn '@retry' --include='*.py'`), then
 
   ```bash
-  grep -rn 'while True:.*try:\|for _ in range(' --include='*.py'
+  grep -rnE 'while True:.*try:|for _ in range\(' --include='*.py'
   ```
 
   for raw/ad hoc retry loops that should have used the decorator instead.
@@ -506,13 +506,13 @@ divergent call sites.
   wrapper (e.g.
 
   ```bash
-  grep -rln 'class ApiClient\|export.*apiClient' --include='*.ts'
+  grep -rlnE 'class ApiClient|export.*apiClient' --include='*.ts'
   ```
 
   ), then
 
   ```bash
-  grep -rn 'fetch(\|axios\.' --include='*.ts' --include='*.js'
+  grep -rnE 'fetch\(|axios\.' --include='*.ts' --include='*.js'
   ```
 
   for call sites bypassing it with a raw `fetch`/`axios` call.
@@ -595,13 +595,13 @@ equivalent guard/fix.
   writers),
 
   ```bash
-  grep -rn 'net\.Listen\|net\.FileListener' --include='*.go'
+  grep -rnE 'net\.Listen|net\.FileListener' --include='*.go'
   ```
 
   (listeners),
 
   ```bash
-  grep -rn 'schema\.OpenDB\|schema\.OpenReadDB\|sql\.Open' --include='*.go'
+  grep -rnE 'schema\.OpenDB|schema\.OpenReadDB|sql\.Open' --include='*.go'
   ```
 
   (DB opens) — enumerate all hits per resource type and diff against which ones
@@ -610,7 +610,7 @@ equivalent guard/fix.
 - Python: enumerate all writers across `*.py` —
 
   ```bash
-  grep -rn '\.execute(\|\.commit(\|session\.add(' --include='*.py'
+  grep -rnE '\.execute\(|\.commit\(|session\.add\(' --include='*.py'
   ```
 
   scoped to the same resource/table the fix targeted, then check each hit for
@@ -619,7 +619,7 @@ equivalent guard/fix.
 - JS/TS: enumerate all save/write across `*.ts` —
 
   ```bash
-  grep -rn '\.save(\|\.update(\|\.write(' --include='*.ts' --include='*.js'
+  grep -rnE '\.save\(|\.update\(|\.write\(' --include='*.ts' --include='*.js'
   ```
 
   scoped to the same resource the fix targeted, then check each hit for the
@@ -658,13 +658,13 @@ and check whether the WHERE/filter clause uses the canonical liveness predicate
 - Go:
 
   ```bash
-  grep -rn 'ended_at IS NULL\|session.*not.*closed\|phase IS NULL' --include='*.go'
+  grep -rnE 'ended_at IS NULL|session.*not.*closed|phase IS NULL' --include='*.go'
   ```
 
 - Python: N+1 ORM loop without `select_related`/`prefetch_related` —
 
   ```bash
-  grep -rn 'for \w+ in \w+\.objects\.\(all\|filter\)(' --include='*.py'
+  grep -rnE 'for \w+ in \w+\.objects\.(all|filter)\(' --include='*.py'
   ```
 
   with no accompanying `select_related(`/`prefetch_related(` on the same
@@ -716,13 +716,13 @@ against a fixed input to catch accidental drift.
 - Go:
 
   ```bash
-  grep -rn 'GenerateRepoID\|NormalizeGitURL\|stableRepoAccount\|sha256\.Sum' --include='*.go'
+  grep -rnE 'GenerateRepoID|NormalizeGitURL|stableRepoAccount|sha256\.Sum' --include='*.go'
   ```
 
   for the primitive, cross-checked against
 
   ```bash
-  grep -rn 'SaveIdentityFile\|identities/.*\.json\|license\.\|GrantsOSS' --include='*.go'
+  grep -rnE 'SaveIdentityFile|identities/.*\.json|license\.|GrantsOSS' --include='*.go'
   ```
 
   for a persisted/licensing consumer downstream.
@@ -730,7 +730,7 @@ against a fixed input to catch accidental drift.
 - Python: normalizer → disk/cache/DB key —
 
   ```bash
-  grep -rn 'def normalize_\| hashlib\.sha256' --include='*.py'
+  grep -rnE 'def normalize_| hashlib\.sha256' --include='*.py'
   ```
 
   for the primitive, cross-checked against
@@ -740,13 +740,13 @@ against a fixed input to catch accidental drift.
 - JS/TS: hash → localStorage/DB key/JWT —
 
   ```bash
-  grep -rn 'crypto\.createHash\|normalize' --include='*.ts' --include='*.js'
+  grep -rnE 'crypto\.createHash|normalize' --include='*.ts' --include='*.js'
   ```
 
   for the primitive, cross-checked against
 
   ```bash
-  grep -rn 'localStorage\.setItem\|jwt\.sign\|\.save(' --include='*.ts' --include='*.js'
+  grep -rnE 'localStorage\.setItem|jwt\.sign|\.save\(' --include='*.ts' --include='*.js'
   ```
 
   for a persisted consumer.

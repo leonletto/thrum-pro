@@ -121,9 +121,9 @@ if [ "$(printf '%s' "$PRIME_OUTPUT" | LC_ALL=C wc -c | tr -d ' ')" -gt "$BRIEFIN
         _split_inline=${_split_wrapped%%"$_split_marker_line"*}
         PRIME_OUTPUT=${_split_inline#$'\n'}
         if [ -n "$_split_project" ]; then
-          SPLIT_FIRST_LINE="The briefing was SPLIT: only its inline part is below. Your first action is to read your role preamble ${_split_preamble} and the Project State file ${_split_project}. Other reference sections (State.md, knowledge-tree domains, Past Sessions, messaging protocol) are omitted from this output."
+          SPLIT_FIRST_LINE="The briefing was SPLIT: only its inline part is below. Your first action is to read your role preamble ${_split_preamble} and the Project State file ${_split_project}. Other reference sections (State.md, Past Sessions, messaging protocol) are omitted from this output."
         else
-          SPLIT_FIRST_LINE="The briefing was SPLIT: only its inline part is below. Your first action is to read your role preamble ${_split_preamble}. Other reference sections (State.md, knowledge-tree domains, Past Sessions, messaging protocol) are omitted from this output."
+          SPLIT_FIRST_LINE="The briefing was SPLIT: only its inline part is below. Your first action is to read your role preamble ${_split_preamble}. Other reference sections (State.md, Past Sessions, messaging protocol) are omitted from this output."
         fi
       fi
       ;;

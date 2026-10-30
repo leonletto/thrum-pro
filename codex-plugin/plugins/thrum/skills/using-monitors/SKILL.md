@@ -285,7 +285,8 @@ code and one structured line.
 #!/usr/bin/env bash
 # disk-check.sh: report the root volume when it passes the threshold.
 LIMIT=90
-u=$(timeout 10 df --output=pcent / | tail -1 | tr -dc 0-9)
+T=$(command -v timeout || command -v gtimeout) || exit 2
+u=$("$T" 10 df -P / | awk 'NR==2 {print $5}' | tr -dc 0-9)
 [ "$u" -lt "$LIMIT" ] && exit 0
 echo "CHECK-DISK: root volume at ${u} percent used, free space then rerun df -h /"
 exit 3

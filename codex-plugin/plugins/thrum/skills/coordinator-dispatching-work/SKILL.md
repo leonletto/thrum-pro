@@ -103,6 +103,35 @@ trunk or the last referenced bead closes, `done` + `drop` in that same turn (see
 `coordinator-merging-code` §7 and `using-the-queue`). ADD has a natural trigger
 and gets done; the close has one only if you make the merge/close BE it.
 
+### Every dispatch carries a scope block — it is the spec
+
+Before sending any dispatch, decide what the work should contain, what is out of
+bounds, and roughly how big it should be. Put that at the top of the dispatch:
+
+```text
+SCOPE (coordinator ruling)
+Ask:       <one sentence; the owner's own words where they gave them>
+In:        <what changes: areas, behaviour, bundled bead IDs>
+Out:       <what is excluded, especially the tempting extras>
+Budget:    ~N production lines / M files
+Model:     implementer model; Sonnet 5.5 / medium for security-touching,
+           epic or complicated work, else the default implementer model
+Gate path: <changed packages; test-only lands same turn; RDP yes/no>
+Rule:      If the work will exceed the budget or touch anything in Out, STOP
+           and report to the coordinator before continuing. Hold your
+           implementers to the same limit; no guards for unseen cases.
+```
+
+Send the scope block as the dispatch message, then queue the work with
+`--ref msg:<dispatch-message-id>`. Post later rulings as replies in that thread,
+so the queue item points at the spec plus every ruling on it.
+
+When a tip comes back, compare `git diff --stat trunk...tip` with the Budget and
+the Out line before relaying, approving or gating it. Over budget without a
+report means stop the lane and ask; never approve growth because it is
+technically better. Bundled candidates (next section) go on the In line with
+their own budget.
+
 ### Bundle adjacent open issues into every dispatch
 
 **Why:** Priority order and code locality are INDEPENDENT axes, and sequencing

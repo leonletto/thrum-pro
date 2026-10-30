@@ -23,6 +23,23 @@ runs `thrum tmux send` to put a short prompt into the agent's own pane, which
 starts a turn. Keep the wording and logic of anything that will change in a
 script file: you then edit the script, and the monitor stays as it is.
 
+### Why A Script File
+
+Put a monitor's command in a script file at a stable path, not inline:
+
+- The command, its arguments, `--cwd` and `--env` are fixed when the monitor
+  starts. Changing an inline command means deleting the monitor and starting a
+  new one, which drops its run history and health record and leaves a gap with
+  no check running. An edited script takes effect on the next tick.
+- A script can be tested by hand before it is wired up. Run it with the send
+  step removed and read what it would deliver: a pattern that matches far too
+  much or nothing at all shows up here, not in the target's inbox.
+- A script that types into a pane uses `thrum tmux send`, never raw
+  `tmux send-keys`. `thrum tmux send` waits for the pane to be idle and for a
+  human to finish typing, checks for an open dialog before pressing Enter, and
+  sends text and Enter in one call. Raw `tmux send-keys` skips all of that and
+  can type into someone's half-written input or answer a dialog.
+
 Every flag below appears in `thrum monitor start --help`. Re-read the help
 before relying on a flag not listed here.
 
@@ -248,7 +265,7 @@ Rules:
    new cadence, `update --to` for a new recipient of failure notices.
 4. Bound the send with `timeout`; a hung send holds the tick.
 5. Never call raw `tmux send-keys` from a monitor script. `thrum tmux send` is
-   the only way a script types into a pane.
+   the only way a script types into a pane (see Why A Script File).
 6. Target your own pane. Prompt another agent's pane only when that agent's
    owner asked for it.
 7. Never send the text a second time from the script. After exit 3 or 4 the text
@@ -265,17 +282,22 @@ A script check runs a bounded, synchronous probe and reports through its exit
 code and one structured line.
 
 ```bash
-thrum monitor start --name disk-check --to @<your_agent_name> \
-  --match '^CHECK-DISK:' --schedule "*/15 * * * *" -- \
-  bash -c 'u=$(df --output=pcent / | tail -1 | tr -dc 0-9)
-  [ "$u" -lt 90 ] && exit 0
-  echo "CHECK-DISK: root volume at ${u} percent used, free space then rerun df -h /"
-  exit 3'
+#!/usr/bin/env bash
+# disk-check.sh: report the root volume when it passes the threshold.
+LIMIT=90
+u=$(timeout 10 df --output=pcent / | tail -1 | tr -dc 0-9)
+[ "$u" -lt "$LIMIT" ] && exit 0
+echo "CHECK-DISK: root volume at ${u} percent used, free space then rerun df -h /"
+exit 3
 ```
 
-Inline `bash -c` suits a short probe whose text and threshold are fixed. Put a
-probe whose logic, threshold or wording will change in a script file and give
-the monitor the file's path, as in the pane prompt example.
+```bash
+chmod +x <script-dir>/disk-check.sh
+thrum monitor start --name disk-check --to @<your_agent_name> \
+  --match '^CHECK-DISK:' --schedule "*/15 * * * *" -- <script-dir>/disk-check.sh
+```
+
+Change the threshold or wording by editing the script; the monitor stays.
 
 Rules:
 

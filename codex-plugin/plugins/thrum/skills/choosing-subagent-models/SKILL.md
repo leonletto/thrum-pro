@@ -81,9 +81,11 @@ role from that runtime's preset (`RuntimePreset.TierModels`) or
   built-in role-neutral default is Sonnet 5.5 / low. Read configured overrides
   from `runtime.role_models`; use another runtime's own `TierModels` values.
 - **`judgment` tier (implementers, researchers, verifiers, reviewers)** — use
-  the named-role defaults above: implementers use Haiku 5.5 / high, researchers
-  use Sonnet 5.5 / high, and verifiers/reviewers use Sonnet 5.5 / medium. Keep
-  reviewers at medium or higher.
+  the named-role defaults above: implementers use Haiku 5.5 / high (Sonnet 5.5 /
+  medium for security-touching, epic or complicated work: auth, TLS, pairing,
+  credentials, encryption, licensing, privacy, several subsystems, or over ~300
+  production lines), researchers use Sonnet 5.5 / high, and verifiers/reviewers
+  use Sonnet 5.5 / medium. Keep reviewers at medium or higher.
 - **`orchestration` tier (coordinators, orchestrators, brainstormers)** — use
   the named-role defaults above: coordinators and orchestrators use Opus 5.5 /
   low; brainstormers use Opus 5.5 / medium. Operators configure orchestrator

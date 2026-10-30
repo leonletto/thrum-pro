@@ -80,14 +80,21 @@ The per-landing gate:
    (the tests it adds), not the whole package under race.
 6. An explicit verdict with the landing ref. Green lands the same turn.
 
-The batch race:
+Batch the slow whole-system checks: full race, regression and load tests.
 
-- After every FIVE landings, dispatch ONE full race of trunk
-  (the project test runner's `race all`) to one gate.
-- A failure is attributed to a landing by test name and stack trace and fixed
-  as a follow-up. Landings are not unwound, and other landings do not wait.
-- **A bundle is built only from a trunk commit that has a green full race.**
-  If the last batch race is older than trunk's tip, race the tip first.
+- These never run per landing. Gate-green candidates land immediately; nothing
+  waits for them.
+- After every N landings, run each check ONCE on trunk's tip (the race as the
+  project test runner's `race all`, to one gate). N defaults to **5**; the user
+  may set a different N.
+- A race failure is attributed to a landing by test name and stack trace and
+  fixed as a follow-up. A regression or load result worse than the last good
+  run is bisected across that batch's landings. Landings are not unwound, and
+  later landings do not wait.
+- Gates do not hand per-candidate commits to the regression runner.
+- **A bundle is built only from a trunk commit whose latest batch race and
+  batch regression run are both green.** If either is older than trunk's tip,
+  run it on the tip first.
 
 A non-race run may take a pool slot above the cap (lower load); a race run
 uses a normal slot.
@@ -102,8 +109,8 @@ anything in these diffs:
   changed tests ran and passed, with the runner's return code and the executed
   count. The coordinator confirms the diff touches no production file, then
   merges.
-- **Any production line in the diff:** the normal per-landing gate, with the
-  load test in parallel.
+- **Any production line in the diff:** the normal per-landing gate.
+  Regression and load tests do not run per landing (see the batch rule above).
 
 A comment that carries meaning to the compiler (`//go:embed`, `//go:build`,
 `//nolint`) and any file embedded into the binary count as production. See §5.
@@ -214,7 +221,8 @@ merge target before merging.
 **Combine, don't gate one branch at a time.** Each gate box builds ONE combined merge tree from
 its queued items: related branches together, small ones folded in with the large, merged onto current trunk one
 after another with a clean merge-tree check at each step. It runs the required lanes once on that tree. The
-load test likewise takes one combined candidate per run. A branch that conflicts or fails is named and dropped
+regression and load tests run on trunk per the batch rule above, not per gate batch. A branch that conflicts
+or fails is named and dropped
 from the set; it goes back to its owner, and the rest proceed. Stacked branches always travel together. The gate
 reports conflicts to you and never resolves them.
 

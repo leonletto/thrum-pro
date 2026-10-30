@@ -1,0 +1,4 @@
+interface:
+  display_name: "Routing Messages Across Daemons"
+  short_description: "Use when thrum send fails with unknown recipient, when sending a cross-box message to an agent on another daemon, when there is no second hop, when you need to route or relay through a paired peer, reach an agent on another box, or tmux send to a remote agent."
+  default_prompt: "Use when thrum send fails with unknown recipient, when sending a cross-box message to an agent on another daemon, when there is no second hop, when you need to route or relay through a paired peer, reach an agent on another box, or tmux send to a remote agent."

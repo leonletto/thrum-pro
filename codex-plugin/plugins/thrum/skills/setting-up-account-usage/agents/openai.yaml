@@ -1,0 +1,4 @@
+interface:
+  display_name: "Setting Up Account Usage"
+  short_description: "Use when the user wants to see account usage, quota, usage limits, rate limits or their plan usage, when thrum team shows no Accounts section or the line Usage not enabled on daemon, when account usage says not_installed, version_mismatch or unavailable, or when setting up quota-axi for the daemon and choosing which runtimes it reads."
+  default_prompt: "Use when the user wants to see account usage, quota, usage limits, rate limits or their plan usage, when thrum team shows no Accounts section or the line Usage not enabled on daemon, when account usage says not_installed, version_mismatch or unavailable, or when setting up quota-axi for the daemon and choosing which runtimes it reads."

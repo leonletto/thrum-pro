@@ -114,9 +114,9 @@ Ask:       <one sentence; the owner's own words where they gave them>
 In:        <what changes: areas, behaviour, bundled bead IDs>
 Out:       <what is excluded, especially the tempting extras>
 Budget:    ~N production lines / M files
-Model:     implementer model; Sonnet 5.5 / medium for security-touching,
-           epic or complicated work, else the default implementer model
-Gate path: <changed packages; test-only lands same turn; RDP yes/no>
+Model:     implementer model; the stronger role model at medium effort for
+           security-touching, epic or complicated work, else the default
+Gate path: <changed packages; test-only lands same turn; load test yes/no>
 Rule:      If the work will exceed the budget or touch anything in Out, STOP
            and report to the coordinator before continuing. Hold your
            implementers to the same limit; no guards for unseen cases.

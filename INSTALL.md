@@ -250,6 +250,15 @@ MP=$(find ~/.cursor/plugins/marketplaces/github.com/leonletto/thrum-pro -mindept
 python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['version'])" "$MP/cursor-plugin/.cursor-plugin/plugin.json"
 ```
 
+Known Cursor issue: **Install for you** can keep installing the version from
+your first import of this marketplace, even after the marketplace is removed
+and added again and the version above is current
+([Cursor forum thread](https://forum.cursor.com/t/add-plugin-github-imports-can-get-stuck-on-stale-plugin-versions/163895)).
+Check the version `/plugin` shows after installing. If it is older than the
+marketplace version, install the current version into your project with the
+bundled installer below; it copies the plugin from the fetched clone, not from
+Cursor's install cache.
+
 For a project install from the command line, run the bundled installer from
 that clone: `bash "$MP/cursor-plugin/local-install.sh" --target /path/to/project`.
 
